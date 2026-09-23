@@ -1,221 +1,173 @@
-﻿# Job Ranger
+<p align="center">
+  <img src="docs/assets/branding/job-ranger-banner.png" alt="Job Ranger - Find Your Next Opportunity" width="100%" />
+</p>
 
-[![Version](https://img.shields.io/badge/version-1.0.2-0f172a.svg)](#release-status)
-[![Platform](https://img.shields.io/badge/platform-Windows%20desktop-2563eb.svg)](#installation)
-[![Electron](https://img.shields.io/badge/Electron-28.3.3-47848f.svg)](#technology)
-[![React](https://img.shields.io/badge/React-19.2.3-149eca.svg)](#technology)
-[![TypeScript](https://img.shields.io/badge/TypeScript-5.9.3-3178c6.svg)](#technology)
-[![License](https://img.shields.io/badge/license-MIT-15803d.svg)](./LICENSE)
+# Job Ranger
 
-Job Ranger is a local-first desktop application for monitoring company career pages, storing results in a local SQLite database, and surfacing the job changes that matter to you without turning your search into a cloud product.
+<p align="center">
+  <strong>A local-first desktop companion for finding, monitoring, and managing job opportunities without turning your search into somebody else's cloud product.</strong>
+</p>
 
-It is built as an Electron shell with a React renderer and an IPC-backed desktop runtime. The current release is intentionally honest about scope: it focuses on personal job monitoring, deterministic extraction, and local persistence rather than sync, accounts, or team workflows.
+<p align="center">
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.0.2"><img src="https://img.shields.io/badge/release-v1.0.2-0f172a.svg" alt="Release v1.0.2" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml"><img src="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
+</p>
 
-## Table Of Contents
+## Status
 
-- [Why Job Ranger Exists](#why-job-ranger-exists)
-- [Release Status](#release-status)
-- [What The App Does](#what-the-app-does)
-- [Feature Status](#feature-status)
-- [Installation](#installation)
-- [Usage](#usage)
-- [Supported Source Types](#supported-source-types)
-- [Technology](#technology)
-- [Repository Layout](#repository-layout)
-- [Development](#development)
-- [Packaging](#packaging)
-- [Roadmap And Limits](#roadmap-and-limits)
-- [Claim Map](#claim-map)
-- [Help](#help)
-- [License](#license)
+**Functional and actively evolving.** Job Ranger v1.0.2 is the current published release. It can monitor selected company career pages, persist jobs and settings locally, filter results, run background checks, and notify you about new opportunities.
+
+The next product direction is broader than career-page monitoring: Job Ranger is being evolved into a consumer-friendly job-search workspace that can help ordinary users understand fit, track applications, and prepare next steps without requiring GitHub, YAML, terminals, or an AI account. That work is active in [PR #28](https://github.com/Knapp-Kevin/job-ranger/pull/28) and is **not part of v1.0.2 yet**.
 
 ## Why Job Ranger Exists
 
-Job searching often degrades into repetitive tab checking, incomplete notes, and missed postings. Job Ranger addresses that loop with a local desktop workflow: track selected companies, run scheduled scrapes, filter noise, and review fresh jobs in one place.
+Job searching has an absurd amount of clerical work hiding inside it. People repeatedly check the same career pages, lose track of what changed, forget which roles they already reviewed, and maintain increasingly haunted browser-tab collections.
 
-The design center is privacy and operational honesty. The application stores its state locally, opens external links in the user's browser, and distinguishes between supported, detected, browser-required, and unsupported source types instead of pretending every career page is equally automatable.
+Job Ranger automates the repetitive parts while keeping the user in control:
 
-## Release Status
+- monitor selected employers and career pages;
+- store job-search state locally;
+- distinguish reliable source support from best-effort extraction;
+- filter noise by title, keyword, salary, and location;
+- receive desktop notifications for new results;
+- keep the product useful without requiring cloud accounts or inference.
 
-`implemented`: Job Ranger `v1.0.2` ships as a desktop application with a local Electron IPC backend, SQLite-backed persistence, company/job/filter/settings management, scrape run tracking, notifications settings, and Windows packaging.
-
-`implemented`: The repository also includes backend smoke coverage and an Electron Playwright E2E suite scaffold.
-
-`implemented`: The repository is configured to build macOS release artifacts on macOS runners, with optional notarization when Apple signing credentials are present.
-
-`planned`: Broader cross-platform hardening and deeper browser-backed automation remain active roadmap topics in the planning documents.
-
-## What The App Does
-
-- Tracks companies and career page sources you explicitly add.
-- Detects supported and partially supported applicant tracking system patterns.
-- Stores companies, jobs, filters, scrape runs, and runtime settings locally.
-- Surfaces jobs in a dedicated review interface instead of mixing them into browser tabs.
-- Supports saved filters with title, keyword, salary, and location criteria.
-- Exposes runtime controls for scrape concurrency, timeout, retries, and cooldown behavior.
-- Supports desktop notification preferences and minimize-to-tray behavior.
-- Shows local runtime facts such as the database path, SQLite path, and supported adapters.
-
-## Feature Status
+## Current Capabilities
 
 | Capability | Status | Notes |
-|---|---|---|
-| Desktop shell and local backend | `implemented` | Electron main process, preload bridge, IPC handlers, and local data directory are present. |
-| Company source management | `implemented` | Companies can be created, updated, deleted, and scraped from the UI and desktop API. |
-| Job review workflow | `implemented` | Jobs can be listed and marked seen. |
-| Filter management | `implemented` | Filters support title, keyword, salary, and location criteria. |
-| Runtime settings | `implemented` | User agent, concurrency, timeout, retries, cooldown, and circuit-breaker settings are stored locally. |
-| Desktop notifications and tray behavior | `implemented` | Notification toggles and minimize-to-tray behavior are part of the current UI and desktop runtime. |
-| Windows packaging | `implemented` | The build config emits NSIS and portable Windows artifacts. |
-| E2E automation suite | `implemented` | A Playwright Electron suite exists in the repo. |
-| Cross-platform distribution | `implemented` | Windows packaging is local; macOS packaging is configured for macOS runners and release uploads. |
-| Team sync, cloud backend, accounts | `deferred` | These are outside the current product scope. |
+| --- | --- | --- |
+| Desktop application | **Shipped** | Electron + React desktop app. |
+| Local persistence | **Shipped** | SQLite-backed companies, jobs, filters, settings, and scrape history. |
+| Career-page monitoring | **Shipped** | User-selected employer sources with scheduled/background scraping. |
+| Structured ATS adapters | **Shipped** | Greenhouse, Lever, SmartRecruiters, and Ashby. |
+| Browser/generic extraction | **Shipped, best effort** | Workday, iCIMS, BambooHR, Taleo, Oracle, Microsoft, and generic career pages are classified honestly by support level. |
+| Filters | **Shipped** | Title, keyword, salary, and location criteria. |
+| Desktop notifications | **Shipped** | Configurable new-job and matched-job notifications. |
+| System tray behavior | **Shipped** | Optional minimize-to-tray operation. |
+| Windows release | **Shipped** | v1.0.2 Windows x64 executable. |
+| macOS releases | **Shipped** | v1.0.2 x64 and arm64 DMG/ZIP artifacts. |
+| Linux distribution | **Not shipped** | No supported packaged Linux release is currently published. |
+| Career profile and fit guidance | **In development** | Active in PR #28; not part of the published release. |
+| Application tracking | **In development** | Active in PR #28; not part of the published release. |
+| Resume/import intelligence | **Planned** | Must preserve factual evidence and remain usable without inference. |
+| Auto-apply | **Not a current product goal** | Job Ranger should assist decisions, not impersonate the user. |
 
-## Installation
+## Download
 
-### End Users
+Published builds are available from [GitHub Releases](https://github.com/Knapp-Kevin/job-ranger/releases).
 
-Use the release artifacts generated from the project packaging flow. The current packaging configuration produces:
+For v1.0.2:
 
-- An NSIS installer
-- A portable executable
-- A macOS DMG
-- A macOS ZIP
+- **Windows:** x64 executable
+- **macOS Apple Silicon:** arm64 DMG or ZIP
+- **macOS Intel:** x64 DMG or ZIP
 
-If you are on macOS, download the macOS `.dmg` or `.zip` asset from Releases. Do not download the `.exe` asset because it is a Windows binary.
-If the macOS build is unsigned, use Finder's `Open` action on first launch so Gatekeeper can present the manual override flow.
+Job Ranger is currently best treated as a personal desktop application. It is functional, but still under active modernization and product expansion.
 
-The artifact naming pattern is `Job Ranger-v<version>-windows-x64.<ext>`.
-The macOS artifact naming pattern is `Job Ranger-v<version>-macos-<arch>.<ext>`.
+## First Run
 
-### Developers
+1. Install and launch Job Ranger.
+2. Open **Companies**.
+3. Add an employer and its careers URL.
+4. Run a scrape or allow the configured schedule to check it.
+5. Review discovered jobs under **Jobs**.
+6. Use **Filters** to reduce noise.
+7. Configure notifications and tray behavior under **Settings**.
 
-Prerequisites:
+For user-facing troubleshooting, see [HELP.md](./HELP.md).
 
-- Node.js `>=20.19.0`
-- Windows development environment for the packaged release flow
-- `sqlite3` on `PATH`, or `SQLITE3_PATH` set explicitly for backend execution
+## Source Support Model
 
-Install dependencies:
+Job Ranger deliberately avoids pretending that every careers site is equally automatable.
 
-```bash
-npm install
+| Support level | Meaning |
+| --- | --- |
+| `supported` | A structured adapter exists and is the preferred path. |
+| `detected` | Job Ranger recognizes the portal and can attempt generic/browser extraction. Results can vary with site structure. |
+| `browser-required` | A browser-backed extraction path is required. |
+| `manual-review` | No reliable automated path is currently claimed. |
+
+Current structured adapters are Greenhouse, Lever, SmartRecruiters, and Ashby. Other recognized sources include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, Microsoft Careers, and generic HTML career pages.
+
+## Product Principles
+
+### Local first
+
+Search state is stored locally. Job Ranger does not require a cloud account or hosted backend to perform its core workflow.
+
+### Useful before AI
+
+Core discovery, persistence, filtering, monitoring, and application-state functionality should work deterministically. Optional inference can improve explanations, resume tailoring, interview preparation, and career guidance later, but it must not become the key that opens the application.
+
+### Consumer first
+
+A job seeker should not need software-development skills to use Job Ranger. Technical implementation details belong behind the interface, not in the user's way.
+
+### Evidence over confidence
+
+When Job Ranger cannot reliably extract or interpret something, it should expose the limitation rather than fabricate certainty.
+
+### User authority
+
+Job Ranger assists the user's search. It does not make irreversible career decisions or apply to jobs on the user's behalf without explicit, future product-level governance.
+
+## Architecture
+
+```text
+React renderer
+      |
+      v
+Electron preload / IPC boundary
+      |
+      v
+Desktop backend
+  |        |        |
+  v        v        v
+SQLite   Scrapers  Runtime settings
+           |
+           +--> Structured ATS adapters
+           +--> Generic HTML extraction
+           +--> Browser-backed extraction
 ```
 
-## Usage
+Security-relevant renderer boundaries currently include `contextIsolation: true`, `nodeIntegration: false`, `webSecurity: true`, URL validation before opening external links, and a renderer Content Security Policy.
 
-### 1. Launch The App
-
-For development:
-
-```bash
-npm run electron:dev
-```
-
-For a packaged Windows build, use the generated installer or portable executable. For macOS, use the `.dmg` or `.zip` artifact attached to the release.
-
-### 2. Add A Source
-
-Open `Companies`, choose `Add source`, and provide:
-
-- A company name
-- A careers URL
-- A polling frequency
-- An active/inactive state
-
-### 3. Review Jobs
-
-Use `Jobs` to inspect the current local job set and mark items as seen.
-
-### 4. Add Filters
-
-Use `Filters` to constrain results by:
-
-- Title include or exclude terms
-- Keyword include or exclude terms
-- Minimum salary
-- Location include or exclude terms
-
-### 5. Configure Runtime Behavior
-
-Use `Settings` to tune:
-
-- User agent
-- Maximum concurrent scrapes
-- Scrape timeout
-- Retry count
-- Cooldown behavior
-- Notification preferences
-- Minimize-to-tray behavior
-
-### 6. Inspect Local Runtime Facts
-
-The `Settings` page shows:
-
-- Database path
-- SQLite binary path
-- Supported source adapters
-
-The desktop app menu also includes `Help -> Open Job Ranger Data Folder`.
-
-## Supported Source Types
-
-Job Ranger classifies source types with explicit support metadata rather than a single binary label.
-
-### `implemented` Source Profiles
-
-| Source Type | Support Label | Extraction Mode |
-|---|---|---|
-| `greenhouse` | `supported` | `api` |
-| `lever` | `supported` | `api` |
-| `smartrecruiters` | `supported` | `api` |
-| `ashby` | `supported` | `api` |
-| `workday` | `detected` | `html` |
-| `icims` | `detected` | `html` |
-| `bamboohr` | `detected` | `html` |
-| `taleo` | `detected` | `html` |
-| `oracle` | `detected` | `html` |
-| `generic-html` | `detected` | `html` |
-| `microsoft` | `browser-required` | `browser` |
-| `browser-required` | `browser-required` | `browser` |
-| `unsupported` | `manual-review` | `unknown` |
-
-### Practical Reading Of These Labels
-
-- `supported`: implemented adapter path with current runtime support.
-- `detected`: the app can classify the source and attempt extraction, but behavior depends on the site's structure.
-- `browser-required`: the app recognizes that a browser-backed path is required.
-- `manual-review`: the app cannot claim a reliable extraction path.
-
-## Technology
-
-- Electron desktop runtime
-- React renderer
-- TypeScript across renderer and desktop source
-- Local SQLite persistence via desktop backend commands
-- Playwright test coverage for Electron UI flows
-- Electron Builder for Windows packaging
+See [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md) for the current architecture and evolution plan.
 
 ## Repository Layout
 
 | Path | Purpose |
-|---|---|
-| `src/` | React renderer and UI state |
-| `src/shared/` | Shared contracts consumed across renderer and desktop source |
-| `electron/src/` | Electron main process, backend, preload, scraping, validation, and repository code |
-| `tests/` | Backend smoke tests and E2E coverage |
-| `docs/` | plans, concept notes, and system-state artifacts |
-| `public/` | static assets including the application icon |
-| `release/` | current Windows packaging output from the local build workflow |
+| --- | --- |
+| `src/` | React renderer, pages, components, state, and shared contracts. |
+| `electron/src/` | TypeScript source for the desktop runtime and backend. |
+| `electron/` | Compiled desktop runtime files used by packaged execution. |
+| `tests/` | Unit, backend smoke, and Electron Playwright coverage. |
+| `public/` | Runtime static assets, including the canonical application icon. |
+| `docs/assets/branding/` | README/banner/logo/social-preview assets. |
+| `docs/` | Product, architecture, system-state, and historical planning documentation. |
+| `.github/` | CI and dependency automation. |
 
 ## Development
 
-Primary commands:
+### Prerequisites
+
+- Node.js `>=20.19.0`
+- npm
+- a working `sqlite3` executable available on `PATH`, or `SQLITE3_PATH` set explicitly
+
+### Setup
 
 ```bash
-npm run dev
-npm run desktop:compile
-npm run desktop:watch
+npm ci
+npm run repo:health
+npm run electron:dev
+```
+
+### Quality Commands
+
+```bash
 npm run typecheck
 npm run build
 npm run test
@@ -224,22 +176,9 @@ npm run test:e2e
 npm run repo:health
 ```
 
-Recommended local sequence:
-
-1. `npm install`
-2. `npm run typecheck`
-3. `npm run electron:dev`
+Pull requests are automatically gated by CI running `npm ci` and `npm run repo:health`.
 
 ## Packaging
-
-Packaging is configured through Electron Builder and currently targets:
-
-- `nsis`
-- `portable`
-- `dmg`
-- `zip`
-
-Packaging commands:
 
 ```bash
 npm run electron:build
@@ -248,52 +187,31 @@ npm run electron:build:mac
 npm run electron:pack
 ```
 
-The current builder configuration uses `public/ICON.png` for Windows artifacts and generates a macOS `.icns` icon on macOS runners before building `dmg` and `zip` assets.
+Electron Builder is configured for Windows NSIS/portable targets and macOS DMG/ZIP targets. Published artifacts may differ from every locally configured target, so the release page is the source of truth for what users can actually download.
 
-## Roadmap And Limits
+The canonical runtime icon remains [`public/ICON.png`](./public/ICON.png). Brand presentation assets live under [`docs/assets/branding/`](./docs/assets/branding/).
 
-### `planned`
+## Roadmap
 
-- Cross-platform hardening and packaging maturity
-- Broader browser automation improvements for dynamic ATS portals
-- Additional operational resilience improvements documented in planning artifacts
+Near-term work is organized around four tracks:
 
-### `deferred`
+1. **Consumer workflow:** career profile, job-fit explanations, and application tracking, beginning with PR #28.
+2. **Discovery:** reduce the need for users to manually know which company career pages to add.
+3. **Career intelligence:** resume evidence, skill/credential gaps, optional inference, and decision support without making AI mandatory.
+4. **Platform health:** dependency hygiene and coordinated modernization of Node, Electron, Vite, and Electron tooling under [issue #38](https://github.com/Knapp-Kevin/job-ranger/issues/38).
 
-- Cloud sync
-- Multi-user collaboration
-- Resume parsing
-- Auto-apply workflows
-- Team-oriented workflow features
+See [docs/planning/PLAN.md](./docs/planning/PLAN.md) for the active roadmap and [docs/README.md](./docs/README.md) for documentation status.
 
-### `unknown`
+## Governance and Security
 
-- Any production claim beyond the current Windows packaging path that is not explicitly represented in source or release artifacts
-
-## Claim Map
-
-| Claim | Status | Source |
-|---|---|---|
-| Job Ranger is version `1.0.2`. | `implemented` | `package.json:4` |
-| The desktop app exposes company, job, filter, settings, and scrape-run operations over a preload API. | `implemented` | `src/shared/contracts.ts:283` |
-| The Electron shell creates a local window, enforces context isolation, and loads the renderer from `dist` in production. | `implemented` | `electron/src/main.cts:23` |
-| The application stores data in a local app data directory and initializes a desktop backend on startup. | `implemented` | `electron/src/main.cts:195` |
-| Runtime settings include notifications and minimize-to-tray controls. | `implemented` | `src/shared/contracts.ts:259`, `src/pages/Settings.tsx:160` |
-| The desktop menu includes a Help entry for opening the local data folder. | `implemented` | `electron/src/main.cts:110` |
-| The app classifies source support levels rather than treating every source as fully supported. | `implemented` | `src/shared/contracts.ts:18`, `src/shared/contracts.ts:33` |
-| Backend smoke coverage exercises persistence, source detection, and concurrency protection. | `implemented` | `tests/backend-smoke-test.cjs:115` |
-| An Electron Playwright E2E suite exists for dashboard, navigation, companies, filters, settings, and notifications flows. | `implemented` | `tests/e2e/app.spec.ts:39` |
-| Windows packaging targets NSIS and portable artifacts. | `implemented` | `electron-builder.json:18` |
-| macOS packaging targets DMG and ZIP artifacts. | `implemented` | `electron-builder.json:35` |
-| Desktop notifications and system tray behavior are part of the documented system state. | `implemented` | `docs/SYSTEM_STATE.md:76` |
-| Cross-platform support is complete. | `unknown` | Packaging exists for Windows and macOS, but runtime validation still depends on platform testing. |
-| Application tracking is part of the shipped product. | `planned` | `docs/planning/PLAN.md:282` |
-
-## Help
-
-For user-facing setup, troubleshooting, and operational guidance, see [HELP.md](./HELP.md).
+- [CONTRIBUTING.md](./CONTRIBUTING.md) explains contribution expectations.
+- [GOVERNANCE.md](./GOVERNANCE.md) describes project decision authority and merge standards.
+- [SECURITY.md](./SECURITY.md) describes the supported security posture and reporting path.
+- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) defines community expectations.
+- [docs/BRANDING.md](./docs/BRANDING.md) defines canonical brand assets and usage.
 
 ## License
 
-This project is licensed under the MIT License. See [LICENSE](./LICENSE).
+Job Ranger is open source under the [MIT License](./LICENSE).
 
+Third-party dependencies and any future adapted open-source components retain their own copyright and license obligations. Where Job Ranger incorporates substantial third-party source material, attribution must be preserved explicitly.
