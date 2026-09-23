@@ -39,8 +39,8 @@
   "devDependencies": {
     "@electron/fuses": "^1.8.0",
     "@electron/notarize": "^2.2.1",
-    "@playwright/test": "^1.58.2",
-    "@tailwindcss/vite": "4.1.17",
+    "@playwright/test": "^1.63.0",
+    "@tailwindcss/vite": "4.3.3",
     "@types/electron": "^1.4.38",
     "@types/node": "^22.0.0",
     "@types/react": "19.2.7",
@@ -50,7 +50,7 @@
     "electron": "^28.3.3",
     "electron-builder": "^26.15.3",
     "playwright": "^1.58.2",
-    "tailwindcss": "4.1.17",
+    "tailwindcss": "4.3.3",
     "typescript": "5.9.3",
     "vite": "7.2.4",
     "wait-on": "^7.2.0"
