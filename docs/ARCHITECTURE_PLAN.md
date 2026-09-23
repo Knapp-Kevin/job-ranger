@@ -1,223 +1,176 @@
-# Architecture Plan
+# Architecture and Evolution Plan
 
-## Risk Grade: L2
+This document describes Job Ranger's current architecture and the intended direction of travel. Older phase plans are retained as historical records and should not be read as current implementation status.
 
-### Risk Assessment
+## Current Architecture
 
-- [ ] Contains security/auth logic -> No (local-only app, no auth)
-- [x] Modifies existing APIs -> Yes (enhancing scraper adapters, IPC handlers)
-- [ ] UI-only changes -> No
-
-**Rationale**: L2 assigned because changes modify core backend logic (scraper adapters, browser automation) that affect data extraction reliability. No security-critical paths but significant logic changes.
-
----
-
-## Current Architecture (Existing)
-
-```
-electron/
-├── main.cts              # Electron main process, IPC handlers, browser automation
-├── preload.cts           # Context bridge exposing DesktopApi
-├── backend.cts           # JobScoutBackend, scheduling, queue management
-├── scrapers.cts          # Source detection, adapters, job extraction
-├── contracts.cts         # Type definitions for main process
-└── repository.cts        # SQLite repository layer
-
-src/
-├── main.tsx              # React entry point
-├── App.tsx               # Root component with routing
-├── context/
-│   └── AppContext.tsx    # Global state management
-├── pages/
-│   ├── Dashboard.tsx     # Overview and stats
-│   ├── Companies.tsx     # Company source management
-│   ├── Jobs.tsx          # Job listing view
-│   ├── Filters.tsx       # Filter configuration
-│   └── Settings.tsx      # App settings
-├── components/
-│   ├── Layout.tsx        # Main layout wrapper
-│   ├── Sidebar.tsx       # Navigation
-│   ├── Modal.tsx         # Modal dialog
-│   └── ui/               # Primitive components
-├── services/
-│   └── api.ts            # IPC wrapper
-├── hooks/
-│   ├── useApi.ts         # API hook
-│   └── useForm.ts        # Form state hook
-├── types/
-│   └── index.ts          # Shared type exports
-└── shared/
-    └── contracts.ts      # Shared type definitions
+```text
+┌──────────────────────────────┐
+│ React renderer               │
+│ Dashboard / Jobs / Companies│
+│ Filters / Settings           │
+└──────────────┬───────────────┘
+               │
+               │ preload bridge / typed IPC
+               ▼
+┌──────────────────────────────┐
+│ Electron desktop runtime     │
+│ main process + backend       │
+└───────┬──────────┬───────────┘
+        │          │
+        │          ├───────────────► OS integration
+        │          │                 notifications / tray / shell
+        │          │
+        ▼          ▼
+     SQLite     Scraping layer
+                    │
+          ┌─────────┼───────────┐
+          ▼         ▼           ▼
+      ATS APIs   HTML path   Browser path
 ```
 
----
+## Runtime Boundaries
 
-## Planned Changes (Phase 1: Browser Automation)
+### Renderer
 
-### Modified Files
+The React renderer owns presentation and user interaction. It does not receive direct Node.js access.
 
-| File | Change Type | Description |
-|------|-------------|-------------|
-| `electron/main.cts` | MODIFY | Enhanced `loadPageHtmlInHiddenWindow` with smart waits, scroll handling |
-| `electron/scrapers.cts` | MODIFY | Platform-specific selectors, improved extraction logic |
-| `electron/contracts.cts` | MODIFY | New types for wait strategies, selector configs |
+### Preload / IPC
 
-### New Files (None for Phase 1)
+The preload bridge exposes a constrained desktop API to the renderer. IPC is the boundary between user-interface code and privileged desktop behavior.
 
-Phase 1 modifies existing files only. No new files required.
+### Desktop backend
 
----
+The backend owns persistence, scraper execution, source classification, runtime settings, scrape guards, and application-level desktop services.
 
-## Interface Contracts
+### Persistence
 
-### Enhanced Browser Loader
+Current shipped domain state is stored locally through SQLite-backed repository code. New durable product domains should prefer that same backend persistence model rather than creating unrelated renderer-only storage systems.
 
-```typescript
-// electron/main.cts
-interface BrowserLoadOptions {
-  url: string;
-  waitSelectors: string[];      // NEW: element selectors to wait for
-  maxWaitMs: number;            // NEW: max wait time for selectors
-  enableScroll: boolean;        // NEW: infinite scroll handling
-  maxScrollIterations: number;  // NEW: scroll limit
-}
+## Source Architecture
 
-async function loadPageHtmlInHiddenWindow(
-  options: BrowserLoadOptions
-): Promise<string>
+Job Ranger does not use one universal scraper and pretend the internet agreed on markup.
+
+### Structured API adapters
+
+- Greenhouse
+- Lever
+- SmartRecruiters
+- Ashby
+
+These are the preferred paths where a structured job-board API can be used reliably.
+
+### Generic / detected extraction
+
+Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and generic careers pages can be recognized and routed through generic HTML or browser-backed extraction. These paths are intentionally described as best effort.
+
+### Browser-required extraction
+
+Some sources require a rendered browser context. Browser extraction is an untrusted-content boundary and should remain isolated from renderer privileges.
+
+## Security Boundaries
+
+The desktop shell currently uses:
+
+- `nodeIntegration: false`;
+- `contextIsolation: true`;
+- `webSecurity: true`;
+- a preload boundary;
+- external URL validation before opening the system browser;
+- a renderer Content Security Policy;
+- `X-Frame-Options: DENY` response headers for the renderer;
+- sandboxing for the help window.
+
+Any change that weakens those boundaries is a high-impact governance change, not an implementation convenience.
+
+## Quality Architecture
+
+Current automated layers include:
+
+- TypeScript typechecking;
+- Vite build validation;
+- desktop TypeScript compilation;
+- backend smoke tests;
+- focused unit tests;
+- Electron Playwright E2E coverage;
+- PR CI running the `repo:health` baseline.
+
+Passing CI is a gate, not a claim that every third-party careers portal or every supported OS has been fully exercised.
+
+## Evolution Plan
+
+### 1. Consumer job-search domain
+
+The active Career Profile and Applications work should become native Job Ranger domain functionality.
+
+The durable target is:
+
+```text
+Career Profile ─┐
+                ├──► job fit / guidance
+Jobs ───────────┤
+                ├──► application workflow
+Applications ───┘
 ```
 
-### Platform Selector Registry
+Profile and application state should ultimately live behind the desktop backend and SQLite persistence rather than remaining renderer-only state.
 
-```typescript
-// electron/scrapers.cts
-interface PlatformSelectors {
-  waitFor: string[];           // Selectors indicating content loaded
-  jobCard: string;             // Job listing container
-  title: string;               // Job title within card
-  location: string;            // Location within card
-  link: string;                // Job detail link
-}
+### 2. Consumer-friendly discovery
 
-const PLATFORM_SELECTORS: Record<CompanySourceType, PlatformSelectors>
-```
+The current shipped product expects users to add employer career pages themselves. That is too technical for the long-term audience.
 
-### Salary Extraction (Phase 3)
+The next discovery layer should let a user express ordinary intent, such as role, geography, commute tolerance, or employer interests, while Job Ranger resolves appropriate sources internally.
 
-```typescript
-// electron/scrapers.cts
-interface SalaryInfo {
-  min: number | null;
-  max: number | null;
-  currency: string;           // USD, EUR, GBP, etc.
-  period: 'year' | 'month' | 'hour';
-  raw: string;                // Original text
-}
+Source acquisition and source extraction should remain separate concerns so discovery improvements do not destabilize existing adapters.
 
-function extractSalary(text: string): SalaryInfo | null
-```
+### 3. Career intelligence layer
 
----
+Career intelligence should be a native Job Ranger service boundary, not an embedded second application.
 
-## Data Flow
+Deterministic capabilities should include explicit requirement matching, credentials, location/pay constraints, status tracking, and evidence-aware scoring.
 
-### Current Scrape Flow
+Optional inference may later enrich:
 
-```
-User clicks "Scrape"
-  -> IPC: scrape-company
-  -> Backend.scrapeCompany()
-  -> Adapter.scrape()
-  -> [fetchText OR loadPageHtml]
-  -> extractJobsFromHtml()
-  -> Repository.upsertJobs()
-```
+- fuzzy experience matching;
+- fit explanations;
+- resume tailoring;
+- interview preparation;
+- transferable-skill analysis;
+- skill/credential gap synthesis.
 
-### Enhanced Scrape Flow (Phase 1)
+Inference must remain optional infrastructure. The base application should still function when no provider is configured.
 
-```
-User clicks "Scrape"
-  -> IPC: scrape-company
-  -> Backend.scrapeCompany()
-  -> Adapter.scrape()
-  -> loadPageHtmlInHiddenWindow({
-       url,
-       waitSelectors: PLATFORM_SELECTORS[sourceType].waitFor,
-       maxWaitMs: settings.scrapeTimeoutMs,
-       enableScroll: true,
-       maxScrollIterations: 10
-     })
-  -> [Poll for selectors, scroll to load all]
-  -> extractJobsFromHtml() with platform-specific selectors
-  -> extractSalary() from description text (Phase 3)
-  -> Repository.upsertJobs()
-```
+### 4. Evidence and resume model
 
----
+Resume/import functionality should distinguish source evidence from generated presentation. The system must be able to explain where a claimed skill, certification, responsibility, or accomplishment came from before it places that claim into a tailored resume.
 
-## Dependencies
+### 5. Toolchain modernization
 
-| Package | Justification | Vanilla Alternative |
-|---------|---------------|---------------------|
-| `electron` | Desktop app framework, browser automation | No - core requirement |
-| `react` | UI framework | Vanilla JS possible but impractical |
-| `react-router-dom` | Client-side routing | ~50 lines vanilla, but fragile |
-| `tailwindcss` | Utility CSS | Yes, but slower development |
-| `date-fns` | Date formatting | ~20 lines vanilla per format |
-| `lucide-react` | Icons | SVG strings, but maintenance burden |
-| `clsx` + `tailwind-merge` | Class composition | ~10 lines vanilla |
+Issue #38 owns the coordinated migration of Node, Electron, Vite, and Electron ecosystem tooling.
 
-**No new dependencies required for Phase 1-5.**
+Major upgrades are coupled by runtime and ESM requirements. They should be validated together with clean install, repository health, Electron E2E, and platform packaging rather than landed as unrelated Dependabot PRs.
 
----
+### 6. Packaging maturity
 
-## Section 4 Razor Pre-Check
+Windows and macOS are currently published. Further maturity includes:
 
-- [x] All planned functions <= 40 lines
-  - `waitForJobContent`: ~25 lines (polling loop)
-  - `scrollToLoadAll`: ~20 lines (scroll loop)
-  - `extractSalary`: ~35 lines (regex matching)
+- supported Electron runtime;
+- repeatable Windows packaging validation;
+- macOS signing/notarization validation when credentials are available;
+- explicit decision on Linux packaging rather than accidental partial support.
 
-- [x] All planned files <= 250 lines
-  - `scrapers.cts` currently ~600 lines -> may need split if grows
-  - **WATCH**: If scrapers.cts exceeds 800 lines, extract platform adapters to separate files
+## Architectural Non-Goals
 
-- [x] No planned nesting > 3 levels
-  - All new functions use early returns, no deep nesting
+Job Ranger should not become:
 
----
+- a collection of occupation-specific forks;
+- a thin wrapper around a second CLI runtime;
+- inference-dependent for basic product operation;
+- a cloud backend solely because cloud architecture is fashionable;
+- an autonomous mass-application system without explicit product and governance decisions.
 
-## Risk Mitigation
+## Third-Party Mechanisms
 
-| Risk | Mitigation |
-|------|------------|
-| Browser automation timing issues | Configurable timeouts, fallback to current behavior |
-| Platform selectors become stale | Selectors in config, easy to update without code changes |
-| Infinite scroll never terminates | Max iteration limit, height change detection |
-| New code breaks existing adapters | Smoke tests cover Greenhouse/Lever, manual testing for others |
+Open-source projects can be used as implementation ancestry, evidence, or code donors when licensing permits. Adapted functionality should become native Job Ranger architecture where appropriate, with required attribution preserved.
 
----
-
-## Success Criteria
-
-| Metric | Current | Phase 1 Target |
-|--------|---------|----------------|
-| Working sources | 2/16 | 8/16 |
-| Browser extraction success | ~20% | 70% |
-| Jobs per scrape | First page | All visible |
-
----
-
-## Implementation Order
-
-1. **Phase 1.1**: Smart wait strategies in `loadPageHtmlInHiddenWindow`
-2. **Phase 1.2**: Infinite scroll handling
-3. **Phase 1.3**: Platform selector registry in `scrapers.cts`
-4. **Phase 2**: API adapters (SmartRecruiters, Ashby)
-5. **Phase 3**: Salary extraction
-6. **Phase 4**: Caching, circuit breaker
-7. **Phase 5**: Notifications, system tray
-
----
-
-*Blueprint sealed. Awaiting GATE tribunal.*
+Career-Ops-related work is currently isolated to the active career-intelligence pull request and is not part of the shipped v1.0.2 architecture.

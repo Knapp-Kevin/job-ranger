@@ -1,82 +1,66 @@
-# Build Assets Directory
+# Build Assets
 
-This directory contains the assets needed for building the Electron desktop application.
+This directory contains build-time resources for Job Ranger. Public branding assets live under `docs/assets/branding/`; runtime static assets live under `public/`.
 
-## Required Files
+## Canonical Application Icon
 
-### Windows (Required for Windows builds)
+The canonical source image is:
 
-- `icon.ico` - Main application icon (256x256px recommended)
-- `installer.ico` - Installer icon (256x256px recommended)
-- `uninstaller.ico` - Uninstaller icon (256x256px recommended)
-- `installer-header.bmp` - Installer header image (493x58px)
-- `installer-sidebar.bmp` - Installer sidebar image (164x314px)
-
-### macOS (Required for macOS builds)
-
-- `icon.icns` - Application icon (1024x1024px recommended)
-- `background.png` - DMG background image (540x380px)
-
-### Linux (Required for Linux builds)
-
-- `icon.png` - Application icon (512x512px recommended)
-
-## Creating Icons
-
-### Windows Icons (.ico)
-
-You can create .ico files using:
-
-- [GIMP](https://www.gimp.org/) - Free and open source
-- [IcoFX](https://icofx.ro/) - Specialized icon editor
-- [Online converters](https://convertio.co/ico-png/)
-
-### macOS Icons (.icns)
-
-You can create .icns files using:
-
-- [Iconutil](https://developer.apple.com/library/archive/documentation/CoreGraphics/Conceptual/OnScreenResolution/OnScreenResolution.html) - Built-in macOS tool
-- [Icon Composer](https://www.macupdate.com/app/mac/29161/icon-composer) - Third-party tool
-- [Online converters](https://cloudconvert.com/png-to-icns)
-
-### Linux Icons (.png)
-
-Use any image editor to create PNG files:
-
-- [GIMP](https://www.gimp.org/)
-- [Photoshop](https://www.adobe.com/products/photoshop.html)
-- [Paint.NET](https://www.getpaint.net/)
-
-## Placeholder Icons
-
-For development and testing, you can use placeholder icons. Create simple colored squares or use online icon generators.
-
-## Icon Guidelines
-
-1. **Size**: Use the recommended sizes for best quality
-2. **Format**: Use the correct format for each platform
-3. **Transparency**: Use transparency for better integration
-4. **Color**: Use colors that work well on different backgrounds
-5. **Simplicity**: Keep the design simple and recognizable
-
-## Automation
-
-You can automate icon generation using tools like:
-
-- [electron-icon-builder](https://www.npmjs.com/package/electron-icon-builder)
-- [png-to-icns](https://www.npmjs.com/package/png-to-icns)
-- [ico-to-png](https://www.npmjs.com/package/ico-to-png)
-
-Example:
-
-```bash
-npm install --save-dev electron-icon-builder
-npx electron-icon-builder --input=./build/icon.png --output=./build
+```text
+public/ICON.png
 ```
 
-## Notes
+Do not maintain independent platform icons by hand unless the packaging workflow requires it. Keeping one canonical source prevents platform assets from quietly becoming different brands.
 
-- All icon files should be placed in this directory
-- The build process will automatically use these files
-- Missing icons will cause the build to fail
-- Icon files are not included in the final application bundle
+## Windows
+
+`electron-builder.json` points Windows packaging directly at:
+
+```text
+public/ICON.png
+```
+
+Current configured Windows targets include NSIS and portable output. The release workflow currently uploads the generated Windows executable, blockmap, and `latest.yml` artifacts.
+
+## macOS
+
+The macOS release workflow derives:
+
+```text
+build/icon.icns
+```
+
+from `public/ICON.png` using `sips` and `iconutil` on the macOS runner before invoking Electron Builder.
+
+The committed macOS entitlement configuration is:
+
+```text
+build/entitlements.mac.plist
+```
+
+Signing and notarization behavior depends on the Apple credentials available to the release workflow.
+
+## Consumer Branding
+
+Repository/presentation assets do **not** belong in this directory. Use:
+
+```text
+docs/assets/branding/job-ranger-logo.png
+docs/assets/branding/job-ranger-banner.png
+docs/assets/branding/job-ranger-social-preview.png
+```
+
+See `docs/BRANDING.md` for the canonical asset map.
+
+## Validation
+
+Relevant commands:
+
+```bash
+npm run repo:health
+npm run electron:build:win
+npm run electron:build:mac
+npm run electron:pack
+```
+
+A successful local or CI build validates that build path under the environment where it ran. It does not prove that signing, notarization, installers, or runtime behavior are correct on every target platform. Release artifacts should be smoke-tested before being represented as production-ready downloads.

@@ -1,208 +1,189 @@
 # Job Ranger Help
 
-This help file is written for people using or evaluating the desktop application, not just building the repository.
+Job Ranger is a local-first desktop application for monitoring job opportunities. This guide is written for people using the app, not just people building it.
 
 ## Quick Start
 
-### Install Or Launch
+### 1. Install Job Ranger
 
-- If you are using a packaged Windows release, run the installer or portable executable.
-- If you are on macOS, download the `.dmg` or `.zip` release asset. Do not download the `.exe` Windows installer.
-- If macOS warns that the app is from an unidentified developer, use Finder's `Open` action once to allow the app to launch.
-- If you are running from source, start the desktop shell with `npm run electron:dev`.
+Use the latest published build from the repository's **Releases** page.
 
-### Add Your First Source
+Current v1.0.2 release options include:
 
-1. Open `Companies`.
-2. Select `Add source`.
-3. Enter a company name and a careers URL.
-4. Choose a polling frequency.
-5. Save the source.
+- Windows x64 executable
+- macOS Apple Silicon (arm64) DMG or ZIP
+- macOS Intel (x64) DMG or ZIP
 
-### Review Jobs
+There is no supported packaged Linux release at this time.
 
-Open `Jobs` to see locally stored results. Mark jobs as seen after review to keep the queue manageable.
+### 2. Add an employer
 
-### Tighten Signal With Filters
+1. Open **Companies**.
+2. Select **Add source**.
+3. Enter the employer name.
+4. Paste the employer's careers-page URL.
+5. Choose the polling frequency.
+6. Save the source.
 
-Open `Filters` to define criteria such as:
+### 3. Check for jobs
 
-- job title terms
-- keyword terms
-- location terms
-- minimum salary
+Run a scrape from the company/source workflow or allow Job Ranger's configured schedule to check the source.
 
-### Tune Behavior
+Open **Jobs** to review locally stored results. Mark jobs as seen as you review them.
 
-Open `Settings` to adjust:
+### 4. Reduce noise
 
-- scrape concurrency
-- scrape timeout
-- retry count
-- notifications
-- minimize-to-tray behavior
+Open **Filters** to configure criteria such as:
 
-## What Job Ranger Is Designed To Do
+- title terms;
+- keywords;
+- locations;
+- minimum salary.
 
-`implemented`: Monitor selected company career pages from a local desktop application.
+### 5. Configure background behavior
 
-`implemented`: Store companies, jobs, filters, scrape history, and settings in local application storage.
+Open **Settings** to control:
 
-`implemented`: Surface support status honestly when a source is supported, detected, browser-required, or unsupported.
+- scrape concurrency;
+- scrape timeout;
+- retries and cooldowns;
+- desktop notifications;
+- minimize-to-tray behavior.
 
-`deferred`: Replace your browser, apply for jobs automatically, or sync your search state to a cloud account.
+## What the Source Labels Mean
 
-## Supported Source Guidance
+Job Ranger does not claim every careers site works equally well.
 
-### Best Current Fit
+### Supported
 
-The clearest adapter-backed source types in the current codebase are:
+A structured adapter exists and is the preferred retrieval path.
+
+Current supported adapter families:
 
 - Greenhouse
 - Lever
 - SmartRecruiters
 - Ashby
 
-### Detected Or Conditional Fit
+### Detected
 
-The app can also classify and attempt handling for:
+Job Ranger recognizes the portal and can attempt a generic or browser-backed extraction path. Results may depend on the specific site's structure.
+
+Examples include:
 
 - Workday
 - iCIMS
 - BambooHR
 - Taleo
 - Oracle Careers
-- generic HTML career pages
+- generic career pages
 
-### Browser-Required Or Manual Review
+### Browser required
 
-Some sources are recognized but not guaranteed to work as a straightforward API or static HTML scrape path:
+The source requires a rendered browser path rather than a simple structured/API retrieval.
 
-- Microsoft Careers
-- browser-required portals
-- unsupported or deceptive sources
+### Manual review
+
+Job Ranger does not currently claim a reliable automated extraction path. This is preferable to quietly reporting a successful scrape that found nothing.
 
 ## Troubleshooting
 
-### The App Opens But No Jobs Appear
+### The app opens but I do not see jobs
 
-Check these first:
+Check:
 
-- The source URL is a real careers page, not a marketing or company home page.
-- The source is marked as a supported or detected source type.
-- The source is active.
-- The most recent scrape run does not show an unsupported or failure state.
+1. The URL points to a real careers or jobs page.
+2. The source is active.
+3. The latest scrape run did not fail.
+4. The source support label is not `manual-review`.
+5. Your filters are not excluding the results you expected to see.
 
-### The App Says A Source Is Unsupported
+Some dynamic career portals can still change underneath Job Ranger. A detected source is not the same thing as a guaranteed structured adapter.
 
-That is intentional behavior. Job Ranger classifies uncertain or deceptive URLs as unsupported instead of fabricating a successful scrape result.
+### Job Ranger says a source is unsupported
 
-### Notifications Do Not Appear
+That means the app could not identify a reliable extraction path. It is an intentional safety/reliability state, not a disguised success.
 
-Confirm all of the following:
+### Notifications are not appearing
 
-- `Enable desktop notifications` is turned on.
-- The specific notification subtype you want is turned on.
-- Your operating system is allowing notifications for the application.
+Confirm:
 
-### Closing The Window Exits Instead Of Going To Tray
+- desktop notifications are enabled in Job Ranger;
+- the notification subtype you want is enabled;
+- your operating system allows notifications from Job Ranger.
 
-Enable `Minimize to system tray on close` in `Settings`.
+### Closing the window exits the app
 
-### I Want To Find The Local Data Folder
+Enable **Minimize to system tray on close** in Settings if you want Job Ranger to remain available in the tray.
 
-Use the desktop menu:
+### Where is my local data?
 
-- `Help`
-- `Open Job Ranger Data Folder`
+Use:
 
-You can also inspect the `Database path` and `SQLite binary` values shown in the `Desktop backend facts` section of the `Settings` page.
+**Help → Open Job Ranger Data Folder**
 
-### Development Build Fails Around SQLite
+The Settings page also exposes desktop-backend facts including the database path and resolved SQLite binary.
 
-The desktop backend expects a working `sqlite3` binary. If it is not on `PATH`, set `SQLITE3_PATH` explicitly before running backend or packaging commands.
+### macOS warns about the application
 
-### Development Build Fails On Node Version
+Signing/notarization depends on the credentials available when a release is built. If macOS blocks an otherwise trusted release build, Finder's **Open** action can expose the operating system's manual override flow.
 
-The repository declares `Node.js >=20.19.0`. If your local Node runtime is older, upgrade before relying on Vite or the full repo health flow.
+Do not bypass platform security warnings for a file you did not obtain from a source you trust.
 
-## FAQ
+## Privacy
 
-### Does Job Ranger Upload My Data To A Remote Service?
+Job Ranger is local first. Search state is stored on your machine. Network access is used to retrieve the career pages and job sources you ask Job Ranger to check.
 
-The current product shape is local-first. The desktop runtime stores state locally and uses network access for job source retrieval, not for cloud account sync.
+The current shipped release does not require a Job Ranger cloud account.
 
-### Does It Support Team Collaboration?
+## AI and Career Guidance
 
-No. That is outside the present scope.
+The v1.0.2 release does not require an AI provider.
 
-### Does It Auto-Apply To Jobs?
+Broader Career Profile, fit guidance, and Applications functionality is under active development and is not part of the published v1.0.2 release yet. The product direction is that deterministic job-search functionality remains useful without inference, while optional AI can later improve explanation and preparation features.
 
-No. The current product is focused on discovery and review.
+## Frequently Asked Questions
 
-### Is It Cross-Platform?
+### Does Job Ranger auto-apply for me?
 
-`implemented`: the repository contains a desktop runtime that can be developed beyond Windows.
+No. Job Ranger currently helps discover and review opportunities. Autonomous mass application is not a current product goal.
 
-`implemented`: packaged macOS release artifacts can be built on macOS runners.
+### Does Job Ranger upload my search history to a hosted account?
 
-`implemented`: Windows and macOS packaging paths are documented today.
+No hosted account is required in the current product.
 
-### Is The E2E Suite Part Of The Repo?
+### Is Job Ranger cross-platform?
 
-Yes. The repository includes a Playwright Electron E2E suite for key navigation and settings flows, alongside backend smoke coverage.
+Published v1.0.2 builds exist for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
 
-## Operator Notes
+### Is every Workday/iCIMS/etc. careers page guaranteed to work?
 
-### Useful Commands
+No. Those sources can vary and change. Job Ranger exposes support levels specifically to avoid making that claim.
+
+## Developer Appendix
+
+### Requirements
+
+- Node.js `>=20.19.0`
+- npm
+- `sqlite3` on `PATH`, or `SQLITE3_PATH` set explicitly
+
+### Common commands
 
 ```bash
-npm run typecheck
-npm run build
-npm run test
+npm ci
 npm run repo:health
 npm run electron:dev
+npm run test:unit
+npm run test:e2e
 npm run electron:build:win
 npm run electron:build:mac
 ```
 
-### Current Packaged Outputs
-
-Windows packaging is configured for:
-
-- NSIS installer
-- portable executable
-
-macOS packaging is configured for:
-
-- DMG
-- ZIP
-
-Artifact names follow:
-
-```text
-Job Ranger-v<version>-windows-x64.<ext>
-Job Ranger-v<version>-macos-<arch>.<ext>
-```
-
-## Status Snapshot
-
-| Area | Status |
-|---|---|
-| Desktop runtime | `implemented` |
-| Local persistence | `implemented` |
-| Filtering workflow | `implemented` |
-| Notifications settings | `implemented` |
-| Tray behavior | `implemented` |
-| Windows packaging | `implemented` |
-| macOS packaging | `implemented` |
-| Cross-platform distribution maturity | `implemented` |
-| Cloud sync | `deferred` |
-| Auto-apply workflows | `deferred` |
-
-## More Reading
+For architecture and contribution guidance, see:
 
 - [README.md](./README.md)
-- [docs/CONCEPT.md](./docs/CONCEPT.md)
-- [docs/SYSTEM_STATE.md](./docs/SYSTEM_STATE.md)
-- [docs/planning/PLAN.md](./docs/planning/PLAN.md)
+- [docs/README.md](./docs/README.md)
+- [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md)
+- [CONTRIBUTING.md](./CONTRIBUTING.md)
+- [SECURITY.md](./SECURITY.md)
