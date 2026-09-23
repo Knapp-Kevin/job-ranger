@@ -31,5 +31,9 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Report dependency audit
+        continue-on-error: true
+        run: npm audit --audit-level=high
+
       - name: Typecheck, build, and smoke test
         run: npm run repo:health
