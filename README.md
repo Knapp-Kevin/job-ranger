@@ -15,6 +15,43 @@
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
 
+## Install Job Ranger
+
+**You do not need Git, Node.js, npm, a terminal, or an AI account to use Job Ranger.** Download the desktop build for your computer and run it.
+
+### Windows
+
+**[Download Job Ranger v1.0.2 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.0.2/Job.Ranger-v1.0.2-windows-x64.exe)**
+
+1. Download the single `.exe` file.
+2. Open the downloaded file.
+3. Follow the Windows prompts and launch **Job Ranger**.
+
+### macOS
+
+Choose the build that matches your Mac:
+
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.0.2/Job.Ranger-v1.0.2-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.0.2/Job.Ranger-v1.0.2-macos-x64.dmg)**
+
+Open the downloaded `.dmg`, move Job Ranger into **Applications** if prompted, then launch it normally. If you are not sure which Mac you have, open **Apple menu → About This Mac** and look for either an Apple M-series chip or an Intel processor.
+
+Prefer to inspect the release first? See the [latest Job Ranger release](https://github.com/Knapp-Kevin/job-ranger/releases/latest).
+
+### Start using it
+
+Once Job Ranger opens:
+
+1. Open **Companies**.
+2. Choose **Add source**.
+3. Enter an employer name and paste its careers-page URL.
+4. Run a scrape or let Job Ranger check it on the configured schedule.
+5. Review new opportunities under **Jobs**.
+6. Use **Filters** to narrow results by title, keywords, salary, or location.
+7. Turn on desktop notifications in **Settings** if you want Job Ranger to alert you when something new appears.
+
+For user-facing troubleshooting, see [HELP.md](./HELP.md).
+
 ## Status
 
 **Functional and actively evolving.** Job Ranger v1.0.2 is the current published release. It can monitor selected company career pages, persist jobs and settings locally, filter results, run background checks, and notify you about new opportunities.
@@ -54,29 +91,7 @@ Job Ranger automates the repetitive parts while keeping the user in control:
 | Resume/import intelligence | **Planned** | Must preserve factual evidence and remain usable without inference. |
 | Auto-apply | **Not a current product goal** | Job Ranger should assist decisions, not impersonate the user. |
 
-## Download
-
-Published builds are available from [GitHub Releases](https://github.com/Knapp-Kevin/job-ranger/releases).
-
-For v1.0.2:
-
-- **Windows:** x64 executable
-- **macOS Apple Silicon:** arm64 DMG or ZIP
-- **macOS Intel:** x64 DMG or ZIP
-
 Job Ranger is currently best treated as a personal desktop application. It is functional, but still under active modernization and product expansion.
-
-## First Run
-
-1. Install and launch Job Ranger.
-2. Open **Companies**.
-3. Add an employer and its careers URL.
-4. Run a scrape or allow the configured schedule to check it.
-5. Review discovered jobs under **Jobs**.
-6. Use **Filters** to reduce noise.
-7. Configure notifications and tray behavior under **Settings**.
-
-For user-facing troubleshooting, see [HELP.md](./HELP.md).
 
 ## Source Support Model
 
@@ -150,6 +165,8 @@ See [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md) for the current arc
 | `.github/` | CI and dependency automation. |
 
 ## Development
+
+The following is only for people who want to build or modify Job Ranger from source. Normal users should use the installers at the top of this README.
 
 ### Prerequisites
 
