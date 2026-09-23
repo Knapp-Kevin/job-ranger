@@ -1,0 +1,24 @@
+version: 2
+
+updates:
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "08:00"
+      timezone: "America/New_York"
+    open-pull-requests-limit: 8
+    labels:
+      - "dependencies"
+    groups:
+      production-nonmajor:
+        dependency-type: "production"
+        update-types:
+          - "minor"
+          - "patch"
+      development-nonmajor:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
