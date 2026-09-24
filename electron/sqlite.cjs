@@ -42,9 +42,32 @@ function sql(queryParts, ...values) {
         return output + part + toSqlLiteral(values[index]);
     }, "");
 }
+async function findExecutable(candidates) {
+    for (const candidatePath of candidates) {
+        if (!candidatePath) {
+            continue;
+        }
+        try {
+            await node_fs_1.promises.access(candidatePath, node_fs_1.constants.X_OK);
+            return candidatePath;
+        }
+        catch {
+        }
+    }
+    return null;
+}
 async function resolveSqliteBinary() {
     if (process.env.SQLITE3_PATH) {
         return process.env.SQLITE3_PATH;
+    }
+    if (process.platform === "win32") {
+        const resourcesPath = process.resourcesPath;
+        const bundledSqlite = resourcesPath
+            ? await findExecutable([node_path_1.default.join(resourcesPath, "sqlite3.exe")])
+            : null;
+        if (bundledSqlite) {
+            return bundledSqlite;
+        }
     }
     const command = process.platform === "win32" ? "where.exe" : "which";
     const lookupTarget = "sqlite3";
@@ -70,18 +93,16 @@ async function resolveSqliteBinary() {
         : process.platform === "linux"
             ? ["/usr/bin/sqlite3", "/usr/local/bin/sqlite3", "/bin/sqlite3"]
             : [];
-    for (const candidatePath of fallbackCandidates) {
-        try {
-            await node_fs_1.promises.access(candidatePath, node_fs_1.constants.X_OK);
-            return candidatePath;
-        }
-        catch {
-        }
+    const fallback = await findExecutable(fallbackCandidates);
+    if (fallback) {
+        return fallback;
     }
     const expectedBinary = process.platform === "win32" ? "sqlite3.exe" : "sqlite3";
     const platformHint = process.platform === "darwin"
         ? " On macOS, Finder-launched apps may not inherit Homebrew paths, so set SQLITE3_PATH or install sqlite3 in a standard location such as /usr/bin, /opt/homebrew/bin, or /usr/local/bin."
-        : "";
+        : process.platform === "win32"
+            ? " Packaged Windows builds include sqlite3.exe. Source/development runs can set SQLITE3_PATH or install sqlite3 on PATH."
+            : "";
     throw new Error(`${expectedBinary} was not found. Set SQLITE3_PATH to a valid sqlite3 binary.${platformHint}`);
 }
 class SqliteClient {
