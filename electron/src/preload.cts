@@ -34,6 +34,17 @@ const desktopApi: DesktopApi = {
   scrapeRuns: {
     listRecent: (limit) => ipcRenderer.invoke("scrape-runs:list-recent", limit),
   },
+  career: {
+    getProfile: () => ipcRenderer.invoke("career:get-profile"),
+    saveProfile: (profile) => ipcRenderer.invoke("career:save-profile", profile),
+    migrateLegacy: (payload) => ipcRenderer.invoke("career:migrate-legacy", payload),
+  },
+  applications: {
+    list: () => ipcRenderer.invoke("applications:list"),
+    track: (jobId) => ipcRenderer.invoke("applications:track", jobId),
+    update: (id, update) => ipcRenderer.invoke("applications:update", id, update),
+    delete: (id) => ipcRenderer.invoke("applications:delete", id),
+  },
 };
 
 contextBridge.exposeInMainWorld("electronAPI", desktopApi);

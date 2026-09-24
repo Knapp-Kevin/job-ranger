@@ -1,48 +1,28 @@
 import { useCallback, useEffect, useState } from "react";
 import type { Job } from "../types";
+import type {
+  ApplicationStatus,
+  ApplicationUpdate,
+  CareerProfile,
+  LegacyCareerMigration,
+  OnCallPreference,
+  PayBasis,
+  TrackedApplication,
+} from "../shared/contracts";
+import { getDesktopApi } from "../services/api";
 
-export type OnCallPreference = "yes" | "no" | "either";
-export type PayBasis = "hourly" | "annual";
-export type ApplicationStatus =
-  | "interested"
-  | "applied"
-  | "interview"
-  | "offer"
-  | "rejected"
-  | "withdrawn";
-
-export interface CareerProfile {
-  version: 2;
-  fullName: string;
-  homeLocation: string;
-  radiusMiles: number | null;
-  minimumPay: number | null;
-  payBasis: PayBasis;
-  targetTitles: string[];
-  skills: string[];
-  certifications: string[];
-  sectors: string[];
-  onCallPreference: OnCallPreference;
-  fullTimeOnly: boolean;
-  updatedAt: string | null;
-}
+export type {
+  ApplicationStatus,
+  CareerProfile,
+  OnCallPreference,
+  PayBasis,
+  TrackedApplication,
+};
 
 type StoredCareerProfile = Omit<Partial<CareerProfile>, "version"> & {
   minimumHourlyPay?: number | null;
   version?: number;
 };
-
-export interface TrackedApplication {
-  id: string;
-  jobId: string;
-  title: string;
-  companyName: string;
-  url: string;
-  status: ApplicationStatus;
-  notes: string;
-  createdAt: string;
-  updatedAt: string;
-}
 
 const profileKey = "job-ranger.career-profile.v1";
 const applicationsKey = "job-ranger.applications.v1";
@@ -64,15 +44,6 @@ export const emptyCareerProfile: CareerProfile = {
   fullTimeOnly: true,
   updatedAt: null,
 };
-
-function readJson<T>(key: string, fallback: T): T {
-  try {
-    const raw = window.localStorage.getItem(key);
-    return raw ? (JSON.parse(raw) as T) : fallback;
-  } catch {
-    return fallback;
-  }
-}
 
 function cleanList(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
@@ -101,12 +72,25 @@ export function normalizeCareerProfile(profile: CareerProfile): CareerProfile {
     skills: cleanList(profile.skills),
     certifications: cleanList(profile.certifications),
     sectors: cleanList(profile.sectors),
-    updatedAt: new Date().toISOString(),
+    updatedAt: profile.updatedAt,
   };
 }
 
-export function loadCareerProfile(): CareerProfile {
-  const stored = readJson<StoredCareerProfile>(profileKey, {});
+function readLegacyJson<T>(key: string, fallback: T): T {
+  try {
+    const raw = window.localStorage.getItem(key);
+    return raw ? (JSON.parse(raw) as T) : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function readLegacyProfile(): CareerProfile | null {
+  if (!window.localStorage.getItem(profileKey)) {
+    return null;
+  }
+
+  const stored = readLegacyJson<StoredCareerProfile>(profileKey, {});
   const { minimumHourlyPay: legacyMinimumHourlyPay, ...current } = stored;
   const minimumPay =
     typeof current.minimumPay === "number"
@@ -115,7 +99,7 @@ export function loadCareerProfile(): CareerProfile {
         ? legacyMinimumHourlyPay
         : null;
 
-  return {
+  return normalizeCareerProfile({
     ...emptyCareerProfile,
     ...current,
     version: 2,
@@ -125,103 +109,163 @@ export function loadCareerProfile(): CareerProfile {
     skills: Array.isArray(current.skills) ? current.skills : [],
     certifications: Array.isArray(current.certifications) ? current.certifications : [],
     sectors: Array.isArray(current.sectors) ? current.sectors : [],
-  };
+  });
 }
 
-export function saveCareerProfile(profile: CareerProfile): CareerProfile {
-  const normalized = normalizeCareerProfile(profile);
-  window.localStorage.setItem(profileKey, JSON.stringify(normalized));
-  window.dispatchEvent(new CustomEvent(profileEvent));
-  return normalized;
-}
-
-export function hasCareerProfile(profile: CareerProfile): boolean {
-  return Boolean(profile.homeLocation || profile.targetTitles.length > 0 || profile.skills.length > 0);
-}
-
-export function useCareerProfile() {
-  const [profile, setProfile] = useState<CareerProfile>(() => loadCareerProfile());
-
-  useEffect(() => {
-    const refresh = () => setProfile(loadCareerProfile());
-    window.addEventListener("storage", refresh);
-    window.addEventListener(profileEvent, refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener(profileEvent, refresh);
-    };
-  }, []);
-
-  const save = useCallback((next: CareerProfile) => {
-    const saved = saveCareerProfile(next);
-    setProfile(saved);
-    return saved;
-  }, []);
-
-  return { profile, save, configured: hasCareerProfile(profile) };
-}
-
-export function loadApplications(): TrackedApplication[] {
-  const stored = readJson<TrackedApplication[]>(applicationsKey, []);
+function readLegacyApplications(): TrackedApplication[] {
+  if (!window.localStorage.getItem(applicationsKey)) {
+    return [];
+  }
+  const stored = readLegacyJson<TrackedApplication[]>(applicationsKey, []);
   return Array.isArray(stored) ? stored : [];
 }
 
-function writeApplications(applications: TrackedApplication[]): void {
-  window.localStorage.setItem(applicationsKey, JSON.stringify(applications));
-  window.dispatchEvent(new CustomEvent(applicationsEvent));
-}
+let legacyMigrationPromise: Promise<void> | null = null;
 
-export function trackJob(job: Job, companyName: string): TrackedApplication {
-  const current = loadApplications();
-  const existing = current.find((application) => application.jobId === job.id);
-  if (existing) {
-    return existing;
+async function ensureLegacyMigration(): Promise<void> {
+  if (legacyMigrationPromise) {
+    return legacyMigrationPromise;
   }
 
-  const now = new Date().toISOString();
-  const application: TrackedApplication = {
-    id: `application-${job.id}`,
-    jobId: job.id,
-    title: job.title,
-    companyName,
-    url: job.url,
-    status: "interested",
-    notes: "",
-    createdAt: now,
-    updatedAt: now,
+  legacyMigrationPromise = (async () => {
+    const hasProfile = window.localStorage.getItem(profileKey) !== null;
+    const hasApplications = window.localStorage.getItem(applicationsKey) !== null;
+    if (!hasProfile && !hasApplications) {
+      return;
+    }
+
+    const payload: LegacyCareerMigration = {
+      profile: readLegacyProfile(),
+      applications: readLegacyApplications(),
+    };
+
+    await getDesktopApi().career.migrateLegacy(payload);
+
+    if (hasProfile) {
+      window.localStorage.removeItem(profileKey);
+    }
+    if (hasApplications) {
+      window.localStorage.removeItem(applicationsKey);
+    }
+  })().catch((error) => {
+    legacyMigrationPromise = null;
+    throw error;
+  });
+
+  return legacyMigrationPromise;
+}
+
+export function hasCareerProfile(profile: CareerProfile): boolean {
+  return Boolean(
+    profile.homeLocation || profile.targetTitles.length > 0 || profile.skills.length > 0,
+  );
+}
+
+export function useCareerProfile() {
+  const [profile, setProfile] = useState<CareerProfile>(emptyCareerProfile);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      await ensureLegacyMigration();
+      const stored = await getDesktopApi().career.getProfile();
+      setProfile(stored ?? emptyCareerProfile);
+      setError(null);
+    } catch (refreshError) {
+      setError(
+        refreshError instanceof Error
+          ? refreshError.message
+          : "Unable to load Career Profile",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    void refresh();
+    const handleChange = () => void refresh();
+    window.addEventListener(profileEvent, handleChange);
+    return () => window.removeEventListener(profileEvent, handleChange);
+  }, [refresh]);
+
+  const save = useCallback(async (next: CareerProfile) => {
+    const saved = await getDesktopApi().career.saveProfile(next);
+    setProfile(saved);
+    setError(null);
+    window.dispatchEvent(new CustomEvent(profileEvent));
+    return saved;
+  }, []);
+
+  return {
+    profile,
+    save,
+    configured: hasCareerProfile(profile),
+    loading,
+    error,
   };
-  writeApplications([application, ...current]);
+}
+
+export async function trackJob(
+  job: Pick<Job, "id">,
+  _legacyCompanyName?: string,
+): Promise<TrackedApplication> {
+  await ensureLegacyMigration();
+  const application = await getDesktopApi().applications.track(job.id);
+  window.dispatchEvent(new CustomEvent(applicationsEvent));
   return application;
 }
 
 export function useApplications() {
-  const [applications, setApplications] = useState<TrackedApplication[]>(() => loadApplications());
+  const [applications, setApplications] = useState<TrackedApplication[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  const refresh = useCallback(async () => {
+    try {
+      await ensureLegacyMigration();
+      const stored = await getDesktopApi().applications.list();
+      setApplications(stored);
+      setError(null);
+    } catch (refreshError) {
+      setError(
+        refreshError instanceof Error
+          ? refreshError.message
+          : "Unable to load applications",
+      );
+    } finally {
+      setLoading(false);
+    }
+  }, []);
 
   useEffect(() => {
-    const refresh = () => setApplications(loadApplications());
-    window.addEventListener("storage", refresh);
-    window.addEventListener(applicationsEvent, refresh);
-    return () => {
-      window.removeEventListener("storage", refresh);
-      window.removeEventListener(applicationsEvent, refresh);
-    };
-  }, []);
+    void refresh();
+    const handleChange = () => void refresh();
+    window.addEventListener(applicationsEvent, handleChange);
+    return () => window.removeEventListener(applicationsEvent, handleChange);
+  }, [refresh]);
 
-  const update = useCallback((id: string, patch: Partial<Pick<TrackedApplication, "status" | "notes">>) => {
-    const next = loadApplications().map((application) =>
-      application.id === id
-        ? { ...application, ...patch, updatedAt: new Date().toISOString() }
-        : application,
+  const update = useCallback(async (id: string, patch: ApplicationUpdate) => {
+    const updated = await getDesktopApi().applications.update(id, patch);
+    setApplications((current) =>
+      current.map((application) =>
+        application.id === updated.id ? updated : application,
+      ),
     );
-    writeApplications(next);
-    setApplications(next);
+    setError(null);
+    window.dispatchEvent(new CustomEvent(applicationsEvent));
+    return updated;
   }, []);
 
-  const remove = useCallback((id: string) => {
-    const next = loadApplications().filter((application) => application.id !== id);
-    writeApplications(next);
-    setApplications(next);
+  const remove = useCallback(async (id: string) => {
+    await getDesktopApi().applications.delete(id);
+    setApplications((current) =>
+      current.filter((application) => application.id !== id),
+    );
+    setError(null);
+    window.dispatchEvent(new CustomEvent(applicationsEvent));
   }, []);
 
-  return { applications, update, remove };
+  return { applications, update, remove, loading, error };
 }

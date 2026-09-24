@@ -23,6 +23,8 @@ The maintained Technical Capability Catalog is used to identify implementation d
 
 ## Current Architecture
 
+The published v1.1.2 installers still contain the pre-R0 Career Profile/Application persistence boundary. PR #66 changes the durable desktop architecture to:
+
 ```text
 ┌─────────────────────────────────────┐
 │ React renderer                      │
@@ -35,54 +37,69 @@ The maintained Technical Capability Catalog is used to identify implementation d
                    ▼
 ┌─────────────────────────────────────┐
 │ Electron 44 desktop runtime         │
-│ main process + backend              │
-└──────────┬───────────┬──────────────┘
-           │           │
-           │           ├──────────────► OS integration
-           │           │                notifications / tray / shell
-           ▼           ▼
-        SQLite      Scraping layer
-                       │
-             ┌─────────┼───────────┐
-             ▼         ▼           ▼
-         ATS APIs   HTML path   Browser path
+│ main process                        │
+├──────────────────┬──────────────────┤
+│ JobScoutBackend  │ CareerBackend    │
+│                  │                  │
+│ sources/jobs     │ Career Profile   │
+│ filters/settings │ Applications     │
+│ scrape history   │ evidence schema  │
+│ scraping         │ artifact dir     │
+└────────┬─────────┴─────────┬────────┘
+         │                   │
+         └─────────┬─────────┘
+                   ▼
+                SQLite
+                   │
+                   └── managed filesystem artifacts
 
-Renderer-local Career Profile / Applications
-        │
-        └── planned migration to backend + SQLite
+Scraping layer
+   ├── structured ATS APIs
+   ├── generic HTML extraction
+   └── hidden browser extraction
 ```
+
+PR #66 is the R0 implementation branch for this architecture. Until merged, it is in development rather than default-branch reality.
 
 ## Runtime Boundaries
 
 ### Renderer
 
-The React renderer owns presentation and ordinary user interaction. It does not receive direct Node.js access.
+The React renderer owns presentation and ordinary user interaction. It does not receive direct Node.js, SQLite, or filesystem authority.
 
-The Career Profile and Applications domains are native Job Ranger functionality in v1.1.x. Their current persistence is renderer-local; this is an acknowledged transitional boundary, not the intended final storage architecture.
+Career Profile and Applications remain native Job Ranger user-facing domains, but R0 moves their persistence behind the trusted desktop boundary. Renderer `localStorage` is retained only as a one-time migration source for users upgrading from the v1.1 renderer-local model.
 
 ### Preload / IPC
 
-The preload bridge exposes a constrained desktop API to the renderer. IPC is the boundary between user-interface code and privileged desktop behavior.
+The preload bridge exposes a constrained typed desktop API to the renderer. IPC is the boundary between user-interface code and privileged desktop behavior.
+
+R0 adds typed Career Profile and Application methods to this boundary. Untrusted IPC values are validated before reaching backend services.
 
 ### Desktop backend
 
-The backend owns SQLite persistence, scraper execution, source classification, runtime settings, scrape guards, and application-level desktop services.
+`JobScoutBackend` continues to own job-source operations, jobs, filters, settings, scrape history, scraper execution, scheduling, and related runtime behavior.
+
+R0 introduces a dedicated `CareerBackend` and `CareerRepository` rather than turning the scrape backend into a universal service object. They share Job Ranger's existing SQLite database but preserve a clear ownership boundary for Career Profile, Applications, future Career Evidence, and managed career artifacts.
 
 ### Persistence
 
-Current durable backend state is SQLite-backed for companies, jobs, filters, settings, and scrape history.
+After R0:
 
-Career Profile and Applications are local in v1.1.2 but still use renderer-local storage. Their next architectural step is migration behind the same backend repository boundary, with data migration rather than casually abandoning existing local state.
+- companies, jobs, filters, settings, and scrape history remain SQLite-backed;
+- Career Profile is SQLite-backed;
+- Applications are SQLite-backed;
+- Career Evidence/provenance/resume-artifact tables exist as frozen foundation for later slices;
+- large user-provided/generated documents belong in `<userData>/data/artifacts/`, with SQLite metadata and relationships rather than database blobs.
 
-Future Career Evidence, resume artifacts, application milestones, reminders, and related lifecycle state also belong behind this backend boundary.
+Legacy Career Profile/Application data is migrated idempotently from the v1.1 renderer-local keys. Legacy values are deleted only after the backend confirms successful migration.
 
-Large user-provided/generated documents should live in a managed Job Ranger artifact directory with SQLite metadata, hashes, provenance, and relationships. SQLite should not become an accidental binary-file warehouse.
+Applications created from Find Jobs are populated from backend-owned job/company records rather than accepting renderer-supplied factual snapshots as authority.
 
 ## Career Intelligence Architecture
 
 Career Intelligence is native Job Ranger behavior rather than an embedded Career-Ops runtime or a second CLI application.
 
-The current deterministic flow is:
+The current deterministic user flow remains:
 
 ```text
 Career Profile ──────┐
@@ -92,22 +109,30 @@ Collected Job Data ──┘
 Find Jobs ──► user chooses Track this job ──► Applications
 ```
 
-The scorer uses explicit profile information and collected listing evidence. It is designed for prioritization and explanation, not as a hiring-outcome prediction.
+R0 changes persistence and authority, not the basic interaction model.
+
+Career Profile owns preferences and intent such as target roles, geography, commute, compensation, and work preferences.
+
+Applications own the user's job-search lifecycle state.
+
+Career Evidence owns factual career history, credentials, projects, accomplishments, source provenance, and future document-derived evidence.
+
+These domains must not silently duplicate or compete for factual authority.
 
 Career-Ops served as implementation ancestry/design evidence for portions of the career-search workflow. Required MIT attribution is preserved in `THIRD_PARTY_NOTICES.md`. Job Ranger remains an independent project and does not embed the Career-Ops runtime.
 
-## Planned Career Evidence Architecture
+## Career Evidence Architecture
 
-The next major domain extends Career Intelligence with a durable evidence model.
-
-The accepted direction is:
+R0 freezes the durable domain boundary for the next major program:
 
 ```text
 Source Artifact
       ↓
+Extraction Snapshot
+      ↓
 Candidate Evidence
       ↓
-Target Requirements ↔ Evidence Mapping
+Job Requirements ↔ Evidence Mapping
       ↓
 Resume / Application-Material Projection
       ↓
@@ -120,7 +145,7 @@ Application Lifecycle
 
 The canonical product asset is **Career Evidence**, not a PDF, DOCX, JSON Resume object, parser output, or LLM-generated paragraph.
 
-Planned core domain concepts are described in `docs/design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md` and include:
+R0 defines shared/backend contracts and SQLite tables for:
 
 - `SourceArtifact`;
 - `ExtractionSnapshot`;
@@ -133,23 +158,32 @@ Planned core domain concepts are described in `docs/design/CAREER_EVIDENCE_RESUM
 - `ResumeArtifact`;
 - `ApplicationArtifactLink`.
 
+The exact persistence/artifact/privacy contract is documented in `docs/design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`.
+
 ### Evidence authority
 
 Evidence may originate from imported resumes, user entry, future credentials/documents, or assisted extraction. Imported/parser-generated facts do not become trusted merely because parsing succeeded.
 
-Verification state and provenance must remain visible and durable.
+R0 establishes the blocking factual-claim invariant:
+
+- user-confirmed or user-authored evidence may support factual generated claims;
+- imported evidence cannot support factual generated claims until confirmed;
+- inferred-pending evidence cannot support factual generated claims until confirmed;
+- rejected or missing evidence cannot support factual generated claims.
+
+Future inference cannot weaken this rule.
 
 ### Career Profile relationship
 
 Career Profile remains the user-facing intent/preferences layer.
 
 - target roles, geography, compensation, commute, and work preferences are profile-owned preferences;
-- confirmed skills, credentials, experience, projects, and accomplishments can be surfaced from Career Evidence;
-- the profile should not become a second factual store that can silently disagree with Career Evidence.
+- confirmed skills, credentials, experience, projects, and accomplishments can later be surfaced from Career Evidence;
+- the profile must not become a second factual store that can silently disagree with Career Evidence.
 
 ### Requirement mapping
 
-Tracked jobs will eventually normalize requirements and map each to evidence as:
+R2 will normalize tracked-job requirements and map each to evidence as:
 
 - direct;
 - transferable;
@@ -166,15 +200,13 @@ Resume/application-material generation will preserve three separate review syste
 2. **Parseability gate:** blocking for critical output failures such as unreadable/image-only artifacts; advisory for lesser structural concerns.
 3. **Relevance review:** advisory assessment of whether the truthful artifact makes the strongest case for the target.
 
-These concerns remain separate so a parseable document is not mistaken for a persuasive document and a persuasive document is not allowed to become an invented one.
+A parseable document is not automatically persuasive, and a persuasive document is not allowed to become invented.
 
 ## Resume Import and Rendering Strategy
 
-The Technical Capability Catalog/QOR work deliberately narrowed the external tool set.
-
 ### Import
 
-`firecrawl/anydoc` is the preferred R1 parser candidate, subject to a bounded benchmark before adoption.
+`firecrawl/anydoc` is the preferred R1 parser candidate, subject to the bounded benchmark in #61 before adoption.
 
 Why it is preferred for evaluation:
 
@@ -185,15 +217,15 @@ Why it is preferred for evaluation:
 - explicit encrypted/malformed/resource-limit/OCR-required states;
 - no cloud/model dependency for ordinary imports.
 
-It is not yet a production dependency. The benchmark must establish extraction quality, failure behavior, packaging, performance, and transitive-license clarity.
+It is not yet a production dependency. R0 intentionally adopts no parser.
 
 OCR remains a separate future capability. No imported resume should silently leave the machine for hosted OCR.
 
 ### Rendering
 
-The initial renderer should reuse Job Ranger's existing Electron/Chromium runtime rather than add a second rendering engine immediately.
+The initial renderer should reuse Job Ranger's existing Electron/Chromium runtime rather than add another rendering engine immediately.
 
-A dedicated hidden isolated render window will transform a structured projection through Job Ranger-owned HTML/CSS templates and Electron PDF printing.
+A dedicated hidden isolated render window can transform a structured projection through Job Ranger-owned HTML/CSS templates and Electron PDF printing.
 
 Initial template scope should remain deliberately small:
 
@@ -201,13 +233,9 @@ Initial template scope should remain deliberately small:
 2. ATS-safe compact;
 3. human-polished conservative.
 
-Do not import a giant third-party template pack merely because one exists.
-
 ### Output verification
 
-If the selected import parser reliably handles generated PDFs, Job Ranger should re-parse its own exported PDF and compare extracted content/order with the intended projection. This lets one parser serve both import normalization and output parseability verification.
-
-Adopt a second PDF/spatial parser only if a measured gap justifies another dependency.
+If the selected import parser reliably handles generated PDFs, Job Ranger should re-parse its own exported PDF and compare extracted content/order with the intended projection. A second spatial PDF parser should be added only if measured gaps justify it.
 
 ## Source Architecture
 
@@ -220,19 +248,15 @@ Job Ranger does not use one universal scraper and pretend the internet agreed on
 - SmartRecruiters
 - Ashby
 
-These are the preferred paths where a structured job-board API can be used reliably.
-
 ### Generic / detected extraction
 
 Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and generic careers pages can be recognized and routed through generic HTML or browser-backed extraction. These paths are intentionally described as best effort.
 
 ### Browser-required extraction
 
-Some sources require a rendered browser context. Job Ranger already uses a hidden sandboxed Electron `BrowserWindow` with constrained navigation/session behavior for this narrow purpose.
+Some sources require a rendered browser context. Job Ranger uses a hidden sandboxed Electron `BrowserWindow` with constrained navigation/session behavior for this narrow purpose.
 
-The broader capability-catalog reconciliation found no justification to replace this with Browserless, Steel, Cloudflare Browser Run, Firecrawl, Notte, or another browser platform as a default runtime dependency.
-
-Browser extraction is an untrusted-content boundary and should remain isolated from renderer privileges.
+Browser extraction is an untrusted-content boundary and remains isolated from renderer privileges.
 
 ## Planned Source Discovery Architecture
 
@@ -240,33 +264,15 @@ Source discovery and source acquisition remain separate concerns.
 
 A future `SourceDiscoveryProvider` seam may help ordinary users find relevant employer career sources from role/geography intent without requiring them to know ATS URLs.
 
-Conceptually:
+Discovery returns candidates. Users approve sources before they become monitored companies.
 
-```text
-SourceDiscoveryQuery
-  targetRoles[]
-  geography
-  employerHints[]
-  remotePreference
-
-SourceDiscoveryCandidate
-  employer
-  careersUrl
-  detectedSourceFamily?
-  confidence
-  evidence
-  provider
-```
-
-Discovery returns **candidates**. Users approve sources before they become monitored companies.
-
-The catalog contains broad search/research platforms, but none currently earns default incorporation. The native contract should be defined first; optional external search can be added later behind that seam.
+No cataloged search/browser platform currently earns default incorporation. Native contracts come first; optional providers can be added later behind those seams.
 
 ## Application Lifecycle Architecture
 
 Applications are strategically important native state because they connect jobs, materials, reminders, interviews, and outcomes.
 
-The domain should evolve toward:
+R0 makes the current application records durable and backend-owned. The domain should later evolve toward:
 
 ```text
 Application
@@ -282,30 +288,15 @@ Application
   outcome?
 ```
 
-The application domain should not be outsourced to a generic task/project platform.
-
 The exact resume/application artifact used should be linked to the application so later interview preparation reasons from what the candidate actually sent.
+
+The application domain should not be outsourced to a generic task/project platform.
 
 ## Interview and Story Architecture
 
-Interview preparation should build on the same evidence/application foundation rather than become a separate AI toy.
+Interview preparation should build on the same evidence/application foundation rather than become a separate AI subsystem.
 
-A future `CareerStory` can compose existing evidence:
-
-```text
-CareerStory
-  id
-  title
-  evidenceIds[]
-  situation
-  challenge
-  action
-  result
-  reflection
-  tags[]
-```
-
-This can support interview prep, resume statements, cover letters, networking, and other career narratives without cloning factual history into separate silos.
+A future `CareerStory` can compose existing evidence for interview prep, resume statements, cover letters, networking, and related narratives without cloning factual history into separate silos.
 
 Career-Ops and the cataloged Interview Prep AI Stack remain workflow/design references, not required runtimes.
 
@@ -313,9 +304,7 @@ Career-Ops and the cataloged Interview Prep AI Stack remain workflow/design refe
 
 Inference remains optional infrastructure. The base application must still function when no provider is configured.
 
-Job Ranger does not currently need a general-purpose agent framework.
-
-The first inference seam should be deliberately narrow, conceptually:
+The first inference seam should remain narrow, conceptually:
 
 ```text
 InferenceProvider
@@ -323,30 +312,22 @@ InferenceProvider
   structuredGenerate(request, schema)
 ```
 
-Potential uses include:
-
-- semantic requirement/evidence mapping;
-- transferable-skill suggestions;
-- resume phrasing assistance;
-- interview question generation;
-- repeated gap synthesis;
-- optional company/role research summaries.
+Potential uses include semantic requirement/evidence mapping, transferable-skill suggestions, resume phrasing assistance, interview question generation, repeated gap synthesis, and optional research summaries.
 
 Requirements:
 
-- explicit user disclosure before remote inference receives personal career data;
+- explicit disclosure before remote inference receives personal career data;
 - structured outputs validated before use;
 - evidence linking for factual claims;
 - deterministic fallback when inference is absent;
-- no silent transmission of resumes/profile/evidence.
+- no silent transmission of resumes/profile/evidence;
+- no inference path may bypass R0 truth authority.
 
-If future workflows become sufficiently agentic to justify orchestration infrastructure, reevaluate that problem then rather than pre-installing an agent platform for hypothetical autonomy.
+Job Ranger does not currently need a general-purpose agent framework.
 
 ## Notifications, Scheduling, and External Integrations
 
 Desktop reminders/background work should continue to use SQLite state and Job Ranger's existing OS notification/tray infrastructure.
-
-Do not add a workflow engine to schedule recruiter follow-ups.
 
 Future calendar/email/notification integrations, if justified, should be optional adapters. They may mirror or act on Job Ranger state but do not become canonical owners.
 
@@ -367,7 +348,7 @@ job-ranger-export.zip
   artifacts/
 ```
 
-JSON Resume may later be an interoperability import/export adapter for career-document data, but it is not the complete Job Ranger backup schema or canonical evidence model.
+JSON Resume may later be an interoperability import/export adapter, but it is not the complete Job Ranger backup schema or canonical evidence model.
 
 ## Security Boundaries
 
@@ -386,16 +367,7 @@ Any change that weakens those boundaries is a high-impact governance change, not
 
 Career Evidence adds another untrusted-input boundary: uploaded resumes/documents.
 
-Document ingestion must include:
-
-- file/size validation;
-- content-based format detection;
-- decompression/nesting/resource limits;
-- no macro execution;
-- no embedded-link execution;
-- no automatic network fallback;
-- constrained parser execution outside renderer privileges where practical;
-- explicit OCR/inference disclosure before any personal document leaves the machine.
+Document ingestion must include file/size validation, content-based format detection, decompression/nesting/resource limits, no macro execution, no embedded-link execution, no automatic network fallback, constrained parser execution outside renderer privileges where practical, and explicit OCR/inference disclosure before personal documents leave the machine.
 
 ## Runtime and Build Architecture
 
@@ -408,9 +380,9 @@ The v1.1.x baseline is deliberately coordinated:
 - React `19.2.3`;
 - Electron Builder `26.x`.
 
-Electron ecosystem tooling includes the Node 22-compatible `@electron/notarize` 3.x and `@electron/fuses` 2.x lines. The Electron Builder notarization hook remains CommonJS and dynamically imports the ESM-only notarization package when Apple credentials are available.
+R0 validation exposed a pre-existing build-layout defect tracked by #67: TypeScript Electron source lives under `electron/src`, while development/package/test entry points still consume checked-in root `electron/*.cjs` runtime files.
 
-Major runtime/toolchain upgrades should continue to be treated as coordinated compatibility migrations rather than independent dependency bumps.
+PR #66 synchronizes both representations for the R0 implementation and proves the packaged runtime through Electron E2E. This duplication is transitional, not the intended architecture. Before the backend expands substantially through R1-R5, #67 should make one authoritative source tree deterministically generate the exact runtime consumed by development, tests, Electron Builder, and releases.
 
 ## Quality Architecture
 
@@ -420,23 +392,19 @@ Automated layers include:
 - Vite production build validation;
 - desktop TypeScript compilation;
 - backend smoke tests;
+- Career persistence/migration/provenance smoke tests;
 - focused unit tests;
 - Electron Playwright E2E coverage;
 - PR and `main` CI;
 - dependency audit reporting.
 
-The current Electron E2E suite passes 13/13 on the Electron 44 runtime. Passing CI is a gate, not a claim that every third-party careers portal or every supported OS has been fully exercised.
+R0 adds deterministic coverage for migrations 3/4, Profile/Application restart persistence, legacy migration idempotence, artifact-directory creation, evidence-table presence, and factual truth authority.
 
-Future Career Evidence work adds deterministic benchmark/fixture suites for:
+The Electron E2E suite passes 13/13 on the R0 branch after the persistence boundary change.
 
-- resume import corpus;
-- requirement/evidence mapping;
-- truth gating;
-- generated-PDF parseability;
-- artifact/application linkage;
-- migrations/export/restore.
+Future Career Evidence work adds deterministic benchmark/fixture suites for resume import, requirement/evidence mapping, generated-PDF parseability, artifact/application linkage, and export/restore.
 
-Inference features should have their own golden evaluation sets and must not weaken deterministic truth gates.
+Inference features require their own golden evaluation sets and cannot weaken deterministic truth gates.
 
 ## External Capability Policy
 
@@ -464,67 +432,70 @@ Every adopted component must be reviewed at the exact code/asset/dependency boun
 
 ## Evolution Plan
 
-### 1. Durable Career Intelligence persistence
+### R0. Durable Career Intelligence persistence and contract freeze
 
-Move Career Profile and Applications behind the desktop backend and SQLite repository boundary.
+Implemented by PR #66 and tracked by #60:
 
-The migration should preserve existing user data where practical and add deterministic persistence/scorer coverage.
+- backend/SQLite Career Profile persistence;
+- backend/SQLite Applications persistence;
+- one-time legacy renderer-local migration;
+- Career Evidence shared/backend contracts;
+- deterministic migrations;
+- managed artifact-storage contract;
+- occupation-diverse benchmark corpus;
+- truth/provenance tests;
+- inference/privacy authority boundary.
 
-### 2. Career Evidence contract freeze
+R0 must be merged and #67 build-runtime debt should be addressed before the Electron backend grows significantly further.
 
-Before resume UI implementation:
+### R1. Resume import and evidence review
 
-- freeze core evidence/provenance contracts;
-- define SQLite migrations;
-- define managed artifact storage;
-- build the occupation-diverse benchmark corpus;
-- define truth/parseability fixtures;
-- freeze inference/privacy boundaries.
-
-### 3. Resume import and evidence review
+Tracked by #61:
 
 - run the bounded parser bake-off;
-- adopt only the best-fit parser if it clears the acceptance gate;
+- adopt a parser only if it clears the acceptance gate;
 - preserve source artifacts before interpretation;
 - normalize into evidence with confidence/provenance;
 - give users confirm/edit/reject controls;
-- synchronize confirmed evidence into Career Profile surfaces.
+- synchronize confirmed factual evidence into appropriate product surfaces without duplicating authority.
 
-### 4. Requirement/evidence mapping and deterministic resume output
+### R2. Requirement/evidence mapping
+
+Tracked by #62:
 
 - normalize tracked-job requirements;
 - classify direct/transferable/ambiguous/gap;
+- preserve explicit evidence links;
+- keep gaps from becoming claims.
+
+### R3. Deterministic resume creation and artifact lifecycle
+
+Tracked by #63:
+
 - build versioned resume projections from confirmed evidence;
 - render through Job Ranger-owned templates using Electron/Chromium;
 - enforce truth and critical parseability gates;
 - link exact artifacts to Applications.
 
-### 5. First-run and consumer-friendly discovery
+### R4. Target-specific tailoring and optional inference
 
-Use the richer profile/evidence model to improve first-run guidance and source discovery without requiring ATS knowledge.
+Tracked by #64:
 
-Source discovery remains separate from extraction adapters.
+- add provider-agnostic assistance only after deterministic evidence paths exist;
+- keep all assisted factual language evidence-backed;
+- preserve full no-provider operation.
 
-### 6. Optional inference
+### R5. Application materials, interview preparation, follow-up, and portability
 
-Add provider-agnostic assistance only after deterministic evidence paths are complete.
+Tracked by #65:
 
-Inference may enrich:
+- application-material lifecycle;
+- follow-up/reminders;
+- interview preparation and evidence-backed story reuse;
+- offers/outcomes;
+- export/backup and portability.
 
-- fuzzy experience matching;
-- richer fit explanations;
-- resume tailoring;
-- interview preparation;
-- transferable-skill analysis;
-- skill/credential gap synthesis.
-
-Inference remains optional infrastructure and cannot establish career truth.
-
-### 7. Application workflow maturity
-
-Build follow-up, contacts, interview milestones, story reuse, offers, export/backup, and useful summaries on the native application/evidence foundation.
-
-### 8. Source and packaging maturity
+### Ongoing source and packaging maturity
 
 Continue evidence-based improvements for dynamic source families, maintain Windows/macOS packaging confidence, validate notarization whenever production Apple credentials are available, and decide explicitly whether Linux becomes a supported packaged target.
 
@@ -546,4 +517,4 @@ Job Ranger should not become:
 
 Career-Ops-related concepts used in the Career Intelligence foundation are native Job Ranger functionality. Attribution and the independence/trademark boundary are documented in `THIRD_PARTY_NOTICES.md`.
 
-Resume/import research and product-wide catalog reconciliation live under `docs/research/`; the implementation-oriented resume/evidence design lives under `docs/design/`.
+Resume/import research and product-wide catalog reconciliation live under `docs/research/`; the implementation-oriented resume/evidence design and R0 persistence contract live under `docs/design/`.

@@ -1,3 +1,12 @@
+import type {
+  ApplicationUpdate,
+  CareerProfile,
+  LegacyCareerMigration,
+  TrackedApplication,
+} from "./career-contracts.js";
+
+export * from "./career-contracts.js";
+
 export type CompanySourceType =
   | "greenhouse"
   | "lever"
@@ -311,5 +320,16 @@ export interface DesktopApi {
   };
   scrapeRuns: {
     listRecent: (limit?: number) => Promise<ScrapeRun[]>;
+  };
+  career: {
+    getProfile: () => Promise<CareerProfile | null>;
+    saveProfile: (profile: CareerProfile) => Promise<CareerProfile>;
+    migrateLegacy: (payload: LegacyCareerMigration) => Promise<void>;
+  };
+  applications: {
+    list: () => Promise<TrackedApplication[]>;
+    track: (jobId: string) => Promise<TrackedApplication>;
+    update: (id: string, update: ApplicationUpdate) => Promise<TrackedApplication>;
+    delete: (id: string) => Promise<void>;
   };
 }

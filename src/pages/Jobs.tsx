@@ -19,12 +19,13 @@ import { trackJob, useCareerProfile } from "../career/storage";
 
 export function Jobs() {
   const { jobs, companies, markJobAsSeen, loading } = useAppContext();
-  const { profile, configured } = useCareerProfile();
+  const { profile, configured, loading: profileLoading } = useCareerProfile();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [companyFilter, setCompanyFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"fit" | "newest">("fit");
+  const [trackError, setTrackError] = useState<string | null>(null);
 
   const filteredJobs = useMemo(() => {
     const next = jobs
@@ -41,14 +42,29 @@ export function Jobs() {
 
         return matchesSearch && matchesLocation && matchesCompany;
       })
-      .map((job) => ({ job, fit: evaluateJobFit(job, profile) }));
+      .map((job) => ({
+        job,
+        fit: profileLoading ? null : evaluateJobFit(job, profile),
+      }));
 
     if (sortBy === "fit" && configured) {
       next.sort((a, b) => (b.fit?.score ?? -1) - (a.fit?.score ?? -1));
     }
 
     return next;
-  }, [jobs, searchTerm, locationTerm, companyFilter, sortBy, configured, profile]);
+  }, [jobs, searchTerm, locationTerm, companyFilter, sortBy, configured, profile, profileLoading]);
+
+  const handleTrackJob = async (job: (typeof jobs)[number]) => {
+    setTrackError(null);
+    try {
+      await trackJob(job);
+      navigate("/applications");
+    } catch (error) {
+      setTrackError(
+        error instanceof Error ? error.message : "Unable to track this job",
+      );
+    }
+  };
 
   return (
     <Layout>
@@ -63,7 +79,7 @@ export function Jobs() {
         </p>
       </section>
 
-      {!configured && (
+      {!profileLoading && !configured && (
         <section className="support-note mt-6 flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold text-[var(--color-text-primary)]">Set up your Career Profile to see match explanations.</p>
@@ -72,6 +88,12 @@ export function Jobs() {
           <button type="button" className="primary-button" onClick={() => navigate("/career-profile")}>
             Create Career Profile
           </button>
+        </section>
+      )}
+
+      {trackError && (
+        <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
+          {trackError}
         </section>
       )}
 
@@ -192,10 +214,7 @@ export function Jobs() {
                   )}
                   <button
                     type="button"
-                    onClick={() => {
-                      trackJob(job, companyName);
-                      navigate("/applications");
-                    }}
+                    onClick={() => void handleTrackJob(job)}
                     className="primary-button"
                   >
                     Track this job

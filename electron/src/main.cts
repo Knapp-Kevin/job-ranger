@@ -1,6 +1,7 @@
 import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import path from "node:path";
 import { JobScoutBackend } from "./backend.cjs";
+import { CareerBackend } from "./career-backend.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -11,6 +12,11 @@ import {
   validateFilterUpdate,
   validateSettingsUpdate,
 } from "./validators.cjs";
+import {
+  validateApplicationUpdate,
+  validateCareerProfile,
+  validateLegacyCareerMigration,
+} from "./career-validators.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
 
@@ -19,6 +25,7 @@ const moduleDirectory = __dirname;
 let mainWindow: BrowserWindow | null = null;
 let helpWindow: BrowserWindow | null = null;
 let backend: JobScoutBackend | null = null;
+let careerBackend: CareerBackend | null = null;
 let isQuitting = false;
 
 function createWindow(): void {
@@ -180,6 +187,13 @@ function requireBackend(): JobScoutBackend {
   return backend;
 }
 
+function requireCareerBackend(): CareerBackend {
+  if (!careerBackend) {
+    throw new Error("Job Ranger career backend is not initialized");
+  }
+  return careerBackend;
+}
+
 function registerIpcHandlers(): void {
   ipcMain.handle("app:get-version", () => app.getVersion());
   ipcMain.handle("app:get-platform", () => process.platform);
@@ -240,15 +254,49 @@ function registerIpcHandlers(): void {
       limit === undefined ? undefined : validateFiniteNumber(limit, "Scrape run limit"),
     ),
   );
+
+  ipcMain.handle("career:get-profile", () => requireCareerBackend().getProfile());
+  ipcMain.handle("career:save-profile", (_event, profile) =>
+    requireCareerBackend().saveProfile(validateCareerProfile(profile)),
+  );
+  ipcMain.handle("career:migrate-legacy", (_event, payload) =>
+    requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
+  );
+
+  ipcMain.handle("applications:list", () =>
+    requireCareerBackend().listApplications(),
+  );
+  ipcMain.handle("applications:track", (_event, jobId: string) =>
+    requireCareerBackend().trackApplication(validateId(jobId, "Job id")),
+  );
+  ipcMain.handle("applications:update", (_event, id: string, update) =>
+    requireCareerBackend().updateApplication(
+      validateId(id, "Application id"),
+      validateApplicationUpdate(update),
+    ),
+  );
+  ipcMain.handle("applications:delete", (_event, id: string) =>
+    requireCareerBackend().deleteApplication(validateId(id, "Application id")),
+  );
 }
 
 app.whenReady().then(async () => {
   try {
+    const dataDirectory = path.join(app.getPath("userData"), "data");
     backend = new JobScoutBackend({
-      dataDirectory: path.join(app.getPath("userData"), "data"),
+      dataDirectory,
       browserPageLoader: loadPageHtmlInHiddenWindow,
     });
     await backend.initialize();
+
+    const systemStatus = await backend.getSystemStatus(process.platform);
+    careerBackend = new CareerBackend({
+      dataDirectory,
+      databasePath: systemStatus.databasePath,
+      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+    });
+    await careerBackend.initialize();
+
     registerIpcHandlers();
     createWindow();
     createMenu();

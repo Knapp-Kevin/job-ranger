@@ -14,7 +14,7 @@ const statuses: Array<{ value: ApplicationStatus; label: string }> = [
 ];
 
 export function Applications() {
-  const { applications, update, remove } = useApplications();
+  const { applications, update, remove, loading, error } = useApplications();
 
   return (
     <Layout>
@@ -29,8 +29,20 @@ export function Applications() {
         </p>
       </section>
 
+      {error && (
+        <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
+          {error}
+        </section>
+      )}
+
       <div className="mt-8 space-y-4">
-        {applications.length === 0 && (
+        {loading && (
+          <div className="panel panel-strong px-6 py-12 text-center text-sm text-[var(--color-text-secondary)]">
+            Loading your applications...
+          </div>
+        )}
+
+        {!loading && applications.length === 0 && (
           <div className="panel panel-strong px-6 py-12 text-center">
             <p className="text-lg font-semibold text-[var(--color-text-primary)]">No applications tracked yet.</p>
             <p className="mx-auto mt-2 max-w-xl text-sm leading-6 text-[var(--color-text-secondary)]">
@@ -61,7 +73,11 @@ export function Applications() {
                 <select
                   className="select-shell min-w-40"
                   value={application.status}
-                  onChange={(event) => update(application.id, { status: event.target.value as ApplicationStatus })}
+                  onChange={(event) =>
+                    void update(application.id, {
+                      status: event.target.value as ApplicationStatus,
+                    })
+                  }
                   aria-label={`Application status for ${application.title}`}
                 >
                   {statuses.map((status) => (
@@ -73,7 +89,7 @@ export function Applications() {
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => remove(application.id)}
+                  onClick={() => void remove(application.id)}
                   aria-label={`Remove ${application.title} from applications`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -87,7 +103,9 @@ export function Applications() {
               <textarea
                 className="input-shell mt-2 min-h-24 resize-y py-3"
                 value={application.notes}
-                onChange={(event) => update(application.id, { notes: event.target.value })}
+                onChange={(event) =>
+                  void update(application.id, { notes: event.target.value })
+                }
                 placeholder="Contact name, interview date, follow-up note, what you liked about the role..."
               />
             </label>
