@@ -1,6 +1,6 @@
 # Documentation Index
 
-Job Ranger documentation is divided into current guidance, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
+Job Ranger documentation is divided into current guidance, active research, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
 
 ## Current Sources of Truth
 
@@ -18,6 +18,12 @@ Job Ranger documentation is divided into current guidance, validation evidence, 
 | [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, status language, merge and release rules. |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Contributor workflow and quality expectations. |
 | [`../SECURITY.md`](../SECURITY.md) | Security posture and reporting guidance. |
+
+## Active Research
+
+- [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md) is the QOR research synthesis for the planned resume/import intelligence phase. It evaluates resume consumers, document formats, ATS/parser constraints, truthful tailoring, import provenance, Career-Ops lessons, and a proposed evidence-first product architecture. It is research input, not yet a frozen architecture contract.
+
+Research documents may propose future architecture or product behavior. They do not override current shipped-product documentation until those decisions are explicitly accepted and implemented.
 
 ## Validation Evidence
 
