@@ -14,6 +14,7 @@ const requiredRuntimeFiles = [
   "electron/runtime/electron/src/backend.cjs",
   "electron/runtime/electron/src/career-backend.cjs",
   "electron/runtime/electron/src/sqlite.cjs",
+  "electron/runtime/electron/src/validators/common.cjs",
   "electron/runtime/src/shared/contracts.js",
   "electron/runtime/src/shared/career-contracts.js",
 ];
@@ -63,6 +64,7 @@ const trackedLegacyRuntime = execFileSync(
     "electron/*.cjs",
     "electron/adapters",
     "electron/shared",
+    "electron/validators",
     "electron/src/shared/*.js",
   ],
   { cwd: root, encoding: "utf8" },
