@@ -9,7 +9,7 @@ const { SqliteClient } = require("../electron/sqlite.cjs");
 const {
   canEvidenceSupportFactualClaim,
   evaluateResumeStatementTruth,
-} = require("../electron/shared/career-contracts.js");
+} = require("../electron/career-contracts.cjs");
 
 function createMockFetch() {
   return async (url) => {
