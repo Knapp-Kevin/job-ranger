@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { BadgeCheck, BriefcaseBusiness, Compass, MapPin, Save, Sparkles } from "lucide-react";
 import { Layout } from "../components/Layout";
 import {
@@ -19,9 +19,17 @@ function joinLines(values: string[]): string {
 }
 
 export function CareerProfile() {
-  const { profile, save } = useCareerProfile();
-  const [draft, setDraft] = useState<CareerProfileValue>(profile);
+  const { profile, save, loading, error } = useCareerProfile();
+  const [draft, setDraft] = useState<CareerProfileValue>(emptyCareerProfile);
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [saveError, setSaveError] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!loading) {
+      setDraft(profile);
+    }
+  }, [loading, profile]);
 
   const targetText = useMemo(() => joinLines(draft.targetTitles), [draft.targetTitles]);
   const skillText = useMemo(() => joinLines(draft.skills), [draft.skills]);
@@ -31,17 +39,32 @@ export function CareerProfile() {
   const update = <K extends keyof CareerProfileValue,>(key: K, value: CareerProfileValue[K]) => {
     setDraft((current) => ({ ...current, [key]: value }));
     setSaved(false);
+    setSaveError(null);
   };
 
   const reset = () => {
     setDraft(emptyCareerProfile);
     setSaved(false);
+    setSaveError(null);
   };
 
-  const handleSave = () => {
-    const next = save(draft);
-    setDraft(next);
-    setSaved(true);
+  const handleSave = async () => {
+    setSaving(true);
+    setSaveError(null);
+    try {
+      const next = await save(draft);
+      setDraft(next);
+      setSaved(true);
+    } catch (saveFailure) {
+      setSaved(false);
+      setSaveError(
+        saveFailure instanceof Error
+          ? saveFailure.message
+          : "Unable to save Career Profile",
+      );
+    } finally {
+      setSaving(false);
+    }
   };
 
   return (
@@ -56,6 +79,12 @@ export function CareerProfile() {
           No technical setup. Add the work you want, where you can work, what you already know, and what matters to you. Job Ranger uses this only on your device to explain which listings look worth your time.
         </p>
       </section>
+
+      {(error || saveError) && (
+        <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
+          {saveError ?? error}
+        </section>
+      )}
 
       <section className="mt-6 grid grid-cols-1 gap-5 xl:grid-cols-[0.8fr_1.2fr]">
         <aside className="space-y-5">
@@ -96,6 +125,7 @@ export function CareerProfile() {
                 value={draft.fullName}
                 onChange={(event) => update("fullName", event.target.value)}
                 placeholder="Optional"
+                disabled={loading}
               />
             </label>
 
@@ -108,6 +138,7 @@ export function CareerProfile() {
                   value={draft.homeLocation}
                   onChange={(event) => update("homeLocation", event.target.value)}
                   placeholder="City, state, or region"
+                  disabled={loading}
                 />
               </div>
             </label>
@@ -124,6 +155,7 @@ export function CareerProfile() {
                     update("radiusMiles", event.target.value ? Number(event.target.value) : null)
                   }
                   placeholder="30"
+                  disabled={loading}
                 />
                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">
                   miles
@@ -149,6 +181,7 @@ export function CareerProfile() {
                       update("minimumPay", event.target.value ? Number(event.target.value) : null)
                     }
                     placeholder={draft.payBasis === "hourly" ? "30" : "75000"}
+                    disabled={loading}
                   />
                 </div>
                 <select
@@ -158,6 +191,7 @@ export function CareerProfile() {
                   onChange={(event) =>
                     update("payBasis", event.target.value as CareerProfileValue["payBasis"])
                   }
+                  disabled={loading}
                 >
                   <option value="hourly">per hour</option>
                   <option value="annual">per year</option>
@@ -174,6 +208,7 @@ export function CareerProfile() {
                 value={targetText}
                 onChange={(event) => update("targetTitles", splitLines(event.target.value))}
                 placeholder={"Current or preferred role\nAdjacent role\nStretch role"}
+                disabled={loading}
               />
               <span className="mt-2 block text-xs text-[var(--color-text-muted)]">
                 One title per line. Include adjacent roles that genuinely fit your interests and transferable strengths.
@@ -187,6 +222,7 @@ export function CareerProfile() {
                 value={skillText}
                 onChange={(event) => update("skills", splitLines(event.target.value))}
                 placeholder={"customer service\ntroubleshooting\nproject coordination"}
+                disabled={loading}
               />
               <span className="mt-2 block text-xs text-[var(--color-text-muted)]">Only list work you can defend in an interview.</span>
             </label>
@@ -198,6 +234,7 @@ export function CareerProfile() {
                 value={certificationText}
                 onChange={(event) => update("certifications", splitLines(event.target.value))}
                 placeholder={"Professional license\nIndustry certification\nSafety training"}
+                disabled={loading}
               />
               <span className="mt-2 block text-xs text-[var(--color-text-muted)]">Optional. Leave this blank if credentials are not important in your field.</span>
             </label>
@@ -209,6 +246,7 @@ export function CareerProfile() {
                 value={sectorText}
                 onChange={(event) => update("sectors", splitLines(event.target.value))}
                 placeholder={"Industry\nWork environment\nSpecialty area"}
+                disabled={loading}
               />
             </label>
           </div>
@@ -220,6 +258,7 @@ export function CareerProfile() {
                 className="select-shell mt-2"
                 value={draft.onCallPreference}
                 onChange={(event) => update("onCallPreference", event.target.value as CareerProfileValue["onCallPreference"])}
+                disabled={loading}
               >
                 <option value="either">No preference</option>
                 <option value="yes">Okay with it</option>
@@ -234,20 +273,21 @@ export function CareerProfile() {
                 checked={draft.fullTimeOnly}
                 onChange={(event) => update("fullTimeOnly", event.target.checked)}
                 className="h-4 w-4"
+                disabled={loading}
               />
               <span className="text-sm font-semibold text-[var(--color-text-primary)]">Show full-time work as the default fit</span>
             </label>
           </div>
 
           <div className="border-divider mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
-            <button type="button" className="surface-link-button text-sm font-semibold text-[var(--color-text-secondary)]" onClick={reset}>
+            <button type="button" className="surface-link-button text-sm font-semibold text-[var(--color-text-secondary)]" onClick={reset} disabled={loading || saving}>
               Clear form
             </button>
             <div className="flex items-center gap-3">
               {saved && <span className="text-sm font-semibold text-[var(--color-success)]">Saved on this device</span>}
-              <button type="button" className="primary-button" onClick={handleSave}>
+              <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={loading || saving}>
                 <Save className="h-4 w-4" />
-                Save career profile
+                {saving ? "Saving..." : "Save career profile"}
               </button>
             </div>
           </div>
