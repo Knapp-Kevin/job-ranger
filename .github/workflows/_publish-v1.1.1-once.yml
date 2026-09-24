@@ -1,0 +1,55 @@
+name: Publish Job Ranger v1.1.1 once
+
+on:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  publish:
+    if: github.repository == 'Knapp-Kevin/job-ranger'
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out main
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Verify release version
+        shell: bash
+        run: |
+          set -euo pipefail
+          VERSION=$(node -p "require('./package.json').version")
+          test "$VERSION" = "1.1.1"
+
+      - name: Create v1.1.1 release if absent
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if gh release view v1.1.1 >/dev/null 2>&1; then
+            echo "v1.1.1 already exists; leaving the existing release untouched."
+            exit 0
+          fi
+          gh release create v1.1.1 \
+            --target "$GITHUB_SHA" \
+            --title "Job Ranger v1.1.1" \
+            --generate-notes \
+            --latest
+
+      - name: Dispatch Windows and macOS release builders
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh workflow run release-build.yml \
+            --ref v1.1.1 \
+            -f tag=v1.1.1 \
+            -f platform=all
