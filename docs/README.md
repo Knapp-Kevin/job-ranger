@@ -1,6 +1,6 @@
 # Documentation Index
 
-Job Ranger documentation is divided into current guidance and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
+Job Ranger documentation is divided into current guidance, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
 
 ## Current Sources of Truth
 
@@ -19,7 +19,13 @@ Job Ranger documentation is divided into current guidance and historical impleme
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Contributor workflow and quality expectations. |
 | [`../SECURITY.md`](../SECURITY.md) | Security posture and reporting guidance. |
 
-## v1.1.0 Documentation Baseline
+## Validation Evidence
+
+- [`windows-package-validation.md`](./windows-package-validation.md) records the Windows self-contained SQLite packaging proof used to close the v1.1.x release blocker and issue #38.
+
+These documents record specific verification evidence. They do not replace the current product/state documentation above.
+
+## v1.1.x Documentation Baseline
 
 The current documentation baseline reflects:
 

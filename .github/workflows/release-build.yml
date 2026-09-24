@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing release tag to upload assets to, for example v1.1.0"
+        description: "Existing release tag to upload assets to, for example v1.1.1"
         required: true
         type: string
       platform:
@@ -41,8 +41,53 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Provision pinned SQLite CLI
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sqliteUrl = "https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip"
+          $expectedSha3 = "88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b"
+          $archive = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400.zip"
+          $extractDir = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400"
+
+          Invoke-WebRequest -Uri $sqliteUrl -OutFile $archive
+          $actualSha3 = node -e "const fs=require('fs'),crypto=require('crypto'); console.log(crypto.createHash('sha3-256').update(fs.readFileSync(process.argv[1])).digest('hex'))" $archive
+          if ($actualSha3.Trim().ToLowerInvariant() -ne $expectedSha3) {
+            throw "SQLite archive SHA3-256 mismatch. Expected $expectedSha3 but received $actualSha3."
+          }
+
+          Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
+          $sqlite = Get-ChildItem -Path $extractDir -Recurse -Filter sqlite3.exe | Select-Object -First 1
+          if (-not $sqlite) {
+            throw "sqlite3.exe was not found in the verified SQLite tools archive."
+          }
+
+          New-Item -ItemType Directory -Path build/sqlite -Force | Out-Null
+          Copy-Item -LiteralPath $sqlite.FullName -Destination build/sqlite/sqlite3.exe -Force
+          $sqlitePath = (Resolve-Path build/sqlite/sqlite3.exe).Path
+          "SQLITE3_PATH=$sqlitePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          & $sqlitePath --version
+
       - name: Build release artifacts
         run: npm run electron:build:win
+
+      - name: Verify packaged SQLite runtime
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $resourcesPath = (Resolve-Path "release/win-unpacked/resources").Path
+          $packagedSqlite = Join-Path $resourcesPath "sqlite3.exe"
+          if (-not (Test-Path -LiteralPath $packagedSqlite)) {
+            throw "Packaged sqlite3.exe is missing from $resourcesPath."
+          }
+          & $packagedSqlite --version
+
+          Remove-Item Env:SQLITE3_PATH -ErrorAction SilentlyContinue
+          $resolved = node -e "process.resourcesPath=process.argv[1]; delete process.env.SQLITE3_PATH; require('./electron/sqlite.cjs').resolveSqliteBinary().then((p)=>process.stdout.write(require('path').resolve(p))).catch((e)=>{console.error(e); process.exit(1);})" $resourcesPath
+          $expected = (Resolve-Path $packagedSqlite).Path
+          if ($resolved.Trim() -ne $expected) {
+            throw "Runtime resolver selected '$resolved' instead of packaged SQLite '$expected'."
+          }
 
       - name: Resolve target tag
         id: release_tag

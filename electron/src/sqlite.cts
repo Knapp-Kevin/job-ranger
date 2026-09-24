@@ -6,6 +6,8 @@ import { promisify } from "node:util";
 const execFileAsync = promisify(execFile);
 const SQLITE_BUSY_TIMEOUT_MS = 5000;
 
+type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
+
 function escapeSqlString(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
@@ -42,9 +44,34 @@ export function sql(queryParts: TemplateStringsArray, ...values: unknown[]): str
   }, "");
 }
 
+async function findExecutable(candidates: string[]): Promise<string | null> {
+  for (const candidatePath of candidates) {
+    if (!candidatePath) {
+      continue;
+    }
+    try {
+      await fs.access(candidatePath, fsConstants.X_OK);
+      return candidatePath;
+    } catch {
+      // Try the next candidate.
+    }
+  }
+  return null;
+}
+
 export async function resolveSqliteBinary(): Promise<string> {
   if (process.env.SQLITE3_PATH) {
     return process.env.SQLITE3_PATH;
+  }
+
+  if (process.platform === "win32") {
+    const resourcesPath = (process as ElectronProcess).resourcesPath;
+    const bundledSqlite = resourcesPath
+      ? await findExecutable([path.join(resourcesPath, "sqlite3.exe")])
+      : null;
+    if (bundledSqlite) {
+      return bundledSqlite;
+    }
   }
 
   const command = process.platform === "win32" ? "where.exe" : "which";
@@ -61,7 +88,7 @@ export async function resolveSqliteBinary(): Promise<string> {
       return firstMatch;
     }
   } catch {
-    // Fall through to the platform-specific guidance below.
+    // Fall through to the platform-specific candidates below.
   }
 
   const fallbackCandidates =
@@ -76,20 +103,18 @@ export async function resolveSqliteBinary(): Promise<string> {
         ? ["/usr/bin/sqlite3", "/usr/local/bin/sqlite3", "/bin/sqlite3"]
         : [];
 
-  for (const candidatePath of fallbackCandidates) {
-    try {
-      await fs.access(candidatePath, fsConstants.X_OK);
-      return candidatePath;
-    } catch {
-      // Try the next common install location.
-    }
+  const fallback = await findExecutable(fallbackCandidates);
+  if (fallback) {
+    return fallback;
   }
 
   const expectedBinary = process.platform === "win32" ? "sqlite3.exe" : "sqlite3";
   const platformHint =
     process.platform === "darwin"
       ? " On macOS, Finder-launched apps may not inherit Homebrew paths, so set SQLITE3_PATH or install sqlite3 in a standard location such as /usr/bin, /opt/homebrew/bin, or /usr/local/bin."
-      : "";
+      : process.platform === "win32"
+        ? " Packaged Windows builds include sqlite3.exe. Source/development runs can set SQLITE3_PATH or install sqlite3 on PATH."
+        : "";
   throw new Error(
     `${expectedBinary} was not found. Set SQLITE3_PATH to a valid sqlite3 binary.${platformHint}`,
   );
