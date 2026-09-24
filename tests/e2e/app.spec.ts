@@ -38,6 +38,47 @@ test.describe("Job Ranger E2E Tests", () => {
     ).toBeVisible();
   });
 
+  test("dashboard next-step prompts are real navigation", async () => {
+    const { page } = fixture;
+
+    await navigateTo(page, "Home");
+    const sourceAction = page.getByRole("link", { name: "Add a job source", exact: true }).first();
+    await expect(sourceAction).toBeVisible();
+    await sourceAction.click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Bring in real career pages, then let Job Ranger adapt its extraction strategy.",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await navigateTo(page, "Home");
+    const filterAction = page.getByRole("link", { name: "Set up filters", exact: true });
+    await expect(filterAction).toBeVisible();
+    await filterAction.click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Build filters that coach the next scrape toward relevance.",
+        exact: true,
+      }),
+    ).toBeVisible();
+  });
+
+  test("career profile is occupation agnostic and supports annual pay", async () => {
+    const { page } = fixture;
+
+    await navigateTo(page, "Career Profile");
+    await expect(page.getByText("HVAC starter", { exact: true })).toHaveCount(0);
+    await expect(
+      page.getByRole("heading", { name: "Broaden the search, not your résumé", exact: true }),
+    ).toBeVisible();
+
+    const payBasis = page.getByRole("combobox", { name: "Pay basis", exact: true });
+    await expect(payBasis).toBeVisible();
+    await payBasis.selectOption("annual");
+    await expect(payBasis).toHaveValue("annual");
+  });
+
   test("navigation sidebar works", async () => {
     const { page } = fixture;
 
