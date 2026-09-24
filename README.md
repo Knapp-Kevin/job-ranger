@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.0"><img src="https://img.shields.io/badge/release-v1.1.0-0f172a.svg" alt="Release v1.1.0" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/release-v1.1.1-0f172a.svg" alt="Release v1.1.1" /></a>
   <a href="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml"><img src="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
@@ -17,30 +17,60 @@
 
 ## Install Job Ranger
 
-**Normal users do not need Git, Node.js, npm, a terminal, or an AI account.** Download the desktop build for your computer and run it.
+**Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account.** Download the desktop build for your computer and run it.
 
 ### Windows
 
-**[Download Job Ranger v1.1.0 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.0/Job.Ranger-v1.1.0-windows-x64.exe)**
+**[Download Job Ranger v1.1.1 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-windows-x64.exe)**
 
 1. Download the `.exe` file.
 2. Open it.
 3. Follow the Windows prompts and launch **Job Ranger**.
 
+The Windows installer is self-contained for Job Ranger's SQLite runtime. You do not need to install `sqlite3` separately.
+
 ### macOS
 
 Choose the build that matches your Mac:
 
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.0/Job.Ranger-v1.1.0-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.0/Job.Ranger-v1.1.0-macos-x64.dmg)**
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-macos-x64.dmg)**
 
 Open the downloaded `.dmg`, move Job Ranger into **Applications** if prompted, then launch it normally. If you are unsure which Mac you have, open **Apple menu → About This Mac** and look for either an Apple M-series chip or an Intel processor.
 
 Prefer to inspect the release first? See the [latest Job Ranger release](https://github.com/Knapp-Kevin/job-ranger/releases/latest).
 
+## What's New
+
+### v1.1.1 — current
+
+This patch completes the v1.1 cross-platform release by fixing the Windows packaging defect exposed during the v1.1.0 release run.
+
+- Windows is now **self-contained** for Job Ranger's SQLite runtime. No separate SQLite installation is required.
+- The Windows release workflow pins the official SQLite 3.53.4 x64 tools archive and verifies its published SHA3-256 before packaging.
+- Release validation proves the packaged `sqlite3.exe` exists, executes, and is the runtime-selected binary with `SQLITE3_PATH` removed.
+- The Windows download is standardized on the normal NSIS installer.
+- SQLite runtime provenance and Windows package-validation evidence are now part of the repository documentation.
+
+### v1.1.0
+
+The v1.1 feature release transformed Job Ranger from a career-page monitor into a broader local-first job-search companion.
+
+- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.
+- Added deterministic **job-fit scoring and plain-language fit guidance** based only on saved profile data and collected listing evidence.
+- Added the **Applications** workspace with status tracking and notes.
+- Reorganized navigation around Home → Find Jobs → Applications → Career Profile.
+- Upgraded the supported desktop runtime to **Electron 44.4.5**, **Node.js 22.12+**, **Vite 8**, and **TypeScript 7**.
+- Completed the accumulated dependency-security cleanup and modernized Electron packaging/notarization tooling.
+- Added repository branding, governance, CI, release documentation, and Career-Ops MIT attribution.
+
+The macOS v1.1.0 artifacts were published successfully. Its Windows builder exposed the missing bundled-SQLite boundary before a Windows asset was uploaded, which is why v1.1.1 supersedes it for normal installation.
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
+
 ## Start Using It
 
-Job Ranger v1.1.0 adds a consumer-oriented career workflow on top of the existing local job monitor:
+Job Ranger v1.1.1 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:
 
 1. Open **Career Profile** and enter the roles, location, pay floor, skills, and credentials that are true for you.
 2. Open **Companies** and add employer career pages you want Job Ranger to monitor.
@@ -55,24 +85,9 @@ For user-facing troubleshooting, see [HELP.md](./HELP.md).
 
 ## Status
 
-**Job Ranger v1.1.0 is the current release line.** It combines the established local career-page monitor with the first native Career Intelligence workflow.
+**Job Ranger v1.1.1 is the current release.** It combines the established local career-page monitor with native Career Profile, deterministic fit guidance, and application tracking, and it corrects the Windows packaging defect found during the v1.1.0 release run.
 
 The application remains local first and useful without inference. Career Profile, deterministic fit guidance, application tracking, scraping, filters, and notifications do not require an AI provider. Optional inference may enrich future guidance, but it is not the key that opens the product.
-
-## What Changed in v1.1.0
-
-- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.
-- Added deterministic **job-fit scoring and plain-language fit guidance** using only saved profile data and collected listing evidence.
-- Added a local **Applications** workspace with status tracking and notes.
-- Reorganized navigation around the user workflow: Home → Find Jobs → Applications → Career Profile.
-- Upgraded the supported desktop runtime to **Electron 44.4.5** and the development baseline to **Node.js 22.12+**.
-- Upgraded the build/toolchain stack to **Vite 8** and **TypeScript 7**.
-- Modernized Electron notarization/fuse tooling and repaired ESM/CJS boundaries.
-- Fixed intermittent SQLite lock contention with a bounded SQLite client timeout.
-- Completed a broad dependency-security cleanup. The release-prep dependency audit reports no known npm vulnerabilities.
-- Updated Electron E2E coverage to the current accessible UI.
-
-See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Why Job Ranger Exists
 
@@ -95,17 +110,17 @@ Job Ranger automates and organizes the repetitive parts while leaving career dec
 | --- | --- | --- |
 | Desktop application | **Shipped** | Electron + React desktop app. |
 | Local job-source persistence | **Shipped** | SQLite-backed companies, jobs, filters, settings, and scrape history. |
-| Career Profile | **Shipped in v1.1.0** | Local profile for target roles, location, pay, skills, credentials, and preferences. |
-| Deterministic fit guidance | **Shipped in v1.1.0** | Evidence-based local scoring and explanations. It is guidance, not a hiring prediction. |
-| Application tracking | **Shipped in v1.1.0** | Local statuses and notes for jobs the user chooses to track. |
+| Career Profile | **Shipped** | Local profile for target roles, location, pay, skills, credentials, and preferences. |
+| Deterministic fit guidance | **Shipped** | Evidence-based local scoring and explanations. It is guidance, not a hiring prediction. |
+| Application tracking | **Shipped** | Local statuses and notes for jobs the user chooses to track. |
 | Career-page monitoring | **Shipped** | User-selected employer sources with scheduled/background scraping. |
 | Structured ATS adapters | **Shipped** | Greenhouse, Lever, SmartRecruiters, and Ashby. |
 | Browser/generic extraction | **Shipped, best effort** | Workday, iCIMS, BambooHR, Taleo, Oracle, Microsoft, and generic career pages are classified honestly by support level. |
 | Filters | **Shipped** | Title, keyword, salary, and location criteria. |
 | Desktop notifications | **Shipped** | Configurable new-job and matched-job notifications. |
 | System tray behavior | **Shipped** | Optional minimize-to-tray operation. |
-| Windows release | **Shipped** | v1.1.0 Windows x64 executable. |
-| macOS releases | **Shipped** | v1.1.0 x64 and arm64 DMG/ZIP artifacts. |
+| Windows release | **Shipped** | v1.1.1 Windows x64 installer with bundled SQLite runtime. |
+| macOS releases | **Shipped** | v1.1.1 x64 and arm64 DMG/ZIP artifacts. |
 | Linux distribution | **Not shipped** | No supported packaged Linux release is currently published. |
 | Resume/import intelligence | **Planned** | Must preserve factual evidence and remain useful without inference. |
 | Auto-apply | **Not a current product goal** | Job Ranger assists decisions rather than impersonating the user. |
@@ -184,7 +199,7 @@ See [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md) for architecture an
 | `tests/` | Unit, backend smoke, and Electron Playwright coverage. |
 | `public/` | Runtime static assets, including the canonical application icon. |
 | `docs/assets/branding/` | README/banner/logo/social-preview assets. |
-| `docs/` | Product, architecture, system-state, and planning documentation. |
+| `docs/` | Product, architecture, system-state, validation evidence, and planning documentation. |
 | `.github/` | CI, release automation, and dependency automation. |
 
 ## Development
@@ -196,6 +211,8 @@ The following is for people building or modifying Job Ranger from source. Normal
 - Node.js `>=22.12.0`
 - npm
 - a working `sqlite3` executable available on `PATH`, or `SQLITE3_PATH` set explicitly
+
+The `sqlite3` prerequisite applies to source/development runs. Published Windows installers bundle their own verified SQLite CLI.
 
 ### Setup
 
@@ -227,7 +244,7 @@ npm run electron:build:mac
 npm run electron:pack
 ```
 
-Electron Builder is configured for Windows and macOS targets. Published release artifacts are the source of truth for what users can actually download. macOS notarization runs when the required Apple credentials are available to the release environment.
+Electron Builder is configured for Windows and macOS targets. Published release artifacts are the source of truth for what users can actually download. The Windows release workflow stages and verifies the pinned SQLite CLI before packaging. macOS notarization runs when the required Apple credentials are available to the release environment.
 
 The canonical runtime icon is [`public/ICON.png`](./public/ICON.png). Brand presentation assets live under [`docs/assets/branding/`](./docs/assets/branding/).
 
@@ -250,10 +267,10 @@ See [docs/planning/PLAN.md](./docs/planning/PLAN.md) for the active roadmap and 
 - [SECURITY.md](./SECURITY.md) describes the supported security posture and reporting path.
 - [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) defines community expectations.
 - [docs/BRANDING.md](./docs/BRANDING.md) defines canonical brand assets and usage.
-- [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) records attribution for adapted/open-source ancestry, including Career-Ops-related work.
+- [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) records attribution and runtime provenance for third-party/open-source ancestry, including Career-Ops and bundled SQLite.
 
 ## License
 
 Job Ranger is open source under the [MIT License](./LICENSE).
 
-Third-party dependencies and adapted open-source components retain their own copyright and license obligations. Required attribution is preserved in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+Third-party dependencies and adapted open-source components retain their own copyright and license obligations or public-domain status. Required attribution and provenance are preserved in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).

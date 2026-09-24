@@ -8,13 +8,15 @@ Job Ranger is a local-first desktop application for finding, monitoring, underst
 
 Use the latest published build from the repository's **Releases** page.
 
-Current v1.1.0 release options include:
+Current v1.1.1 release options include:
 
-- Windows x64 executable
+- Windows x64 installer
 - macOS Apple Silicon (arm64) DMG or ZIP
 - macOS Intel (x64) DMG or ZIP
 
 There is no supported packaged Linux release at this time.
+
+Windows users do **not** need to install SQLite separately. The v1.1.1 Windows package includes the SQLite runtime Job Ranger uses.
 
 ### 2. Set up your Career Profile
 
@@ -40,7 +42,7 @@ Career Profile is stored locally on this device. Job Ranger uses it to produce d
 5. Choose the polling frequency.
 6. Save the source.
 
-Job Ranger still expects the user to supply career pages in v1.1.0. Consumer-friendly source discovery is planned work.
+Job Ranger still expects the user to supply career pages in v1.1.1. Consumer-friendly source discovery is planned work.
 
 ### 4. Find and review jobs
 
@@ -140,7 +142,7 @@ SQLite-backed desktop storage currently owns:
 - settings;
 - scrape history.
 
-Career Profile and Applications are also local, but in v1.1.0 they are stored in renderer-local storage rather than the SQLite backend. Moving those domains behind the same durable backend boundary is planned work.
+Career Profile and Applications are also local, but in the v1.1.x line they are stored in renderer-local storage rather than the SQLite backend. Moving those domains behind the same durable backend boundary is planned work.
 
 Use **Help → Open Job Ranger Data Folder** for the desktop backend data folder. The Settings page also exposes backend facts including the database path and resolved SQLite binary.
 
@@ -184,6 +186,12 @@ Confirm:
 
 Enable **Minimize to system tray on close** in Settings if you want Job Ranger to remain available in the tray.
 
+### Windows reports that SQLite is missing
+
+Published v1.1.1 Windows installers include Job Ranger's SQLite runtime. If a packaged v1.1.1 installation still reports that `sqlite3.exe` is missing, treat that as a release defect and report the exact version and installation path.
+
+Developers running from source still need a host `sqlite3` executable on `PATH` or an explicit `SQLITE3_PATH`.
+
 ### macOS warns about the application
 
 Signing/notarization depends on the credentials available when a release is built. If macOS blocks an otherwise trusted release build, Finder's **Open** action can expose the operating system's manual override flow.
@@ -192,7 +200,7 @@ Do not bypass platform security warnings for a file you did not obtain from a so
 
 ## Privacy and AI
 
-Job Ranger v1.1.0 does not require an AI provider or hosted Job Ranger account. Search state and the current Career Intelligence workflow are local-first.
+Job Ranger v1.1.1 does not require an AI provider or hosted Job Ranger account. Search state and the current Career Intelligence workflow are local-first.
 
 Network access is used to retrieve the career pages and job sources you ask Job Ranger to check.
 
@@ -214,7 +222,7 @@ No hosted account is required in the current product.
 
 ### Is Job Ranger cross-platform?
 
-Published v1.1.0 builds are provided for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
+Published v1.1.1 builds are provided for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
 
 ### Is every Workday/iCIMS/etc. careers page guaranteed to work?
 
@@ -228,7 +236,7 @@ No. Those sources can vary and change. Job Ranger exposes support levels specifi
 - npm
 - `sqlite3` on `PATH`, or `SQLITE3_PATH` set explicitly
 
-The current desktop/toolchain baseline includes Electron 44.4.5, Vite 8, and TypeScript 7.
+The SQLite prerequisite above is for source/development runs. Published Windows installers bundle a pinned, verified SQLite CLI. The current desktop/toolchain baseline includes Electron 44.4.5, Vite 8, and TypeScript 7.
 
 ### Common commands
 

@@ -1,7 +1,7 @@
 # System State
 
 **Snapshot date:** 2026-09-24  
-**Published release:** v1.1.0  
+**Release candidate:** v1.1.1  
 **Default branch:** `main`
 
 This document describes current verified reality. Historical phase documents under `docs/` are retained for provenance and are not authoritative when they conflict with current source, tests, releases, or this snapshot.
@@ -10,13 +10,14 @@ This document describes current verified reality. Historical phase documents und
 
 - **Shipped:** available in a published GitHub Release.
 - **Implemented on main:** merged into the default branch, whether or not a new release has been cut.
+- **In release validation:** merged implementation with release packaging/version work still being completed.
 - **In development:** active branch or pull request, not yet part of `main`.
 - **Planned:** accepted direction without completed implementation.
 - **Historical:** retained for provenance only.
 
-## Shipped Product
+## Product State
 
-Job Ranger v1.1.0 is a functional Electron desktop job-search application with:
+The v1.1 feature line is a functional Electron desktop job-search application with:
 
 - local SQLite-backed company, job, filter, settings, and scrape-history persistence;
 - company/career-source management and scheduled/background monitoring;
@@ -27,14 +28,18 @@ Job Ranger v1.1.0 is a functional Electron desktop job-search application with:
 - filters for title, keywords, salary, and location;
 - desktop notifications;
 - minimize-to-tray behavior;
-- Windows x64 release artifacts;
-- macOS x64 and arm64 release artifacts.
+- Windows x64 packaging;
+- macOS x64 and arm64 packaging.
+
+v1.1.0 published the macOS v1.1 artifacts, but its Windows builder exposed that packaged Windows execution still depended on a host `sqlite3.exe`. That release therefore remains historical rather than the recommended Windows download.
+
+The v1.1.1 release candidate corrects that boundary by bundling and verifying the official SQLite Windows CLI and validating the packaged resolver on a real Windows runner. v1.1.1 is intended to become the first complete Windows + macOS release of the v1.1 line.
 
 No supported packaged Linux release is currently published.
 
 ### Career Intelligence persistence boundary
 
-Career Profile and Applications are local-first and shipped in v1.1.0, but currently use renderer-local storage. They have not yet moved behind the desktop backend/SQLite repository boundary. That migration remains planned durability work and should not be obscured by the fact that the UI is already functional.
+Career Profile and Applications are local-first in the v1.1 line, but currently use renderer-local storage. They have not yet moved behind the desktop backend/SQLite repository boundary. That migration remains planned durability work and should not be obscured by the fact that the UI is already functional.
 
 ## Source Handling
 
@@ -71,7 +76,7 @@ Unknown or unsupported sources are allowed to fail honestly rather than being re
 
 The renderer is a React application. It communicates with the desktop backend through an Electron preload/IPC boundary. The backend owns SQLite persistence, scraping, runtime settings, and OS integration.
 
-The v1.1.0 user-facing renderer includes:
+The v1.1 user-facing renderer includes:
 
 - Home;
 - Find Jobs;
@@ -92,7 +97,7 @@ Current renderer safeguards include:
 
 ## Runtime and Toolchain Baseline
 
-The coordinated modernization previously tracked under issue #38 is implemented:
+The coordinated modernization tracked under issue #38 is implemented:
 
 - Node.js `>=22.12.0`;
 - Electron `44.4.5`;
@@ -107,6 +112,21 @@ The macOS Electron Builder hook remains CommonJS because Electron Builder loads 
 
 The stale root-level Electron `version` artifact from the old 28.3.3 runtime has been removed. `package.json` is the application-version source used by Electron Builder.
 
+## Windows Runtime Packaging
+
+Published Windows builds no longer require a separate SQLite installation.
+
+The release workflow:
+
+1. downloads the pinned official SQLite 3.53.4 x64 tools archive from `sqlite.org`;
+2. verifies its published SHA3-256 digest;
+3. stages only `sqlite3.exe` for Electron Builder;
+4. uses that executable for release-build repository-health checks;
+5. packages it in the installed app's `resources` directory;
+6. verifies the packaged executable runs and is selected by the runtime resolver with `SQLITE3_PATH` removed.
+
+Windows Actions run `36017084154` passed this full package proof. See `docs/windows-package-validation.md`.
+
 ## Quality and Automation
 
 The repository has pull-request and `main` CI. The standard CI path:
@@ -118,7 +138,7 @@ The repository has pull-request and `main` CI. The standard CI path:
 
 Runtime/release validation also uses the Electron Playwright E2E suite. The current suite passes 11/11 on the modernized Electron 44 runtime.
 
-The v1.1.0 release-prep dependency audit reports zero known npm vulnerabilities.
+The v1.1.1 release-prep dependency audit reports zero known npm vulnerabilities.
 
 Dependabot remains configured with grouped routine non-major updates. Major runtime/toolchain changes are treated as coordinated migrations rather than blindly merged bot proposals.
 
@@ -164,8 +184,9 @@ Known follow-ups include:
 - `docs/SYSTEM_STATE.md`
 - `docs/ARCHITECTURE_PLAN.md`
 - `docs/planning/PLAN.md`
+- `docs/windows-package-validation.md`
 - `GOVERNANCE.md`
 - `SECURITY.md`
 - `THIRD_PARTY_NOTICES.md`
 
-See `docs/README.md` for the distinction between current documentation and historical planning artifacts.
+See `docs/README.md` for the distinction between current documentation, validation evidence, and historical planning artifacts.
