@@ -31,7 +31,13 @@
                                }
                            ],
                 "icon":  "public/ICON.png",
-                "artifactName":  "${productName}-v${version}-windows-${arch}.${ext}"
+                "artifactName":  "${productName}-v${version}-windows-${arch}.${ext}",
+                "extraResources": [
+                                      {
+                                        "from": "build/sqlite/sqlite3.exe",
+                                        "to": "sqlite3.exe"
+                                      }
+                                  ]
             },
     "mac":  {
                 "target":  [
