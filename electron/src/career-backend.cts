@@ -54,7 +54,7 @@ export class CareerBackend {
   private readonly repository: CareerRepository;
   private readonly artifactsDirectory: string;
 
-  constructor(private readonly options: CareerBackendOptions) {
+  constructor(options: CareerBackendOptions) {
     this.sqlite = new SqliteClient(
       options.databasePath,
       options.sqliteBinaryPath,
