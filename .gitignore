@@ -27,10 +27,7 @@ dist-ssr
 # Electron
 release
 out
-electron/main.js
-electron/main.js.map
-electron/preload.js
-electron/preload.js.map
+electron/runtime/
 
 # Build
 build/*.ico
@@ -52,7 +49,6 @@ coverage
 .temp
 release-*
 !.github/workflows/release-build.yml
-electron/
 
 .failsafe/
 .agent/
