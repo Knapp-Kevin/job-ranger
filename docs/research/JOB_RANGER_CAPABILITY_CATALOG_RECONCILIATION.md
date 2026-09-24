@@ -1,6 +1,6 @@
 # QOR Research: Job Ranger Technical Capability Catalog Reconciliation
 
-**Status:** Product-wide capability reconciliation  
+**Status:** Product-wide capability reconciliation supporting the accepted architecture  
 **Date:** 2026-09-24  
 **Scope:** Evaluate the maintained Technical Capability Catalog against Job Ranger as a whole, not only resume/import intelligence.
 
@@ -22,7 +22,7 @@ Job Ranger is strongest when it remains a focused consumer application with a sm
 
 The catalog is most valuable as a source of **specialized capability donors, implementation patterns, benchmarks, and explicit rejection evidence**. It should not turn Job Ranger into a composition of agent frameworks, browser clouds, memory systems, workflow engines, and hosted services simply because those products exist.
 
-The preferred architecture is therefore:
+The accepted architectural principle is therefore:
 
 > **Native vertical product core; narrow replaceable adapters at true external capability boundaries.**
 
