@@ -1,5 +1,5 @@
 import type { Job } from "../types";
-import type { CareerProfile } from "./storage";
+import type { CareerProfile, PayBasis } from "./storage";
 
 export type FitBand = "strong" | "good" | "possible" | "low";
 
@@ -48,21 +48,37 @@ function formatMoney(value: number): string {
   }).format(value);
 }
 
-function hourlyEquivalent(job: Job): number | null {
+function detectJobPayBasis(job: Job): PayBasis | null {
   const text = normalize(job.salaryText ?? "");
+  if (text.includes("hour") || text.includes("/hr") || text.includes("hourly")) {
+    return "hourly";
+  }
+  if (text.includes("year") || text.includes("annual") || text.includes("salary")) {
+    return "annual";
+  }
+  if (job.salaryMin && job.salaryMin > 1000) {
+    return "annual";
+  }
+  return null;
+}
+
+function payEquivalent(job: Job, targetBasis: PayBasis): number | null {
   if (!job.salaryMin) {
     return null;
   }
 
-  if (text.includes("hour") || text.includes("/hr") || text.includes("hourly")) {
+  const sourceBasis = detectJobPayBasis(job);
+  if (!sourceBasis) {
+    return null;
+  }
+  if (sourceBasis === targetBasis) {
     return job.salaryMin;
   }
+  return targetBasis === "hourly" ? job.salaryMin / 2080 : job.salaryMin * 2080;
+}
 
-  if (text.includes("year") || text.includes("annual") || job.salaryMin > 1000) {
-    return job.salaryMin / 2080;
-  }
-
-  return null;
+function formatPay(value: number, basis: PayBasis): string {
+  return `${formatMoney(value)}/${basis === "hourly" ? "hr" : "yr"}`;
 }
 
 function includesPhrase(haystack: string, value: string): boolean {
@@ -86,7 +102,7 @@ export function evaluateJobFit(job: Job, profile: CareerProfile): JobFitEvaluati
     profile.skills.length > 0 ||
     profile.certifications.length > 0 ||
     Boolean(profile.homeLocation) ||
-    profile.minimumHourlyPay !== null;
+    profile.minimumPay !== null;
 
   if (!hasProfile) {
     return null;
@@ -150,18 +166,18 @@ export function evaluateJobFit(job: Job, profile: CareerProfile): JobFitEvaluati
     }
   }
 
-  if (profile.minimumHourlyPay !== null) {
+  if (profile.minimumPay !== null) {
     availableWeight += 10;
-    const hourly = hourlyEquivalent(job);
-    if (hourly === null) {
+    const comparablePay = payEquivalent(job, profile.payBasis);
+    if (comparablePay === null) {
       score += 5;
       concerns.push("The posting does not provide enough pay detail to verify your minimum.");
-    } else if (hourly >= profile.minimumHourlyPay) {
+    } else if (comparablePay >= profile.minimumPay) {
       score += 10;
-      reasons.push(`Listed pay appears to meet your ${formatMoney(profile.minimumHourlyPay)}/hr minimum.`);
-      evidence.push(`Approx. starting pay: ${formatMoney(hourly)}/hr`);
+      reasons.push(`Listed pay appears to meet your ${formatPay(profile.minimumPay, profile.payBasis)} minimum.`);
+      evidence.push(`Approx. starting pay: ${formatPay(comparablePay, profile.payBasis)}`);
     } else {
-      concerns.push(`Listed pay appears below your ${formatMoney(profile.minimumHourlyPay)}/hr minimum.`);
+      concerns.push(`Listed pay appears below your ${formatPay(profile.minimumPay, profile.payBasis)} minimum.`);
     }
   }
 

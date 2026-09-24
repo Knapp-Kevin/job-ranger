@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from "react";
 import type { Job } from "../types";
 
 export type OnCallPreference = "yes" | "no" | "either";
+export type PayBasis = "hourly" | "annual";
 export type ApplicationStatus =
   | "interested"
   | "applied"
@@ -11,11 +12,12 @@ export type ApplicationStatus =
   | "withdrawn";
 
 export interface CareerProfile {
-  version: 1;
+  version: 2;
   fullName: string;
   homeLocation: string;
   radiusMiles: number | null;
-  minimumHourlyPay: number | null;
+  minimumPay: number | null;
+  payBasis: PayBasis;
   targetTitles: string[];
   skills: string[];
   certifications: string[];
@@ -24,6 +26,11 @@ export interface CareerProfile {
   fullTimeOnly: boolean;
   updatedAt: string | null;
 }
+
+type StoredCareerProfile = Omit<Partial<CareerProfile>, "version"> & {
+  minimumHourlyPay?: number | null;
+  version?: number;
+};
 
 export interface TrackedApplication {
   id: string;
@@ -43,11 +50,12 @@ const profileEvent = "job-ranger:career-profile-changed";
 const applicationsEvent = "job-ranger:applications-changed";
 
 export const emptyCareerProfile: CareerProfile = {
-  version: 1,
+  version: 2,
   fullName: "",
   homeLocation: "",
   radiusMiles: null,
-  minimumHourlyPay: null,
+  minimumPay: null,
+  payBasis: "hourly",
   targetTitles: [],
   skills: [],
   certifications: [],
@@ -71,18 +79,24 @@ function cleanList(values: string[]): string[] {
 }
 
 export function normalizeCareerProfile(profile: CareerProfile): CareerProfile {
+  const normalizedMinimumPay =
+    profile.minimumPay === null || Number.isNaN(profile.minimumPay)
+      ? null
+      : profile.payBasis === "annual"
+        ? Math.max(0, Math.round(profile.minimumPay))
+        : Math.max(0, Math.round(profile.minimumPay * 100) / 100);
+
   return {
     ...profile,
+    version: 2,
     fullName: profile.fullName.trim(),
     homeLocation: profile.homeLocation.trim(),
     radiusMiles:
       profile.radiusMiles === null || Number.isNaN(profile.radiusMiles)
         ? null
         : Math.max(0, Math.round(profile.radiusMiles)),
-    minimumHourlyPay:
-      profile.minimumHourlyPay === null || Number.isNaN(profile.minimumHourlyPay)
-        ? null
-        : Math.max(0, Math.round(profile.minimumHourlyPay * 100) / 100),
+    minimumPay: normalizedMinimumPay,
+    payBasis: profile.payBasis === "annual" ? "annual" : "hourly",
     targetTitles: cleanList(profile.targetTitles),
     skills: cleanList(profile.skills),
     certifications: cleanList(profile.certifications),
@@ -92,15 +106,25 @@ export function normalizeCareerProfile(profile: CareerProfile): CareerProfile {
 }
 
 export function loadCareerProfile(): CareerProfile {
-  const stored = readJson<Partial<CareerProfile>>(profileKey, {});
+  const stored = readJson<StoredCareerProfile>(profileKey, {});
+  const { minimumHourlyPay: legacyMinimumHourlyPay, ...current } = stored;
+  const minimumPay =
+    typeof current.minimumPay === "number"
+      ? current.minimumPay
+      : typeof legacyMinimumHourlyPay === "number"
+        ? legacyMinimumHourlyPay
+        : null;
+
   return {
     ...emptyCareerProfile,
-    ...stored,
-    version: 1,
-    targetTitles: Array.isArray(stored.targetTitles) ? stored.targetTitles : [],
-    skills: Array.isArray(stored.skills) ? stored.skills : [],
-    certifications: Array.isArray(stored.certifications) ? stored.certifications : [],
-    sectors: Array.isArray(stored.sectors) ? stored.sectors : [],
+    ...current,
+    version: 2,
+    minimumPay,
+    payBasis: current.payBasis === "annual" ? "annual" : "hourly",
+    targetTitles: Array.isArray(current.targetTitles) ? current.targetTitles : [],
+    skills: Array.isArray(current.skills) ? current.skills : [],
+    certifications: Array.isArray(current.certifications) ? current.certifications : [],
+    sectors: Array.isArray(current.sectors) ? current.sectors : [],
   };
 }
 

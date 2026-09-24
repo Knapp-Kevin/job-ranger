@@ -1,5 +1,5 @@
 import { useMemo, useState } from "react";
-import { BadgeCheck, BriefcaseBusiness, MapPin, Save, Sparkles, Wrench } from "lucide-react";
+import { BadgeCheck, BriefcaseBusiness, Compass, MapPin, Save, Sparkles } from "lucide-react";
 import { Layout } from "../components/Layout";
 import {
   emptyCareerProfile,
@@ -18,13 +18,6 @@ function joinLines(values: string[]): string {
   return values.join("\n");
 }
 
-const hvacTargets = [
-  "HVAC Service Technician",
-  "Commercial HVAC Technician",
-  "HVAC/R Technician",
-  "Facilities HVAC Technician",
-];
-
 export function CareerProfile() {
   const { profile, save } = useCareerProfile();
   const [draft, setDraft] = useState<CareerProfileValue>(profile);
@@ -37,15 +30,6 @@ export function CareerProfile() {
 
   const update = <K extends keyof CareerProfileValue,>(key: K, value: CareerProfileValue[K]) => {
     setDraft((current) => ({ ...current, [key]: value }));
-    setSaved(false);
-  };
-
-  const applyHvacStarter = () => {
-    setDraft((current) => ({
-      ...current,
-      targetTitles: hvacTargets,
-      sectors: current.sectors.length > 0 ? current.sectors : ["Commercial", "Residential"],
-    }));
     setSaved(false);
   };
 
@@ -69,7 +53,7 @@ export function CareerProfile() {
         </span>
         <h1 className="page-title mt-4">Tell Job Ranger what good work looks like for you.</h1>
         <p className="page-copy">
-          No technical setup. Add the jobs you want, where you can work, and the experience you already have. Job Ranger uses this only on your device to explain which listings look worth your time.
+          No technical setup. Add the work you want, where you can work, what you already know, and what matters to you. Job Ranger uses this only on your device to explain which listings look worth your time.
         </p>
       </section>
 
@@ -77,15 +61,17 @@ export function CareerProfile() {
         <aside className="space-y-5">
           <div className="story-card">
             <div className="flex items-center gap-3">
-              <Wrench className="h-5 w-5 text-[var(--color-primary)]" />
-              <h2 className="text-xl font-semibold">HVAC starter</h2>
+              <Compass className="h-5 w-5 text-[var(--color-primary)]" />
+              <h2 className="text-xl font-semibold">Broaden the search, not your résumé</h2>
             </div>
             <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              This adds common HVAC job titles to your search targets. It does not claim any certification, license, or skill you have not entered yourself.
+              Start with roles you already understand, then add adjacent or stretch roles you would genuinely consider. Target roles guide discovery. They never become claims about experience you do not have.
             </p>
-            <button type="button" className="secondary-button mt-4" onClick={applyHvacStarter}>
-              Use HVAC job targets
-            </button>
+            <ul className="mt-4 space-y-2 text-sm text-[var(--color-text-secondary)]">
+              <li>Add the role you do now or have done before.</li>
+              <li>Add nearby roles that use the same strengths in a different setting.</li>
+              <li>Add reasonable stretch roles you could grow into.</li>
+            </ul>
           </div>
 
           <div className="story-card">
@@ -95,7 +81,7 @@ export function CareerProfile() {
             </div>
             <ul className="mt-4 space-y-3 text-sm text-[var(--color-text-secondary)]">
               <li>Your career profile is stored locally in this app.</li>
-              <li>Job Ranger never invents credentials or experience for you.</li>
+              <li>Job Ranger never invents credentials, skills, or experience for you.</li>
               <li>The first match score is deterministic. No AI account is required.</li>
             </ul>
           </div>
@@ -121,7 +107,7 @@ export function CareerProfile() {
                   className="input-shell pl-11"
                   value={draft.homeLocation}
                   onChange={(event) => update("homeLocation", event.target.value)}
-                  placeholder="Stevensville, MD"
+                  placeholder="City, state, or region"
                 />
               </div>
             </label>
@@ -137,7 +123,7 @@ export function CareerProfile() {
                   onChange={(event) =>
                     update("radiusMiles", event.target.value ? Number(event.target.value) : null)
                   }
-                  placeholder="35"
+                  placeholder="30"
                 />
                 <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">
                   miles
@@ -150,34 +136,48 @@ export function CareerProfile() {
 
             <label>
               <span className="metric-label">Minimum pay</span>
-              <div className="relative mt-2">
-                <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">$</span>
-                <input
-                  className="input-shell pl-8 pr-16"
-                  type="number"
-                  min="0"
-                  step="0.50"
-                  value={draft.minimumHourlyPay ?? ""}
+              <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
+                <div className="relative">
+                  <span className="pointer-events-none absolute left-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">$</span>
+                  <input
+                    className="input-shell pl-8"
+                    type="number"
+                    min="0"
+                    step={draft.payBasis === "hourly" ? "0.50" : "1000"}
+                    value={draft.minimumPay ?? ""}
+                    onChange={(event) =>
+                      update("minimumPay", event.target.value ? Number(event.target.value) : null)
+                    }
+                    placeholder={draft.payBasis === "hourly" ? "30" : "75000"}
+                  />
+                </div>
+                <select
+                  className="select-shell w-auto min-w-28"
+                  aria-label="Pay basis"
+                  value={draft.payBasis}
                   onChange={(event) =>
-                    update("minimumHourlyPay", event.target.value ? Number(event.target.value) : null)
+                    update("payBasis", event.target.value as CareerProfileValue["payBasis"])
                   }
-                  placeholder="30"
-                />
-                <span className="pointer-events-none absolute right-4 top-1/2 -translate-y-1/2 text-sm text-[var(--color-text-muted)]">/hr</span>
+                >
+                  <option value="hourly">per hour</option>
+                  <option value="annual">per year</option>
+                </select>
               </div>
             </label>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-5 lg:grid-cols-2">
             <label>
-              <span className="metric-label">Jobs you want</span>
+              <span className="metric-label">Roles you would consider</span>
               <textarea
                 className="input-shell mt-2 min-h-36 resize-y py-3"
                 value={targetText}
                 onChange={(event) => update("targetTitles", splitLines(event.target.value))}
-                placeholder={"HVAC Service Technician\nCommercial HVAC Technician"}
+                placeholder={"Current or preferred role\nAdjacent role\nStretch role"}
               />
-              <span className="mt-2 block text-xs text-[var(--color-text-muted)]">One title per line.</span>
+              <span className="mt-2 block text-xs text-[var(--color-text-muted)]">
+                One title per line. Include adjacent roles that genuinely fit your interests and transferable strengths.
+              </span>
             </label>
 
             <label>
@@ -186,7 +186,7 @@ export function CareerProfile() {
                 className="input-shell mt-2 min-h-36 resize-y py-3"
                 value={skillText}
                 onChange={(event) => update("skills", splitLines(event.target.value))}
-                placeholder={"heat pumps\nelectrical troubleshooting\nrooftop units"}
+                placeholder={"customer service\ntroubleshooting\nproject coordination"}
               />
               <span className="mt-2 block text-xs text-[var(--color-text-muted)]">Only list work you can defend in an interview.</span>
             </label>
@@ -197,33 +197,35 @@ export function CareerProfile() {
                 className="input-shell mt-2 min-h-32 resize-y py-3"
                 value={certificationText}
                 onChange={(event) => update("certifications", splitLines(event.target.value))}
-                placeholder={"EPA 608 Universal\nOSHA 10"}
+                placeholder={"Professional license\nIndustry certification\nSafety training"}
               />
+              <span className="mt-2 block text-xs text-[var(--color-text-muted)]">Optional. Leave this blank if credentials are not important in your field.</span>
             </label>
 
             <label>
-              <span className="metric-label">Work you prefer</span>
+              <span className="metric-label">Industries or work settings you prefer</span>
               <textarea
                 className="input-shell mt-2 min-h-32 resize-y py-3"
                 value={sectorText}
                 onChange={(event) => update("sectors", splitLines(event.target.value))}
-                placeholder={"Commercial\nResidential\nFacilities"}
+                placeholder={"Industry\nWork environment\nSpecialty area"}
               />
             </label>
           </div>
 
           <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2">
             <label>
-              <span className="metric-label">On-call work</span>
+              <span className="metric-label">After-hours or on-call work</span>
               <select
                 className="select-shell mt-2"
                 value={draft.onCallPreference}
                 onChange={(event) => update("onCallPreference", event.target.value as CareerProfileValue["onCallPreference"])}
               >
                 <option value="either">No preference</option>
-                <option value="yes">Okay with on-call work</option>
-                <option value="no">Avoid on-call work</option>
+                <option value="yes">Okay with it</option>
+                <option value="no">Prefer to avoid it</option>
               </select>
+              <span className="mt-2 block text-xs text-[var(--color-text-muted)]">Optional preference for roles where after-hours availability matters.</span>
             </label>
 
             <label className="panel panel-muted flex items-center gap-3 rounded-2xl px-4 py-3 sm:mt-6">
@@ -255,7 +257,7 @@ export function CareerProfile() {
       <section className="support-note mt-6 flex items-start gap-3 px-5 py-4 text-sm text-[var(--color-text-secondary)]">
         <BriefcaseBusiness className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--color-primary)]" />
         <p>
-          Next, open Find Jobs. Listings will show a plain-language fit score based only on the information you saved here and the job data Job Ranger has actually collected.
+          Next, open Find Jobs. Listings will show plain-language fit guidance based only on the information you saved here and the job data Job Ranger has actually collected.
         </p>
       </section>
     </Layout>

@@ -8,6 +8,7 @@ import {
   ShieldCheck,
   Sparkles,
 } from "lucide-react";
+import { Link } from "react-router-dom";
 import { formatDistanceToNow } from "date-fns";
 import { Layout } from "../components/Layout";
 import { useAppContext } from "../context/AppContext";
@@ -48,8 +49,12 @@ export function Dashboard() {
       title: newJobs > 0 ? `${newJobs} fresh jobs are ready for review` : "No unseen jobs right now",
       copy:
         newJobs > 0
-          ? "Start in Jobs, acknowledge anything relevant, and use filters to tighten the next pass."
-          : "Your queue is clear. This is a good moment to tune sources or add a new target company.",
+          ? "Start in Find Jobs, acknowledge anything relevant, and use filters to tighten the next pass."
+          : companies.length === 0
+            ? "Your queue is clear. Add a source you care about so Job Ranger has somewhere useful to look."
+            : "Your queue is clear. This is a good moment to review the sources you are tracking or add another one.",
+      action: newJobs > 0 ? "Review new jobs" : companies.length === 0 ? "Add a job source" : "Review job sources",
+      href: newJobs > 0 ? "/jobs" : "/companies",
     },
     {
       kicker: "Source coverage",
@@ -59,8 +64,10 @@ export function Dashboard() {
           : `${runnableCompanies.length} source${runnableCompanies.length === 1 ? "" : "s"} can run right now`,
       copy:
         companies.length === 0
-          ? "Job Ranger can now detect broader ATS families and generic careers pages. Start with the sources you actually care about."
+          ? "Job Ranger can detect broader ATS families and generic careers pages. Start with the sources you actually care about."
           : formatSourceCoverageMessage(browserRequiredCompanies, manualReviewCompanies),
+      action: companies.length === 0 ? "Add a job source" : "Manage job sources",
+      href: "/companies",
     },
     {
       kicker: "Signal quality",
@@ -72,6 +79,8 @@ export function Dashboard() {
         scrapeRuns.length > 0
           ? "Use Filters to make the next scrape quieter and more relevant, especially if the latest run found too much noise."
           : "A simple title-plus-keyword rule is usually enough to turn a noisy board into a focused review deck.",
+      action: scrapeRuns.length > 0 ? "Tune filters" : "Set up filters",
+      href: "/filters",
     },
   ];
 
@@ -109,11 +118,11 @@ export function Dashboard() {
           <div>
             <span className="alpha-pill">
               <Sparkles className="h-3.5 w-3.5" />
-              Alpha workspace
+              Local workspace
             </span>
             <h1 className="page-title mt-4">Build a calmer review ritual around the jobs you actually want.</h1>
             <p className="page-copy">
-              Job Ranger Alpha now aims for breadth with honesty: detect the source family, run the best available extraction path, and surface when a portal still needs a dedicated or browser-backed adapter.
+              Job Ranger keeps the search grounded: detect the source family, run the best available extraction path, and surface when a portal still needs a dedicated or browser-backed adapter.
             </p>
           </div>
           <div className="panel panel-muted max-w-md rounded-[1.4rem] px-5 py-4">
@@ -150,10 +159,13 @@ export function Dashboard() {
             <p className="story-kicker">{story.kicker}</p>
             <h2 className="story-title">{story.title}</h2>
             <p className="story-copy">{story.copy}</p>
-            <div className="mt-5 inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)]">
-              Keep the next step small
-              <ArrowRight className="h-4 w-4" />
-            </div>
+            <Link
+              to={story.href}
+              className="mt-5 inline-flex items-center gap-2 rounded-md text-sm font-semibold text-[var(--color-primary)] underline-offset-4 hover:underline focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-[var(--color-primary)]"
+            >
+              {story.action}
+              <ArrowRight className="h-4 w-4" aria-hidden="true" />
+            </Link>
           </article>
         ))}
       </section>
@@ -229,7 +241,7 @@ export function Dashboard() {
           <div className="story-card">
             <div className="flex items-center gap-3">
               <ShieldCheck className="h-5 w-5 text-[var(--color-success)]" />
-              <h2 className="text-xl font-semibold">Alpha promises</h2>
+              <h2 className="text-xl font-semibold">Product promises</h2>
             </div>
             <ul className="mt-4 space-y-3 text-sm text-[var(--color-text-secondary)]">
               <li>What you see here is persisted locally and survives restarts.</li>
@@ -242,5 +254,3 @@ export function Dashboard() {
     </Layout>
   );
 }
-
-
