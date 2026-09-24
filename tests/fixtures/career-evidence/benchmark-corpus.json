@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "description": "Synthetic, non-personal benchmark corpus for Career Evidence import, normalization, requirement mapping, and resume validation. Names and organizations are fictional.",
+  "candidates": [
+    {
+      "id": "software-engineer",
+      "archetype": "software engineering",
+      "candidate": "Jordan Vale",
+      "sourceFacts": [
+        "Senior Software Engineer at Northstar Systems, 2021-present",
+        "Built TypeScript services and React interfaces",
+        "Led migration of 14 services to a shared deployment platform",
+        "Mentored four engineers"
+      ],
+      "targetRole": "Staff Software Engineer",
+      "expectedEvidence": ["TypeScript", "React", "technical leadership", "platform migration"],
+      "mustNotInfer": ["Kubernetes certification", "people manager title"]
+    },
+    {
+      "id": "hvac-technician",
+      "archetype": "skilled trade",
+      "candidate": "Morgan Reed",
+      "sourceFacts": [
+        "HVAC Service Technician at Harbor Mechanical, 2018-2026",
+        "EPA 608 Universal certification",
+        "Serviced rooftop units, heat pumps, split systems, and gas furnaces",
+        "Performed electrical troubleshooting and preventive maintenance",
+        "Participated in rotating on-call coverage"
+      ],
+      "targetRole": "Commercial HVAC Technician",
+      "expectedEvidence": ["EPA 608", "diagnostics", "preventive maintenance", "commercial equipment"],
+      "mustNotInfer": ["NATE certification", "building automation programming"]
+    },
+    {
+      "id": "registered-nurse",
+      "archetype": "licensed healthcare",
+      "candidate": "Casey Lin",
+      "sourceFacts": [
+        "Registered Nurse at Cedar Point Medical Center, 2020-present",
+        "Active RN license",
+        "BLS certification",
+        "Medical-surgical unit experience",
+        "Precepted newly hired nurses"
+      ],
+      "targetRole": "Clinical Nurse Coordinator",
+      "expectedEvidence": ["RN license", "BLS", "patient care", "precepting"],
+      "mustNotInfer": ["BSN", "ACLS", "formal supervisor authority"]
+    },
+    {
+      "id": "retail-manager",
+      "archetype": "retail and service management",
+      "candidate": "Avery Stone",
+      "sourceFacts": [
+        "Store Manager at Juniper Market, 2019-present",
+        "Managed scheduling for a 22-person team",
+        "Handled inventory, cash controls, customer escalations, and hiring",
+        "Reduced annual inventory shrink from 3.1% to 2.2%"
+      ],
+      "targetRole": "District Operations Manager",
+      "expectedEvidence": ["team scheduling", "inventory", "hiring", "shrink reduction"],
+      "mustNotInfer": ["multi-store responsibility", "P&L ownership"]
+    },
+    {
+      "id": "warehouse-supervisor",
+      "archetype": "warehouse and logistics",
+      "candidate": "Riley Brooks",
+      "sourceFacts": [
+        "Warehouse Supervisor at Meridian Distribution, 2017-present",
+        "Supervised 18 associates across receiving and fulfillment",
+        "Used handheld warehouse scanning systems",
+        "Coordinated cycle counts and safety briefings",
+        "Forklift operator certification"
+      ],
+      "targetRole": "Logistics Operations Supervisor",
+      "expectedEvidence": ["supervision", "receiving", "fulfillment", "cycle counts", "forklift certification"],
+      "mustNotInfer": ["SAP", "CDL", "transportation fleet management"]
+    },
+    {
+      "id": "administrative-coordinator",
+      "archetype": "administrative and operations",
+      "candidate": "Samira Cole",
+      "sourceFacts": [
+        "Administrative Coordinator at Bluewater Association, 2022-present",
+        "Managed executive calendars and meeting logistics",
+        "Processed vendor invoices and purchase requests",
+        "Maintained member records and responded to customer inquiries",
+        "Created monthly operational reports in Excel"
+      ],
+      "targetRole": "Operations Coordinator",
+      "expectedEvidence": ["calendar management", "vendor coordination", "customer service", "Excel reporting"],
+      "mustNotInfer": ["budget authority", "project management certification"]
+    },
+    {
+      "id": "recent-graduate",
+      "archetype": "recent graduate",
+      "candidate": "Noah Ellis",
+      "sourceFacts": [
+        "B.A. Economics, Lakeview College, 2026",
+        "Capstone analyzed regional housing data using Excel and Python",
+        "Treasurer for a student organization",
+        "Part-time customer service associate, 2023-2026"
+      ],
+      "targetRole": "Junior Business Analyst",
+      "expectedEvidence": ["economics", "data analysis", "Excel", "Python", "customer service"],
+      "mustNotInfer": ["professional analyst experience", "SQL"]
+    },
+    {
+      "id": "career-changer",
+      "archetype": "career transition",
+      "candidate": "Elena Park",
+      "sourceFacts": [
+        "High School Teacher at East Ridge School, 2016-2026",
+        "Designed curriculum and facilitated professional-development sessions",
+        "Coordinated a six-person curriculum committee",
+        "Built asynchronous learning materials in the district LMS"
+      ],
+      "targetRole": "Learning and Development Specialist",
+      "expectedEvidence": ["facilitation", "curriculum design", "committee coordination", "digital learning content"],
+      "mustNotInfer": ["corporate L&D experience", "Articulate Storyline"]
+    },
+    {
+      "id": "senior-executive",
+      "archetype": "senior leadership",
+      "candidate": "Drew Bennett",
+      "sourceFacts": [
+        "Vice President of Operations at Atlas Components, 2018-present",
+        "Accountable for three manufacturing sites and 240 employees",
+        "Led a $12M capital improvement program",
+        "Improved on-time delivery from 84% to 95%"
+      ],
+      "targetRole": "Chief Operating Officer",
+      "expectedEvidence": ["multi-site operations", "240 employees", "$12M capital program", "delivery improvement"],
+      "mustNotInfer": ["board membership", "international operations", "M&A experience"]
+    },
+    {
+      "id": "academic-researcher",
+      "archetype": "academic and research CV",
+      "candidate": "Priya Novak",
+      "sourceFacts": [
+        "Ph.D. Environmental Science, 2022",
+        "Postdoctoral Researcher at Silver Oak University, 2022-present",
+        "Four peer-reviewed publications",
+        "Presented research at three academic conferences",
+        "Teaching assistant for undergraduate environmental methods"
+      ],
+      "targetRole": "Assistant Professor of Environmental Science",
+      "expectedEvidence": ["Ph.D.", "postdoctoral research", "publications", "conference presentations", "teaching"],
+      "mustNotInfer": ["principal investigator funding", "tenure-track experience"]
+    },
+    {
+      "id": "federal-applicant",
+      "archetype": "federal application",
+      "candidate": "Cameron West",
+      "sourceFacts": [
+        "Program Specialist at Pine County Government, 2021-present, 40 hours/week",
+        "Administered public-service program intake and eligibility records",
+        "Prepared quarterly compliance reports",
+        "Trained six staff members on revised procedures"
+      ],
+      "targetRole": "Federal Program Specialist",
+      "expectedEvidence": ["40 hours/week", "program administration", "compliance reporting", "staff training"],
+      "mustNotInfer": ["federal service", "security clearance", "GS grade"]
+    }
+  ]
+}
