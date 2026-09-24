@@ -1,9 +1,8 @@
 /**
- * Notarization script for macOS
- * This script is used to notarize the macOS app for distribution outside the App Store
+ * Notarization hook for macOS release builds.
+ * Keep the Electron Builder hook itself in CommonJS, then load the ESM-only
+ * @electron/notarize package dynamically when Apple credentials are present.
  */
-
-const { notarize } = require("@electron/notarize");
 
 exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
@@ -21,10 +20,10 @@ exports.default = async function notarizing(context) {
     return;
   }
 
+  const { notarize } = await import("@electron/notarize");
   const appName = context.packager.appInfo.productFilename;
 
-  return await notarize({
-    tool: "notarytool",
+  await notarize({
     appPath: `${appOutDir}/${appName}.app`,
     appleId: process.env.APPLE_ID,
     appleIdPassword: process.env.APPLE_ID_PASSWORD,
