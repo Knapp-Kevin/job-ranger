@@ -1,0 +1,72 @@
+name: Recover v1.1.1 macOS artifacts once
+
+on:
+  push:
+    branches:
+      - fix/macos-release-sqlite-path
+    paths:
+      - .github/workflows/_recover-v1.1.1-macos-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  recover-macos:
+    runs-on: macos-latest
+    steps:
+      - name: Check out immutable v1.1.1 tag
+        uses: actions/checkout@v4
+        with:
+          ref: v1.1.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Verify system SQLite
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x /usr/bin/sqlite3
+          /usr/bin/sqlite3 --version
+
+      - name: Generate macOS icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/icon.iconset
+          sips -z 16 16 public/ICON.png --out build/icon.iconset/icon_16x16.png
+          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_32x32.png
+          sips -z 64 64 public/ICON.png --out build/icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 public/ICON.png --out build/icon.iconset/icon_128x128.png
+          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_256x256.png
+          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_512x512.png
+          cp public/ICON.png build/icon.iconset/icon_512x512@2x.png
+          iconutil -c icns build/icon.iconset -o build/icon.icns
+
+      - name: Build macOS artifacts from v1.1.1 tag
+        run: npm run electron:build:mac
+        env:
+          SQLITE3_PATH: /usr/bin/sqlite3
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+
+      - name: Upload v1.1.1 macOS assets
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh release upload v1.1.1 \
+            release/Job*macos*.dmg \
+            release/Job*macos*.zip \
+            --clobber
