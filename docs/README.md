@@ -11,7 +11,7 @@ Job Ranger documentation is divided into current guidance, active design/researc
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history and notable changes. |
 | [`CONCEPT.md`](./CONCEPT.md) | Product intent, principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Current factual repository/product snapshot. |
-| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and intended evolution. |
+| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and accepted intended evolution. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Active roadmap and prioritized next work. |
 | [`BRANDING.md`](./BRANDING.md) | Canonical visual assets and brand usage. |
 | [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required third-party attribution and independence/trademark boundaries. |
@@ -21,12 +21,12 @@ Job Ranger documentation is divided into current guidance, active design/researc
 
 ## Active Design and Research
 
-- [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md) translates the resume/import research into the proposed functional architecture: native Career Evidence, provenance, requirement/evidence mapping, deterministic resume generation, truth/parseability/relevance gates, managed artifacts, and application-scoped resume versions. It also narrows the external tool set instead of accumulating overlapping parsers/renderers.
+- [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md) translates the resume/import research into the implementation design for the accepted next-phase Career Evidence architecture: provenance, requirement/evidence mapping, deterministic resume generation, truth/parseability/relevance gates, managed artifacts, and application-scoped resume versions. Exact database/API contracts are still finalized during R0 before implementation.
 - [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md) is the QOR research synthesis behind the planned Career Evidence and Resume Intelligence phase. It evaluates resume consumers, document formats, ATS/parser constraints, truthful tailoring, import provenance, Career-Ops lessons, and an evidence-first product model.
 - [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md) applies the maintained Technical Capability Catalog to resume/import intelligence. It identifies permissively licensed candidates, rejects incompatible licensing paths, and proposes a bounded parser bake-off before Job Ranger adopts an import dependency.
 - [`research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](./research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md) reconciles the Technical Capability Catalog across Job Ranger's broader product surface: source discovery/acquisition, fit intelligence, applications, follow-up, interview preparation, notifications, inference, export, and security boundaries. Its central conclusion is to keep a native vertical product core and add only narrow replaceable adapters where a real external capability is needed.
 
-Research/design documents may describe future behavior. They do not claim that planned functionality is already shipped.
+Research documents provide supporting evidence and alternatives. `ARCHITECTURE_PLAN.md` and `planning/PLAN.md` carry the accepted direction; planned functionality is not claimed as shipped until implementation and release evidence exists.
 
 ## Validation Evidence
 
