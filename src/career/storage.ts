@@ -207,7 +207,10 @@ export function useCareerProfile() {
   };
 }
 
-export async function trackJob(job: Pick<Job, "id">): Promise<TrackedApplication> {
+export async function trackJob(
+  job: Pick<Job, "id">,
+  _legacyCompanyName?: string,
+): Promise<TrackedApplication> {
   await ensureLegacyMigration();
   const application = await getDesktopApi().applications.track(job.id);
   window.dispatchEvent(new CustomEvent(applicationsEvent));
