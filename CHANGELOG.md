@@ -2,6 +2,27 @@
 
 All notable user-facing, architecture, governance, and maintenance changes should be recorded here.
 
+## v1.1.1 - 2026-09-24
+
+### Fixed
+
+- Made the Windows release self-contained by bundling the official SQLite 3.53.4 x64 command-line runtime used by the desktop backend.
+- Updated Windows runtime resolution so packaged builds prefer `resources/sqlite3.exe` before host `PATH` while development still supports `SQLITE3_PATH` or a host install.
+- Standardized the published Windows artifact on the NSIS installer target instead of generating two same-named `.exe` targets.
+
+### Release engineering
+
+- Pinned the official SQLite Windows tools archive used by the release workflow.
+- Added SHA3-256 verification against SQLite's published digest before extraction.
+- Added Windows packaging validation that executes the bundled SQLite binary and proves the runtime resolver selects it with `SQLITE3_PATH` removed.
+- Added durable Windows packaging evidence under `docs/windows-package-validation.md`.
+- Added SQLite runtime provenance to `THIRD_PARTY_NOTICES.md`.
+
+### Release note
+
+- v1.1.0 successfully produced the macOS x64/arm64 artifacts but its Windows builder exposed the missing-host-SQLite defect before a Windows asset was uploaded.
+- v1.1.1 supersedes v1.1.0 as the first complete Windows + macOS release of the v1.1 feature line.
+
 ## v1.1.0 - 2026-09-24
 
 ### Added
