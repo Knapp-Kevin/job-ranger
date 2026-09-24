@@ -38,8 +38,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
   return (
     <form className="space-y-4" onSubmit={(event) => void handleSubmit(event)}>
       <div>
-        <label className="block text-sm font-medium">Filter name</label>
+        <label htmlFor="filter-name" className="block text-sm font-medium">Filter name</label>
         <input
+          id="filter-name"
           type="text"
           required
           value={draft.name}
@@ -48,8 +49,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
         />
       </div>
       <div>
-        <label className="block text-sm font-medium">Company scope</label>
+        <label htmlFor="filter-company" className="block text-sm font-medium">Company scope</label>
         <select
+          id="filter-company"
           value={draft.companyId ?? "all"}
           onChange={(event) =>
             setDraft((current) => ({
@@ -69,8 +71,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">Title includes</label>
+          <label htmlFor="filter-title-include" className="block text-sm font-medium">Title includes</label>
           <input
+            id="filter-title-include"
             type="text"
             placeholder="engineer, platform"
             onChange={(event) =>
@@ -83,8 +86,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium">Title excludes</label>
+          <label htmlFor="filter-title-exclude" className="block text-sm font-medium">Title excludes</label>
           <input
+            id="filter-title-exclude"
             type="text"
             placeholder="senior, manager"
             onChange={(event) =>
@@ -97,8 +101,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium">Keywords include</label>
+          <label htmlFor="filter-keywords-include" className="block text-sm font-medium">Keywords include</label>
           <input
+            id="filter-keywords-include"
             type="text"
             placeholder="typescript, api"
             onChange={(event) =>
@@ -111,8 +116,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
           />
         </div>
         <div>
-          <label className="block text-sm font-medium">Location includes</label>
+          <label htmlFor="filter-location-include" className="block text-sm font-medium">Location includes</label>
           <input
+            id="filter-location-include"
             type="text"
             placeholder="remote, new york"
             onChange={(event) =>
@@ -127,8 +133,9 @@ export function FilterForm({ companies, onSubmit, onCancel }: FilterFormProps) {
       </div>
       <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
         <div>
-          <label className="block text-sm font-medium">Minimum salary</label>
+          <label htmlFor="filter-salary-min" className="block text-sm font-medium">Minimum salary</label>
           <input
+            id="filter-salary-min"
             type="number"
             min={0}
             onChange={(event) =>
