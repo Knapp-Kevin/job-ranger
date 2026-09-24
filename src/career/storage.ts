@@ -27,10 +27,10 @@ export interface CareerProfile {
   updatedAt: string | null;
 }
 
-interface StoredCareerProfile extends Partial<CareerProfile> {
+type StoredCareerProfile = Omit<Partial<CareerProfile>, "version"> & {
   minimumHourlyPay?: number | null;
   version?: number;
-}
+};
 
 export interface TrackedApplication {
   id: string;
