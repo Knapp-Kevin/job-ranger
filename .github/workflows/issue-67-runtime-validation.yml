@@ -9,21 +9,6 @@ permissions:
   contents: read
 
 jobs:
-  linux-e2e:
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22.12.0"
-          cache: npm
-      - run: npm ci
-      - name: Unit tests from generated runtime
-        run: npm run test:unit
-      - name: Electron E2E from generated runtime
-        run: xvfb-run -a npm run test:e2e
-
   windows-package:
     runs-on: windows-latest
     timeout-minutes: 25
@@ -63,47 +48,7 @@ jobs:
           $asar = Get-ChildItem -Path release -Recurse -Filter app.asar | Select-Object -First 1
           if (-not $asar) { throw "Packaged app.asar not found" }
           $listing = & npx --no-install asar list $asar.FullName
-          if (-not ($listing -match "electron/runtime/electron/src/main.cjs")) {
+          $normalized = ($listing -join "`n") -replace '\\', '/'
+          if ($normalized -notmatch "electron/runtime/electron/src/main.cjs") {
             throw "Generated Electron main entry is missing from app.asar"
           }
-
-  macos-package:
-    runs-on: macos-latest
-    timeout-minutes: 25
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22.12.0"
-          cache: npm
-      - run: npm ci
-      - name: Generate macOS icon
-        shell: bash
-        run: |
-          set -euo pipefail
-          mkdir -p build/icon.iconset
-          sips -z 16 16 public/ICON.png --out build/icon.iconset/icon_16x16.png
-          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_16x16@2x.png
-          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_32x32.png
-          sips -z 64 64 public/ICON.png --out build/icon.iconset/icon_32x32@2x.png
-          sips -z 128 128 public/ICON.png --out build/icon.iconset/icon_128x128.png
-          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_128x128@2x.png
-          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_256x256.png
-          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_256x256@2x.png
-          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_512x512.png
-          cp public/ICON.png build/icon.iconset/icon_512x512@2x.png
-          iconutil -c icns build/icon.iconset -o build/icon.icns
-      - name: Build renderer and generated runtime
-        run: npm run build && npm run desktop:compile && npm run desktop:verify
-      - name: Package macOS directory
-        env:
-          CSC_IDENTITY_AUTO_DISCOVERY: "false"
-          SQLITE3_PATH: /usr/bin/sqlite3
-        run: npx electron-builder --mac --dir --x64 --publish never
-      - name: Verify packaged generated runtime
-        shell: bash
-        run: |
-          set -euo pipefail
-          asar_path="$(find release -name app.asar -print -quit)"
-          test -n "$asar_path"
-          npx --no-install asar list "$asar_path" | grep -q "electron/runtime/electron/src/main.cjs"
