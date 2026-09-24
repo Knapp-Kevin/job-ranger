@@ -8,14 +8,28 @@ Job Ranger documentation is divided into current guidance and historical impleme
 | --- | --- |
 | [`../README.md`](../README.md) | Public product overview, current release, capabilities, setup, and roadmap. |
 | [`../HELP.md`](../HELP.md) | User-facing setup and troubleshooting. |
+| [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history and notable changes. |
 | [`CONCEPT.md`](./CONCEPT.md) | Product intent, principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Current factual repository/product snapshot. |
 | [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and intended evolution. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Active roadmap and prioritized next work. |
 | [`BRANDING.md`](./BRANDING.md) | Canonical visual assets and brand usage. |
+| [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required third-party attribution and independence/trademark boundaries. |
 | [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, status language, merge and release rules. |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Contributor workflow and quality expectations. |
 | [`../SECURITY.md`](../SECURITY.md) | Security posture and reporting guidance. |
+
+## v1.1.0 Documentation Baseline
+
+The current documentation baseline reflects:
+
+- Career Profile and deterministic fit guidance on `main`;
+- Applications tracking on `main`;
+- Career-Ops attribution preserved without embedding its runtime;
+- Node.js 22.12+, Electron 44.4.5, Vite 8, and TypeScript 7;
+- the completed coordinated modernization formerly tracked by issue #38;
+- Windows x64 and macOS x64/arm64 release packaging;
+- the explicit transitional persistence boundary for Career Profile and Applications.
 
 ## Historical Planning Records
 

@@ -1,12 +1,12 @@
 # Job Ranger Roadmap
 
-**Current as of:** 2026-09-23
+**Current as of:** 2026-09-24
 
 This file is the active roadmap. Older phase/remediation plans under `docs/` are historical implementation records and no longer define current status.
 
 ## North Star
 
-Job Ranger should become a desktop job-search companion that an ordinary person can install and use without learning software-development tooling.
+Job Ranger should be a desktop job-search companion that an ordinary person can install and use without learning software-development tooling.
 
 The product should help the user:
 
@@ -16,7 +16,7 @@ The product should help the user:
 4. track what happened;
 5. identify useful next steps.
 
-Core functionality should remain useful without inference. Optional inference should improve guidance, not determine whether the app is usable.
+Core functionality remains useful without inference. Optional inference should improve guidance, not determine whether the app is usable.
 
 ## Shipped Foundation
 
@@ -24,10 +24,14 @@ Core functionality should remain useful without inference. Optional inference sh
 
 - [x] Electron desktop application
 - [x] React renderer
-- [x] local SQLite persistence
+- [x] local SQLite persistence for source/job/filter/settings/scrape domains
 - [x] typed preload/IPC boundary
 - [x] runtime settings
 - [x] local data-folder access
+- [x] local Career Profile storage
+- [x] local Applications storage
+
+Career Profile and Applications are functional but still renderer-local. Moving them to the desktop backend/SQLite repository is the next persistence-hardening step.
 
 ### Job-source monitoring
 
@@ -41,32 +45,7 @@ Core functionality should remain useful without inference. Optional inference sh
 - [x] scrape history
 - [x] cooldown/circuit-breaker behavior
 
-### Job-search workflow
-
-- [x] jobs review view
-- [x] title/keyword/location filters
-- [x] salary parsing/filter support
-- [x] desktop notifications
-- [x] optional minimize-to-tray behavior
-
-### Packaging and quality
-
-- [x] Windows v1.0.2 release
-- [x] macOS x64 v1.0.2 release
-- [x] macOS arm64 v1.0.2 release
-- [x] typecheck/build/backend smoke baseline
-- [x] focused unit tests
-- [x] Electron Playwright E2E suite
-- [x] PR CI
-- [x] grouped Dependabot policy for routine non-major updates
-
-## Active Work
-
-### Career intelligence foundation — PR #28
-
-Status: **in development, not merged**
-
-Current PR scope:
+### Career intelligence foundation
 
 - [x] plain-language Career Profile UI
 - [x] HVAC starter targets without fabricated credentials
@@ -76,44 +55,76 @@ Current PR scope:
 - [x] consumer-oriented navigation
 - [x] MIT attribution boundary for Career-Ops-derived work
 
-Required follow-up before this becomes the durable foundation:
+### Job-search workflow
 
-- [ ] move Career Profile persistence into SQLite/backend
-- [ ] move Applications persistence into SQLite/backend
-- [ ] add deterministic fit-scorer tests
-- [ ] add first-run onboarding routing
-- [ ] verify UI behavior with nontechnical-user flows
+- [x] Find Jobs review view
+- [x] deterministic profile-to-listing fit guidance
+- [x] title/keyword/location filters
+- [x] salary parsing/filter support
+- [x] application status tracking and notes
+- [x] desktop notifications
+- [x] optional minimize-to-tray behavior
 
-### Toolchain modernization — issue #38
+### Packaging, runtime, and quality
 
-Status: **planned/coordinated migration**
+- [x] Windows v1.1.0 release
+- [x] macOS x64 v1.1.0 release
+- [x] macOS arm64 v1.1.0 release
+- [x] Node.js 22.12+ baseline
+- [x] supported Electron 44.4.5 runtime
+- [x] Vite 8 / TypeScript 7 toolchain
+- [x] modern Electron notarization/fuse tooling
+- [x] clean dependency audit baseline
+- [x] typecheck/build/backend smoke baseline
+- [x] focused unit tests
+- [x] Electron Playwright E2E suite
+- [x] PR CI
+- [x] grouped Dependabot policy for routine non-major updates
 
-- [ ] choose a supported Electron target line
-- [ ] establish the required Node baseline
-- [ ] reconcile ESM/CJS boundaries
-- [ ] migrate Vite/plugin stack deliberately
-- [ ] migrate Electron ecosystem tooling
-- [ ] pass clean `npm ci`
-- [ ] pass `repo:health`
-- [ ] pass Electron E2E
-- [ ] validate Windows packaging
-- [ ] validate macOS packaging/notarization behavior where credentials permit
+## Completed Modernization
+
+The coordinated runtime/toolchain migration formerly tracked under issue #38 is complete in the v1.1.0 line:
+
+- [x] supported Electron target selected and adopted
+- [x] Node baseline raised deliberately
+- [x] ESM/CJS notarization boundary reconciled
+- [x] Vite/plugin stack migrated together
+- [x] Electron ecosystem tooling modernized
+- [x] TypeScript 7 adopted
+- [x] clean `npm ci`
+- [x] `repo:health`
+- [x] Electron E2E
+- [x] Windows packaging validation
+- [x] macOS x64/arm64 packaging validation
+
+Future major toolchain upgrades should follow the same migration discipline rather than arrive as disconnected bot merges.
 
 ## Next Product Slices
 
-### 1. First-run experience
+### 1. Durable Career Intelligence persistence
+
+Goal: Career Profile and Applications should survive through the same governed backend boundary as the rest of Job Ranger's durable state.
+
+- [ ] move Career Profile persistence into SQLite/backend
+- [ ] move Applications persistence into SQLite/backend
+- [ ] define migrations for both domains
+- [ ] preserve existing local renderer data during migration where practical
+- [ ] add deterministic scorer tests and persistence tests
+
+### 2. First-run experience
 
 Goal: a new user should launch Job Ranger and immediately understand what information is needed.
 
-- [ ] role/occupation input
-- [ ] location and commute radius
-- [ ] pay floor/preferences
-- [ ] resume upload or guided experience entry
-- [ ] certification/license capture
-- [ ] suggested adjacent role titles
+- [ ] route first launch into Career Profile when no profile exists
+- [ ] simplify role/occupation entry
+- [ ] clarify location and commute radius behavior
+- [ ] clarify pay floor/preferences
+- [ ] add resume upload or guided experience entry
+- [ ] improve certification/license capture
+- [ ] suggest adjacent role titles without fabricating qualification
 - [ ] no requirement for GitHub, YAML, terminal commands, or provider configuration
 
-### 2. Consumer-friendly source discovery
+### 3. Consumer-friendly source discovery
 
 Goal: users should not need to know employer ATS URLs in advance.
 
@@ -123,7 +134,7 @@ Goal: users should not need to know employer ATS URLs in advance.
 - [ ] preserve trust/support labels for resolved sources
 - [ ] avoid creating a brittle one-off employer catalog as the architecture
 
-### 3. Resume and evidence model
+### 4. Resume and evidence model
 
 Goal: Job Ranger can prepare tailored application material without inventing experience.
 
@@ -133,14 +144,14 @@ Goal: Job Ranger can prepare tailored application material without inventing exp
 - [ ] tailored resume generation from supported evidence only
 - [ ] visible warnings when a requested claim lacks evidence
 
-### 4. Optional inference layer
+### 5. Optional inference layer
 
 Goal: richer reasoning without making AI mandatory.
 
 Potential capabilities:
 
 - [ ] fuzzy requirement-to-experience matching
-- [ ] fit explanations
+- [ ] richer fit explanations
 - [ ] resume phrasing assistance
 - [ ] interview preparation
 - [ ] transferable-skill analysis
@@ -153,10 +164,10 @@ Architecture requirements:
 - [ ] deterministic fallback when inference is absent
 - [ ] no silent transmission of resumes or profile data
 
-### 5. Application workflow maturity
+### 6. Application workflow maturity
 
 - [ ] reminders/follow-up dates
-- [ ] contacts and notes
+- [ ] contacts
 - [ ] interview milestones
 - [ ] offer details
 - [ ] export/backup
@@ -177,10 +188,10 @@ Do not promote a source from best-effort to supported merely because one example
 
 ## Packaging Track
 
-- [ ] complete issue #38 modernization
-- [ ] maintain Windows release confidence
-- [ ] maintain macOS x64/arm64 release confidence
-- [ ] validate signing/notarization process
+- [x] complete Node/Electron/Vite/TypeScript modernization
+- [ ] maintain Windows release confidence on future releases
+- [ ] maintain macOS x64/arm64 release confidence on future releases
+- [ ] validate notarization with production Apple credentials whenever those credentials are available
 - [ ] decide whether Linux becomes an explicitly supported release target
 
 ## Deferred / Not Current Goals

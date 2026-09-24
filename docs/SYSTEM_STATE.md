@@ -1,10 +1,10 @@
 # System State
 
-**Snapshot date:** 2026-09-23  
-**Published release:** v1.0.2  
+**Snapshot date:** 2026-09-24  
+**Published release:** v1.1.0  
 **Default branch:** `main`
 
-This document describes current verified reality. Historical phase documents are retained elsewhere under `docs/` and are not authoritative when they conflict with current source, tests, releases, or this snapshot.
+This document describes current verified reality. Historical phase documents under `docs/` are retained for provenance and are not authoritative when they conflict with current source, tests, releases, or this snapshot.
 
 ## Status Legend
 
@@ -16,19 +16,25 @@ This document describes current verified reality. Historical phase documents are
 
 ## Shipped Product
 
-Job Ranger v1.0.2 is a functional Electron desktop application with:
+Job Ranger v1.1.0 is a functional Electron desktop job-search application with:
 
-- local SQLite-backed persistence;
-- company/career-source management;
+- local SQLite-backed company, job, filter, settings, and scrape-history persistence;
+- company/career-source management and scheduled/background monitoring;
+- Career Profile onboarding;
+- deterministic job-fit scoring and evidence-oriented explanations;
+- local Applications tracking and notes;
 - job collection and review;
 - filters for title, keywords, salary, and location;
-- scrape history and runtime settings;
 - desktop notifications;
 - minimize-to-tray behavior;
 - Windows x64 release artifacts;
 - macOS x64 and arm64 release artifacts.
 
 No supported packaged Linux release is currently published.
+
+### Career Intelligence persistence boundary
+
+Career Profile and Applications are local-first and shipped in v1.1.0, but currently use renderer-local storage. They have not yet moved behind the desktop backend/SQLite repository boundary. That migration remains planned durability work and should not be obscured by the fact that the UI is already functional.
 
 ## Source Handling
 
@@ -63,7 +69,17 @@ Unknown or unsupported sources are allowed to fail honestly rather than being re
 
 ## Architecture State
 
-The renderer is a React application. It communicates with the desktop backend through an Electron preload/IPC boundary. The backend owns persistence, scraping, runtime settings, and OS integration.
+The renderer is a React application. It communicates with the desktop backend through an Electron preload/IPC boundary. The backend owns SQLite persistence, scraping, runtime settings, and OS integration.
+
+The v1.1.0 user-facing renderer includes:
+
+- Home;
+- Find Jobs;
+- Applications;
+- Career Profile;
+- Companies;
+- Filters;
+- Settings.
 
 Current renderer safeguards include:
 
@@ -74,60 +90,82 @@ Current renderer safeguards include:
 - a renderer Content Security Policy;
 - sandboxing on the separate help window.
 
+## Runtime and Toolchain Baseline
+
+The coordinated modernization previously tracked under issue #38 is implemented:
+
+- Node.js `>=22.12.0`;
+- Electron `44.4.5`;
+- Vite `8.x`;
+- TypeScript `7.0.2`;
+- `@vitejs/plugin-react` `6.1.1`;
+- `@electron/notarize` `3.1.1`;
+- `@electron/fuses` `2.1.3`;
+- `concurrently` `10.x`.
+
+The macOS Electron Builder hook remains CommonJS because Electron Builder loads it that way, and dynamically imports the ESM-only notarization package. Notarization is skipped when Apple credentials are unavailable rather than failing ordinary non-notarized validation.
+
+The stale root-level Electron `version` artifact from the old 28.3.3 runtime has been removed. `package.json` is the application-version source used by Electron Builder.
+
 ## Quality and Automation
 
-The repository now has pull-request and `main` CI. The CI path:
+The repository has pull-request and `main` CI. The standard CI path:
 
 1. installs dependencies with `npm ci`;
-2. runs `npm run repo:health`;
-3. therefore typechecks, builds, compiles the desktop source, and runs the backend smoke suite.
+2. reports the npm dependency audit;
+3. runs `npm run repo:health`;
+4. therefore typechecks, builds, compiles the desktop source, and runs the backend smoke suite.
 
-Additional unit and Electron Playwright E2E commands exist in the repository, but `repo:health` should not be misrepresented as equivalent to complete cross-platform product validation.
+Runtime/release validation also uses the Electron Playwright E2E suite. The current suite passes 11/11 on the modernized Electron 44 runtime.
 
-Dependabot is configured and routine non-major updates are grouped. Major upgrades are intentionally handled as migrations rather than merged automatically.
+The v1.1.0 release-prep dependency audit reports zero known npm vulnerabilities.
 
-## Active Development
+Dependabot remains configured with grouped routine non-major updates. Major runtime/toolchain changes are treated as coordinated migrations rather than blindly merged bot proposals.
 
-### Career intelligence foundation
+## Career Intelligence Foundation
 
-PR #28 is active and **not part of `main` or v1.0.2**.
+The former PR #28 is merged and forms the first native Career Intelligence slice.
 
-Its current scope includes:
+Implemented behavior includes:
 
 - plain-language Career Profile UI;
-- an HVAC starter profile that does not invent credentials;
+- HVAC starter target roles without fabricated credentials;
 - deterministic fit scoring and explanations;
-- an Applications workspace;
-- a consumer-oriented navigation flow;
-- Career-Ops lineage/attribution work under the upstream MIT license.
+- Applications workspace;
+- consumer-oriented navigation;
+- Career-Ops lineage/attribution under the upstream MIT license.
 
-Known follow-ups on that branch include moving profile/application persistence into SQLite, first-run onboarding, consumer-friendly source discovery, resume/evidence handling, optional inference, and scorer tests.
+Known follow-ups include:
 
-### Toolchain modernization
-
-Issue #38 tracks coordinated modernization of Node, Electron, Vite, and Electron ecosystem tooling.
-
-The current `main` stack still uses Electron 28 and Node `>=20.19.0`. Major Dependabot proposals must not be confused with an accepted supported-runtime target.
+- moving Career Profile persistence into SQLite/backend;
+- moving Applications persistence into SQLite/backend;
+- stronger deterministic scorer test coverage;
+- first-run onboarding routing;
+- consumer-friendly source discovery;
+- resume/evidence handling;
+- optional provider-agnostic inference.
 
 ## Known Gaps
 
 - Users still need to know which employer career pages to add.
-- Career-profile and application-tracking work is not yet shipped.
-- The current Electron line needs deliberate modernization.
+- Career Profile and Applications are local but not yet SQLite-backed.
 - Linux distribution is not currently a supported release path.
-- Release signing/notarization behavior depends on available platform credentials.
+- Signing/notarization behavior depends on release-environment credentials.
 - Source extraction remains inherently variable for dynamic third-party career sites.
-- The product still exposes more technical configuration than the long-term consumer UX should require.
+- The product still exposes more technical source/runtime configuration than the long-term consumer UX should require.
+- Resume import and factual evidence provenance are not implemented yet.
 
-## Current Source-of-Truth Documents
+## Current Sources of Truth
 
 - `README.md`
 - `HELP.md`
+- `CHANGELOG.md`
 - `docs/CONCEPT.md`
 - `docs/SYSTEM_STATE.md`
 - `docs/ARCHITECTURE_PLAN.md`
 - `docs/planning/PLAN.md`
 - `GOVERNANCE.md`
 - `SECURITY.md`
+- `THIRD_PARTY_NOTICES.md`
 
 See `docs/README.md` for the distinction between current documentation and historical planning artifacts.

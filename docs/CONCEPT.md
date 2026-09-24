@@ -6,9 +6,20 @@ Job Ranger helps ordinary job seekers discover, monitor, evaluate, and manage jo
 
 ## Current Product Shape
 
-The shipped foundation is a local-first career-page monitor. Users add employer career sources, Job Ranger retrieves and classifies those sources, stores discovered jobs locally, filters results, and can notify the user when new opportunities appear.
+Job Ranger v1.1.0 combines a local-first career-page monitor with the first native Career Intelligence workflow.
 
-The active product direction expands that foundation into a broader job-search workspace. Career profile, fit guidance, and application tracking are being developed as native Job Ranger capabilities rather than as a second technical runtime bolted onto the side.
+Users can:
+
+- create a Career Profile with roles, location, pay, skills, credentials, and work preferences;
+- add employer career sources for Job Ranger to monitor;
+- collect and review jobs locally;
+- see deterministic fit guidance based on profile data and collected listing evidence;
+- track promising jobs through application states and notes;
+- filter results and receive desktop notifications.
+
+Career Profile, fit guidance, and application tracking are native Job Ranger capabilities rather than a second technical runtime bolted onto the side.
+
+The current product still expects users to know which employer career pages to add. Consumer-friendly source discovery, durable backend persistence for Career Profile/Applications, resume evidence handling, and optional inference remain future product slices.
 
 ## Design Principles
 
@@ -24,13 +35,15 @@ Core search state belongs on the user's machine by default. A future remote serv
 
 ### Deterministic before inferential
 
-Discovery, storage, filters, monitoring, status tracking, reminders, and explicit requirement matching should continue to work without inference.
+Discovery, storage, filters, monitoring, status tracking, and explicit requirement matching should continue to work without inference.
 
 Optional inference can later improve fuzzy fit analysis, resume tailoring, interview preparation, career pivots, and explanatory guidance. It should make Job Ranger more capable, not decide whether the application opens its front door.
 
 ### Evidence before confidence
 
 Job Ranger must not invent user experience, certifications, licenses, compensation, job requirements, or application history. Ambiguous information should be presented as something to verify, not transformed into certainty by prose quality.
+
+The Career Profile starter flows are intentionally conservative. For example, the HVAC starter can suggest target job titles but does not grant the user licenses, certifications, or skills they did not enter themselves.
 
 ### Honest source support
 
@@ -49,7 +62,8 @@ Job Ranger is not currently:
 - a cloud-account requirement wrapped around a desktop app;
 - an AI-only career assistant;
 - an autonomous mass-application bot;
-- a guarantee that every career page can be extracted successfully.
+- a guarantee that every career page can be extracted successfully;
+- a prediction engine that can know whether an employer will hire the user.
 
 ## Success Standard
 
