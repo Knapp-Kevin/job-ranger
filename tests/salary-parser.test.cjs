@@ -1,5 +1,5 @@
 const assert = require("assert");
-const { parseSalary } = require("../electron/salary-parser.cjs");
+const { parseSalary } = require("../electron/runtime/electron/src/salary-parser.cjs");
 
 // Range formats
 assert.deepStrictEqual(
