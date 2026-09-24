@@ -6,13 +6,16 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const electron_1 = require("electron");
 const node_path_1 = __importDefault(require("node:path"));
 const backend_cjs_1 = require("./backend.cjs");
+const career_backend_cjs_1 = require("./career-backend.cjs");
 const validators_cjs_1 = require("./validators.cjs");
+const career_validators_cjs_1 = require("./career-validators.cjs");
 const browser_loader_cjs_1 = require("./browser-loader.cjs");
 const tray_notifications_cjs_1 = require("./tray-notifications.cjs");
 const moduleDirectory = __dirname;
 let mainWindow = null;
 let helpWindow = null;
 let backend = null;
+let careerBackend = null;
 let isQuitting = false;
 function createWindow() {
     mainWindow = new electron_1.BrowserWindow({
@@ -159,6 +162,12 @@ function requireBackend() {
     }
     return backend;
 }
+function requireCareerBackend() {
+    if (!careerBackend) {
+        throw new Error("Job Ranger career backend is not initialized");
+    }
+    return careerBackend;
+}
 function registerIpcHandlers() {
     electron_1.ipcMain.handle("app:get-version", () => electron_1.app.getVersion());
     electron_1.ipcMain.handle("app:get-platform", () => process.platform);
@@ -183,14 +192,29 @@ function registerIpcHandlers() {
     electron_1.ipcMain.handle("settings:get", () => requireBackend().getSettings());
     electron_1.ipcMain.handle("settings:update", (_event, update) => requireBackend().updateSettings((0, validators_cjs_1.validateSettingsUpdate)(update)));
     electron_1.ipcMain.handle("scrape-runs:list-recent", (_event, limit) => requireBackend().listRecentScrapeRuns(limit === undefined ? undefined : (0, validators_cjs_1.validateFiniteNumber)(limit, "Scrape run limit")));
+    electron_1.ipcMain.handle("career:get-profile", () => requireCareerBackend().getProfile());
+    electron_1.ipcMain.handle("career:save-profile", (_event, profile) => requireCareerBackend().saveProfile((0, career_validators_cjs_1.validateCareerProfile)(profile)));
+    electron_1.ipcMain.handle("career:migrate-legacy", (_event, payload) => requireCareerBackend().migrateLegacy((0, career_validators_cjs_1.validateLegacyCareerMigration)(payload)));
+    electron_1.ipcMain.handle("applications:list", () => requireCareerBackend().listApplications());
+    electron_1.ipcMain.handle("applications:track", (_event, jobId) => requireCareerBackend().trackApplication((0, validators_cjs_1.validateId)(jobId, "Job id")));
+    electron_1.ipcMain.handle("applications:update", (_event, id, update) => requireCareerBackend().updateApplication((0, validators_cjs_1.validateId)(id, "Application id"), (0, career_validators_cjs_1.validateApplicationUpdate)(update)));
+    electron_1.ipcMain.handle("applications:delete", (_event, id) => requireCareerBackend().deleteApplication((0, validators_cjs_1.validateId)(id, "Application id")));
 }
 electron_1.app.whenReady().then(async () => {
     try {
+        const dataDirectory = node_path_1.default.join(electron_1.app.getPath("userData"), "data");
         backend = new backend_cjs_1.JobScoutBackend({
-            dataDirectory: node_path_1.default.join(electron_1.app.getPath("userData"), "data"),
+            dataDirectory,
             browserPageLoader: browser_loader_cjs_1.loadPageHtmlInHiddenWindow,
         });
         await backend.initialize();
+        const systemStatus = await backend.getSystemStatus(process.platform);
+        careerBackend = new career_backend_cjs_1.CareerBackend({
+            dataDirectory,
+            databasePath: systemStatus.databasePath,
+            sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+        });
+        await careerBackend.initialize();
         registerIpcHandlers();
         createWindow();
         createMenu();
