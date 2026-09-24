@@ -1,6 +1,6 @@
 # Documentation Index
 
-Job Ranger documentation is divided into current guidance, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
+Job Ranger documentation is divided into current guidance, active design/research, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
 
 ## Current Sources of Truth
 
@@ -11,13 +11,22 @@ Job Ranger documentation is divided into current guidance, validation evidence, 
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history and notable changes. |
 | [`CONCEPT.md`](./CONCEPT.md) | Product intent, principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Current factual repository/product snapshot. |
-| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and intended evolution. |
+| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and accepted intended evolution. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Active roadmap and prioritized next work. |
 | [`BRANDING.md`](./BRANDING.md) | Canonical visual assets and brand usage. |
 | [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required third-party attribution and independence/trademark boundaries. |
 | [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, status language, merge and release rules. |
 | [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Contributor workflow and quality expectations. |
 | [`../SECURITY.md`](../SECURITY.md) | Security posture and reporting guidance. |
+
+## Active Design and Research
+
+- [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md) is the accepted implementation architecture for the next-phase Career Evidence program: provenance, requirement/evidence mapping, deterministic resume generation, truth/parseability/relevance gates, managed artifacts, and application-scoped resume versions. Exact database/API contracts are finalized during R0 before implementation.
+- [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md) is the QOR research synthesis behind the planned Career Evidence and Resume Intelligence phase. It evaluates resume consumers, document formats, ATS/parser constraints, truthful tailoring, import provenance, Career-Ops lessons, and an evidence-first product model.
+- [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md) applies the maintained Technical Capability Catalog to resume/import intelligence. It identifies permissively licensed candidates, rejects incompatible licensing paths, and proposes a bounded parser bake-off before Job Ranger adopts an import dependency.
+- [`research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](./research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md) reconciles the Technical Capability Catalog across Job Ranger's broader product surface: source discovery/acquisition, fit intelligence, applications, follow-up, interview preparation, notifications, inference, export, and security boundaries. Its central conclusion is to keep a native vertical product core and add only narrow replaceable adapters where a real external capability is needed.
+
+Research documents provide supporting evidence and alternatives. `ARCHITECTURE_PLAN.md` and `planning/PLAN.md` carry the accepted direction; planned functionality is not claimed as shipped until implementation and release evidence exists.
 
 ## Validation Evidence
 
@@ -31,10 +40,11 @@ The current documentation baseline reflects:
 
 - Career Profile and deterministic fit guidance on `main`;
 - Applications tracking on `main`;
+- occupation-agnostic Career Profile onboarding;
 - Career-Ops attribution preserved without embedding its runtime;
 - Node.js 22.12+, Electron 44.4.5, Vite 8, and TypeScript 7;
 - the completed coordinated modernization formerly tracked by issue #38;
-- Windows x64 and macOS x64/arm64 release packaging;
+- Windows x64 and macOS x64/arm64 v1.1.2 release packaging;
 - the explicit transitional persistence boundary for Career Profile and Applications.
 
 ## Historical Planning Records
