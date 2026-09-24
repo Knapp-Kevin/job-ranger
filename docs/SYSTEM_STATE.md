@@ -1,7 +1,7 @@
 # System State
 
 **Snapshot date:** 2026-09-24  
-**Release candidate:** v1.1.1  
+**Published release:** v1.1.1  
 **Default branch:** `main`
 
 This document describes current verified reality. Historical phase documents under `docs/` are retained for provenance and are not authoritative when they conflict with current source, tests, releases, or this snapshot.
@@ -10,14 +10,13 @@ This document describes current verified reality. Historical phase documents und
 
 - **Shipped:** available in a published GitHub Release.
 - **Implemented on main:** merged into the default branch, whether or not a new release has been cut.
-- **In release validation:** merged implementation with release packaging/version work still being completed.
 - **In development:** active branch or pull request, not yet part of `main`.
 - **Planned:** accepted direction without completed implementation.
 - **Historical:** retained for provenance only.
 
-## Product State
+## Shipped Product
 
-The v1.1 feature line is a functional Electron desktop job-search application with:
+Job Ranger v1.1.1 is a functional Electron desktop job-search application with:
 
 - local SQLite-backed company, job, filter, settings, and scrape-history persistence;
 - company/career-source management and scheduled/background monitoring;
@@ -28,12 +27,10 @@ The v1.1 feature line is a functional Electron desktop job-search application wi
 - filters for title, keywords, salary, and location;
 - desktop notifications;
 - minimize-to-tray behavior;
-- Windows x64 packaging;
-- macOS x64 and arm64 packaging.
+- a self-contained Windows x64 installer;
+- macOS x64 and arm64 DMG/ZIP artifacts.
 
-v1.1.0 published the macOS v1.1 artifacts, but its Windows builder exposed that packaged Windows execution still depended on a host `sqlite3.exe`. That release therefore remains historical rather than the recommended Windows download.
-
-The v1.1.1 release candidate corrects that boundary by bundling and verifying the official SQLite Windows CLI and validating the packaged resolver on a real Windows runner. v1.1.1 is intended to become the first complete Windows + macOS release of the v1.1 line.
+v1.1.0 published the macOS v1.1 artifacts, but its Windows builder exposed that packaged Windows execution still depended on a host `sqlite3.exe`. v1.1.1 corrects that boundary and supersedes v1.1.0 for normal installation.
 
 No supported packaged Linux release is currently published.
 
@@ -97,7 +94,7 @@ Current renderer safeguards include:
 
 ## Runtime and Toolchain Baseline
 
-The coordinated modernization tracked under issue #38 is implemented:
+The coordinated modernization tracked under issue #38 is complete:
 
 - Node.js `>=22.12.0`;
 - Electron `44.4.5`;
@@ -125,7 +122,13 @@ The release workflow:
 5. packages it in the installed app's `resources` directory;
 6. verifies the packaged executable runs and is selected by the runtime resolver with `SQLITE3_PATH` removed.
 
-Windows Actions run `36017084154` passed this full package proof. See `docs/windows-package-validation.md`.
+Windows Actions run `36017084154` proved the package boundary before release, and the v1.1.1 Windows release builder subsequently passed and uploaded the installer.
+
+## macOS Release Packaging
+
+The v1.1.1 macOS artifacts were built from the immutable v1.1.1 tag and uploaded for both x64 and arm64.
+
+During the first v1.1.1 macOS release attempt, GitHub's hosted runner exposed an Android SDK `sqlite3` earlier on `PATH` than the system SQLite. The recovery build explicitly used `/usr/bin/sqlite3` for release smoke tests while still checking out the v1.1.1 tag. The durable release workflow now pins macOS release smoke tests to `/usr/bin/sqlite3` so future packaging is deterministic on hosted runners.
 
 ## Quality and Automation
 
@@ -138,7 +141,7 @@ The repository has pull-request and `main` CI. The standard CI path:
 
 Runtime/release validation also uses the Electron Playwright E2E suite. The current suite passes 11/11 on the modernized Electron 44 runtime.
 
-The v1.1.1 release-prep dependency audit reports zero known npm vulnerabilities.
+The v1.1.1 dependency audit reports zero known npm vulnerabilities.
 
 Dependabot remains configured with grouped routine non-major updates. Major runtime/toolchain changes are treated as coordinated migrations rather than blindly merged bot proposals.
 
