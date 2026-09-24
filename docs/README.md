@@ -22,6 +22,7 @@ Job Ranger documentation is divided into current guidance, active research, vali
 ## Active Research
 
 - [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md) is the QOR research synthesis for the planned resume/import intelligence phase. It evaluates resume consumers, document formats, ATS/parser constraints, truthful tailoring, import provenance, Career-Ops lessons, and a proposed evidence-first product architecture. It is research input, not yet a frozen architecture contract.
+- [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md) applies the maintained Technical Capability Catalog to the same program. It identifies permissively licensed import/rendering/career-tool candidates, rejects incompatible licensing paths, and proposes a bounded parser bake-off before Job Ranger adopts an import dependency.
 
 Research documents may propose future architecture or product behavior. They do not override current shipped-product documentation until those decisions are explicitly accepted and implemented.
 
