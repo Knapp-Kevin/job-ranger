@@ -10,10 +10,6 @@ function escapeSqlString(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
 }
 
-function withConnectionPragmas(statement: string): string {
-  return `PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS}; PRAGMA foreign_keys = ON; ${statement}`;
-}
-
 export function toSqlLiteral(value: unknown): string {
   if (value === null || value === undefined) {
     return "NULL";
@@ -112,8 +108,10 @@ export class SqliteClient {
   async exec(statement: string): Promise<void> {
     await this.ensureDatabaseDirectory();
     await execFileAsync(this.sqliteBinaryPath, [
+      "-cmd",
+      `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
-      withConnectionPragmas(statement),
+      `PRAGMA foreign_keys = ON; ${statement}`,
     ]);
   }
 
@@ -121,8 +119,10 @@ export class SqliteClient {
     await this.ensureDatabaseDirectory();
     const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
       "-json",
+      "-cmd",
+      `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
-      withConnectionPragmas(statement),
+      `PRAGMA foreign_keys = ON; ${statement}`,
     ]);
 
     const trimmed = stdout.trim();
