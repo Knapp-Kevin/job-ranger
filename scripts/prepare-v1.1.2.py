@@ -1,0 +1,136 @@
+from pathlib import Path
+
+readme = Path("README.md")
+text = readme.read_text()
+text = text.replace("releases/tag/v1.1.1", "releases/tag/v1.1.2")
+text = text.replace("release-v1.1.1-0f172a.svg", "release-v1.1.2-0f172a.svg")
+text = text.replace("Release v1.1.1", "Release v1.1.2")
+text = text.replace(
+    "releases/download/v1.1.1/Job.Ranger-v1.1.1-",
+    "releases/download/v1.1.2/Job.Ranger-v1.1.2-",
+)
+text = text.replace(
+    "**[Download Job Ranger v1.1.1 for Windows x64 (.exe)]",
+    "**[Download Job Ranger v1.1.2 for Windows x64 (.exe)]",
+)
+marker = "## What's New\n\n### v1.1.1 — current\n"
+replacement = """## What's New
+
+### v1.1.2 — current
+
+This patch turns the first Career Intelligence slice into a more genuinely career-agnostic consumer experience and fixes issues found during hands-on desktop review.
+
+- Restored readable inactive navigation in the Midnight theme by separating sidebar foreground treatment from inverse button text semantics.
+- Replaced dashboard text that looked like links with real contextual navigation actions for jobs, sources, and filters.
+- Simplified the sidebar header to the Job Ranger identity only; theme marketing copy and the redundant `Local desktop` pill no longer consume navigation space.
+- Removed the HVAC-specific starter and trade-specific placeholders from primary Career Profile onboarding.
+- Reframed target roles around current, adjacent, and reasonable stretch opportunities without turning target roles into claims about experience.
+- Generalized minimum compensation so users can set either an hourly or annual floor.
+- Added backward-compatible migration for existing v1 Career Profiles so saved hourly minimums are preserved.
+- Added Electron E2E coverage for actionable dashboard prompts and occupation-agnostic Career Profile behavior.
+
+### v1.1.1
+"""
+if marker not in text:
+    raise SystemExit("README What's New marker not found")
+text = text.replace(marker, replacement)
+text = text.replace(
+    "- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.",
+    "- Added **Career Profile** onboarding for target roles, location, pay, skills, credentials, and work preferences. The first iteration included one occupation-specific starter; v1.1.2 generalized the primary experience across careers.",
+)
+text = text.replace(
+    "Job Ranger v1.1.1 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:",
+    "Job Ranger v1.1.2 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:",
+)
+text = text.replace(
+    "**Job Ranger v1.1.1 is the current release.** It combines the established local career-page monitor with native Career Profile, deterministic fit guidance, and application tracking, and it corrects the Windows packaging defect found during the v1.1.0 release run.",
+    "**Job Ranger v1.1.2 is the current release.** It combines the established local career-page monitor with occupation-agnostic Career Profile onboarding, deterministic fit guidance, application tracking, and the cross-platform packaging fixes completed in v1.1.1.",
+)
+text = text.replace(
+    "| Windows release | **Shipped** | v1.1.1 Windows x64 installer with bundled SQLite runtime. |",
+    "| Windows release | **Shipped** | v1.1.2 Windows x64 installer with bundled SQLite runtime. |",
+)
+text = text.replace(
+    "| macOS releases | **Shipped** | v1.1.1 x64 and arm64 DMG/ZIP artifacts. |",
+    "| macOS releases | **Shipped** | v1.1.2 x64 and arm64 DMG/ZIP artifacts. |",
+)
+readme.write_text(text)
+
+help_file = Path("HELP.md")
+text = help_file.read_text().replace("v1.1.1", "v1.1.2")
+text = text.replace(
+    "- minimum pay;",
+    "- minimum pay and whether you think about it hourly or annually;",
+)
+text = text.replace(
+    "\nThe HVAC starter can add common HVAC target titles. It does **not** add certifications, licenses, or experience on your behalf.\n",
+    "\nAdd the roles you already know, adjacent roles that use similar strengths, and reasonable stretch roles you would genuinely consider. Target roles guide discovery; they do not become claims about experience you have not entered.\n",
+)
+text = text.replace(
+    "No. Career Profile intentionally relies on information the user supplies. The HVAC starter adds target job titles only and does not fabricate certifications or skills.",
+    "No. Career Profile intentionally relies on information the user supplies. Target roles can include adjacent or stretch opportunities, but they do not become claims about experience, licenses, certifications, or skills you do not have.",
+)
+help_file.write_text(text)
+
+changelog = Path("CHANGELOG.md")
+text = changelog.read_text()
+insertion = """## v1.1.2 - 2026-09-24
+
+### Fixed
+
+- Restored readable inactive sidebar navigation in the Midnight theme.
+- Replaced inert dashboard text styled like links with real contextual navigation to Find Jobs, Companies, and Filters.
+- Removed stale Alpha-facing workspace language from the released dashboard.
+
+### Changed
+
+- Removed the HVAC-specific starter and occupation-specific placeholders from primary Career Profile onboarding.
+- Reframed role targeting around current, adjacent, and reasonable stretch opportunities across careers.
+- Generalized minimum compensation from an hourly-only field to an hourly-or-annual preference.
+- Simplified the sidebar brand area by removing the theme description and redundant `Local desktop` pill.
+
+### Compatibility and validation
+
+- Existing v1 Career Profiles preserve their saved hourly minimum through the v2 profile migration.
+- Deterministic fit scoring compares listed compensation against the user's selected hourly or annual basis.
+- Repository-health validation and Electron E2E cover the updated navigation and Career Profile behavior.
+- Dependency audit remains at zero known npm vulnerabilities.
+
+"""
+heading = "## v1.1.1 - 2026-09-24\n"
+if heading not in text:
+    raise SystemExit("CHANGELOG v1.1.1 marker not found")
+text = text.replace(heading, insertion + heading, 1)
+text = text.replace(
+    "- HVAC starter targets that add common role titles without fabricating certifications, licenses, or experience.",
+    "- Career Profile role targeting for jobs the user would consider. The first iteration included one occupation-specific starter; v1.1.2 removed that product-level specialization and generalized onboarding across careers.",
+)
+changelog.write_text(text)
+
+state = Path("docs/SYSTEM_STATE.md")
+text = state.read_text()
+text = text.replace("**Published release:** v1.1.1", "**Published release:** v1.1.2")
+text = text.replace(
+    "Job Ranger v1.1.1 is a functional Electron desktop job-search application with:",
+    "Job Ranger v1.1.2 is a functional Electron desktop job-search application with:",
+)
+text = text.replace(
+    "The v1.1.1 dependency audit reports zero known npm vulnerabilities.",
+    "The v1.1.2 dependency audit reports zero known npm vulnerabilities.",
+)
+text = text.replace(
+    "- HVAC starter target roles without fabricated credentials;",
+    "- occupation-agnostic role targeting for current, adjacent, and reasonable stretch opportunities;\n- hourly or annual minimum-pay preferences with backward-compatible migration of existing hourly profiles;",
+)
+text = text.replace(
+    "The current suite passes 11/11 on the modernized Electron 44 runtime.",
+    "The current suite passes 13/13 on the modernized Electron 44 runtime.",
+)
+packaging_note = "v1.1.0 published the macOS v1.1 artifacts, but its Windows builder exposed that packaged Windows execution still depended on a host `sqlite3.exe`. v1.1.1 corrects that boundary and supersedes v1.1.0 for normal installation."
+state_note = packaging_note + "\n\nv1.1.2 retains that cross-platform packaging boundary and adds the first post-release UX correction pass: occupation-agnostic Career Profile onboarding, hourly/annual compensation preferences, accessible Midnight navigation, simplified sidebar branding, and real dashboard next-step actions."
+text = text.replace(packaging_note, state_note)
+state.write_text(text)
+
+for path in [Path("README.md"), Path("HELP.md"), Path("docs/SYSTEM_STATE.md")]:
+    if "HVAC starter" in path.read_text():
+        raise SystemExit(f"stale HVAC starter language remains in {path}")
