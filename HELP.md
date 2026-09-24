@@ -8,7 +8,7 @@ Job Ranger is a local-first desktop application for finding, monitoring, underst
 
 Use the latest published build from the repository's **Releases** page.
 
-Current v1.1.1 release options include:
+Current v1.1.2 release options include:
 
 - Windows x64 installer
 - macOS Apple Silicon (arm64) DMG or ZIP
@@ -16,7 +16,7 @@ Current v1.1.1 release options include:
 
 There is no supported packaged Linux release at this time.
 
-Windows users do **not** need to install SQLite separately. The v1.1.1 Windows package includes the SQLite runtime Job Ranger uses.
+Windows users do **not** need to install SQLite separately. The v1.1.2 Windows package includes the SQLite runtime Job Ranger uses.
 
 ### 2. Set up your Career Profile
 
@@ -24,12 +24,12 @@ Open **Career Profile** and add the information that is true for you:
 
 - target job titles;
 - home area and commute preference;
-- minimum pay;
+- minimum pay and whether you think about it hourly or annually;
 - skills you already use;
 - certifications and licenses you actually hold;
 - work/sector preferences.
 
-The HVAC starter can add common HVAC target titles. It does **not** add certifications, licenses, or experience on your behalf.
+Add the roles you already know, adjacent roles that use similar strengths, and reasonable stretch roles you would genuinely consider. Target roles guide discovery; they do not become claims about experience you have not entered.
 
 Career Profile is stored locally on this device. Job Ranger uses it to produce deterministic fit guidance without requiring an AI provider.
 
@@ -42,7 +42,7 @@ Career Profile is stored locally on this device. Job Ranger uses it to produce d
 5. Choose the polling frequency.
 6. Save the source.
 
-Job Ranger still expects the user to supply career pages in v1.1.1. Consumer-friendly source discovery is planned work.
+Job Ranger still expects the user to supply career pages in v1.1.2. Consumer-friendly source discovery is planned work.
 
 ### 4. Find and review jobs
 
@@ -188,7 +188,7 @@ Enable **Minimize to system tray on close** in Settings if you want Job Ranger t
 
 ### Windows reports that SQLite is missing
 
-Published v1.1.1 Windows installers include Job Ranger's SQLite runtime. If a packaged v1.1.1 installation still reports that `sqlite3.exe` is missing, treat that as a release defect and report the exact version and installation path.
+Published v1.1.2 Windows installers include Job Ranger's SQLite runtime. If a packaged v1.1.2 installation still reports that `sqlite3.exe` is missing, treat that as a release defect and report the exact version and installation path.
 
 Developers running from source still need a host `sqlite3` executable on `PATH` or an explicit `SQLITE3_PATH`.
 
@@ -200,7 +200,7 @@ Do not bypass platform security warnings for a file you did not obtain from a so
 
 ## Privacy and AI
 
-Job Ranger v1.1.1 does not require an AI provider or hosted Job Ranger account. Search state and the current Career Intelligence workflow are local-first.
+Job Ranger v1.1.2 does not require an AI provider or hosted Job Ranger account. Search state and the current Career Intelligence workflow are local-first.
 
 Network access is used to retrieve the career pages and job sources you ask Job Ranger to check.
 
@@ -214,7 +214,7 @@ No. Job Ranger helps discover, review, and track opportunities. Autonomous mass 
 
 ### Does Job Ranger invent qualifications to improve my match score?
 
-No. Career Profile intentionally relies on information the user supplies. The HVAC starter adds target job titles only and does not fabricate certifications or skills.
+No. Career Profile intentionally relies on information the user supplies. Target roles can include adjacent or stretch opportunities, but they do not become claims about experience, licenses, certifications, or skills you do not have.
 
 ### Does Job Ranger upload my search history to a hosted account?
 
@@ -222,7 +222,7 @@ No hosted account is required in the current product.
 
 ### Is Job Ranger cross-platform?
 
-Published v1.1.1 builds are provided for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
+Published v1.1.2 builds are provided for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
 
 ### Is every Workday/iCIMS/etc. careers page guaranteed to work?
 

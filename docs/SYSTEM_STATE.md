@@ -1,7 +1,7 @@
 # System State
 
 **Snapshot date:** 2026-09-24  
-**Published release:** v1.1.1  
+**Published release:** v1.1.2  
 **Default branch:** `main`
 
 This document describes current verified reality. Historical phase documents under `docs/` are retained for provenance and are not authoritative when they conflict with current source, tests, releases, or this snapshot.
@@ -16,7 +16,7 @@ This document describes current verified reality. Historical phase documents und
 
 ## Shipped Product
 
-Job Ranger v1.1.1 is a functional Electron desktop job-search application with:
+Job Ranger v1.1.2 is a functional Electron desktop job-search application with:
 
 - local SQLite-backed company, job, filter, settings, and scrape-history persistence;
 - company/career-source management and scheduled/background monitoring;
@@ -31,6 +31,8 @@ Job Ranger v1.1.1 is a functional Electron desktop job-search application with:
 - macOS x64 and arm64 DMG/ZIP artifacts.
 
 v1.1.0 published the macOS v1.1 artifacts, but its Windows builder exposed that packaged Windows execution still depended on a host `sqlite3.exe`. v1.1.1 corrects that boundary and supersedes v1.1.0 for normal installation.
+
+v1.1.2 retains that cross-platform packaging boundary and adds the first post-release UX correction pass: occupation-agnostic Career Profile onboarding, hourly/annual compensation preferences, accessible Midnight navigation, simplified sidebar branding, and real dashboard next-step actions.
 
 No supported packaged Linux release is currently published.
 
@@ -139,9 +141,9 @@ The repository has pull-request and `main` CI. The standard CI path:
 3. runs `npm run repo:health`;
 4. therefore typechecks, builds, compiles the desktop source, and runs the backend smoke suite.
 
-Runtime/release validation also uses the Electron Playwright E2E suite. The current suite passes 11/11 on the modernized Electron 44 runtime.
+Runtime/release validation also uses the Electron Playwright E2E suite. The current suite passes 13/13 on the modernized Electron 44 runtime.
 
-The v1.1.1 dependency audit reports zero known npm vulnerabilities.
+The v1.1.2 dependency audit reports zero known npm vulnerabilities.
 
 Dependabot remains configured with grouped routine non-major updates. Major runtime/toolchain changes are treated as coordinated migrations rather than blindly merged bot proposals.
 
@@ -152,7 +154,8 @@ The former PR #28 is merged and forms the first native Career Intelligence slice
 Implemented behavior includes:
 
 - plain-language Career Profile UI;
-- HVAC starter target roles without fabricated credentials;
+- occupation-agnostic role targeting for current, adjacent, and reasonable stretch opportunities;
+- hourly or annual minimum-pay preferences with backward-compatible migration of existing hourly profiles;
 - deterministic fit scoring and explanations;
 - Applications workspace;
 - consumer-oriented navigation;
