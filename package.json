@@ -13,9 +13,10 @@
   "scripts": {
     "dev": "vite",
     "desktop:clean": "node scripts/clean-electron-runtime.cjs",
-    "desktop:compile": "npm run desktop:clean && tsc -p tsconfig.electron.json",
+    "desktop:prepare": "node scripts/prepare-electron-runtime.cjs",
+    "desktop:compile": "npm run desktop:clean && npm run desktop:prepare && tsc -p tsconfig.electron.json",
     "desktop:verify": "node scripts/verify-electron-runtime.cjs",
-    "desktop:watch": "npm run desktop:clean && tsc -p tsconfig.electron.json --watch --preserveWatchOutput",
+    "desktop:watch": "npm run desktop:clean && npm run desktop:prepare && tsc -p tsconfig.electron.json --watch --preserveWatchOutput",
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "build": "vite build",
     "preview": "vite preview",
