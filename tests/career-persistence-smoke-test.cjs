@@ -3,13 +3,13 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 
-const { JobScoutBackend } = require("../electron/backend.cjs");
-const { CareerBackend } = require("../electron/career-backend.cjs");
-const { SqliteClient } = require("../electron/sqlite.cjs");
+const { JobScoutBackend } = require("../electron/runtime/electron/src/backend.cjs");
+const { CareerBackend } = require("../electron/runtime/electron/src/career-backend.cjs");
+const { SqliteClient } = require("../electron/runtime/electron/src/sqlite.cjs");
 const {
   canEvidenceSupportFactualClaim,
   evaluateResumeStatementTruth,
-} = require("../electron/career-contracts.cjs");
+} = require("../electron/runtime/src/shared/career-contracts.js");
 
 function createMockFetch() {
   return async (url) => {
