@@ -29,13 +29,21 @@ Anything incorporated into Job Ranger must preserve Job Ranger's MIT licensing b
 - **Defer** — potentially useful later, not justified in the first import slice.
 - **Reject direct reuse** — licensing or product-boundary mismatch prevents incorporation into the MIT product.
 
+## Selection principle
+
+The goal is not to build a parser collection.
+
+Job Ranger should prefer **one best-fit default parser** and add another only when a measured product gap justifies the additional packaging, security, licensing, and maintenance burden.
+
+The same principle applies to rendering. Tailit's Typst architecture is useful evidence, but Job Ranger already ships Chromium through Electron. The first resume renderer should therefore reuse the existing runtime unless a benchmark demonstrates that a second rendering engine materially improves output quality or reliability.
+
 ## Strongest catalog candidates
 
 ### 1. anydoc — OSS-0772
 
 **Repository:** `firecrawl/anydoc`  
 **License:** MIT  
-**Disposition:** **Adopt candidate for R1 import**
+**Disposition:** **Preferred R1 adoption candidate, pending benchmark**
 
 Why it is unusually well aligned:
 
@@ -50,7 +58,7 @@ Why it is unusually well aligned:
 
 Important boundary:
 
-- scanned/image-only PDF OCR is **not local** when using anydoc's hosted OCR option; it sends the whole document to Firecrawl Parse.
+- scanned/image-only PDF OCR is **not local** when using anydoc's hosted OCR option; it sends the whole document to Firecrawl Parse;
 - Job Ranger must therefore keep hosted OCR disabled by default. `NeedsOcr` should become a visible import state, not an automatic network fallback.
 
 Recommended spike:
@@ -60,6 +68,7 @@ Recommended spike:
 3. Record parser name/version and warnings in the import record.
 4. Compare extracted text/structure against the benchmark corpus.
 5. Validate malformed/encrypted/resource-limit behavior with adversarial fixtures.
+6. Re-parse Job Ranger-generated PDFs and evaluate whether the same dependency can serve output parseability verification.
 
 ### 2. EasyPeasyCV — OSS-1325
 
@@ -106,7 +115,8 @@ Recommendation:
 - harvest schema-validation, diff/tailoring, and adapter concepts;
 - consider JSON Resume as an import/export interchange format;
 - do **not** make JSON Resume Job Ranger's canonical evidence model;
-- do not bulk-copy Tailit templates. Review any desired template individually.
+- do not bulk-copy Tailit templates. Review any desired template individually;
+- do not adopt Typst merely because Tailit uses it. Job Ranger's first renderer should use the existing Electron/Chromium runtime and keep the renderer contract replaceable.
 
 ### 4. Career-Ops — AC-0008 / upstream `career-ops-hq/career-ops`
 
@@ -129,7 +139,7 @@ Job Ranger should continue to harvest these mechanisms natively rather than embe
 
 **Repository:** `microsoft/markitdown`  
 **License:** MIT  
-**Disposition:** **Benchmark / possible secondary adapter**
+**Disposition:** **Benchmark / possible fallback only if justified**
 
 Useful for:
 
@@ -142,13 +152,13 @@ Burden/caveat:
 - Python integration is less natural for the Electron desktop than anydoc's Node binding;
 - optional MarkItDown OCR currently pulls in PyMuPDF, whose AGPL/commercial licensing materially changes the boundary.
 
-Recommendation: benchmark local core conversion, but do not enable or inherit the optional OCR dependency without a separate license review.
+Recommendation: benchmark local core conversion, but do not enable or inherit the optional OCR dependency without a separate license review. Do not ship it beside anydoc unless the benchmark demonstrates a meaningful uncovered format/quality gap.
 
 ### 6. Docling — OSS-0096
 
 **Repository:** `docling-project/docling`  
 **License:** MIT  
-**Disposition:** **Benchmark; possible advanced parser later**
+**Disposition:** **Advanced parser benchmark, not default**
 
 Strengths:
 
@@ -168,7 +178,7 @@ Model/OCR components also require their own license review. MIT on the Docling r
 
 **Repository:** `run-llama/liteparse`  
 **License:** Apache-2.0  
-**Disposition:** **Benchmark / PDF-specialized candidate**
+**Disposition:** **PDF spatial/read-order benchmark**
 
 Potential Job Ranger value:
 
@@ -181,6 +191,8 @@ Potential Job Ranger value:
 This may prove more useful for **verifying PDF output and reading order** than for general resume import.
 
 Apache-2.0 is compatible with Job Ranger's MIT project, but Apache attribution/NOTICE obligations must be preserved where applicable.
+
+Do not adopt it if the selected default parser can adequately verify the generated PDF itself.
 
 ### 8. Unstructured — OSS-0098
 
@@ -251,7 +263,7 @@ They are useful for understanding resume transformation and authorization failur
 
 ## Recommended Job Ranger import architecture after catalog review
 
-The catalog strongly supports a layered adapter architecture rather than one universal parser.
+The catalog supports a layered adapter architecture, but not a permanently multi-parser runtime.
 
 ```text
 source artifact
@@ -259,17 +271,16 @@ source artifact
 format sniff / safety precheck
     ↓
 ImportAdapter
-    ├── anydoc (R1 default candidate)
-    ├── PDF-spatial adapter (later / LiteParse candidate)
-    ├── advanced-layout adapter (later / Docling candidate)
-    └── OCR adapter (later, explicit capability)
-    ↓
+    └── selected default parser
+          ↓
 raw extraction + parser evidence
     ↓
 normalization into Candidate Evidence
     ↓
 human confirmation
 ```
+
+Alternative parsers remain development benchmarks or future fallbacks until evidence requires them.
 
 A parser is not allowed to create profile truth merely because it returned structured output.
 
@@ -327,6 +338,8 @@ Candidate Evidence (canonical)
 
 JSON Resume is attractive as an interoperability surface because other tools already use it. It is not sufficient as the provenance-rich internal career record Job Ranger needs.
 
+For the initial renderer, reuse Electron/Chromium and Job Ranger-owned HTML/CSS templates. Revisit Typst only if rendering benchmarks or future DOC/PDF requirements show a material advantage.
+
 ## Proposed R1 tool bake-off
 
 Before adopting a parser dependency, run a bounded benchmark on the synthetic corpus proposed in the primary QOR research.
@@ -336,7 +349,7 @@ Minimum competitors:
 1. anydoc;
 2. MarkItDown;
 3. Docling;
-4. LiteParse for PDF-specific cases;
+4. LiteParse for PDF-specific/read-order cases;
 5. current simple extraction baseline, if one exists.
 
 Score each on:
@@ -353,7 +366,8 @@ Score each on:
 - cold/warm latency;
 - Electron packaging complexity;
 - fully local operation;
-- license and transitive-license clarity.
+- license and transitive-license clarity;
+- ability to re-parse generated Job Ranger PDFs for output verification.
 
 The winner does not need the most features. It needs the best product fit for ordinary resume imports.
 
@@ -373,13 +387,13 @@ For every adopted external component:
 
 ### Advance into R0/R1 evaluation
 
-- **anydoc** — strongest default-import candidate.
+- **anydoc** — preferred default-import candidate, pending benchmark.
 - **EasyPeasyCV** — structured editing/local UX reference.
 - **Tailit** — schema/tailoring/template-adapter reference, selective MIT code candidate.
 - **Career-Ops** — domain logic source for truth, relevance, ATS, and application-scoped artifacts.
-- **LiteParse** — PDF spatial/read-order benchmark.
+- **LiteParse** — PDF spatial/read-order benchmark only.
 - **Docling** — advanced parser benchmark.
-- **MarkItDown** — normalization benchmark and possible fallback.
+- **MarkItDown** — normalization benchmark/fallback candidate.
 
 ### Later capability lane
 
