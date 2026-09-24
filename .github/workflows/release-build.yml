@@ -83,7 +83,7 @@ jobs:
           & $packagedSqlite --version
 
           Remove-Item Env:SQLITE3_PATH -ErrorAction SilentlyContinue
-          $resolved = node -e "process.resourcesPath=process.argv[1]; delete process.env.SQLITE3_PATH; require('./electron/sqlite.cjs').resolveSqliteBinary().then((p)=>process.stdout.write(require('path').resolve(p))).catch((e)=>{console.error(e); process.exit(1);})" $resourcesPath
+          $resolved = node -e "process.resourcesPath=process.argv[1]; delete process.env.SQLITE3_PATH; require('./electron/runtime/electron/src/sqlite.cjs').resolveSqliteBinary().then((p)=>process.stdout.write(require('path').resolve(p))).catch((e)=>{console.error(e); process.exit(1);})" $resourcesPath
           $expected = (Resolve-Path $packagedSqlite).Path
           if ($resolved.Trim() -ne $expected) {
             throw "Runtime resolver selected '$resolved' instead of packaged SQLite '$expected'."
@@ -158,8 +158,7 @@ jobs:
           sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_128x128@2x.png
           sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_256x256.png
           sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_256x256@2x.png
-          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_512x512.png
-          cp public/ICON.png build/icon.iconset/icon_512x512@2x.png
+          sips -z 512 512 public/ICON.png build/icon.iconset/icon_512x512@2x.png
           iconutil -c icns build/icon.iconset -o build/icon.icns
 
       - name: Build release artifacts
