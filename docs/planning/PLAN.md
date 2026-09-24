@@ -67,9 +67,9 @@ Career Profile and Applications are functional but still renderer-local. Moving 
 
 ### Packaging, runtime, and quality
 
-- [x] Windows self-contained package validation for v1.1.1
-- [x] macOS x64 v1.1 packaging
-- [x] macOS arm64 v1.1 packaging
+- [x] Windows v1.1.1 self-contained installer published
+- [x] macOS x64 v1.1.1 DMG/ZIP published
+- [x] macOS arm64 v1.1.1 DMG/ZIP published
 - [x] Node.js 22.12+ baseline
 - [x] supported Electron 44.4.5 runtime
 - [x] Vite 8 / TypeScript 7 toolchain
@@ -83,7 +83,7 @@ Career Profile and Applications are functional but still renderer-local. Moving 
 
 ## Completed Modernization
 
-The coordinated runtime/toolchain migration tracked under issue #38 is complete in code and package validation for the v1.1.1 release candidate:
+The coordinated runtime/toolchain migration tracked under issue #38 is complete and published in v1.1.1:
 
 - [x] supported Electron target selected and adopted
 - [x] Node baseline raised deliberately
@@ -96,9 +96,10 @@ The coordinated runtime/toolchain migration tracked under issue #38 is complete 
 - [x] Electron E2E
 - [x] Windows packaging built and smoke-tested on a Windows runner
 - [x] Windows packaged runtime includes and resolves bundled SQLite without host installation
-- [x] macOS x64/arm64 packaging validation
+- [x] macOS x64/arm64 packaging built from the immutable v1.1.1 tag
+- [x] Windows and macOS artifact sets verified on the v1.1.1 GitHub Release
 
-Issue #38 should close only after v1.1.1 is published and both platform artifact sets are verified on the release page.
+The hosted macOS runner exposed an Android SDK `sqlite3` earlier on `PATH` than the system binary during the first release attempt. The durable release workflow now pins macOS release smoke tests to `/usr/bin/sqlite3`, and the successful v1.1.1 recovery build used the immutable release tag rather than a later source tree.
 
 Future major toolchain upgrades should follow the same migration discipline rather than arrive as disconnected bot merges.
 
@@ -193,6 +194,7 @@ Do not promote a source from best-effort to supported merely because one example
 
 - [x] complete Node/Electron/Vite/TypeScript modernization
 - [x] make Windows packaging self-contained for SQLite
+- [x] pin macOS release smoke tests to the system SQLite binary
 - [ ] maintain Windows release confidence on future releases
 - [ ] maintain macOS x64/arm64 release confidence on future releases
 - [ ] validate notarization with production Apple credentials whenever those credentials are available
