@@ -21,6 +21,9 @@ import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
 
 const moduleDirectory = __dirname;
+const applicationRoot = path.resolve(moduleDirectory, "../../../..");
+const distDirectory = path.join(applicationRoot, "dist");
+const appIconPath = path.join(distDirectory, "ICON.png");
 
 let mainWindow: BrowserWindow | null = null;
 let helpWindow: BrowserWindow | null = null;
@@ -42,14 +45,14 @@ function createWindow(): void {
       preload: path.join(moduleDirectory, "preload.cjs"),
       webSecurity: true,
     },
-    icon: path.join(moduleDirectory, "../public/ICON.png"),
+    icon: appIconPath,
   });
 
   if (process.env.NODE_ENV === "development") {
     void mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
-    void mainWindow.loadFile(path.join(moduleDirectory, "../dist/index.html"));
+    void mainWindow.loadFile(path.join(distDirectory, "index.html"));
   }
 
   mainWindow.once("ready-to-show", () => {
@@ -111,13 +114,13 @@ function openHelpWindow(): void {
       nodeIntegration: false,
       webSecurity: true,
     },
-    icon: path.join(moduleDirectory, "../public/ICON.png"),
+    icon: appIconPath,
   });
 
   if (process.env.NODE_ENV === "development") {
     void helpWindow.loadURL("http://localhost:5173/help.html");
   } else {
-    void helpWindow.loadFile(path.join(moduleDirectory, "../dist/help.html"));
+    void helpWindow.loadFile(path.join(distDirectory, "help.html"));
   }
 
   helpWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -300,7 +303,7 @@ app.whenReady().then(async () => {
     registerIpcHandlers();
     createWindow();
     createMenu();
-    createTray(moduleDirectory, mainWindow, () => app.quit());
+    createTray(appIconPath, mainWindow, () => app.quit());
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {
