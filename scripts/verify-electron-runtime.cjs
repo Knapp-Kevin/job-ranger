@@ -8,6 +8,7 @@ const packageJson = require(path.join(root, "package.json"));
 const builderConfig = require(path.join(root, "electron-builder.json"));
 
 const expectedMain = "electron/runtime/electron/src/main.cjs";
+const runtimePackagePath = path.join(root, "electron/runtime/package.json");
 const requiredRuntimeFiles = [
   expectedMain,
   "electron/runtime/electron/src/preload.cjs",
@@ -37,6 +38,14 @@ assert.equal(
   builderConfig.files?.includes("electron/**/*"),
   false,
   "electron-builder must not package the entire Electron source/mirror tree",
+);
+
+assert.ok(fs.existsSync(runtimePackagePath), "generated runtime package.json is missing");
+const runtimePackage = JSON.parse(fs.readFileSync(runtimePackagePath, "utf8"));
+assert.equal(
+  runtimePackage.type,
+  "commonjs",
+  "generated runtime must declare CommonJS so shared .js output matches Electron .cjs consumers",
 );
 
 for (const relativePath of requiredRuntimeFiles) {
