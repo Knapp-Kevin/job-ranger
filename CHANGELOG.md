@@ -2,6 +2,28 @@
 
 All notable user-facing, architecture, governance, and maintenance changes should be recorded here.
 
+## v1.1.2 - 2026-09-24
+
+### Fixed
+
+- Restored readable inactive sidebar navigation in the Midnight theme.
+- Replaced inert dashboard text styled like links with real contextual navigation to Find Jobs, Companies, and Filters.
+- Removed stale Alpha-facing workspace language from the released dashboard.
+
+### Changed
+
+- Removed the HVAC-specific starter and occupation-specific placeholders from primary Career Profile onboarding.
+- Reframed role targeting around current, adjacent, and reasonable stretch opportunities across careers.
+- Generalized minimum compensation from an hourly-only field to an hourly-or-annual preference.
+- Simplified the sidebar brand area by removing the theme description and redundant `Local desktop` pill.
+
+### Compatibility and validation
+
+- Existing v1 Career Profiles preserve their saved hourly minimum through the v2 profile migration.
+- Deterministic fit scoring compares listed compensation against the user's selected hourly or annual basis.
+- Repository-health validation and Electron E2E cover the updated navigation and Career Profile behavior.
+- Dependency audit remains at zero known npm vulnerabilities.
+
 ## v1.1.1 - 2026-09-24
 
 ### Fixed
@@ -28,7 +50,7 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 ### Added
 
 - Career Profile onboarding for target roles, location, pay floor, skills, credentials, and work preferences.
-- HVAC starter targets that add common role titles without fabricating certifications, licenses, or experience.
+- Career Profile role targeting for jobs the user would consider. The first iteration included one occupation-specific starter; v1.1.2 removed that product-level specialization and generalized onboarding across careers.
 - Deterministic job-fit scoring with plain-language reasons and concerns derived only from saved profile data and collected listing evidence.
 - Applications workspace with Interested, Applied, Interview, Offer, Rejected, and Withdrawn states plus local notes.
 - Career-Ops lineage and MIT attribution in `THIRD_PARTY_NOTICES.md`.

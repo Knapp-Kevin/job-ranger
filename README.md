@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.1"><img src="https://img.shields.io/badge/release-v1.1.1-0f172a.svg" alt="Release v1.1.1" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/release-v1.1.2-0f172a.svg" alt="Release v1.1.2" /></a>
   <a href="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml"><img src="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
@@ -21,7 +21,7 @@
 
 ### Windows
 
-**[Download Job Ranger v1.1.1 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-windows-x64.exe)**
+**[Download Job Ranger v1.1.2 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-windows-x64.exe)**
 
 1. Download the `.exe` file.
 2. Open it.
@@ -33,8 +33,8 @@ The Windows installer is self-contained for Job Ranger's SQLite runtime. You do 
 
 Choose the build that matches your Mac:
 
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.1/Job.Ranger-v1.1.1-macos-x64.dmg)**
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-x64.dmg)**
 
 Open the downloaded `.dmg`, move Job Ranger into **Applications** if prompted, then launch it normally. If you are unsure which Mac you have, open **Apple menu → About This Mac** and look for either an Apple M-series chip or an Intel processor.
 
@@ -42,7 +42,20 @@ Prefer to inspect the release first? See the [latest Job Ranger release](https:/
 
 ## What's New
 
-### v1.1.1 — current
+### v1.1.2 — current
+
+This patch turns the first Career Intelligence slice into a more genuinely career-agnostic consumer experience and fixes issues found during hands-on desktop review.
+
+- Restored readable inactive navigation in the Midnight theme by separating sidebar foreground treatment from inverse button text semantics.
+- Replaced dashboard text that looked like links with real contextual navigation actions for jobs, sources, and filters.
+- Simplified the sidebar header to the Job Ranger identity only; theme marketing copy and the redundant `Local desktop` pill no longer consume navigation space.
+- Removed the HVAC-specific starter and trade-specific placeholders from primary Career Profile onboarding.
+- Reframed target roles around current, adjacent, and reasonable stretch opportunities without turning target roles into claims about experience.
+- Generalized minimum compensation so users can set either an hourly or annual floor.
+- Added backward-compatible migration for existing v1 Career Profiles so saved hourly minimums are preserved.
+- Added Electron E2E coverage for actionable dashboard prompts and occupation-agnostic Career Profile behavior.
+
+### v1.1.1
 
 This patch completes the v1.1 cross-platform release by fixing the Windows packaging defect exposed during the v1.1.0 release run.
 
@@ -56,7 +69,7 @@ This patch completes the v1.1 cross-platform release by fixing the Windows packa
 
 The v1.1 feature release transformed Job Ranger from a career-page monitor into a broader local-first job-search companion.
 
-- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.
+- Added **Career Profile** onboarding for target roles, location, pay, skills, credentials, and work preferences. The first iteration included one occupation-specific starter; v1.1.2 generalized the primary experience across careers.
 - Added deterministic **job-fit scoring and plain-language fit guidance** based only on saved profile data and collected listing evidence.
 - Added the **Applications** workspace with status tracking and notes.
 - Reorganized navigation around Home → Find Jobs → Applications → Career Profile.
@@ -70,7 +83,7 @@ See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
 
 ## Start Using It
 
-Job Ranger v1.1.1 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:
+Job Ranger v1.1.2 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:
 
 1. Open **Career Profile** and enter the roles, location, pay floor, skills, and credentials that are true for you.
 2. Open **Companies** and add employer career pages you want Job Ranger to monitor.
@@ -85,7 +98,7 @@ For user-facing troubleshooting, see [HELP.md](./HELP.md).
 
 ## Status
 
-**Job Ranger v1.1.1 is the current release.** It combines the established local career-page monitor with native Career Profile, deterministic fit guidance, and application tracking, and it corrects the Windows packaging defect found during the v1.1.0 release run.
+**Job Ranger v1.1.2 is the current release.** It combines the established local career-page monitor with occupation-agnostic Career Profile onboarding, deterministic fit guidance, application tracking, and the cross-platform packaging fixes completed in v1.1.1.
 
 The application remains local first and useful without inference. Career Profile, deterministic fit guidance, application tracking, scraping, filters, and notifications do not require an AI provider. Optional inference may enrich future guidance, but it is not the key that opens the product.
 
@@ -119,8 +132,8 @@ Job Ranger automates and organizes the repetitive parts while leaving career dec
 | Filters | **Shipped** | Title, keyword, salary, and location criteria. |
 | Desktop notifications | **Shipped** | Configurable new-job and matched-job notifications. |
 | System tray behavior | **Shipped** | Optional minimize-to-tray operation. |
-| Windows release | **Shipped** | v1.1.1 Windows x64 installer with bundled SQLite runtime. |
-| macOS releases | **Shipped** | v1.1.1 x64 and arm64 DMG/ZIP artifacts. |
+| Windows release | **Shipped** | v1.1.2 Windows x64 installer with bundled SQLite runtime. |
+| macOS releases | **Shipped** | v1.1.2 x64 and arm64 DMG/ZIP artifacts. |
 | Linux distribution | **Not shipped** | No supported packaged Linux release is currently published. |
 | Resume/import intelligence | **Planned** | Must preserve factual evidence and remain useful without inference. |
 | Auto-apply | **Not a current product goal** | Job Ranger assists decisions rather than impersonating the user. |
