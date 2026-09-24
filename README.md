@@ -40,6 +40,34 @@ Open the downloaded `.dmg`, move Job Ranger into **Applications** if prompted, t
 
 Prefer to inspect the release first? See the [latest Job Ranger release](https://github.com/Knapp-Kevin/job-ranger/releases/latest).
 
+## What's New
+
+### v1.1.1 — current
+
+This patch completes the v1.1 cross-platform release by fixing the Windows packaging defect exposed during the v1.1.0 release run.
+
+- Windows is now **self-contained** for Job Ranger's SQLite runtime. No separate SQLite installation is required.
+- The Windows release workflow pins the official SQLite 3.53.4 x64 tools archive and verifies its published SHA3-256 before packaging.
+- Release validation proves the packaged `sqlite3.exe` exists, executes, and is the runtime-selected binary with `SQLITE3_PATH` removed.
+- The Windows download is standardized on the normal NSIS installer.
+- SQLite runtime provenance and Windows package-validation evidence are now part of the repository documentation.
+
+### v1.1.0
+
+The v1.1 feature release transformed Job Ranger from a career-page monitor into a broader local-first job-search companion.
+
+- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.
+- Added deterministic **job-fit scoring and plain-language fit guidance** based only on saved profile data and collected listing evidence.
+- Added the **Applications** workspace with status tracking and notes.
+- Reorganized navigation around Home → Find Jobs → Applications → Career Profile.
+- Upgraded the supported desktop runtime to **Electron 44.4.5**, **Node.js 22.12+**, **Vite 8**, and **TypeScript 7**.
+- Completed the accumulated dependency-security cleanup and modernized Electron packaging/notarization tooling.
+- Added repository branding, governance, CI, release documentation, and Career-Ops MIT attribution.
+
+The macOS v1.1.0 artifacts were published successfully. Its Windows builder exposed the missing bundled-SQLite boundary before a Windows asset was uploaded, which is why v1.1.1 supersedes it for normal installation.
+
+See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
+
 ## Start Using It
 
 Job Ranger v1.1.1 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:
@@ -60,32 +88,6 @@ For user-facing troubleshooting, see [HELP.md](./HELP.md).
 **Job Ranger v1.1.1 is the current release.** It combines the established local career-page monitor with native Career Profile, deterministic fit guidance, and application tracking, and it corrects the Windows packaging defect found during the v1.1.0 release run.
 
 The application remains local first and useful without inference. Career Profile, deterministic fit guidance, application tracking, scraping, filters, and notifications do not require an AI provider. Optional inference may enrich future guidance, but it is not the key that opens the product.
-
-## What Changed in v1.1.1
-
-- Made the Windows installer self-contained by bundling the official SQLite 3.53.4 x64 command-line runtime used by Job Ranger's desktop backend.
-- Added packaged-runtime resolution so Windows prefers the bundled `sqlite3.exe` before host `PATH`.
-- Hardened the Windows release supply chain by pinning the official SQLite tools archive and verifying its published SHA3-256 before extraction.
-- Added release validation that proves the packaged SQLite binary exists, executes, and is selected by the runtime resolver with `SQLITE3_PATH` removed.
-- Standardized the published Windows artifact on the NSIS installer target.
-- Added explicit SQLite provenance to `THIRD_PARTY_NOTICES.md` and durable Windows packaging evidence under `docs/`.
-
-v1.1.1 supersedes v1.1.0 as the first complete Windows + macOS release of the v1.1 feature line.
-
-## What Changed in v1.1.0
-
-- Added **Career Profile** onboarding, including an HVAC-friendly starter that never invents skills, licenses, or certifications.
-- Added deterministic **job-fit scoring and plain-language fit guidance** using only saved profile data and collected listing evidence.
-- Added a local **Applications** workspace with status tracking and notes.
-- Reorganized navigation around the user workflow: Home → Find Jobs → Applications → Career Profile.
-- Upgraded the supported desktop runtime to **Electron 44.4.5** and the development baseline to **Node.js 22.12+**.
-- Upgraded the build/toolchain stack to **Vite 8** and **TypeScript 7**.
-- Modernized Electron notarization/fuse tooling and repaired ESM/CJS boundaries.
-- Fixed intermittent SQLite lock contention with a bounded SQLite client timeout.
-- Completed a broad dependency-security cleanup. The release-prep dependency audit reports no known npm vulnerabilities.
-- Updated Electron E2E coverage to the current accessible UI.
-
-See [CHANGELOG.md](./CHANGELOG.md) for release history.
 
 ## Why Job Ranger Exists
 
