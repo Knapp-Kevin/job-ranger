@@ -1,5 +1,7 @@
 # Third-Party Notices
 
+## career-ops lineage
+
 Job Ranger is an independent project. Some career-search workflow concepts in Job Ranger's career intelligence work were informed by the open-source **career-ops** project by Santiago Fernández de Valderrama.
 
 - Upstream project: `career-ops-hq/career-ops`
@@ -34,3 +36,15 @@ SOFTWARE.
 ```
 
 Career-ops also publishes a separate trademark policy covering its project name and brand. Job Ranger's attribution above is descriptive lineage only and is intentionally written to avoid implying an official relationship.
+
+## SQLite
+
+Job Ranger's packaged Windows release includes the official SQLite command-line shell so normal users do not need to install a separate SQLite executable.
+
+- Project: SQLite
+- Distribution source: `sqlite.org`
+- Bundled Windows release line: SQLite 3.53.4 x64 command-line shell
+- Status: SQLite's authors dedicate the SQLite deliverable code to the public domain; no SQLite license is required for redistribution of the bundled executable.
+- Release integrity: the Windows release workflow downloads the pinned official tools archive and verifies its published SHA3-256 digest before extracting `sqlite3.exe`.
+
+SQLite is a separate project. Its inclusion does not imply endorsement of Job Ranger by the SQLite authors or Hwaci.
