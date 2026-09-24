@@ -4,7 +4,7 @@
 **Published release:** v1.1.2  
 **Default branch:** `main`
 
-This document describes verified repository/product reality. Published-release behavior and newer behavior implemented on `main` are intentionally distinguished.
+This document describes verified repository/product reality. Published-release behavior, default-branch behavior, and newer behavior in active pull requests are intentionally distinguished.
 
 ## Status Legend
 
@@ -34,11 +34,11 @@ The v1.1.2 installers still represent the pre-R0 persistence boundary: Career Pr
 
 No supported packaged Linux release is currently published.
 
-## Implemented on Main: R0 Career Intelligence Foundation
+## In Development: R0 Career Intelligence Foundation
 
-R0 of the Career Evidence and Resume Intelligence program moves Career Profile and Applications behind the trusted desktop backend boundary.
+R0 of the Career Evidence and Resume Intelligence program is implemented on PR #66 and tracked by issue #60. It is not yet part of `main` or the published v1.1.2 installers.
 
-Current `main` now provides:
+PR #66 provides:
 
 - SQLite-backed Career Profile persistence;
 - SQLite-backed Applications persistence;
@@ -57,7 +57,7 @@ Current `main` now provides:
 
 The R0 persistence contract is documented in `docs/design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`.
 
-### Career Evidence schema now established
+### Career Evidence schema established by R0
 
 R0 establishes durable contracts/tables for:
 
@@ -76,7 +76,7 @@ These contracts are foundation, not a claim that resume import or generation is 
 
 ### Truth authority
 
-The current deterministic invariant is:
+The deterministic R0 invariant is:
 
 - user-confirmed evidence may support factual generated claims;
 - user-authored evidence may support factual generated claims;
@@ -117,6 +117,8 @@ Unknown or unsupported sources are allowed to fail honestly rather than being re
 
 ## Current Architecture
 
+On `main`, the shipped v1.1.x Career Profile and Applications UI remains renderer-backed. PR #66 changes that persistence boundary to the following:
+
 ```text
 React renderer
     │
@@ -152,8 +154,8 @@ Current renderer safeguards include:
 
 Umbrella issue: #59.
 
-- **R0 / #60:** durable Career Intelligence persistence + Career Evidence contract freeze, implemented by PR #66.
-- **R1 / #61:** resume import + Career Evidence review, next active slice.
+- **R0 / #60:** durable Career Intelligence persistence + Career Evidence contract freeze, implemented by PR #66 and awaiting merge.
+- **R1 / #61:** resume import + Career Evidence review, next active slice after R0 lands.
 - **R2 / #62:** job requirement ↔ Career Evidence mapping.
 - **R3 / #63:** deterministic resume creation + artifact lifecycle.
 - **R4 / #64:** target-specific tailoring + optional inference.
@@ -205,9 +207,11 @@ The standard PR/main gate runs:
 5. Vite production build;
 6. Electron desktop compilation;
 7. backend smoke tests;
-8. Career persistence/migration/provenance smoke tests.
+8. Career persistence/migration/provenance smoke tests when the R0 branch is present.
 
-R0 validation additionally ran the full Electron Playwright E2E suite on the implementation branch after the packaged runtime was synchronized.
+PR #66 has passed `npm run repo:health`, including migrations 3/4, normalized Career Profile writes, authoritative application tracking, idempotent legacy migration, restart persistence, Career Evidence table presence, artifact-directory creation, and truth/provenance invariants.
+
+R0 validation also ran the full Electron Playwright E2E suite against the packaged runtime after source/runtime synchronization, and the suite passed 13/13.
 
 The current dependency audit reports zero known npm vulnerabilities.
 
