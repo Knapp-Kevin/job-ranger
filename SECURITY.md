@@ -4,7 +4,7 @@
 
 Job Ranger is a local-first personal desktop application. The latest published release and current `main` branch are the versions considered for security maintenance.
 
-The v1.1.0 line runs on the supported Electron 44.4.5 runtime and the coordinated Node 22.12 / Vite 8 / TypeScript 7 toolchain. It should still not be represented as a hardened enterprise endpoint or centrally managed security product.
+The v1.1.x line runs on the supported Electron 44.4.5 runtime and the coordinated Node 22.12 / Vite 8 / TypeScript 7 toolchain. It should still not be represented as a hardened enterprise endpoint or centrally managed security product.
 
 ## Security Model
 
@@ -25,7 +25,9 @@ These controls reduce risk but do not make arbitrary career pages trustworthy. J
 
 Job Ranger stores application state locally. Network access is used to retrieve job-source content and, where applicable, load career pages through Electron's browser facilities.
 
-SQLite-backed storage owns companies, jobs, filters, settings, and scrape history. Career Profile and Applications are also local in v1.1.0 but currently use renderer-local storage pending migration behind the desktop backend.
+SQLite-backed storage owns companies, jobs, filters, settings, and scrape history. Career Profile and Applications are also local in the v1.1.x line but currently use renderer-local storage pending migration behind the desktop backend.
+
+Published Windows packages include the official SQLite command-line runtime used by Job Ranger. The release workflow pins the SQLite tools archive and verifies its published SHA3-256 digest before extracting the bundled executable. Source/development runs may instead use `SQLITE3_PATH` or a host `sqlite3` executable.
 
 Do not add telemetry, remote account sync, or external inference transmission without an explicit product decision, clear user disclosure, and appropriate security/privacy review.
 
@@ -65,6 +67,6 @@ Fail closed where a malformed or deceptive source could cause unsafe navigation 
 
 Dependabot is enabled and pull-request CI performs clean installation, dependency audit reporting, and `npm run repo:health`. Major dependency upgrades are reviewed as coordinated migrations rather than merged solely because a bot opened a green pull request.
 
-The v1.1.0 release-prep dependency audit reports zero known npm vulnerabilities. The former issue #38 modernization moved the project to Node.js 22.12+, Electron 44.4.5, Vite 8, TypeScript 7, and current Node 22-compatible Electron tooling.
+The v1.1.1 release-prep dependency audit reports zero known npm vulnerabilities. The former issue #38 modernization moved the project to Node.js 22.12+, Electron 44.4.5, Vite 8, TypeScript 7, and current Node 22-compatible Electron tooling.
 
 Security status should continue to be established from the current lockfile and CI/release evidence rather than from stale historical dependency counts.
