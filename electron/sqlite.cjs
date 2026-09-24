@@ -12,6 +12,7 @@ const node_fs_1 = require("node:fs");
 const node_path_1 = __importDefault(require("node:path"));
 const node_util_1 = require("node:util");
 const execFileAsync = (0, node_util_1.promisify)(node_child_process_1.execFile);
+const SQLITE_BUSY_TIMEOUT_MS = 5000;
 function escapeSqlString(value) {
     return `'${value.replace(/'/g, "''")}'`;
 }
@@ -96,6 +97,8 @@ class SqliteClient {
     async exec(statement) {
         await this.ensureDatabaseDirectory();
         await execFileAsync(this.sqliteBinaryPath, [
+            "-cmd",
+            `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
             this.databasePath,
             `PRAGMA foreign_keys = ON; ${statement}`,
         ]);
@@ -104,6 +107,8 @@ class SqliteClient {
         await this.ensureDatabaseDirectory();
         const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
             "-json",
+            "-cmd",
+            `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
             this.databasePath,
             `PRAGMA foreign_keys = ON; ${statement}`,
         ]);

@@ -4,6 +4,7 @@ import path from "node:path";
 import { promisify } from "node:util";
 
 const execFileAsync = promisify(execFile);
+const SQLITE_BUSY_TIMEOUT_MS = 5000;
 
 function escapeSqlString(value: string): string {
   return `'${value.replace(/'/g, "''")}'`;
@@ -107,6 +108,8 @@ export class SqliteClient {
   async exec(statement: string): Promise<void> {
     await this.ensureDatabaseDirectory();
     await execFileAsync(this.sqliteBinaryPath, [
+      "-cmd",
+      `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
       `PRAGMA foreign_keys = ON; ${statement}`,
     ]);
@@ -116,6 +119,8 @@ export class SqliteClient {
     await this.ensureDatabaseDirectory();
     const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
       "-json",
+      "-cmd",
+      `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
       `PRAGMA foreign_keys = ON; ${statement}`,
     ]);
