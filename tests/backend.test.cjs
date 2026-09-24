@@ -4,7 +4,7 @@ const os = require("node:os");
 const path = require("node:path");
 const test = require("node:test");
 
-const { JobScoutBackend } = require("../electron/backend.cjs");
+const { JobScoutBackend } = require("../electron/runtime/electron/src/backend.cjs");
 
 function createMockFetch() {
   return async (url) => {
