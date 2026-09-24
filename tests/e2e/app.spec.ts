@@ -13,7 +13,14 @@ test.afterAll(async () => {
 
 async function navigateTo(
   page: ElectronAppFixture["page"],
-  destination: "Dashboard" | "Jobs" | "Companies" | "Filters" | "Settings",
+  destination:
+    | "Home"
+    | "Find Jobs"
+    | "Applications"
+    | "Career Profile"
+    | "Companies"
+    | "Filters"
+    | "Settings",
 ) {
   await page.getByRole("link", { name: destination, exact: true }).click();
 }
@@ -22,9 +29,7 @@ test.describe("Job Ranger E2E Tests", () => {
   test("app launches and shows dashboard", async () => {
     const { page } = fixture;
 
-    await expect(
-      page.getByRole("heading", { name: "Job Ranger Alpha", exact: true }),
-    ).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Job Ranger", exact: true })).toBeVisible();
     await expect(
       page.getByRole("heading", {
         name: "Build a calmer review ritual around the jobs you actually want.",
@@ -44,10 +49,26 @@ test.describe("Job Ranger E2E Tests", () => {
       }),
     ).toBeVisible();
 
-    await navigateTo(page, "Jobs");
+    await navigateTo(page, "Find Jobs");
     await expect(
       page.getByRole("heading", {
-        name: "Turn scraped listings into a review queue you can actually trust.",
+        name: "Spend your time on the jobs that look worth it.",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await navigateTo(page, "Applications");
+    await expect(
+      page.getByRole("heading", {
+        name: "Keep track of what happens after a job looks promising.",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await navigateTo(page, "Career Profile");
+    await expect(
+      page.getByRole("heading", {
+        name: "Tell Job Ranger what good work looks like for you.",
         exact: true,
       }),
     ).toBeVisible();
@@ -68,7 +89,7 @@ test.describe("Job Ranger E2E Tests", () => {
       }),
     ).toBeVisible();
 
-    await navigateTo(page, "Dashboard");
+    await navigateTo(page, "Home");
     await expect(
       page.getByRole("heading", {
         name: "Build a calmer review ritual around the jobs you actually want.",
@@ -117,10 +138,10 @@ test.describe("Job Ranger E2E Tests", () => {
   test("jobs page loads", async () => {
     const { page } = fixture;
 
-    await navigateTo(page, "Jobs");
+    await navigateTo(page, "Find Jobs");
     await expect(
       page.getByRole("heading", {
-        name: "Turn scraped listings into a review queue you can actually trust.",
+        name: "Spend your time on the jobs that look worth it.",
         exact: true,
       }),
     ).toBeVisible();
