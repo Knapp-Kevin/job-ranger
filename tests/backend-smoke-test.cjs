@@ -3,7 +3,7 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 
-const { JobScoutBackend } = require("../electron/backend.cjs");
+const { JobScoutBackend } = require("../electron/runtime/electron/src/backend.cjs");
 
 async function waitFor(condition, timeoutMs = 1000) {
   const startedAt = Date.now();
