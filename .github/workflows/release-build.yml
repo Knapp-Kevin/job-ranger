@@ -138,6 +138,13 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Verify system SQLite for release smoke tests
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -x /usr/bin/sqlite3
+          /usr/bin/sqlite3 --version
+
       - name: Generate macOS icon
         shell: bash
         run: |
@@ -158,6 +165,7 @@ jobs:
       - name: Build release artifacts
         run: npm run electron:build:mac
         env:
+          SQLITE3_PATH: /usr/bin/sqlite3
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
