@@ -161,15 +161,52 @@ Implemented behavior includes:
 - consumer-oriented navigation;
 - Career-Ops lineage/attribution under the upstream MIT license.
 
-Known follow-ups include:
+## Planned Career Evidence and Resume Intelligence Program
+
+The next accepted product architecture is broader than a resume generator.
+
+Job Ranger will add a native Career Evidence domain so imported career history, user-confirmed facts, job requirements, resume versions, application materials, and later interview preparation share one provenance-aware source of truth.
+
+Planned direction:
+
+```text
+Source Artifact
+      ↓
+Candidate Evidence
+      ↓
+Job Requirements ↔ Evidence Mapping
+      ↓
+Resume / Application-Material Projection
+      ↓
+Truth / Parseability / Relevance Review
+      ↓
+Versioned Artifact
+      ↓
+Application Lifecycle
+```
+
+This program is **planned, not shipped**.
+
+The accepted implementation direction is documented in:
+
+- `docs/design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`;
+- `docs/research/RESUME_INTELLIGENCE_QOR.md`;
+- `docs/research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`;
+- `docs/research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`.
+
+The Technical Capability Catalog review intentionally narrows rather than expands the dependency set. `firecrawl/anydoc` is the current preferred import-parser candidate, but it is not yet a production dependency and must pass the defined parser benchmark before adoption. Job Ranger will retain native ownership of evidence, requirement mapping, application state, rendering decisions, reminders, and career truth.
+
+Known next steps include:
 
 - moving Career Profile persistence into SQLite/backend;
 - moving Applications persistence into SQLite/backend;
-- stronger deterministic scorer test coverage;
-- first-run onboarding routing;
-- consumer-friendly source discovery;
-- resume/evidence handling;
-- optional provider-agnostic inference.
+- freezing Career Evidence/provenance contracts;
+- building the parser benchmark corpus;
+- implementing evidence import/review;
+- implementing requirement-to-evidence mapping;
+- deterministic resume generation and artifact linkage;
+- first-run onboarding/source discovery improvements;
+- optional provider-agnostic inference after deterministic paths exist.
 
 ## Known Gaps
 
@@ -190,9 +227,10 @@ Known follow-ups include:
 - `docs/SYSTEM_STATE.md`
 - `docs/ARCHITECTURE_PLAN.md`
 - `docs/planning/PLAN.md`
+- `docs/design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`
 - `docs/windows-package-validation.md`
 - `GOVERNANCE.md`
 - `SECURITY.md`
 - `THIRD_PARTY_NOTICES.md`
 
-See `docs/README.md` for the distinction between current documentation, validation evidence, and historical planning artifacts.
+See `docs/README.md` for the distinction between current documentation, active design/research, validation evidence, and historical planning artifacts.
