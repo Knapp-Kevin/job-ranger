@@ -1,0 +1,44 @@
+name: Synchronize v1.1.1 lockfile once
+
+on:
+  push:
+    branches:
+      - release/v1.1.1
+    paths:
+      - .github/workflows/_sync-v1.1.1-lock-once.yml
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Check out release branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/v1.1.1
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Regenerate lockfile metadata
+        run: npm install --package-lock-only --ignore-scripts
+
+      - name: Verify release version
+        run: |
+          node -e "const p=require('./package.json'),l=require('./package-lock.json'); if(p.version!=='1.1.1'||l.version!=='1.1.1'||l.packages[''].version!=='1.1.1') process.exit(1)"
+
+      - name: Commit lockfile and remove one-time workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/_sync-v1.1.1-lock-once.yml
+          git add package-lock.json
+          git commit -m "release: synchronize v1.1.1 lockfile"
+          git push origin HEAD:release/v1.1.1
