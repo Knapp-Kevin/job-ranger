@@ -67,9 +67,9 @@ Career Profile and Applications are functional but still renderer-local. Moving 
 
 ### Packaging, runtime, and quality
 
-- [x] Windows v1.1.0 release
-- [x] macOS x64 v1.1.0 release
-- [x] macOS arm64 v1.1.0 release
+- [x] Windows self-contained package validation for v1.1.1
+- [x] macOS x64 v1.1 packaging
+- [x] macOS arm64 v1.1 packaging
 - [x] Node.js 22.12+ baseline
 - [x] supported Electron 44.4.5 runtime
 - [x] Vite 8 / TypeScript 7 toolchain
@@ -83,7 +83,7 @@ Career Profile and Applications are functional but still renderer-local. Moving 
 
 ## Completed Modernization
 
-The coordinated runtime/toolchain migration formerly tracked under issue #38 is complete in the v1.1.0 line:
+The coordinated runtime/toolchain migration tracked under issue #38 is complete in code and package validation for the v1.1.1 release candidate:
 
 - [x] supported Electron target selected and adopted
 - [x] Node baseline raised deliberately
@@ -94,8 +94,11 @@ The coordinated runtime/toolchain migration formerly tracked under issue #38 is 
 - [x] clean `npm ci`
 - [x] `repo:health`
 - [x] Electron E2E
-- [x] Windows packaging validation
+- [x] Windows packaging built and smoke-tested on a Windows runner
+- [x] Windows packaged runtime includes and resolves bundled SQLite without host installation
 - [x] macOS x64/arm64 packaging validation
+
+Issue #38 should close only after v1.1.1 is published and both platform artifact sets are verified on the release page.
 
 Future major toolchain upgrades should follow the same migration discipline rather than arrive as disconnected bot merges.
 
@@ -189,6 +192,7 @@ Do not promote a source from best-effort to supported merely because one example
 ## Packaging Track
 
 - [x] complete Node/Electron/Vite/TypeScript modernization
+- [x] make Windows packaging self-contained for SQLite
 - [ ] maintain Windows release confidence on future releases
 - [ ] maintain macOS x64/arm64 release confidence on future releases
 - [ ] validate notarization with production Apple credentials whenever those credentials are available
