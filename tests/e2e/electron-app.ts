@@ -17,7 +17,7 @@ export interface ElectronAppFixture {
 }
 
 /**
- * Launch the Electron app for E2E testing.
+ * Launch the generated Electron runtime for E2E testing.
  *
  * Note: On some Windows environments, Playwright's Electron launcher may fail
  * with "bad option: --remote-debugging-port=0". This is a known compatibility
@@ -31,10 +31,13 @@ export interface ElectronAppFixture {
  */
 export async function launchElectronApp(): Promise<ElectronAppFixture> {
   const tempDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-e2e-"));
-  const mainPath = path.join(projectRoot, "electron/main.cjs");
+  const mainPath = path.join(
+    projectRoot,
+    "electron/runtime/electron/src/main.cjs",
+  );
   const electronExe = require("electron") as unknown as string;
 
-  console.log("Launching Electron with main:", mainPath);
+  console.log("Launching Electron with generated main:", mainPath);
   console.log("Electron exe:", electronExe);
   console.log("Temp data dir:", tempDataDir);
   console.log("Project root:", projectRoot);
