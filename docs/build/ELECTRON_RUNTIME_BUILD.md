@@ -23,6 +23,8 @@ The generated runtime is:
 2. create `electron/runtime/package.json` with `type: commonjs`;
 3. compile `electron/src/**` and `src/shared/**` into `electron/runtime/**` using `tsconfig.electron.json`.
 
+`tsconfig.electron.json` uses the supported TypeScript 7 `NodeNext` module/resolution model. `src/shared/package.json` declares the shared source boundary as CommonJS for that NodeNext compilation target, so the Electron build emits shared `.js` contracts that can be required from generated `.cjs` modules. The renderer still consumes the same original TypeScript through its Vite/Bundler toolchain; no second shared-contract implementation exists.
+
 The compiler preserves source-relative paths under the generated root. Important outputs include:
 
 ```text
@@ -43,7 +45,7 @@ electron/runtime/
         └── career-contracts.js
 ```
 
-The runtime package boundary is CommonJS so Electron `.cts` output and the compiled shared `.js` contracts use one executable module system. The renderer still consumes the original TypeScript through Vite and is unaffected by this runtime package declaration.
+The generated runtime package boundary is CommonJS so Electron `.cts` output and the compiled shared `.js` contracts use one executable module system.
 
 ## Runtime consumers
 
@@ -84,6 +86,8 @@ Because `npm run repo:health` executes `npm test`, pull-request and main CI vali
 Edit `electron/src/**` or `src/shared/**`. Never edit generated runtime files.
 
 If a new Electron runtime module is added, its source belongs under `electron/src`. If a contract is genuinely shared with the renderer, its source belongs under `src/shared`. Run `npm run desktop:compile` to regenerate the runtime locally.
+
+`src/shared/package.json` is part of the build contract, not a second package distribution. Its module declaration exists so NodeNext produces CommonJS copies for the Electron runtime target while the browser build continues to use Vite.
 
 ## Packaging rule
 
