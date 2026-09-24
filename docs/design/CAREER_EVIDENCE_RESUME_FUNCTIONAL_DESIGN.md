@@ -1,6 +1,6 @@
 # Functional Design: Career Evidence and Resume Intelligence
 
-**Status:** Proposed implementation architecture derived from QOR research  
+**Status:** Accepted implementation architecture for the next Job Ranger product program  
 **Date:** 2026-09-24  
 **Scope:** Candidate evidence, resume import, tailoring, review, rendering, and application linkage.
 
@@ -29,6 +29,8 @@ Application
 ```
 
 This architecture is occupation-agnostic, inference-optional, and independent of any one parser, template language, LLM, or external career tool.
+
+The product-wide Technical Capability Catalog reconciliation in `../research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md` is controlling context for external-tool selection. Job Ranger keeps a native vertical core and adopts external capabilities only at narrow replaceable seams.
 
 ## 2. Functional goals
 
@@ -121,6 +123,18 @@ LiteParse remains a benchmark/fallback candidate only if the default parser cann
 - a large third-party template pack;
 - a proprietary ATS score;
 - autonomous application submission.
+
+### Dependency consolidation rule
+
+A second parser, renderer, model runtime, or external service is not added merely because it covers a neighboring capability. It must close a benchmarked product gap that the selected/native path cannot meet at acceptable quality.
+
+In practical terms:
+
+- `anydoc` should handle import and, if its benchmark permits, generated-PDF verification;
+- Electron/Chromium should handle initial PDF rendering;
+- Job Ranger should own evidence/mapping/artifact state;
+- Career-Ops, Tailit, and EasyPeasyCV remain mechanism donors rather than embedded products;
+- OCR, DOCX output, richer parser fallback, and external research remain separately justified later capabilities.
 
 ## 4. Domain model
 
@@ -751,7 +765,8 @@ Evaluate against:
 - latency;
 - memory footprint;
 - Windows/macOS Electron packaging;
-- transitive license clarity.
+- transitive license clarity;
+- ability to re-parse Job Ranger-generated PDFs.
 
 Only introduce a second parser if there is a demonstrated gap important enough to justify the maintenance burden.
 
@@ -759,6 +774,7 @@ Only introduce a second parser if there is a demonstrated gap important enough t
 
 ### R0 — contract freeze
 
+- migrate Career Profile and Applications to backend/SQLite or deliberately complete those migrations as the opening implementation slice;
 - finalize domain object contracts;
 - define SQLite migrations;
 - define managed artifact directory layout;
@@ -769,20 +785,18 @@ Only introduce a second parser if there is a demonstrated gap important enough t
 ### R1 — import and evidence
 
 - parser bake-off;
-- adopt preferred parser;
+- adopt preferred parser only after acceptance;
 - SourceArtifact + ExtractionSnapshot;
 - evidence normalization;
 - evidence confirmation UI;
-- profile synchronization;
-- migration of Career Profile persistence to backend/SQLite.
+- profile synchronization.
 
 ### R2 — requirement mapping
 
 - JobRequirement normalization;
 - deterministic requirement/evidence mapping;
 - gap/ambiguous UX;
-- application linkage;
-- migration of Applications to backend/SQLite.
+- application linkage.
 
 ### R3 — deterministic resume creation
 
