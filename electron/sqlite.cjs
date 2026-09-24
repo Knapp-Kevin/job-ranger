@@ -16,9 +16,6 @@ const SQLITE_BUSY_TIMEOUT_MS = 5000;
 function escapeSqlString(value) {
     return `'${value.replace(/'/g, "''")}'`;
 }
-function withConnectionPragmas(statement) {
-    return `PRAGMA busy_timeout = ${SQLITE_BUSY_TIMEOUT_MS}; PRAGMA foreign_keys = ON; ${statement}`;
-}
 function toSqlLiteral(value) {
     if (value === null || value === undefined) {
         return "NULL";
@@ -100,16 +97,20 @@ class SqliteClient {
     async exec(statement) {
         await this.ensureDatabaseDirectory();
         await execFileAsync(this.sqliteBinaryPath, [
+            "-cmd",
+            `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
             this.databasePath,
-            withConnectionPragmas(statement),
+            `PRAGMA foreign_keys = ON; ${statement}`,
         ]);
     }
     async queryAll(statement) {
         await this.ensureDatabaseDirectory();
         const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
             "-json",
+            "-cmd",
+            `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
             this.databasePath,
-            withConnectionPragmas(statement),
+            `PRAGMA foreign_keys = ON; ${statement}`,
         ]);
         const trimmed = stdout.trim();
         if (!trimmed) {
