@@ -3,6 +3,7 @@ import path from "node:path";
 import { JobScoutBackend } from "./backend.cjs";
 import { CareerBackend } from "./career-backend.cjs";
 import { RequirementBackend } from "./requirement-backend.cjs";
+import { ResumeBackend } from "./resume-backend.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -21,6 +22,10 @@ import {
   validateLegacyCareerMigration,
   validatePastedResumeInput,
 } from "./career-validators.cjs";
+import {
+  validateCreateResumeProjectionInput,
+  validateReviseResumeProjectionInput,
+} from "./resume-validators.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
 
@@ -31,6 +36,7 @@ let helpWindow: BrowserWindow | null = null;
 let backend: JobScoutBackend | null = null;
 let careerBackend: CareerBackend | null = null;
 let requirementBackend: RequirementBackend | null = null;
+let resumeBackend: ResumeBackend | null = null;
 let isQuitting = false;
 
 function appAssetPath(fileName: string): string {
@@ -197,24 +203,23 @@ function createMenu(): void {
 }
 
 function requireBackend(): JobScoutBackend {
-  if (!backend) {
-    throw new Error("Job Ranger backend is not initialized");
-  }
+  if (!backend) throw new Error("Job Ranger backend is not initialized");
   return backend;
 }
 
 function requireCareerBackend(): CareerBackend {
-  if (!careerBackend) {
-    throw new Error("Job Ranger career backend is not initialized");
-  }
+  if (!careerBackend) throw new Error("Job Ranger career backend is not initialized");
   return careerBackend;
 }
 
 function requireRequirementBackend(): RequirementBackend {
-  if (!requirementBackend) {
-    throw new Error("Job Ranger requirement backend is not initialized");
-  }
+  if (!requirementBackend) throw new Error("Job Ranger requirement backend is not initialized");
   return requirementBackend;
+}
+
+function requireResumeBackend(): ResumeBackend {
+  if (!resumeBackend) throw new Error("Job Ranger resume backend is not initialized");
+  return resumeBackend;
 }
 
 function registerIpcHandlers(): void {
@@ -227,19 +232,14 @@ function registerIpcHandlers(): void {
     shell.showItemInFolder(targetPath);
   });
 
-  ipcMain.handle("system:get-status", () =>
-    requireBackend().getSystemStatus(process.platform),
-  );
+  ipcMain.handle("system:get-status", () => requireBackend().getSystemStatus(process.platform));
 
   ipcMain.handle("companies:list", () => requireBackend().listCompanies());
   ipcMain.handle("companies:create", (_event, draft) =>
     requireBackend().createCompany(validateCompanyDraft(draft)),
   );
   ipcMain.handle("companies:update", (_event, id: string, update) =>
-    requireBackend().updateCompany(
-      validateId(id, "Company id"),
-      validateCompanyUpdate(update),
-    ),
+    requireBackend().updateCompany(validateId(id, "Company id"), validateCompanyUpdate(update)),
   );
   ipcMain.handle("companies:delete", (_event, id: string) =>
     requireBackend().deleteCompany(validateId(id, "Company id")),
@@ -261,10 +261,7 @@ function registerIpcHandlers(): void {
     requireBackend().createFilter(validateFilterDraft(draft)),
   );
   ipcMain.handle("filters:update", (_event, id: string, update) =>
-    requireBackend().updateFilter(
-      validateId(id, "Filter id"),
-      validateFilterUpdate(update),
-    ),
+    requireBackend().updateFilter(validateId(id, "Filter id"), validateFilterUpdate(update)),
   );
   ipcMain.handle("filters:delete", (_event, id: string) =>
     requireBackend().deleteFilter(validateId(id, "Filter id")),
@@ -297,9 +294,7 @@ function registerIpcHandlers(): void {
         { name: "All files", extensions: ["*"] },
       ],
     });
-    if (selection.canceled || selection.filePaths.length === 0) {
-      return null;
-    }
+    if (selection.canceled || selection.filePaths.length === 0) return null;
     return requireCareerBackend().importResumeFile(selection.filePaths[0]);
   });
   ipcMain.handle("career:import-pasted-text", (_event, input) =>
@@ -308,27 +303,40 @@ function registerIpcHandlers(): void {
   ipcMain.handle("career:list-source-artifacts", () =>
     requireCareerBackend().listSourceArtifacts(),
   );
-  ipcMain.handle("career:list-evidence", () =>
-    requireCareerBackend().listEvidence(),
-  );
+  ipcMain.handle("career:list-evidence", () => requireCareerBackend().listEvidence());
   ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
     requireCareerBackend().reviewEvidence(
       validateCareerEntityId(id, "Evidence id"),
       validateEvidenceReviewUpdate(update),
     ),
   );
-  ipcMain.handle(
-    "career:merge-evidence",
-    (_event, sourceId: string, targetId: string) =>
-      requireCareerBackend().mergeEvidence(
-        validateCareerEntityId(sourceId, "Source evidence id"),
-        validateCareerEntityId(targetId, "Target evidence id"),
-      ),
+  ipcMain.handle("career:merge-evidence", (_event, sourceId: string, targetId: string) =>
+    requireCareerBackend().mergeEvidence(
+      validateCareerEntityId(sourceId, "Source evidence id"),
+      validateCareerEntityId(targetId, "Target evidence id"),
+    ),
   );
 
-  ipcMain.handle("applications:list", () =>
-    requireCareerBackend().listApplications(),
+  ipcMain.handle("resume:create-projection", (_event, input) =>
+    requireResumeBackend().createProjection(validateCreateResumeProjectionInput(input)),
   );
+  ipcMain.handle("resume:revise-projection", (_event, input) =>
+    requireResumeBackend().reviseProjection(validateReviseResumeProjectionInput(input)),
+  );
+  ipcMain.handle("resume:get-projection", (_event, id: string) =>
+    requireResumeBackend().getProjection(validateCareerEntityId(id, "Resume projection id")),
+  );
+  ipcMain.handle("resume:get-latest-projection", (_event, jobId: string) =>
+    requireResumeBackend().getLatestProjection(validateId(jobId, "Job id")),
+  );
+  ipcMain.handle("resume:list-projections", (_event, jobId: string) =>
+    requireResumeBackend().listProjections(validateId(jobId, "Job id")),
+  );
+  ipcMain.handle("resume:mark-reviewed", (_event, id: string) =>
+    requireResumeBackend().markReviewed(validateCareerEntityId(id, "Resume projection id")),
+  );
+
+  ipcMain.handle("applications:list", () => requireCareerBackend().listApplications());
   ipcMain.handle("applications:track", (_event, jobId: string) =>
     requireCareerBackend().trackApplication(validateId(jobId, "Job id")),
   );
@@ -339,9 +347,7 @@ function registerIpcHandlers(): void {
     ),
   );
   ipcMain.handle("applications:delete", (_event, id: string) =>
-    requireCareerBackend().deleteApplication(
-      validateCareerEntityId(id, "Application id"),
-    ),
+    requireCareerBackend().deleteApplication(validateCareerEntityId(id, "Application id")),
   );
 }
 
@@ -355,16 +361,14 @@ app.whenReady().then(async () => {
     await backend.initialize();
 
     const systemStatus = await backend.getSystemStatus(process.platform);
-    careerBackend = new CareerBackend({
-      dataDirectory,
+    const sharedBackendOptions = {
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
+    };
+    careerBackend = new CareerBackend({ dataDirectory, ...sharedBackendOptions });
     await careerBackend.initialize();
-    requirementBackend = new RequirementBackend({
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
+    requirementBackend = new RequirementBackend(sharedBackendOptions);
+    resumeBackend = new ResumeBackend(sharedBackendOptions);
 
     registerIpcHandlers();
     createWindow();
@@ -372,22 +376,17 @@ app.whenReady().then(async () => {
     createTray(appAssetPath("ICON.png"), mainWindow, () => app.quit());
 
     app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
+      if (BrowserWindow.getAllWindows().length === 0) createWindow();
     });
   } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown Job Ranger startup error";
+    const message = error instanceof Error ? error.message : "Unknown Job Ranger startup error";
     dialog.showErrorBox("Job Ranger failed to start", message);
     app.quit();
   }
 });
 
 app.on("window-all-closed", () => {
-  if (process.platform !== "darwin") {
-    app.quit();
-  }
+  if (process.platform !== "darwin") app.quit();
 });
 
 app.on("before-quit", () => {
