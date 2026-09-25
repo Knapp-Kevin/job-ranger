@@ -88,7 +88,8 @@ function contentTokens(value: string): string[] {
   return value
     .toLowerCase()
     .match(/[a-z0-9+#.-]+/g)
-    ?.filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
+    ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
+    .filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
 }
 
 function normalizedText(value: string): string {
