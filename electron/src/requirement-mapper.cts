@@ -30,6 +30,30 @@ function significantTokens(value: string): string[] {
     .filter((token) => token.length >= 3 && !STOP_WORDS.has(token));
 }
 
+function commonPrefixLength(left: string, right: string): number {
+  const limit = Math.min(left.length, right.length);
+  let index = 0;
+  while (index < limit && left[index] === right[index]) index += 1;
+  return index;
+}
+
+/**
+ * Deliberately conservative morphological equivalence for deterministic
+ * matching. It catches ordinary inflections such as maintain/maintained,
+ * coordinate/coordinated, record/records, and schedule/scheduling without
+ * introducing a fuzzy semantic matcher that could invent support.
+ */
+function tokenEquivalent(left: string, right: string): boolean {
+  if (left === right) return true;
+  if (left.length < 5 || right.length < 5) return false;
+  if (left.startsWith(right) || right.startsWith(left)) {
+    return Math.abs(left.length - right.length) <= 4;
+  }
+  const prefix = commonPrefixLength(left, right);
+  const shorter = Math.min(left.length, right.length);
+  return prefix >= 5 && prefix / shorter >= 0.75 && Math.abs(left.length - right.length) <= 4;
+}
+
 function stableId(prefix: string, value: string): string {
   return `${prefix}-${createHash("sha256").update(value).digest("hex").slice(0, 20)}`;
 }
@@ -134,8 +158,10 @@ function evidenceSearchText(evidence: CandidateEvidence): string {
 function overlapScore(requirement: JobRequirement, evidence: CandidateEvidence): number {
   const requirementTokens = significantTokens(requirement.text);
   if (requirementTokens.length === 0) return 0;
-  const evidenceTokens = new Set(significantTokens(evidenceSearchText(evidence)));
-  const matched = requirementTokens.filter((token) => evidenceTokens.has(token));
+  const evidenceTokens = significantTokens(evidenceSearchText(evidence));
+  const matched = requirementTokens.filter((token) =>
+    evidenceTokens.some((candidate) => tokenEquivalent(token, candidate)),
+  );
   return matched.length / requirementTokens.length;
 }
 
