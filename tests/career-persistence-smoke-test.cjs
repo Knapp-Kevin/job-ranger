@@ -165,12 +165,18 @@ async function run() {
     const migrationRows = await sqlite.queryAll(
       "SELECT version, name FROM schema_migrations ORDER BY version ASC;",
     );
-    assert.deepEqual(
-      migrationRows.slice(-2).map((row) => [row.version, row.name]),
-      [
-        [3, "career_intelligence_persistence"],
-        [4, "career_evidence_contracts"],
-      ],
+    const appliedMigrations = new Map(
+      migrationRows.map((row) => [row.version, row.name]),
+    );
+    assert.equal(
+      appliedMigrations.get(3),
+      "career_intelligence_persistence",
+      "career persistence migration must remain applied",
+    );
+    assert.equal(
+      appliedMigrations.get(4),
+      "career_evidence_contracts",
+      "Career Evidence contract migration must remain applied",
     );
 
     const expectedTables = [
