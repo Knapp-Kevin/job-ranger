@@ -29,6 +29,22 @@ function requireString(value: unknown, label: string, maxLength = 10000): string
   return value;
 }
 
+/**
+ * Career-domain records use stable opaque string identifiers such as
+ * `application-42` and `evidence-<uuid>`. They intentionally do not share the
+ * numeric SQLite row-id contract used by jobs, companies, and filters.
+ */
+export function validateCareerEntityId(value: unknown, label: string): string {
+  const id = requireString(value, label, 500).trim();
+  if (!id) {
+    throw new Error(`${label} cannot be empty`);
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(id)) {
+    throw new Error(`${label} contains invalid characters`);
+  }
+  return id;
+}
+
 function nullableFiniteNumber(value: unknown, label: string): number | null {
   if (value === null || value === undefined || value === "") {
     return null;
@@ -201,7 +217,7 @@ export function validateEvidenceReviewUpdate(value: unknown): EvidenceReviewUpda
 function validateTrackedApplication(value: unknown): TrackedApplication {
   const record = requireRecord(value, "Legacy application");
   return {
-    id: requireString(record.id, "Application id", 500).trim(),
+    id: validateCareerEntityId(record.id, "Application id"),
     jobId: requireString(record.jobId, "Job id", 500).trim(),
     title: requireString(record.title, "Application title", 1000).trim(),
     companyName: requireString(record.companyName, "Company name", 1000).trim(),
