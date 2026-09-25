@@ -1,5 +1,6 @@
+import { promises as fs } from "node:fs";
 import {
-  formatFromPath,
+  formatFromBytes,
   toMarkdown,
   type ConvertErrorCode,
 } from "@firecrawl/anydoc";
@@ -109,7 +110,8 @@ export function normalizeResumeParserError(error: unknown): ResumeParserError {
 export async function extractResumeDocument(
   filePath: string,
 ): Promise<ResumeParserResult> {
-  const format = formatFromPath(filePath);
+  const bytes = await fs.readFile(filePath);
+  const format = formatFromBytes(bytes);
   if (format !== "docx" && format !== "pdf") {
     throw new ResumeParserError(
       "R1 resume import supports DOCX, text-bearing PDF, plain text, and pasted text.",
