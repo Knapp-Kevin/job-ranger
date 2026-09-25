@@ -17,8 +17,8 @@ const manifest = JSON.parse(
   await readFile(path.join(benchmarkRoot, "manifest.json"), "utf8"),
 );
 const packageSpec = `${manifest.parserCandidate.package}@${manifest.parserCandidate.version}`;
-const npxCommand = process.platform === "win32" ? "npx.cmd" : "npx";
-const npmCommand = process.platform === "win32" ? "npm.cmd" : "npm";
+const npxCommand = "npx";
+const npmCommand = "npm";
 
 function run(command, args, timeout = 60_000) {
   return spawnSync(command, args, {
@@ -26,6 +26,7 @@ function run(command, args, timeout = 60_000) {
     encoding: "utf8",
     maxBuffer: 10 * 1024 * 1024,
     timeout,
+    shell: process.platform === "win32",
     env: {
       ...process.env,
       FIRECRAWL_API_KEY: "",
@@ -44,7 +45,9 @@ function normalize(value) {
 
 function readJsonProcess(result, label) {
   if (result.status !== 0) {
-    throw new Error(`${label} failed: ${result.stderr || result.stdout}`);
+    const detail =
+      result.error?.message || result.stderr || result.stdout || `status ${result.status}`;
+    throw new Error(`${label} failed: ${detail}`);
   }
   try {
     return JSON.parse(result.stdout);

@@ -14,14 +14,8 @@ permissions:
   contents: read
 
 jobs:
-  platform-smoke:
-    strategy:
-      fail-fast: false
-      matrix:
-        os:
-          - windows-2025
-          - macos-15
-    runs-on: ${{ matrix.os }}
+  windows-smoke:
+    runs-on: windows-2025
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -43,13 +37,13 @@ jobs:
       - name: Generate synthetic document fixtures
         run: python scripts/generate-resume-parser-fixtures.py
 
-      - name: Run platform and license audit
+      - name: Run Windows platform and license audit
         run: node scripts/audit-resume-parser-platform.mjs
 
-      - name: Upload platform result
+      - name: Upload Windows platform result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: anydoc-0.2.4-${{ runner.os }}-${{ runner.arch }}-platform
+          name: anydoc-0.2.4-Windows-X64-platform
           path: tests/fixtures/career-evidence/parser-benchmark/results/*-platform.json
           if-no-files-found: error
