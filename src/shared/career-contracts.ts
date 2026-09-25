@@ -94,6 +94,28 @@ export interface ExtractionSnapshot {
   createdAt: string;
 }
 
+export type ResumeImportFailureCode =
+  | "ocr-required"
+  | "encrypted"
+  | "malformed"
+  | "unsupported"
+  | "resource-limit"
+  | "parser-failure";
+
+export interface PastedResumeInput {
+  label: string;
+  text: string;
+}
+
+export interface ResumeImportResult {
+  artifact: SourceArtifact;
+  extractionSnapshot: ExtractionSnapshot | null;
+  proposedEvidence: CandidateEvidence[];
+  duplicate: boolean;
+  failureCode: ResumeImportFailureCode | null;
+  message: string | null;
+}
+
 export type EvidenceSubjectType =
   | "role"
   | "skill"
@@ -147,6 +169,28 @@ export interface EvidenceSourceLink {
   sourceText: string | null;
   relation: EvidenceSourceRelation;
   createdAt: string;
+}
+
+export interface EvidenceReviewSource {
+  sourceArtifactId: string;
+  originalName: string;
+  extractionSnapshotId: string | null;
+  sourceLocator: string | null;
+  sourceText: string | null;
+  relation: EvidenceSourceRelation;
+}
+
+export interface CandidateEvidenceReviewItem {
+  evidence: CandidateEvidence;
+  sources: EvidenceReviewSource[];
+}
+
+export type EvidenceReviewAction = "confirm" | "edit" | "reject";
+
+export interface EvidenceReviewUpdate {
+  action: EvidenceReviewAction;
+  statement?: string;
+  subjectType?: EvidenceSubjectType;
 }
 
 export type JobRequirementKind =
