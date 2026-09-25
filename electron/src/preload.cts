@@ -64,6 +64,10 @@ const desktopApi: DesktopApi & ResumeDesktopApi = {
     get: (id) => ipcRenderer.invoke("resume:get", id),
     updateStatement: (id, update) =>
       ipcRenderer.invoke("resume:update-statement", id, update),
+    previewTailoring: (request) =>
+      ipcRenderer.invoke("resume:preview-tailoring", request),
+    applyTailoring: (request) =>
+      ipcRenderer.invoke("resume:apply-tailoring", request),
     exportPdf: (request) => ipcRenderer.invoke("resume:export-pdf", request),
     compareVersions: (fromArtifactId, toArtifactId) =>
       ipcRenderer.invoke("resume:compare-versions", fromArtifactId, toArtifactId),
