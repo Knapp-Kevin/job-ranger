@@ -22,7 +22,7 @@ async function main() {
   }
 
   const started = process.hrtime.bigint();
-  const markdown = await anydoc.toMarkdown(fixturePath, { ocr: 'reject' });
+  const markdown = await anydoc.toMarkdown(fixturePath);
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
 
   const required = [
