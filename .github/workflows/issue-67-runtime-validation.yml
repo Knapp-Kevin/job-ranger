@@ -1,0 +1,38 @@
+name: Issue 67 Runtime Validation
+
+on:
+  push:
+    branches:
+      - build/67-reproducible-electron-runtime
+
+permissions:
+  contents: read
+
+jobs:
+  generated-runtime:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run unit tests through generated runtime
+        run: npm run test:unit
+
+      - name: Run Electron E2E through generated runtime
+        run: xvfb-run -a npm run test:e2e
+
+      - name: Package generated runtime directory
+        run: npx electron-builder --dir --publish never
+
+      - name: Assert packaged runtime entry exists
+        run: test -f release/linux-unpacked/resources/app.asar || test -d release/linux-unpacked/resources/app.asar.unpacked
