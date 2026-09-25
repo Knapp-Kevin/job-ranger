@@ -20,6 +20,8 @@ const desktopApi: DesktopApi = {
   jobs: {
     list: () => ipcRenderer.invoke("jobs:list"),
     markSeen: (id) => ipcRenderer.invoke("jobs:mark-seen", id),
+    getEvidenceCoverage: (id) =>
+      ipcRenderer.invoke("jobs:get-evidence-coverage", id),
   },
   filters: {
     list: () => ipcRenderer.invoke("filters:list"),
