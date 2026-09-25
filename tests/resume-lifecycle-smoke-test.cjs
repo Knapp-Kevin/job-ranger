@@ -3,11 +3,11 @@ const fs = require("node:fs/promises");
 const os = require("node:os");
 const path = require("node:path");
 
-const { JobScoutBackend } = require("../electron/backend.cjs");
-const { CareerEvidenceRepository } = require("../electron/career-evidence-repository.cjs");
-const { ResumeRepository } = require("../electron/resume-repository.cjs");
-const { ResumeService } = require("../electron/resume-service.cjs");
-const { SqliteClient, sql } = require("../electron/sqlite.cjs");
+const { JobScoutBackend } = require("../electron-runtime/electron/src/backend.cjs");
+const { CareerEvidenceRepository } = require("../electron-runtime/electron/src/career-evidence-repository.cjs");
+const { ResumeRepository } = require("../electron-runtime/electron/src/resume-repository.cjs");
+const { ResumeService } = require("../electron-runtime/electron/src/resume-service.cjs");
+const { SqliteClient, sql } = require("../electron-runtime/electron/src/sqlite.cjs");
 
 async function run() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-resume-"));
