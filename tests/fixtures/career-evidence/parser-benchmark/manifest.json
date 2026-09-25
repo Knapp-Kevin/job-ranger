@@ -1,0 +1,167 @@
+{
+  "version": 1,
+  "description": "Synthetic resume-import benchmark. All people and organizations are fictional. Binary fixtures are generated from committed source definitions before a benchmark run.",
+  "parserCandidate": {
+    "package": "@firecrawl/anydoc",
+    "version": "0.2.4"
+  },
+  "thresholds": {
+    "requiredPhraseCoverage": 1,
+    "requiredOrderCoverage": 1,
+    "forbiddenPhraseCount": 0,
+    "medianLatencyMs": 3000,
+    "maxLatencyMs": 5000
+  },
+  "fixtures": [
+    {
+      "id": "hvac-docx",
+      "file": "generated/hvac-technician.docx",
+      "path": "anydoc",
+      "format": "docx",
+      "expectedOutcome": "success",
+      "expectedPhrases": [
+        "Morgan Reed",
+        "HVAC Service Technician",
+        "EPA 608 Universal certification",
+        "electrical troubleshooting",
+        "preventive maintenance",
+        "rotating on-call coverage"
+      ],
+      "mustAppearInOrder": [
+        "HVAC Service Technician",
+        "EPA 608 Universal certification",
+        "Serviced rooftop units",
+        "Performed electrical troubleshooting",
+        "Participated in rotating on-call coverage"
+      ],
+      "forbiddenPhrases": ["NATE certification", "building automation programming"]
+    },
+    {
+      "id": "nurse-docx",
+      "file": "generated/registered-nurse.docx",
+      "path": "anydoc",
+      "format": "docx",
+      "expectedOutcome": "success",
+      "expectedPhrases": [
+        "Casey Lin",
+        "Registered Nurse",
+        "Active RN license",
+        "BLS certification",
+        "Medical-surgical unit experience",
+        "Precepted newly hired nurses"
+      ],
+      "mustAppearInOrder": [
+        "Registered Nurse",
+        "Active RN license",
+        "BLS certification",
+        "Medical-surgical unit experience",
+        "Precepted newly hired nurses"
+      ],
+      "forbiddenPhrases": ["BSN", "ACLS", "formal supervisor authority"]
+    },
+    {
+      "id": "operations-pdf",
+      "file": "generated/operations-history.pdf",
+      "path": "anydoc",
+      "format": "pdf",
+      "expectedOutcome": "success",
+      "expectedPhrases": [
+        "Samira Cole",
+        "Administrative Coordinator",
+        "Bluewater Association",
+        "vendor invoices",
+        "operational reports in Excel",
+        "Office Assistant",
+        "Harbor Services",
+        "customer inquiries"
+      ],
+      "mustAppearInOrder": [
+        "Administrative Coordinator",
+        "Managed executive calendars",
+        "Processed vendor invoices",
+        "Created monthly operational reports",
+        "Office Assistant",
+        "Responded to customer inquiries",
+        "Coordinated meeting rooms"
+      ],
+      "forbiddenPhrases": ["budget authority", "project management certification"]
+    },
+    {
+      "id": "career-changer-pdf",
+      "file": "generated/career-changer.pdf",
+      "path": "anydoc",
+      "format": "pdf",
+      "expectedOutcome": "success",
+      "expectedPhrases": [
+        "Elena Park",
+        "High School Teacher",
+        "curriculum",
+        "professional-development",
+        "six-person curriculum committee",
+        "district LMS"
+      ],
+      "mustAppearInOrder": [
+        "High School Teacher",
+        "Designed curriculum",
+        "Coordinated a six-person",
+        "Built asynchronous learning materials"
+      ],
+      "forbiddenPhrases": ["corporate L&D experience", "Articulate Storyline"]
+    },
+    {
+      "id": "federal-text",
+      "file": "generated/federal-applicant.txt",
+      "path": "native-text",
+      "format": "txt",
+      "expectedOutcome": "success",
+      "expectedPhrases": [
+        "Cameron West",
+        "Program Specialist",
+        "40 hours/week",
+        "eligibility records",
+        "quarterly compliance reports",
+        "Trained six staff members"
+      ],
+      "mustAppearInOrder": [
+        "Program Specialist",
+        "40 hours/week",
+        "Administered public-service",
+        "Prepared quarterly",
+        "Trained six staff"
+      ],
+      "forbiddenPhrases": ["federal service", "security clearance", "GS grade"]
+    },
+    {
+      "id": "scanned-pdf",
+      "file": "generated/scanned-image-only.pdf",
+      "path": "anydoc",
+      "format": "pdf",
+      "expectedOutcome": "failure",
+      "expectedFailureClass": "ocr-required"
+    },
+    {
+      "id": "encrypted-pdf",
+      "file": "generated/encrypted-resume.pdf",
+      "path": "anydoc",
+      "format": "pdf",
+      "expectedOutcome": "failure",
+      "expectedFailureClass": "encrypted"
+    },
+    {
+      "id": "malformed-docx",
+      "file": "generated/malformed.docx",
+      "path": "anydoc",
+      "format": "docx",
+      "expectedOutcome": "failure",
+      "expectedFailureClass": "malformed"
+    },
+    {
+      "id": "unsupported-binary",
+      "file": "generated/unsupported.bin",
+      "path": "anydoc",
+      "format": "binary",
+      "expectedOutcome": "failure",
+      "expectedFailureClass": "unsupported"
+    }
+  ]
+}

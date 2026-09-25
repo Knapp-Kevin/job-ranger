@@ -1,0 +1,47 @@
+name: R1 Parser Benchmark
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  anydoc-linux-benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install fixture-generation dependencies
+        run: pip install -r tests/fixtures/career-evidence/parser-benchmark/requirements.txt
+
+      - name: Generate synthetic document fixtures
+        run: python scripts/generate-resume-parser-fixtures.py
+
+      - name: Run pinned Anydoc benchmark
+        run: node scripts/benchmark-resume-parser.mjs
+
+      - name: Print benchmark result
+        if: always()
+        run: cat tests/fixtures/career-evidence/parser-benchmark/results/anydoc-0.2.4-linux-x64.json || true
+
+      - name: Upload benchmark result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anydoc-0.2.4-linux-x64-benchmark
+          path: tests/fixtures/career-evidence/parser-benchmark/results/anydoc-0.2.4-linux-x64.json
+          if-no-files-found: error
