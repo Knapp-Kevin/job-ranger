@@ -28,6 +28,9 @@ dist-ssr
 release
 out
 electron-runtime/
+electron/*.cjs
+electron/adapters/
+electron/shared/
 electron/main.js
 electron/main.js.map
 electron/preload.js
