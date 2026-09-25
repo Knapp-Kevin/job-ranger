@@ -25,7 +25,12 @@ async function main() {
   const markdown = await anydoc.toMarkdown(fixturePath, { ocr: 'reject' });
   const elapsedMs = Number(process.hrtime.bigint() - started) / 1e6;
 
-  const required = ['Jordan Ellis', 'Operations Coordinator', 'Northstar Distribution'];
+  const required = [
+    'Samira Cole',
+    'Administrative Coordinator',
+    'Bluewater Association',
+    'vendor invoices',
+  ];
   const missing = required.filter((phrase) => !markdown.includes(phrase));
   if (missing.length > 0) {
     throw new Error(`Packaged parser output missing: ${missing.join(', ')}`);
