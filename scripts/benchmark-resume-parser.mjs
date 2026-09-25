@@ -76,7 +76,11 @@ function classifyFailure(stdout, stderr, status) {
   const combined = normalize(`${stderr}\n${stdout}`);
   if (/needs.?ocr|ocr.?required|scanned|image.?only/.test(combined)) return "ocr-required";
   if (/encrypt|password|protected/.test(combined)) return "encrypted";
-  if (/malform|corrupt|invalid.+docx|invalid.+zip|zip.+invalid|broken/.test(combined)) {
+  if (
+    /malform|corrupt|missing required part|invalid.+docx|invalid.+zip|zip.+invalid|broken/.test(
+      combined,
+    )
+  ) {
     return "malformed";
   }
   if (/unsupported|unknown.+format|unrecognized.+format|cannot.+detect/.test(combined)) {
