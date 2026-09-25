@@ -8,6 +8,7 @@ import {
 } from "lucide-react";
 import { useSearchParams } from "react-router-dom";
 import { Layout } from "../components/Layout";
+import { ResumeTailoringPanel } from "../components/ResumeTailoringPanel";
 import { useCareerProfile } from "../career/storage";
 import { getDesktopApi } from "../services/api";
 import type {
@@ -180,6 +181,13 @@ export function Resume() {
     }
   };
 
+  const handleTailored = async (detail: ResumeProjectionDetail) => {
+    setActive(detail);
+    setDiff(null);
+    setError(null);
+    setProjections(await getDesktopApi().resume.list());
+  };
+
   const exportPdf = async () => {
     if (!active) return;
     setBusy(true);
@@ -312,6 +320,22 @@ export function Resume() {
               </div>
 
               {!active.truthGate.passed && <div className="support-note mt-4 px-4 py-3 text-sm text-[var(--color-danger)]">{active.truthGate.issues.map((issue) => issue.message).join(" ")}</div>}
+
+              {jobId && (
+                <ResumeTailoringPanel
+                  source={active}
+                  jobId={jobId}
+                  onApplied={(detail) => void handleTailored(detail)}
+                  onMessage={(next) => {
+                    setMessage(next);
+                    setError(null);
+                  }}
+                  onError={(next) => {
+                    setError(next);
+                    setMessage(null);
+                  }}
+                />
+              )}
 
               <div className="mt-6 space-y-6">
                 {active.projection.sections.map((section) => (
