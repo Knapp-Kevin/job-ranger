@@ -1,0 +1,35 @@
+name: R2 Description Persistence Scaffold
+
+on:
+  push:
+    branches:
+      - implementation/62-requirement-evidence
+    paths:
+      - '.github/workflows/r2-description-scaffold.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out R2 branch
+        uses: actions/checkout@v4
+        with:
+          ref: implementation/62-requirement-evidence
+
+      - name: Apply deterministic source edits
+        run: node scripts/apply-r2-description-storage.mjs
+
+      - name: Remove temporary scaffold
+        run: rm scripts/apply-r2-description-storage.mjs .github/workflows/r2-description-scaffold.yml
+
+      - name: Commit R2 description persistence slice
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git commit -m 'feat: preserve full job description text for R2'
+          git push origin HEAD:implementation/62-requirement-evidence
