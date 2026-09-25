@@ -10,7 +10,7 @@ import type {
   ResumeProjectionRecord,
   ResumeTemplateId,
 } from "../../src/shared/resume-contracts.js";
-import { sql, SqliteClient } from "./sqlite.cjs";
+import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
 
 type ProjectionRow = {
   id: string;
@@ -231,7 +231,7 @@ export class ResumeRepository {
 
   async getProjection(id: string): Promise<ResumeProjectionRecord | null> {
     const rows = await this.sqlite.queryAll<ProjectionRow>(
-      `${projectionSelect} WHERE p.id = ${sql.value(id)} LIMIT 1;`,
+      `${projectionSelect} WHERE p.id = ${toSqlLiteral(id)} LIMIT 1;`,
     );
     return rows[0] ? mapProjection(rows[0]) : null;
   }
@@ -317,14 +317,14 @@ export class ResumeRepository {
 
   async listArtifacts(projectionId: string): Promise<ResumeArtifactRecord[]> {
     const rows = await this.sqlite.queryAll<ArtifactRow>(
-      `${artifactSelect} WHERE a.projection_id = ${sql.value(projectionId)} ORDER BY a.version DESC, a.created_at DESC;`,
+      `${artifactSelect} WHERE a.projection_id = ${toSqlLiteral(projectionId)} ORDER BY a.version DESC, a.created_at DESC;`,
     );
     return rows.map(mapArtifact);
   }
 
   async getArtifact(id: string): Promise<ResumeArtifactRecord | null> {
     const rows = await this.sqlite.queryAll<ArtifactRow>(
-      `${artifactSelect} WHERE a.id = ${sql.value(id)} LIMIT 1;`,
+      `${artifactSelect} WHERE a.id = ${toSqlLiteral(id)} LIMIT 1;`,
     );
     return rows[0] ? mapArtifact(rows[0]) : null;
   }
