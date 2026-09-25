@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import type {
   CandidateEvidence,
   CandidateEvidenceReviewItem,
@@ -18,24 +18,30 @@ export function useCareerEvidence() {
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [lastImport, setLastImport] = useState<ResumeImportResult | null>(null);
+  const refreshSequence = useRef(0);
 
   const refresh = useCallback(async () => {
+    const requestId = ++refreshSequence.current;
     try {
       const [nextArtifacts, nextItems] = await Promise.all([
         getDesktopApi().career.listSourceArtifacts(),
         getDesktopApi().career.listEvidence(),
       ]);
+      if (requestId !== refreshSequence.current) return;
       setArtifacts(nextArtifacts);
       setItems(nextItems);
       setError(null);
     } catch (refreshError) {
+      if (requestId !== refreshSequence.current) return;
       setError(
         refreshError instanceof Error
           ? refreshError.message
           : "Unable to load career evidence",
       );
     } finally {
-      setLoading(false);
+      if (requestId === refreshSequence.current) {
+        setLoading(false);
+      }
     }
   }, []);
 
