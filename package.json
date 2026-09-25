@@ -18,7 +18,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run desktop:compile && node tests/backend-smoke-test.cjs && node tests/career-persistence-smoke-test.cjs",
+    "test": "npm run desktop:compile && node tests/backend-smoke-test.cjs && node tests/career-persistence-smoke-test.cjs && node tests/resume-import-smoke-test.cjs",
     "test:unit": "npm run desktop:compile && node tests/salary-parser.test.cjs && node tests/scrape-guard.test.cjs && node tests/tray-notifications.test.cjs",
     "test:e2e": "npm run build && npm run desktop:compile && npx playwright test",
     "repo:health": "npm run typecheck && npm run build && npm run test",
@@ -29,6 +29,7 @@
     "electron:pack": "npm run repo:health && electron-builder --dir"
   },
   "dependencies": {
+    "@firecrawl/anydoc": "0.2.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.577.0",

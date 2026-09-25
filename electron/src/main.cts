@@ -14,8 +14,11 @@ import {
 } from "./validators.cjs";
 import {
   validateApplicationUpdate,
+  validateCareerEntityId,
   validateCareerProfile,
+  validateEvidenceReviewUpdate,
   validateLegacyCareerMigration,
+  validatePastedResumeInput,
 } from "./career-validators.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
@@ -273,6 +276,43 @@ function registerIpcHandlers(): void {
   ipcMain.handle("career:migrate-legacy", (_event, payload) =>
     requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
   );
+  ipcMain.handle("career:select-resume-import", async () => {
+    const selection = await dialog.showOpenDialog({
+      title: "Import resume or career history",
+      properties: ["openFile"],
+      filters: [
+        { name: "Resume documents", extensions: ["docx", "pdf", "txt"] },
+        { name: "All files", extensions: ["*"] },
+      ],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) {
+      return null;
+    }
+    return requireCareerBackend().importResumeFile(selection.filePaths[0]);
+  });
+  ipcMain.handle("career:import-pasted-text", (_event, input) =>
+    requireCareerBackend().importPastedText(validatePastedResumeInput(input)),
+  );
+  ipcMain.handle("career:list-source-artifacts", () =>
+    requireCareerBackend().listSourceArtifacts(),
+  );
+  ipcMain.handle("career:list-evidence", () =>
+    requireCareerBackend().listEvidence(),
+  );
+  ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
+    requireCareerBackend().reviewEvidence(
+      validateCareerEntityId(id, "Evidence id"),
+      validateEvidenceReviewUpdate(update),
+    ),
+  );
+  ipcMain.handle(
+    "career:merge-evidence",
+    (_event, sourceId: string, targetId: string) =>
+      requireCareerBackend().mergeEvidence(
+        validateCareerEntityId(sourceId, "Source evidence id"),
+        validateCareerEntityId(targetId, "Target evidence id"),
+      ),
+  );
 
   ipcMain.handle("applications:list", () =>
     requireCareerBackend().listApplications(),
@@ -282,12 +322,14 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle("applications:update", (_event, id: string, update) =>
     requireCareerBackend().updateApplication(
-      validateId(id, "Application id"),
+      validateCareerEntityId(id, "Application id"),
       validateApplicationUpdate(update),
     ),
   );
   ipcMain.handle("applications:delete", (_event, id: string) =>
-    requireCareerBackend().deleteApplication(validateId(id, "Application id")),
+    requireCareerBackend().deleteApplication(
+      validateCareerEntityId(id, "Application id"),
+    ),
   );
 }
 

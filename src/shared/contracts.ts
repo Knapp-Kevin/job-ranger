@@ -1,7 +1,13 @@
 import type {
   ApplicationUpdate,
+  CandidateEvidence,
+  CandidateEvidenceReviewItem,
   CareerProfile,
+  EvidenceReviewUpdate,
   LegacyCareerMigration,
+  PastedResumeInput,
+  ResumeImportResult,
+  SourceArtifact,
   TrackedApplication,
 } from "./career-contracts.js";
 
@@ -325,6 +331,18 @@ export interface DesktopApi {
     getProfile: () => Promise<CareerProfile | null>;
     saveProfile: (profile: CareerProfile) => Promise<CareerProfile>;
     migrateLegacy: (payload: LegacyCareerMigration) => Promise<void>;
+    selectResumeImport: () => Promise<ResumeImportResult | null>;
+    importPastedText: (input: PastedResumeInput) => Promise<ResumeImportResult>;
+    listSourceArtifacts: () => Promise<SourceArtifact[]>;
+    listEvidence: () => Promise<CandidateEvidenceReviewItem[]>;
+    reviewEvidence: (
+      id: string,
+      update: EvidenceReviewUpdate,
+    ) => Promise<CandidateEvidence>;
+    mergeEvidence: (
+      sourceId: string,
+      targetId: string,
+    ) => Promise<CandidateEvidence>;
   };
   applications: {
     list: () => Promise<TrackedApplication[]>;

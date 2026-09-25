@@ -2,8 +2,12 @@ import type {
   ApplicationStatus,
   ApplicationUpdate,
   CareerProfile,
+  EvidenceReviewAction,
+  EvidenceReviewUpdate,
+  EvidenceSubjectType,
   LegacyCareerMigration,
   OnCallPreference,
+  PastedResumeInput,
   PayBasis,
   TrackedApplication,
 } from "../../src/shared/contracts.js";
@@ -23,6 +27,22 @@ function requireString(value: unknown, label: string, maxLength = 10000): string
     throw new Error(`${label} is too long`);
   }
   return value;
+}
+
+/**
+ * Career-domain records use stable opaque string identifiers such as
+ * `application-42` and `evidence-<uuid>`. They intentionally do not share the
+ * numeric SQLite row-id contract used by jobs, companies, and filters.
+ */
+export function validateCareerEntityId(value: unknown, label: string): string {
+  const id = requireString(value, label, 500).trim();
+  if (!id) {
+    throw new Error(`${label} cannot be empty`);
+  }
+  if (!/^[A-Za-z0-9][A-Za-z0-9._:-]*$/.test(id)) {
+    throw new Error(`${label} contains invalid characters`);
+  }
+  return id;
 }
 
 function nullableFiniteNumber(value: unknown, label: string): number | null {
@@ -58,6 +78,31 @@ function applicationStatus(value: unknown): ApplicationStatus {
     throw new Error("Application status is invalid");
   }
   return value as ApplicationStatus;
+}
+
+function evidenceSubjectType(value: unknown): EvidenceSubjectType {
+  const allowed: EvidenceSubjectType[] = [
+    "role",
+    "skill",
+    "credential",
+    "education",
+    "project",
+    "achievement",
+    "publication",
+    "other",
+  ];
+  if (typeof value !== "string" || !allowed.includes(value as EvidenceSubjectType)) {
+    throw new Error("Evidence subject type is invalid");
+  }
+  return value as EvidenceSubjectType;
+}
+
+function evidenceReviewAction(value: unknown): EvidenceReviewAction {
+  const allowed: EvidenceReviewAction[] = ["confirm", "edit", "reject"];
+  if (typeof value !== "string" || !allowed.includes(value as EvidenceReviewAction)) {
+    throw new Error("Evidence review action is invalid");
+  }
+  return value as EvidenceReviewAction;
 }
 
 function payBasis(value: unknown): PayBasis {
@@ -139,10 +184,40 @@ export function validateApplicationUpdate(value: unknown): ApplicationUpdate {
   return update;
 }
 
+export function validatePastedResumeInput(value: unknown): PastedResumeInput {
+  const record = requireRecord(value, "Pasted resume input");
+  const label = requireString(record.label, "Pasted resume label", 200).trim();
+  const text = requireString(record.text, "Pasted resume text", 2_000_000);
+  if (!text.trim()) {
+    throw new Error("Pasted resume text cannot be empty");
+  }
+  return {
+    label: label || "Pasted career evidence",
+    text,
+  };
+}
+
+export function validateEvidenceReviewUpdate(value: unknown): EvidenceReviewUpdate {
+  const record = requireRecord(value, "Evidence review");
+  const action = evidenceReviewAction(record.action);
+  const update: EvidenceReviewUpdate = { action };
+
+  if (record.subjectType !== undefined) {
+    update.subjectType = evidenceSubjectType(record.subjectType);
+  }
+  if (record.statement !== undefined) {
+    update.statement = requireString(record.statement, "Evidence statement", 20_000).trim();
+  }
+  if (action === "edit" && !update.statement) {
+    throw new Error("Edited evidence statement cannot be empty");
+  }
+  return update;
+}
+
 function validateTrackedApplication(value: unknown): TrackedApplication {
   const record = requireRecord(value, "Legacy application");
   return {
-    id: requireString(record.id, "Application id", 500).trim(),
+    id: validateCareerEntityId(record.id, "Application id"),
     jobId: requireString(record.jobId, "Job id", 500).trim(),
     title: requireString(record.title, "Application title", 1000).trim(),
     companyName: requireString(record.companyName, "Company name", 1000).trim(),
