@@ -175,9 +175,8 @@ export class ResumeRepository {
     projection: ResumeProjectionRecord,
     statements: ResumeStatement[],
   ): Promise<ResumeProjectionRecord> {
-    await this.sqlite.exec("BEGIN IMMEDIATE;");
-    try {
-      await this.sqlite.exec(sql`
+    const persistenceStatements = [
+      sql`
         INSERT INTO resume_projections (
           id, job_id, context, page_format, source_projection_id, status,
           sections_json, selected_evidence_ids_json, created_at, updated_at
@@ -188,34 +187,28 @@ export class ResumeRepository {
           ${JSON.stringify(projection.selectedEvidenceIds)}, ${projection.createdAt},
           ${projection.updatedAt}
         );
-      `);
-
-      await this.sqlite.exec(sql`
+      `,
+      sql`
         INSERT INTO resume_projection_metadata (
           projection_id, template_id, contact_json
         ) VALUES (
           ${projection.id}, ${projection.templateId}, ${JSON.stringify(projection.contact)}
         );
-      `);
+      `,
+      ...statements.map((statement) => sql`
+        INSERT INTO resume_statements (
+          id, projection_id, section, display_order, text,
+          evidence_ids_json, generation_mode, user_edited
+        ) VALUES (
+          ${statement.id}, ${statement.projectionId}, ${statement.section},
+          ${statement.order}, ${statement.text},
+          ${JSON.stringify(statement.evidenceIds)}, ${statement.generationMode},
+          ${statement.userEdited}
+        );
+      `),
+    ];
 
-      for (const statement of statements) {
-        await this.sqlite.exec(sql`
-          INSERT INTO resume_statements (
-            id, projection_id, section, display_order, text,
-            evidence_ids_json, generation_mode, user_edited
-          ) VALUES (
-            ${statement.id}, ${statement.projectionId}, ${statement.section},
-            ${statement.order}, ${statement.text},
-            ${JSON.stringify(statement.evidenceIds)}, ${statement.generationMode},
-            ${statement.userEdited}
-          );
-        `);
-      }
-      await this.sqlite.exec("COMMIT;");
-    } catch (error) {
-      await this.sqlite.exec("ROLLBACK;").catch(() => undefined);
-      throw error;
-    }
+    await this.sqlite.transaction(persistenceStatements);
 
     const created = await this.getProjection(projection.id);
     if (!created) throw new Error("Failed to create resume projection");
@@ -283,9 +276,8 @@ export class ResumeRepository {
   }
 
   async createArtifact(artifact: ResumeArtifactRecord): Promise<ResumeArtifactRecord> {
-    await this.sqlite.exec("BEGIN IMMEDIATE;");
-    try {
-      await this.sqlite.exec(sql`
+    await this.sqlite.transaction([
+      sql`
         INSERT INTO resume_artifacts (
           id, projection_id, version, format, managed_path, content_hash,
           page_count, truth_gate_result, parseability_result,
@@ -297,19 +289,16 @@ export class ResumeRepository {
           ${artifact.parseabilityResult}, ${artifact.relevanceReviewResult},
           ${artifact.createdAt}
         );
-      `);
-      await this.sqlite.exec(sql`
+      `,
+      sql`
         INSERT INTO resume_artifact_snapshots (
           artifact_id, projection_snapshot_json
         ) VALUES (
           ${artifact.id}, ${JSON.stringify(artifact.projectionSnapshot)}
         );
-      `);
-      await this.sqlite.exec("COMMIT;");
-    } catch (error) {
-      await this.sqlite.exec("ROLLBACK;").catch(() => undefined);
-      throw error;
-    }
+      `,
+    ]);
+
     const created = await this.getArtifact(artifact.id);
     if (!created) throw new Error("Failed to create resume artifact");
     return created;
