@@ -18,7 +18,7 @@
     "typecheck": "tsc -p tsconfig.json --noEmit && tsc -p tsconfig.electron.json --noEmit",
     "build": "vite build",
     "preview": "vite preview",
-    "test": "npm run desktop:compile && node tests/backend-smoke-test.cjs && node tests/career-persistence-smoke-test.cjs && node tests/resume-import-smoke-test.cjs && node tests/requirement-mapper.test.cjs && node tests/requirement-coverage-smoke-test.cjs && node tests/resume-lifecycle-smoke-test.cjs && node tests/resume-tailoring.test.cjs",
+    "test": "npm run desktop:compile && node tests/backend-smoke-test.cjs && node tests/career-persistence-smoke-test.cjs && node tests/resume-import-smoke-test.cjs && node tests/requirement-mapper.test.cjs && node tests/requirement-coverage-smoke-test.cjs && node tests/resume-lifecycle-smoke-test.cjs && node tests/resume-tailoring.test.cjs && node tests/resume-tailoring-smoke-test.cjs",
     "test:unit": "npm run desktop:compile && node tests/salary-parser.test.cjs && node tests/scrape-guard.test.cjs && node tests/tray-notifications.test.cjs && node tests/requirement-mapper.test.cjs && node tests/resume-tailoring.test.cjs",
     "test:e2e": "npm run build && npm run desktop:compile && npx playwright test",
     "repo:health": "npm run typecheck && npm run build && npm run test",
