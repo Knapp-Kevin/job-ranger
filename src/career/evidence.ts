@@ -89,6 +89,19 @@ export function useCareerEvidence() {
       setError(null);
       try {
         const reviewed = await getDesktopApi().career.reviewEvidence(id, update);
+
+        // The backend write is authoritative. Reflect that returned state immediately
+        // instead of making the user wait for a second IPC round trip before the
+        // review queue changes. A canonical refresh still follows to reconcile source
+        // metadata and any concurrent changes.
+        setItems((current) =>
+          current.map((item) =>
+            item.evidence.id === reviewed.id
+              ? { ...item, evidence: reviewed }
+              : item,
+          ),
+        );
+
         await refresh();
         window.dispatchEvent(new CustomEvent(evidenceEvent));
         return reviewed;
