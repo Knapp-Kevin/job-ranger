@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   linux-package-proof:
+    # One-shot product incorporation proof. Remove after the delta is recorded.
     runs-on: ubuntu-24.04
     timeout-minutes: 20
     steps:
