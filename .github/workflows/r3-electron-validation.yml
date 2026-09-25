@@ -30,5 +30,6 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      # Rerun deliberately after the R3 Prepare resume handoff assertion changed.
       - name: Run Electron product suite
         run: xvfb-run -a npm run test:e2e
