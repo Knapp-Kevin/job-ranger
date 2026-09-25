@@ -1,0 +1,108 @@
+name: R1 Packaged Anydoc Proof
+
+on:
+  push:
+    branches:
+      - implementation/61-resume-import
+    paths:
+      - '.github/workflows/r1-anydoc-packaged-proof.yml'
+      - 'scripts/verify-packaged-anydoc.mjs'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'electron-builder.json'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-x64:
+    runs-on: windows-2025
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - run: npm ci
+      - name: Provision pinned SQLite CLI
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $sqliteUrl = "https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip"
+          $expectedSha3 = "88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b"
+          $archive = Join-Path $env:RUNNER_TEMP "sqlite-tools.zip"
+          $extractDir = Join-Path $env:RUNNER_TEMP "sqlite-tools"
+          Invoke-WebRequest -Uri $sqliteUrl -OutFile $archive
+          $actualSha3 = node -e "const fs=require('fs'),crypto=require('crypto'); console.log(crypto.createHash('sha3-256').update(fs.readFileSync(process.argv[1])).digest('hex'))" $archive
+          if ($actualSha3.Trim().ToLowerInvariant() -ne $expectedSha3) { throw "SQLite checksum mismatch" }
+          Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
+          $sqlite = Get-ChildItem -Path $extractDir -Recurse -Filter sqlite3.exe | Select-Object -First 1
+          New-Item -ItemType Directory -Path build/sqlite -Force | Out-Null
+          Copy-Item -LiteralPath $sqlite.FullName -Destination build/sqlite/sqlite3.exe -Force
+      - name: Build unpacked Windows app
+        run: |
+          npm run build
+          npm run desktop:compile
+          npx electron-builder --win --x64 --dir --publish never
+      - name: Execute Anydoc from packaged app
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = "Stop"
+          $archive = (Resolve-Path "release/win-unpacked/resources/app.asar").Path
+          $exe = (Resolve-Path "release/win-unpacked/Job Ranger.exe").Path
+          $env:ELECTRON_RUN_AS_NODE = "1"
+          & $exe scripts/verify-packaged-anydoc.mjs $archive
+          if ($LASTEXITCODE -ne 0) { throw "Packaged Anydoc proof failed with exit code $LASTEXITCODE" }
+          $native = Get-ChildItem -Path "release/win-unpacked/resources" -Recurse -Filter "*.node" | Where-Object { $_.FullName -match "anydoc" }
+          if (-not $native) { throw "No packaged Anydoc native binding was found" }
+          $bytes = ($native | Measure-Object -Property Length -Sum).Sum
+          Write-Host "Packaged Anydoc native bytes: $bytes"
+
+  macos-arm64:
+    runs-on: macos-14
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+      - run: npm ci
+      - name: Generate macOS icon
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p build/icon.iconset
+          sips -z 16 16 public/ICON.png --out build/icon.iconset/icon_16x16.png
+          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_16x16@2x.png
+          sips -z 32 32 public/ICON.png --out build/icon.iconset/icon_32x32.png
+          sips -z 64 64 public/ICON.png --out build/icon.iconset/icon_32x32@2x.png
+          sips -z 128 128 public/ICON.png --out build/icon.iconset/icon_128x128.png
+          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_128x128@2x.png
+          sips -z 256 256 public/ICON.png --out build/icon.iconset/icon_256x256.png
+          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_256x256@2x.png
+          sips -z 512 512 public/ICON.png --out build/icon.iconset/icon_512x512.png
+          cp public/ICON.png build/icon.iconset/icon_512x512@2x.png
+          iconutil -c icns build/icon.iconset -o build/icon.icns
+      - name: Build unpacked macOS arm64 app
+        shell: bash
+        env:
+          SQLITE3_PATH: /usr/bin/sqlite3
+        run: |
+          set -euo pipefail
+          npm run build
+          npm run desktop:compile
+          npx electron-builder --mac --arm64 --dir --publish never
+      - name: Execute Anydoc from packaged app
+        shell: bash
+        run: |
+          set -euo pipefail
+          APP_ASAR="$(find release -path '*/Job Ranger.app/Contents/Resources/app.asar' -print -quit)"
+          APP_EXE="$(find release -path '*/Job Ranger.app/Contents/MacOS/Job Ranger' -print -quit)"
+          test -n "$APP_ASAR"
+          test -n "$APP_EXE"
+          ELECTRON_RUN_AS_NODE=1 "$APP_EXE" scripts/verify-packaged-anydoc.mjs "$APP_ASAR"
+          NATIVE_BYTES="$(find release -path '*anydoc*' -name '*.node' -exec stat -f '%z' {} \; | awk '{s+=$1} END {print s+0}')"
+          test "$NATIVE_BYTES" -gt 0
+          echo "Packaged Anydoc native bytes: $NATIVE_BYTES"
