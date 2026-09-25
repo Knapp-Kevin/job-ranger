@@ -14,6 +14,7 @@ import {
 } from "./validators.cjs";
 import {
   validateApplicationUpdate,
+  validateCareerEntityId,
   validateCareerProfile,
   validateEvidenceReviewUpdate,
   validateLegacyCareerMigration,
@@ -300,7 +301,7 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
     requireCareerBackend().reviewEvidence(
-      validateId(id, "Evidence id"),
+      validateCareerEntityId(id, "Evidence id"),
       validateEvidenceReviewUpdate(update),
     ),
   );
@@ -308,8 +309,8 @@ function registerIpcHandlers(): void {
     "career:merge-evidence",
     (_event, sourceId: string, targetId: string) =>
       requireCareerBackend().mergeEvidence(
-        validateId(sourceId, "Source evidence id"),
-        validateId(targetId, "Target evidence id"),
+        validateCareerEntityId(sourceId, "Source evidence id"),
+        validateCareerEntityId(targetId, "Target evidence id"),
       ),
   );
 
@@ -321,12 +322,14 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle("applications:update", (_event, id: string, update) =>
     requireCareerBackend().updateApplication(
-      validateId(id, "Application id"),
+      validateCareerEntityId(id, "Application id"),
       validateApplicationUpdate(update),
     ),
   );
   ipcMain.handle("applications:delete", (_event, id: string) =>
-    requireCareerBackend().deleteApplication(validateId(id, "Application id")),
+    requireCareerBackend().deleteApplication(
+      validateCareerEntityId(id, "Application id"),
+    ),
   );
 }
 
