@@ -118,7 +118,9 @@ export async function extractResumeDocument(
   }
 
   try {
-    const rawText = await toMarkdown(filePath, { ocr: "reject" });
+    // Anydoc 0.2.4's local Node API is deterministic and does not invoke hosted OCR.
+    // Image-only PDFs surface as needsOcr and remain an explicit user-facing state.
+    const rawText = await toMarkdown(filePath);
     if (!rawText.trim()) {
       throw new ResumeParserError(
         "No meaningful text could be extracted from this document.",
