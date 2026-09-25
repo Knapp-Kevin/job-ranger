@@ -1,0 +1,55 @@
+name: R1 Parser Platform Audit
+
+on:
+  push:
+    branches:
+      - implementation/61-parser-benchmark
+    paths:
+      - '.github/workflows/r1-parser-platform-audit.yml'
+      - 'scripts/audit-resume-parser-platform.mjs'
+      - 'scripts/generate-resume-parser-fixtures.py'
+      - 'tests/fixtures/career-evidence/parser-benchmark/**'
+
+permissions:
+  contents: read
+
+jobs:
+  platform-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2025
+          - macos-15
+    runs-on: ${{ matrix.os }}
+    timeout-minutes: 15
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install fixture-generation dependencies
+        run: pip install -r tests/fixtures/career-evidence/parser-benchmark/requirements.txt
+
+      - name: Generate synthetic document fixtures
+        run: python scripts/generate-resume-parser-fixtures.py
+
+      - name: Run platform and license audit
+        run: node scripts/audit-resume-parser-platform.mjs
+
+      - name: Upload platform result
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: anydoc-0.2.4-${{ runner.os }}-${{ runner.arch }}-platform
+          path: tests/fixtures/career-evidence/parser-benchmark/results/*-platform.json
+          if-no-files-found: error
