@@ -6,6 +6,11 @@ on:
       - implementation/61-resume-import
     paths:
       - '.github/workflows/r1-resume-import-e2e.yml'
+      - 'electron/src/**'
+      - 'src/career/evidence.ts'
+      - 'src/pages/CareerProfile.tsx'
+      - 'src/shared/**'
+      - 'tests/e2e/app.spec.ts'
 
 permissions:
   contents: read
