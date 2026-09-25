@@ -2,8 +2,12 @@ import type {
   ApplicationStatus,
   ApplicationUpdate,
   CareerProfile,
+  EvidenceReviewAction,
+  EvidenceReviewUpdate,
+  EvidenceSubjectType,
   LegacyCareerMigration,
   OnCallPreference,
+  PastedResumeInput,
   PayBasis,
   TrackedApplication,
 } from "../../src/shared/contracts.js";
@@ -58,6 +62,31 @@ function applicationStatus(value: unknown): ApplicationStatus {
     throw new Error("Application status is invalid");
   }
   return value as ApplicationStatus;
+}
+
+function evidenceSubjectType(value: unknown): EvidenceSubjectType {
+  const allowed: EvidenceSubjectType[] = [
+    "role",
+    "skill",
+    "credential",
+    "education",
+    "project",
+    "achievement",
+    "publication",
+    "other",
+  ];
+  if (typeof value !== "string" || !allowed.includes(value as EvidenceSubjectType)) {
+    throw new Error("Evidence subject type is invalid");
+  }
+  return value as EvidenceSubjectType;
+}
+
+function evidenceReviewAction(value: unknown): EvidenceReviewAction {
+  const allowed: EvidenceReviewAction[] = ["confirm", "edit", "reject"];
+  if (typeof value !== "string" || !allowed.includes(value as EvidenceReviewAction)) {
+    throw new Error("Evidence review action is invalid");
+  }
+  return value as EvidenceReviewAction;
 }
 
 function payBasis(value: unknown): PayBasis {
@@ -135,6 +164,36 @@ export function validateApplicationUpdate(value: unknown): ApplicationUpdate {
   }
   if (record.notes !== undefined) {
     update.notes = requireString(record.notes, "Application notes", 50000);
+  }
+  return update;
+}
+
+export function validatePastedResumeInput(value: unknown): PastedResumeInput {
+  const record = requireRecord(value, "Pasted resume input");
+  const label = requireString(record.label, "Pasted resume label", 200).trim();
+  const text = requireString(record.text, "Pasted resume text", 2_000_000);
+  if (!text.trim()) {
+    throw new Error("Pasted resume text cannot be empty");
+  }
+  return {
+    label: label || "Pasted career evidence",
+    text,
+  };
+}
+
+export function validateEvidenceReviewUpdate(value: unknown): EvidenceReviewUpdate {
+  const record = requireRecord(value, "Evidence review");
+  const action = evidenceReviewAction(record.action);
+  const update: EvidenceReviewUpdate = { action };
+
+  if (record.subjectType !== undefined) {
+    update.subjectType = evidenceSubjectType(record.subjectType);
+  }
+  if (record.statement !== undefined) {
+    update.statement = requireString(record.statement, "Evidence statement", 20_000).trim();
+  }
+  if (action === "edit" && !update.statement) {
+    throw new Error("Edited evidence statement cannot be empty");
   }
   return update;
 }
