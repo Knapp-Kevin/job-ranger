@@ -5,7 +5,7 @@ const path = require('node:path');
 
 const { JobScoutBackend } = require('../electron/backend.cjs');
 const { CareerBackend } = require('../electron/career-backend.cjs');
-const { RequirementBackend } = require('../electron/requirement-backend.cjs');
+const { RequirementBackend } = require('../electron-runtime/electron/src/requirement-backend.cjs');
 const { SqliteClient } = require('../electron/sqlite.cjs');
 
 function createMockFetch() {
