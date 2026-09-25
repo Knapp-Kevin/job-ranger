@@ -1,0 +1,99 @@
+name: R1 Anydoc Package Proof
+
+on:
+  push:
+    branches:
+      - implementation/61-resume-import
+    paths:
+      - '.github/workflows/r1-anydoc-package-proof.yml'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'electron-builder.json'
+      - 'electron/**'
+      - 'src/shared/**'
+      - 'scripts/prepare-electron-runtime.mjs'
+
+permissions:
+  contents: read
+
+jobs:
+  windows-package-proof:
+    runs-on: windows-2025
+    timeout-minutes: 25
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Provision pinned SQLite CLI
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $sqliteUrl = 'https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip'
+          $expectedSha3 = '88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b'
+          $archive = Join-Path $env:RUNNER_TEMP 'sqlite-tools-win-x64-3530400.zip'
+          $extractDir = Join-Path $env:RUNNER_TEMP 'sqlite-tools-win-x64-3530400'
+          Invoke-WebRequest -Uri $sqliteUrl -OutFile $archive
+          $actualSha3 = node -e "const fs=require('fs'),crypto=require('crypto'); console.log(crypto.createHash('sha3-256').update(fs.readFileSync(process.argv[1])).digest('hex'))" $archive
+          if ($actualSha3.Trim().ToLowerInvariant() -ne $expectedSha3) { throw 'SQLite archive checksum mismatch.' }
+          Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
+          $sqlite = Get-ChildItem -Path $extractDir -Recurse -Filter sqlite3.exe | Select-Object -First 1
+          if (-not $sqlite) { throw 'sqlite3.exe not found in verified archive.' }
+          New-Item -ItemType Directory -Path build/sqlite -Force | Out-Null
+          Copy-Item -LiteralPath $sqlite.FullName -Destination build/sqlite/sqlite3.exe -Force
+          "SQLITE3_PATH=$((Resolve-Path build/sqlite/sqlite3.exe).Path)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+
+      - name: Build unpacked Windows app
+        shell: pwsh
+        run: |
+          npm run repo:health
+          npx electron-builder --win --dir --publish never
+
+      - name: Verify packaged Anydoc wrapper and native binding
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $resources = (Resolve-Path 'release/win-unpacked/resources').Path
+          $asar = Join-Path $resources 'app.asar'
+          if (-not (Test-Path -LiteralPath $asar)) { throw 'app.asar missing from packaged app.' }
+
+          $listing = & npx asar list $asar
+          if ($LASTEXITCODE -ne 0) { throw 'Unable to inspect app.asar.' }
+          if (-not ($listing -match 'node_modules[/\\]@firecrawl[/\\]anydoc[/\\]anydoc.js')) {
+            throw '@firecrawl/anydoc wrapper missing from app.asar.'
+          }
+
+          $unpacked = Join-Path $resources 'app.asar.unpacked'
+          $native = Get-ChildItem -Path $unpacked -Recurse -Filter 'anydoc.win32-x64-msvc.node' -ErrorAction SilentlyContinue | Select-Object -First 1
+          if (-not $native) {
+            throw 'Anydoc win32-x64-msvc native binding missing from app.asar.unpacked.'
+          }
+
+          $wrapperSize = (Get-ChildItem node_modules/@firecrawl/anydoc -Recurse -File | Measure-Object -Property Length -Sum).Sum
+          $nativePackageSize = (Get-ChildItem node_modules/@firecrawl/anydoc-win32-x64-msvc -Recurse -File | Measure-Object -Property Length -Sum).Sum
+          $packagedNativeBytes = $native.Length
+          $report = [ordered]@{
+            package = '@firecrawl/anydoc'
+            version = (node -p "require('./node_modules/@firecrawl/anydoc/package.json').version")
+            nativePackage = '@firecrawl/anydoc-win32-x64-msvc'
+            wrapperInstalledBytes = $wrapperSize
+            nativePackageInstalledBytes = $nativePackageSize
+            packagedNativeBindingBytes = $packagedNativeBytes
+            packagedNativePath = $native.FullName.Substring($resources.Length + 1)
+          }
+          $report | ConvertTo-Json | Tee-Object -FilePath r1-anydoc-windows-package-proof.json
+
+      - name: Upload package proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: r1-anydoc-windows-package-proof
+          path: r1-anydoc-windows-package-proof.json
+          if-no-files-found: error
