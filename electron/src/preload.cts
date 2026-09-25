@@ -48,6 +48,10 @@ const desktopApi: DesktopApi = {
       ipcRenderer.invoke("career:review-evidence", id, update),
     mergeEvidence: (sourceId, targetId) =>
       ipcRenderer.invoke("career:merge-evidence", sourceId, targetId),
+    getJobEvidenceCoverage: (jobId) =>
+      ipcRenderer.invoke("career:get-job-evidence-coverage", jobId),
+    confirmRequirementMapping: (mappingId) =>
+      ipcRenderer.invoke("career:confirm-requirement-mapping", mappingId),
   },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),

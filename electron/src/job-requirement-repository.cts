@@ -4,7 +4,7 @@ import type {
   JobRequirementCoverageItem,
   RequirementEvidenceMap,
 } from "../../src/shared/contracts.js";
-import { sql, SqliteClient } from "./sqlite.cjs";
+import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
 import type {
   DeterministicMappingDraft,
   NormalizedRequirementDraft,
@@ -182,10 +182,10 @@ export class JobRequirementRepository {
 
     await this.sqlite.exec(`
       BEGIN IMMEDIATE;
-      DELETE FROM job_requirements WHERE job_id = ${JSON.stringify(jobId)};
+      DELETE FROM job_requirements WHERE job_id = ${toSqlLiteral(jobId)};
       ${inserts}
       INSERT INTO job_requirement_analysis (job_id, source_hash, normalizer_version, analyzed_at)
-      VALUES (${JSON.stringify(jobId)}, ${JSON.stringify(sourceHash)}, ${normalizerVersion}, ${JSON.stringify(now)})
+      VALUES (${toSqlLiteral(jobId)}, ${toSqlLiteral(sourceHash)}, ${normalizerVersion}, ${toSqlLiteral(now)})
       ON CONFLICT(job_id) DO UPDATE SET
         source_hash = excluded.source_hash,
         normalizer_version = excluded.normalizer_version,

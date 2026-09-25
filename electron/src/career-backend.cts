@@ -8,6 +8,8 @@ import type {
   CareerProfile,
   EvidenceReviewUpdate,
   ExtractionSnapshot,
+  JobEvidenceCoverage,
+  RequirementEvidenceMap,
   LegacyCareerMigration,
   PastedResumeInput,
   ResumeImportFailureCode,
@@ -18,7 +20,14 @@ import type {
 } from "../../src/shared/contracts.js";
 import { CareerRepository } from "./career-repository.cjs";
 import { CareerEvidenceRepository } from "./career-evidence-repository.cjs";
+import { JobRequirementRepository } from "./job-requirement-repository.cjs";
 import { normalizeEvidenceProposals } from "./evidence-normalizer.cjs";
+import {
+  mapRequirementToEvidence,
+  normalizeJobRequirements,
+  requirementSourceHash,
+  REQUIREMENT_NORMALIZER_VERSION,
+} from "./requirement-normalizer.cjs";
 import {
   extractResumeDocument,
   RESUME_PARSER_ID,
@@ -145,6 +154,7 @@ export class CareerBackend {
   private readonly sqlite: SqliteClient;
   private readonly repository: CareerRepository;
   private readonly evidenceRepository: CareerEvidenceRepository;
+  private readonly requirementRepository: JobRequirementRepository;
   private readonly artifactsDirectory: string;
   private readonly sourceArtifactsDirectory: string;
 
@@ -155,6 +165,7 @@ export class CareerBackend {
     );
     this.repository = new CareerRepository(this.sqlite);
     this.evidenceRepository = new CareerEvidenceRepository(this.sqlite);
+    this.requirementRepository = new JobRequirementRepository(this.sqlite);
     this.artifactsDirectory = path.join(options.dataDirectory, "artifacts");
     this.sourceArtifactsDirectory = path.join(
       this.artifactsDirectory,
@@ -228,6 +239,74 @@ export class CareerBackend {
     targetId: string,
   ): Promise<CandidateEvidence> {
     return this.evidenceRepository.mergeEvidence(sourceId, targetId);
+  }
+
+  async getJobEvidenceCoverage(jobId: string): Promise<JobEvidenceCoverage> {
+    const source = await this.requirementRepository.getJobSource(jobId);
+    if (!source) throw new Error(`Job ${jobId} not found`);
+
+    const descriptionText = source.descriptionText?.trim() ?? "";
+    if (descriptionText.length < 80) {
+      return {
+        jobId,
+        sourceStatus: "insufficient",
+        sourceMessage:
+          "Job Ranger does not yet have enough source listing text to normalize requirements for this job. The existing deterministic fit guidance remains available.",
+        items: [],
+        directCount: 0,
+        transferableCount: 0,
+        ambiguousCount: 0,
+        gapCount: 0,
+        confirmedAmbiguousCount: 0,
+        analyzedAt: null,
+      };
+    }
+
+    const sourceHash = requirementSourceHash(descriptionText);
+    const analysis = await this.requirementRepository.getAnalysis(jobId);
+    if (
+      !analysis ||
+      analysis.source_hash !== sourceHash ||
+      analysis.normalizer_version !== REQUIREMENT_NORMALIZER_VERSION
+    ) {
+      await this.requirementRepository.replaceRequirements(
+        jobId,
+        sourceHash,
+        REQUIREMENT_NORMALIZER_VERSION,
+        normalizeJobRequirements(jobId, descriptionText),
+      );
+    }
+
+    const requirements = await this.requirementRepository.listRequirements(jobId);
+    const evidence = await this.requirementRepository.listConfirmedEvidence();
+    await this.requirementRepository.replaceDeterministicMappings(
+      jobId,
+      requirements.map((requirement) => mapRequirementToEvidence(requirement, evidence)),
+    );
+    const items = await this.requirementRepository.listCoverage(jobId);
+    const currentAnalysis = await this.requirementRepository.getAnalysis(jobId);
+
+    return {
+      jobId,
+      sourceStatus: "available",
+      sourceMessage:
+        requirements.length > 0
+          ? "Requirements are mapped only against confirmed Career Evidence. Gaps stay gaps."
+          : "The listing text is available, but Job Ranger did not find explicit requirements it can normalize confidently.",
+      items,
+      directCount: items.filter((item) => item.mapping.classification === "direct").length,
+      transferableCount: items.filter((item) => item.mapping.classification === "transferable").length,
+      ambiguousCount: items.filter((item) => item.mapping.classification === "ambiguous").length,
+      gapCount: items.filter((item) => item.mapping.classification === "gap").length,
+      confirmedAmbiguousCount: items.filter(
+        (item) => item.mapping.classification === "ambiguous" && item.mapping.userConfirmed,
+      ).length,
+      analyzedAt: currentAnalysis?.analyzed_at ?? null,
+    };
+  }
+
+  async confirmRequirementMapping(mappingId: string): Promise<RequirementEvidenceMap> {
+    return this.requirementRepository.confirmAmbiguousMapping(mappingId);
   }
 
   async importPastedText(input: PastedResumeInput): Promise<ResumeImportResult> {

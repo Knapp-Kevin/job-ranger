@@ -315,7 +315,6 @@ export const migrations: Migration[] = [
     name: "job_requirement_source_text",
     sql: `
       ALTER TABLE jobs ADD COLUMN description_text TEXT;
-      ALTER TABLE jobs ADD COLUMN description_updated_at TEXT;
 
       CREATE TABLE IF NOT EXISTS job_requirement_analysis (
         job_id TEXT PRIMARY KEY,

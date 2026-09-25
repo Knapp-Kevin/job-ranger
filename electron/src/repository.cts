@@ -405,10 +405,6 @@ export class JobScoutRepository {
           url = excluded.url,
           description_snippet = excluded.description_snippet,
           description_text = excluded.description_text,
-          description_updated_at = CASE
-            WHEN excluded.description_text IS NOT jobs.description_text THEN excluded.last_seen_at
-            ELSE jobs.description_updated_at
-          END,
           salary_min = excluded.salary_min,
           salary_max = excluded.salary_max,
           salary_currency = excluded.salary_currency,

@@ -313,6 +313,14 @@ function registerIpcHandlers(): void {
         validateCareerEntityId(targetId, "Target evidence id"),
       ),
   );
+  ipcMain.handle("career:get-job-evidence-coverage", (_event, jobId: string) =>
+    requireCareerBackend().getJobEvidenceCoverage(validateId(jobId, "Job id")),
+  );
+  ipcMain.handle("career:confirm-requirement-mapping", (_event, mappingId: string) =>
+    requireCareerBackend().confirmRequirementMapping(
+      validateCareerEntityId(mappingId, "Requirement mapping id"),
+    ),
+  );
 
   ipcMain.handle("applications:list", () =>
     requireCareerBackend().listApplications(),

@@ -4,8 +4,10 @@ import type {
   CandidateEvidenceReviewItem,
   CareerProfile,
   EvidenceReviewUpdate,
+  JobEvidenceCoverage,
   LegacyCareerMigration,
   PastedResumeInput,
+  RequirementEvidenceMap,
   ResumeImportResult,
   SourceArtifact,
   TrackedApplication,
@@ -344,6 +346,8 @@ export interface DesktopApi {
       sourceId: string,
       targetId: string,
     ) => Promise<CandidateEvidence>;
+    getJobEvidenceCoverage: (jobId: string) => Promise<JobEvidenceCoverage>;
+    confirmRequirementMapping: (mappingId: string) => Promise<RequirementEvidenceMap>;
   };
   applications: {
     list: () => Promise<TrackedApplication[]>;

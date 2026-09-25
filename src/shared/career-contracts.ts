@@ -234,6 +234,27 @@ export interface RequirementEvidenceMap {
   updatedAt: string;
 }
 
+export interface JobRequirementCoverageItem {
+  requirement: JobRequirement;
+  mapping: RequirementEvidenceMap;
+  evidence: CandidateEvidence | null;
+}
+
+export type RequirementSourceStatus = "available" | "insufficient";
+
+export interface JobEvidenceCoverage {
+  jobId: string;
+  sourceStatus: RequirementSourceStatus;
+  sourceMessage: string;
+  items: JobRequirementCoverageItem[];
+  directCount: number;
+  transferableCount: number;
+  ambiguousCount: number;
+  gapCount: number;
+  confirmedAmbiguousCount: number;
+  analyzedAt: string | null;
+}
+
 export type ResumeContext =
   | "private-sector"
   | "hybrid"
