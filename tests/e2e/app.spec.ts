@@ -94,7 +94,9 @@ test.describe("Job Ranger E2E Tests", () => {
     ].join("\n"));
     await page.getByRole("button", { name: "Extract evidence", exact: true }).click();
 
-    const proposal = page.locator("article").filter({ hasText: statement });
+    const proposal = page.locator("article").filter({
+      has: page.locator("p").filter({ hasText: statement }),
+    });
     await expect(proposal).toBeVisible();
     await expect(page.getByText("Confirmed career evidence (1)", { exact: true })).toHaveCount(0);
 
