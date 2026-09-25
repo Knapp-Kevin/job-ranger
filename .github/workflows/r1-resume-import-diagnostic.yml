@@ -1,0 +1,35 @@
+name: R1 Resume Import Diagnostic
+
+on:
+  push:
+    branches:
+      - implementation/61-resume-import
+    paths:
+      - '.github/workflows/r1-resume-import-diagnostic.yml'
+      - 'tests/e2e/resume-import-diagnostic.spec.ts'
+
+permissions:
+  contents: read
+
+jobs:
+  diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Check out R1 branch
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build desktop runtime
+        run: npm run build && npm run desktop:compile
+
+      - name: Run focused diagnostic
+        run: xvfb-run -a npx playwright test tests/e2e/resume-import-diagnostic.spec.ts --reporter=line
