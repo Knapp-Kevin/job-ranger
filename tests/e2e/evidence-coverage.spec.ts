@@ -72,8 +72,10 @@ test("Find Jobs shows evidence coverage and Prepare resume handoff", async () =>
   await page.getByRole("button", { name: "Prepare resume", exact: true }).click();
   await expect(
     page.getByRole("heading", {
-      name: "Tell Job Ranger what good work looks like for you.",
+      name: "Build the document from facts you have actually confirmed.",
       exact: true,
     }),
   ).toBeVisible();
+  await expect(page.getByText(/Targeting tracked job/)).toBeVisible();
+  await expect(page).toHaveURL(/\/resume\?job=/);
 });
