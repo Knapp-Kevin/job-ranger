@@ -1,0 +1,77 @@
+name: R1 Anydoc Package Proof
+
+on:
+  push:
+    branches:
+      - implementation/61-resume-import
+    paths:
+      - '.github/workflows/r1-anydoc-package-proof.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  linux-package-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out implementation branch
+        uses: actions/checkout@v4
+        with:
+          ref: implementation/61-resume-import
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22.12.0
+          cache: npm
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Install fixture dependencies
+        run: pip install -r tests/fixtures/career-evidence/parser-benchmark/requirements.txt
+
+      - name: Generate synthetic document fixtures
+        run: python scripts/generate-resume-parser-fixtures.py
+
+      - name: Build renderer and Electron runtime
+        run: npm run build && npm run desktop:compile
+
+      - name: Package application directory
+        run: npx electron-builder --dir --publish never
+
+      - name: Prove Anydoc executes from packaged app.asar
+        run: node scripts/verify-packaged-anydoc.mjs release/linux-unpacked tests/fixtures/career-evidence/parser-benchmark/generated/hvac-technician.docx
+
+      - name: Measure packaged Anydoc payload
+        shell: bash
+        run: |
+          rm -rf .tmp-anydoc-asar
+          mkdir -p .tmp-anydoc-asar
+          npx asar extract release/linux-unpacked/resources/app.asar .tmp-anydoc-asar
+          echo '--- packaged Anydoc files ---'
+          find .tmp-anydoc-asar/node_modules/@firecrawl -maxdepth 3 -type f -printf '%s %p\n' | sort -n
+          if [ -d release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl ]; then
+            find release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl -maxdepth 4 -type f -printf '%s %p\n' | sort -n
+          fi
+          echo '--- attributable extracted/unpacked bytes ---'
+          python - <<'PY'
+          from pathlib import Path
+          roots = [
+              Path('.tmp-anydoc-asar/node_modules/@firecrawl'),
+              Path('release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl'),
+          ]
+          total = 0
+          for root in roots:
+              if root.exists():
+                  for path in root.rglob('*'):
+                      if path.is_file():
+                          total += path.stat().st_size
+          print(f'PACKAGED_ANYDOC_BYTES={total}')
+          PY
