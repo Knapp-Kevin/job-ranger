@@ -1,9 +1,7 @@
 name: R1 Parser Benchmark
 
 on:
-  push:
-    branches:
-      - implementation/61-parser-benchmark
+  workflow_dispatch:
 
 permissions:
   contents: read
