@@ -15,7 +15,9 @@ import {
 import {
   validateApplicationUpdate,
   validateCareerProfile,
+  validateEvidenceReviewUpdate,
   validateLegacyCareerMigration,
+  validatePastedResumeInput,
 } from "./career-validators.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
@@ -272,6 +274,43 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle("career:migrate-legacy", (_event, payload) =>
     requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
+  );
+  ipcMain.handle("career:select-resume-import", async () => {
+    const selection = await dialog.showOpenDialog({
+      title: "Import resume or career history",
+      properties: ["openFile"],
+      filters: [
+        { name: "Resume documents", extensions: ["docx", "pdf", "txt"] },
+        { name: "All files", extensions: ["*"] },
+      ],
+    });
+    if (selection.canceled || selection.filePaths.length === 0) {
+      return null;
+    }
+    return requireCareerBackend().importResumeFile(selection.filePaths[0]);
+  });
+  ipcMain.handle("career:import-pasted-text", (_event, input) =>
+    requireCareerBackend().importPastedText(validatePastedResumeInput(input)),
+  );
+  ipcMain.handle("career:list-source-artifacts", () =>
+    requireCareerBackend().listSourceArtifacts(),
+  );
+  ipcMain.handle("career:list-evidence", () =>
+    requireCareerBackend().listEvidence(),
+  );
+  ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
+    requireCareerBackend().reviewEvidence(
+      validateId(id, "Evidence id"),
+      validateEvidenceReviewUpdate(update),
+    ),
+  );
+  ipcMain.handle(
+    "career:merge-evidence",
+    (_event, sourceId: string, targetId: string) =>
+      requireCareerBackend().mergeEvidence(
+        validateId(sourceId, "Source evidence id"),
+        validateId(targetId, "Target evidence id"),
+      ),
   );
 
   ipcMain.handle("applications:list", () =>
