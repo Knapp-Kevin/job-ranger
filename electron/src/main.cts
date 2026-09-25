@@ -2,6 +2,7 @@ import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
 import path from "node:path";
 import { JobScoutBackend } from "./backend.cjs";
 import { CareerBackend } from "./career-backend.cjs";
+import { RequirementBackend } from "./requirement-backend.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -29,6 +30,7 @@ let mainWindow: BrowserWindow | null = null;
 let helpWindow: BrowserWindow | null = null;
 let backend: JobScoutBackend | null = null;
 let careerBackend: CareerBackend | null = null;
+let requirementBackend: RequirementBackend | null = null;
 let isQuitting = false;
 
 function appAssetPath(fileName: string): string {
@@ -208,6 +210,13 @@ function requireCareerBackend(): CareerBackend {
   return careerBackend;
 }
 
+function requireRequirementBackend(): RequirementBackend {
+  if (!requirementBackend) {
+    throw new Error("Job Ranger requirement backend is not initialized");
+  }
+  return requirementBackend;
+}
+
 function registerIpcHandlers(): void {
   ipcMain.handle("app:get-version", () => app.getVersion());
   ipcMain.handle("app:get-platform", () => process.platform);
@@ -242,6 +251,9 @@ function registerIpcHandlers(): void {
   ipcMain.handle("jobs:list", () => requireBackend().listJobs());
   ipcMain.handle("jobs:mark-seen", (_event, id: string) =>
     requireBackend().markJobSeen(validateId(id, "Job id")),
+  );
+  ipcMain.handle("jobs:get-evidence-coverage", (_event, id: string) =>
+    requireRequirementBackend().getJobEvidenceCoverage(validateId(id, "Job id")),
   );
 
   ipcMain.handle("filters:list", () => requireBackend().listFilters());
@@ -349,6 +361,10 @@ app.whenReady().then(async () => {
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
     });
     await careerBackend.initialize();
+    requirementBackend = new RequirementBackend({
+      databasePath: systemStatus.databasePath,
+      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+    });
 
     registerIpcHandlers();
     createWindow();
