@@ -38,6 +38,16 @@ const desktopApi: DesktopApi = {
     getProfile: () => ipcRenderer.invoke("career:get-profile"),
     saveProfile: (profile) => ipcRenderer.invoke("career:save-profile", profile),
     migrateLegacy: (payload) => ipcRenderer.invoke("career:migrate-legacy", payload),
+    selectResumeImport: () => ipcRenderer.invoke("career:select-resume-import"),
+    importPastedText: (input) =>
+      ipcRenderer.invoke("career:import-pasted-text", input),
+    listSourceArtifacts: () =>
+      ipcRenderer.invoke("career:list-source-artifacts"),
+    listEvidence: () => ipcRenderer.invoke("career:list-evidence"),
+    reviewEvidence: (id, update) =>
+      ipcRenderer.invoke("career:review-evidence", id, update),
+    mergeEvidence: (sourceId, targetId) =>
+      ipcRenderer.invoke("career:merge-evidence", sourceId, targetId),
   },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),
