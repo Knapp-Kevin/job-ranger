@@ -8,6 +8,10 @@ on:
       - '.github/workflows/r1-packaged-anydoc-proof.yml'
       - 'package.json'
       - 'package-lock.json'
+      - 'electron/src/**'
+      - 'src/career/evidence.ts'
+      - 'src/pages/CareerProfile.tsx'
+      - 'src/shared/**'
       - 'scripts/verify-packaged-anydoc.cjs'
 
 permissions:
@@ -16,12 +20,10 @@ permissions:
 jobs:
   packaged-runtime:
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 20
     steps:
       - name: Check out R1 branch
         uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -34,7 +36,7 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Install branch dependencies
+      - name: Install dependencies
         run: npm ci
 
       - name: Install fixture-generation dependencies
@@ -43,8 +45,11 @@ jobs:
       - name: Generate synthetic resume fixtures
         run: python scripts/generate-resume-parser-fixtures.py
 
-      - name: Build branch package directory
-        run: npm run build && npm run desktop:compile && npx electron-builder --linux --dir --publish never
+      - name: Run repository health
+        run: npm run repo:health
+
+      - name: Package R1 application
+        run: npx electron-builder --linux --dir --publish never
 
       - name: Verify packaged Anydoc runtime
         shell: bash
@@ -54,51 +59,11 @@ jobs:
             release/linux-unpacked/resources/app.asar \
             tests/fixtures/career-evidence/parser-benchmark/generated/operations.pdf
 
-      - name: Measure R1 package
+      - name: Report packaged parser payload
         shell: bash
         run: |
-          branch_bytes=$(du -sb release/linux-unpacked | cut -f1)
-          asar_bytes=$(stat -c%s release/linux-unpacked/resources/app.asar)
-          echo "BRANCH_BYTES=$branch_bytes" >> "$GITHUB_ENV"
-          echo "BRANCH_ASAR_BYTES=$asar_bytes" >> "$GITHUB_ENV"
-          echo "R1 unpacked bytes: $branch_bytes"
-          echo "R1 app.asar bytes: $asar_bytes"
-
-      - name: Build main baseline in worktree
-        shell: bash
-        run: |
-          git worktree add ../job-ranger-main origin/main
-          cd ../job-ranger-main
-          npm ci
-          npm run build
-          npm run desktop:compile
-          npx electron-builder --linux --dir --publish never
-
-      - name: Report actual package delta
-        shell: bash
-        run: |
-          main_bytes=$(du -sb ../job-ranger-main/release/linux-unpacked | cut -f1)
-          main_asar_bytes=$(stat -c%s ../job-ranger-main/release/linux-unpacked/resources/app.asar)
-          delta=$((BRANCH_BYTES - main_bytes))
-          asar_delta=$((BRANCH_ASAR_BYTES - main_asar_bytes))
-          python - <<PY
-          import json
-          result = {
-              'mainUnpackedBytes': int('$main_bytes'),
-              'r1UnpackedBytes': int('$BRANCH_BYTES'),
-              'unpackedDeltaBytes': int('$delta'),
-              'mainAsarBytes': int('$main_asar_bytes'),
-              'r1AsarBytes': int('$BRANCH_ASAR_BYTES'),
-              'asarDeltaBytes': int('$asar_delta'),
-          }
-          print(json.dumps(result, indent=2))
-          with open('r1-packaged-anydoc-proof.json', 'w', encoding='utf-8') as f:
-              json.dump(result, f, indent=2)
-          PY
-
-      - name: Upload proof
-        uses: actions/upload-artifact@v4
-        with:
-          name: r1-packaged-anydoc-proof
-          path: r1-packaged-anydoc-proof.json
-          if-no-files-found: error
+          du -sb release/linux-unpacked/resources
+          if [ -d release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl ]; then
+            du -sb release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl
+            find release/linux-unpacked/resources/app.asar.unpacked/node_modules/@firecrawl -type f -printf '%s %p\n' | sort -n
+          fi
