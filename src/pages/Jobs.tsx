@@ -12,6 +12,7 @@ import {
 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { Layout } from "../components/Layout";
+import { JobEvidenceCoveragePanel } from "../components/JobEvidenceCoverage";
 import { useAppContext } from "../context/AppContext";
 import { getDesktopApi } from "../services/api";
 import { evaluateJobFit } from "../career/match";
@@ -62,6 +63,18 @@ export function Jobs() {
     } catch (error) {
       setTrackError(
         error instanceof Error ? error.message : "Unable to track this job",
+      );
+    }
+  };
+
+  const handlePrepareResume = async (job: (typeof jobs)[number]) => {
+    setTrackError(null);
+    try {
+      await trackJob(job);
+      navigate(`/career-profile?prepare=${encodeURIComponent(job.id)}`);
+    } catch (error) {
+      setTrackError(
+        error instanceof Error ? error.message : "Unable to start resume preparation",
       );
     }
   };
@@ -248,6 +261,11 @@ export function Jobs() {
                   </div>
                 </div>
               )}
+
+              <JobEvidenceCoveragePanel
+                jobId={job.id}
+                onPrepareResume={() => void handlePrepareResume(job)}
+              />
 
               <div className="border-divider mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-xs text-[var(--color-text-muted)]">
                 <span>First seen {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}</span>

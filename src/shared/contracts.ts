@@ -10,8 +10,10 @@ import type {
   SourceArtifact,
   TrackedApplication,
 } from "./career-contracts.js";
+import type { JobEvidenceCoverage } from "./requirement-coverage.js";
 
 export * from "./career-contracts.js";
+export * from "./requirement-coverage.js";
 
 export type CompanySourceType =
   | "greenhouse"
@@ -313,6 +315,7 @@ export interface DesktopApi {
   jobs: {
     list: () => Promise<Job[]>;
     markSeen: (id: string) => Promise<Job>;
+    getEvidenceCoverage: (id: string) => Promise<JobEvidenceCoverage>;
   };
   filters: {
     list: () => Promise<Filter[]>;
