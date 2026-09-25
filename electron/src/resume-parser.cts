@@ -48,8 +48,10 @@ function normalizePages(value: unknown): number[] {
 }
 
 export function normalizeResumeParserError(error: unknown): ResumeParserError {
-  const source =
-    error instanceof Error ? (error as AnydocError) : new Error(String(error));
+  const source: AnydocError =
+    error instanceof Error
+      ? (error as AnydocError)
+      : Object.assign(new Error(String(error)), { code: undefined, pages: undefined });
   const code = source.code;
   const pages = normalizePages(source.pages);
 
