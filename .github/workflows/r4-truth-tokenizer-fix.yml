@@ -1,0 +1,54 @@
+name: R4 Truth Tokenizer Fix
+
+on:
+  push:
+    branches:
+      - implementation/64-deterministic-tailoring
+    paths:
+      - '.github/workflows/r4-truth-tokenizer-fix.yml'
+
+permissions:
+  contents: write
+
+jobs:
+  apply-fix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out branch
+        uses: actions/checkout@v4
+        with:
+          ref: implementation/64-deterministic-tailoring
+
+      - name: Normalize edge punctuation in Truth Gate tokens
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('electron/src/resume-service.cts')
+          text = path.read_text()
+          old = '''function contentTokens(value: string): string[] {
+            return value
+              .toLowerCase()
+              .match(/[a-z0-9+#.-]+/g)
+              ?.filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
+          }'''
+          new = '''function contentTokens(value: string): string[] {
+            return value
+              .toLowerCase()
+              .match(/[a-z0-9+#.-]+/g)
+              ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
+              .filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
+          }'''
+          if old not in text:
+              raise SystemExit('Expected Truth Gate tokenizer block was not found')
+          path.write_text(text.replace(old, new, 1))
+
+      - name: Self-clean and commit
+        shell: bash
+        run: |
+          rm .github/workflows/r4-truth-tokenizer-fix.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add electron/src/resume-service.cts .github/workflows/r4-truth-tokenizer-fix.yml
+          git commit -m 'fix: normalize Truth Gate edge punctuation'
+          git push origin HEAD:implementation/64-deterministic-tailoring
