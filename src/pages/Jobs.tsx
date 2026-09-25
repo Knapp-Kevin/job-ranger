@@ -53,7 +53,16 @@ export function Jobs() {
     }
 
     return next;
-  }, [jobs, searchTerm, locationTerm, companyFilter, sortBy, configured, profile, profileLoading]);
+  }, [
+    jobs,
+    searchTerm,
+    locationTerm,
+    companyFilter,
+    sortBy,
+    configured,
+    profile,
+    profileLoading,
+  ]);
 
   const handleTrackJob = async (job: (typeof jobs)[number]) => {
     setTrackError(null);
@@ -71,10 +80,12 @@ export function Jobs() {
     setTrackError(null);
     try {
       await trackJob(job);
-      navigate(`/career-profile?prepare=${encodeURIComponent(job.id)}`);
+      navigate(`/resume?job=${encodeURIComponent(job.id)}`);
     } catch (error) {
       setTrackError(
-        error instanceof Error ? error.message : "Unable to start resume preparation",
+        error instanceof Error
+          ? error.message
+          : "Unable to start resume preparation",
       );
     }
   };
@@ -86,19 +97,31 @@ export function Jobs() {
           <Sparkles className="h-3.5 w-3.5" />
           Find Jobs
         </span>
-        <h1 className="page-title mt-4">Spend your time on the jobs that look worth it.</h1>
+        <h1 className="page-title mt-4">
+          Spend your time on the jobs that look worth it.
+        </h1>
         <p className="page-copy">
-          Job Ranger compares each saved listing with your Career Profile and explains the evidence it can actually see. The score is a local, deterministic guide, not a hiring prediction.
+          Job Ranger compares each saved listing with your Career Profile and
+          explains the evidence it can actually see. The score is a local,
+          deterministic guide, not a hiring prediction.
         </p>
       </section>
 
       {!profileLoading && !configured && (
         <section className="support-note mt-6 flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <p className="font-semibold text-[var(--color-text-primary)]">Set up your Career Profile to see match explanations.</p>
-            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">It takes a couple of minutes and stays on this device.</p>
+            <p className="font-semibold text-[var(--color-text-primary)]">
+              Set up your Career Profile to see match explanations.
+            </p>
+            <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+              It takes a couple of minutes and stays on this device.
+            </p>
           </div>
-          <button type="button" className="primary-button" onClick={() => navigate("/career-profile")}>
+          <button
+            type="button"
+            className="primary-button"
+            onClick={() => navigate("/career-profile")}
+          >
             Create Career Profile
           </button>
         </section>
@@ -149,7 +172,9 @@ export function Jobs() {
             <Target className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <select
               value={sortBy}
-              onChange={(event) => setSortBy(event.target.value as "fit" | "newest")}
+              onChange={(event) =>
+                setSortBy(event.target.value as "fit" | "newest")
+              }
               className="select-shell pl-11"
             >
               <option value="fit">Best fit first</option>
@@ -169,7 +194,9 @@ export function Jobs() {
         )}
 
         {filteredJobs.map(({ job, fit }) => {
-          const company = companies.find((candidate) => candidate.id === job.companyId);
+          const company = companies.find(
+            (candidate) => candidate.id === job.companyId,
+          );
           const companyName = company?.name ?? "Unknown company";
           const fitClass =
             fit?.band === "strong"
@@ -179,7 +206,10 @@ export function Jobs() {
                 : "soft-badge-danger";
 
           return (
-            <article key={job.id} className="panel panel-strong p-6 transition hover:-translate-y-0.5">
+            <article
+              key={job.id}
+              className="panel panel-strong p-6 transition hover:-translate-y-0.5"
+            >
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
@@ -189,7 +219,9 @@ export function Jobs() {
                         {fit.label} · {fit.score}%
                       </span>
                     )}
-                    {job.isNew && <span className="soft-badge soft-badge-warning">New</span>}
+                    {job.isNew && (
+                      <span className="soft-badge soft-badge-warning">New</span>
+                    )}
                   </div>
                   <button
                     type="button"
@@ -212,7 +244,8 @@ export function Jobs() {
                     {job.matchedFilterCount > 0 && (
                       <span className="soft-badge soft-badge-success">
                         <Filter className="h-3.5 w-3.5" />
-                        {job.matchedFilterCount} saved filter{job.matchedFilterCount === 1 ? "" : "s"}
+                        {job.matchedFilterCount} saved filter
+                        {job.matchedFilterCount === 1 ? "" : "s"}
                       </span>
                     )}
                   </div>
@@ -220,7 +253,11 @@ export function Jobs() {
 
                 <div className="flex flex-wrap items-center gap-2">
                   {job.isNew && (
-                    <button type="button" onClick={() => void markJobAsSeen(job.id)} className="secondary-button">
+                    <button
+                      type="button"
+                      onClick={() => void markJobAsSeen(job.id)}
+                      className="secondary-button"
+                    >
                       <CheckCircle2 className="h-4 w-4" />
                       Mark seen
                     </button>
@@ -235,12 +272,16 @@ export function Jobs() {
                 </div>
               </div>
 
-              <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">{job.descriptionSnippet}</p>
+              <p className="mt-4 text-sm leading-6 text-[var(--color-text-secondary)]">
+                {job.descriptionSnippet}
+              </p>
 
               {fit && (
                 <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
                   <div className="panel panel-muted rounded-2xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">Why it may fit</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      Why it may fit
+                    </p>
                     <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
                       {fit.reasons.slice(0, 3).map((reason) => (
                         <li key={reason}>✓ {reason}</li>
@@ -248,7 +289,9 @@ export function Jobs() {
                     </ul>
                   </div>
                   <div className="panel panel-muted rounded-2xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">What to check</p>
+                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
+                      What to check
+                    </p>
                     {fit.concerns.length > 0 ? (
                       <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
                         {fit.concerns.slice(0, 3).map((concern) => (
@@ -256,7 +299,10 @@ export function Jobs() {
                         ))}
                       </ul>
                     ) : (
-                      <p className="mt-3 text-sm text-[var(--color-text-secondary)]">No obvious concern surfaced from the data Job Ranger currently has.</p>
+                      <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
+                        No obvious concern surfaced from the data Job Ranger
+                        currently has.
+                      </p>
                     )}
                   </div>
                 </div>
@@ -268,10 +314,26 @@ export function Jobs() {
               />
 
               <div className="border-divider mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-xs text-[var(--color-text-muted)]">
-                <span>First seen {formatDistanceToNow(new Date(job.createdAt), { addSuffix: true })}</span>
-                <span>Last seen {formatDistanceToNow(new Date(job.lastSeenAt), { addSuffix: true })}</span>
-                <span>{job.isActive ? "Still active on source" : "Marked inactive on source"}</span>
-                {fit && <span>Fit score uses only saved profile + collected listing data</span>}
+                <span>
+                  First seen{" "}
+                  {formatDistanceToNow(new Date(job.createdAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+                <span>
+                  Last seen{" "}
+                  {formatDistanceToNow(new Date(job.lastSeenAt), {
+                    addSuffix: true,
+                  })}
+                </span>
+                <span>
+                  {job.isActive
+                    ? "Still active on source"
+                    : "Marked inactive on source"}
+                </span>
+                {fit && (
+                  <span>Fit score uses only saved profile + collected listing data</span>
+                )}
               </div>
             </article>
           );

@@ -18,6 +18,7 @@ async function navigateTo(
     | "Find Jobs"
     | "Applications"
     | "Career Profile"
+    | "Resume"
     | "Companies"
     | "Filters"
     | "Settings",
@@ -107,6 +108,36 @@ test.describe("Job Ranger E2E Tests", () => {
     ).toBeVisible();
   });
 
+  test("confirmed Career Evidence produces a verified resume PDF", async () => {
+    const { page } = fixture;
+
+    await navigateTo(page, "Resume");
+    await expect(
+      page.getByRole("heading", {
+        name: "Build the document from facts you have actually confirmed.",
+        exact: true,
+      }),
+    ).toBeVisible();
+    await expect(page.getByText("1 selected", { exact: true })).toBeVisible();
+
+    await page.getByLabel("Name", { exact: true }).fill("Taylor Example");
+    await page.getByLabel("Email", { exact: true }).fill("taylor@example.com");
+    await page.getByRole("button", { name: "Create truthful draft", exact: true }).click();
+
+    await expect(page.getByText("Truth Gate passed", { exact: true })).toBeVisible();
+    await expect(
+      page.getByText("Resume draft created from confirmed Career Evidence.", { exact: true }),
+    ).toBeVisible();
+
+    await page.getByRole("button", { name: "Export verified PDF", exact: true }).click();
+    await expect(
+      page.getByText("PDF v1 passed the gates and was saved locally.", { exact: true }),
+    ).toBeVisible({ timeout: 30_000 });
+    await expect(page.getByText("PDF v1", { exact: true })).toBeVisible();
+    await expect(page.getByText(/1 page · Passed/)).toBeVisible();
+    await expect(page.getByRole("button", { name: "Show file", exact: true })).toBeVisible();
+  });
+
   test("navigation sidebar works", async () => {
     const { page } = fixture;
 
@@ -138,6 +169,14 @@ test.describe("Job Ranger E2E Tests", () => {
     await expect(
       page.getByRole("heading", {
         name: "Tell Job Ranger what good work looks like for you.",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await navigateTo(page, "Resume");
+    await expect(
+      page.getByRole("heading", {
+        name: "Build the document from facts you have actually confirmed.",
         exact: true,
       }),
     ).toBeVisible();

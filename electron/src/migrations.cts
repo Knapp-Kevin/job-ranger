@@ -310,4 +310,20 @@ export const migrations: Migration[] = [
         ON application_artifact_links(application_id);
     `,
   },
+  {
+    version: 5,
+    name: "resume_lifecycle_metadata",
+    sql: `
+      CREATE TABLE IF NOT EXISTS resume_projection_metadata (
+        projection_id TEXT PRIMARY KEY REFERENCES resume_projections(id) ON DELETE CASCADE,
+        template_id TEXT NOT NULL,
+        contact_json TEXT NOT NULL
+      );
+
+      CREATE TABLE IF NOT EXISTS resume_artifact_snapshots (
+        artifact_id TEXT PRIMARY KEY REFERENCES resume_artifacts(id) ON DELETE CASCADE,
+        projection_snapshot_json TEXT NOT NULL
+      );
+    `,
+  },
 ];

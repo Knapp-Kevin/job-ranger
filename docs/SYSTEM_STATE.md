@@ -4,7 +4,7 @@
 **Published release:** v1.1.2  
 **Default branch:** `main`
 
-This document describes verified repository/product reality. Published-release behavior, default-branch behavior, and newer behavior in active pull requests are intentionally distinguished.
+This document describes verified repository/product reality. Published-release behavior and newer default-branch behavior are intentionally distinguished.
 
 ## Status Legend
 
@@ -29,55 +29,52 @@ Job Ranger v1.1.2 is a functional Electron desktop job-search companion with:
 - a self-contained Windows x64 installer;
 - macOS x64 and arm64 DMG/ZIP artifacts.
 
-The v1.1.2 installers predate the R0/R1 Career Evidence work now on `main`. They do not include SQLite-backed Career Profile/Application migration or resume import/evidence review.
+The v1.1.2 installers predate the Career Evidence R0-R3 implementation now developed on `main`. In particular, v1.1.2 does not include SQLite-backed Career Profile/Application migration, resume import/review, evidence-backed job requirement coverage, or the deterministic Resume workspace.
 
 No supported packaged Linux release is currently published.
 
 ## Implemented on main after v1.1.2
 
-### R0: durable Career Intelligence + Career Evidence foundation
+### R0: durable Career Intelligence and Career Evidence foundation
 
-Issue #60 / PR #66 moved Career Profile and Applications from renderer-local persistence into the backend/SQLite authority boundary and established the Career Evidence domain.
+Issue #60 / PR #66 moved Career Profile and Applications behind the trusted Electron/SQLite boundary and established the durable Career Evidence domain.
 
 Implemented behavior includes:
 
-- SQLite-backed Career Profile persistence;
-- SQLite-backed Applications persistence;
+- SQLite-backed Career Profile and Applications;
 - typed preload/IPC APIs and untrusted-payload validation;
-- one-time, idempotent migration from the v1.1 renderer-local keys;
+- one-time idempotent migration from the v1.1 renderer-local keys;
 - managed `<userData>/data/artifacts/` storage;
 - durable `SourceArtifact`, `ExtractionSnapshot`, `CandidateEvidence`, `EvidenceSourceLink`, `JobRequirement`, `RequirementEvidenceMap`, resume-projection/artifact, and application-artifact contracts;
-- the invariant that imported or inferred evidence cannot support factual generated claims until the user confirms it;
+- factual authority restricted to user-confirmed or user-authored Career Evidence;
 - an occupation-diverse synthetic benchmark corpus.
 
 The persistence contract is documented in `docs/design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`.
 
-### Electron generated-runtime boundary
+### Generated Electron runtime boundary
 
-Issue #67 / PR #69 removed the checked-in compiled Electron implementation as an authority source.
-
-Current build contract:
+Issue #67 / PR #69 removed checked-in compiled Electron implementation files as an authority source.
 
 ```text
 electron/src (authoritative TypeScript)
         ↓
-     tsc
+       tsc
         ↓
 electron-runtime/ (generated, ignored)
         ↓
 dev / tests / Electron Builder / packaged application
 ```
 
-New Electron modules are expected to be consumed from the generated runtime. Compatibility shims exist only for older test entry points and are not additional implementation copies.
+Compatibility shims exist only for older test entry points. New privileged modules are consumed from the generated runtime rather than maintained twice.
 
-### R1: resume import + Career Evidence review
+### R1: resume import and Career Evidence review
 
-Issue #61 was completed by parser adoption PR #70 and product implementation PR #71.
+Issue #61 was completed by parser-adoption PR #70 and product PR #71.
 
-Current `main` provides:
+Current behavior includes:
 
 - exact `@firecrawl/anydoc@0.2.4` local parser integration for DOCX and text-bearing PDF;
-- native plain-text and pasted-text import paths;
+- native plain-text and pasted-text import;
 - source preservation before interpretation;
 - SHA-256 content hashing and duplicate detection;
 - parser/version-tagged extraction snapshots;
@@ -85,43 +82,59 @@ Current `main` provides:
 - no silent hosted OCR or inference;
 - deterministic proposed Career Evidence normalization;
 - confirm, edit, reject, and merge review;
-- provenance links from evidence back to source artifacts/extraction snapshots;
-- Career Profile as the user-facing Career Evidence review surface;
-- MIT attribution for Anydoc in `THIRD_PARTY_NOTICES.md`.
+- provenance links back to source artifacts/extraction snapshots;
+- Career Profile as the user-facing evidence review surface;
+- MIT attribution for Anydoc.
 
-Only `user-confirmed` and `user-authored` Career Evidence can support factual resume statements. Parser output begins as `imported` evidence and is not truth merely because software extracted it.
+Parser output begins as `imported` evidence and does not become factual authority merely because extraction succeeded.
 
-The parser adoption evidence includes a 9/9 Linux corpus pass plus bounded Windows x64 and macOS arm64 platform/package checks. Product-level validation proved the native parser in the packaged Electron runtime without external npm/npx requirements.
+### R2: job requirement to Career Evidence mapping
 
-## In development: R2 requirement ↔ Career Evidence mapping
+Issue #62 / PR #73 added deterministic evidence-backed coverage beneath the Career Profile fit heuristic.
 
-Issue #62 / PR #73 adds deterministic evidence-backed coverage beneath the existing Career Profile fit heuristic.
+Implemented behavior includes:
 
-The active branch currently implements:
-
-- deterministic normalization of explicit requirements from collected listing text;
+- normalization of explicit requirements from listing text Job Ranger actually collected;
 - durable `JobRequirement` records classified as must-have, preferred, responsibility, credential, or logistics;
-- `direct`, `transferable`, `ambiguous`, and `gap` mappings to Career Evidence;
-- direct/transferable support only from user-confirmed or user-authored evidence;
-- imported/unconfirmed evidence surfaced as ambiguous rather than accepted support;
-- persisted mappings in the existing R0 `job_requirements` and `requirement_evidence_maps` tables;
+- `direct`, `transferable`, `ambiguous`, and `gap` mappings;
+- direct/transferable support only from confirmed/user-authored evidence;
+- imported/unconfirmed evidence remaining ambiguous;
+- persisted requirement/evidence mappings;
 - on-demand Evidence coverage in Find Jobs;
-- a `Prepare resume` handoff from a job into the Career Evidence workflow;
-- occupation-diverse deterministic tests and SQLite persistence coverage.
+- explicit visible gaps rather than optimistic fabricated claims;
+- a Prepare resume handoff from a job;
+- deterministic operation with no inference provider.
 
-The existing Career Profile fit score remains available. R2 adds an inspectable evidence layer rather than replacing deterministic fallback behavior with an opaque score.
+The existing Career Profile fit score remains available as a deterministic fallback.
 
-### Current R2 source-text limitation
+#### R2 source-text limitation
 
-Job Ranger currently stores `descriptionSnippet` rather than a canonical complete job-description artifact for every source. Requirement extraction can therefore reason only over the listing text actually collected by Job Ranger.
+Job Ranger does not yet preserve a canonical complete job-description artifact for every source. Requirement coverage therefore reasons only over listing text that Job Ranger actually collected. A missing requirement may reflect incomplete source ingestion rather than absence from the employer's full posting.
 
-Consequences:
+The UI must continue to present this as evidence coverage, not an exhaustive employer audit or hiring prediction.
 
-- a missing requirement in Evidence coverage may mean the requirement was absent from the stored snippet, not absent from the employer's full posting;
-- Job Ranger must not imply that R2 has exhaustively audited requirements it never ingested;
-- future source ingestion should preserve fuller posting text before requirement coverage is described as complete-posting analysis.
+### R3: deterministic resume creation and artifact lifecycle
 
-The UI therefore presents R2 as evidence coverage over the data Job Ranger currently has, not as a hiring prediction or exhaustive employer assessment.
+Issue #63 / PR #75 adds the first complete resume-creation workflow without requiring inference.
+
+Implemented behavior includes:
+
+- a top-level Resume workspace;
+- job-targeted Prepare resume navigation from Find Jobs;
+- immutable structured `ResumeProjection` state and evidence-linked `ResumeStatement` records;
+- deterministic selection from confirmed Career Evidence, with R2 direct/transferable evidence prioritized for targeted jobs;
+- two Job Ranger-owned templates: `ats-standard-v1` and `ats-compact-v1`;
+- isolated Chromium PDF rendering with sandboxing, JavaScript disabled, Node integration disabled, navigation blocked, and a document CSP that denies remote resources;
+- a blocking Truth Gate for missing, unconfirmed, or unsupported factual edits;
+- generated-PDF reparse through the existing Anydoc boundary;
+- a critical/advisory Parseability Gate;
+- versioned PDF artifacts with SHA-256 hashes, page count, gate reports, and an immutable projection snapshot;
+- resume version comparison from stored snapshots rather than filenames;
+- exact Application-to-resume-artifact linkage for targeted exports;
+- artifact reveal through the constrained desktop API;
+- atomic multi-record resume persistence through a single-process SQLite transaction primitive.
+
+R3 remains deterministic. It does not require or invoke a remote inference provider to create or export a truthful resume.
 
 ## Current Architecture
 
@@ -140,32 +153,55 @@ Electron main process
     │     ├── source artifacts / extraction snapshots
     │     └── Career Evidence / provenance
     │
-    └── RequirementBackend (R2 branch)
-          ├── explicit job requirements
-          └── requirement ↔ Career Evidence mappings
+    ├── RequirementBackend
+    │     ├── explicit job requirements
+    │     └── requirement ↔ Career Evidence mappings
+    │
+    └── ResumeService
+          ├── deterministic projections / statements
+          ├── Truth Gate
+          ├── isolated Chromium PDF render
+          ├── Anydoc PDF reparse / Parseability Gate
+          └── versioned artifacts / Application links
                     │
                     ▼
                   SQLite
+                    │
+                    └── managed filesystem artifacts
 ```
 
-The renderer owns presentation and ordinary interaction. It does not receive direct Node.js, arbitrary filesystem, parser, or SQLite authority.
+The renderer owns presentation and ordinary interaction. It does not receive direct Node.js, arbitrary filesystem, parser, Chromium-renderer, or SQLite authority.
 
-Renderer/runtime safeguards include:
+## Security and Trust Boundaries
+
+The desktop shell retains:
 
 - `nodeIntegration: false`;
 - `contextIsolation: true`;
 - `webSecurity: true`;
-- validated external URLs before `shell.openExternal`;
+- a typed preload boundary;
+- external URL validation before `shell.openExternal`;
 - renderer Content Security Policy;
-- sandboxing on the separate help window;
 - main-process file selection for resume import;
-- managed source-artifact storage rather than renderer-selected arbitrary file authority.
+- managed source/artifact storage rather than renderer-selected arbitrary write authority.
+
+Resume import treats uploaded documents as untrusted input. Ordinary extraction stays local. Scanned/image-only documents surface an OCR-required state rather than silently leaving the machine.
+
+Resume PDF rendering uses a separate hidden Chromium window with:
+
+- sandbox enabled;
+- Node integration disabled;
+- context isolation enabled;
+- JavaScript disabled;
+- window opening denied;
+- navigation denied;
+- an embedded CSP using `default-src 'none'` and inline styles only.
+
+User-provided resume text and contact data are HTML-escaped before rendering.
 
 ## Source Handling
 
 ### Structured adapters
-
-Explicit API-backed adapters:
 
 - Greenhouse
 - Lever
@@ -173,8 +209,6 @@ Explicit API-backed adapters:
 - Ashby
 
 ### Detected / best-effort paths
-
-Recognized generic HTML/browser-backed paths:
 
 - Workday
 - iCIMS
@@ -196,12 +230,12 @@ Umbrella issue: #59.
 
 - **R0 / #60:** complete on `main`.
 - **R1 / #61:** complete on `main`.
-- **R2 / #62:** active requirement ↔ Career Evidence mapping slice, PR #73.
-- **R3 / #63:** planned deterministic resume creation + artifact lifecycle.
-- **R4 / #64:** planned target-specific tailoring + optional inference.
+- **R2 / #62:** complete on `main`.
+- **R3 / #63:** deterministic resume creation and artifact lifecycle implemented by PR #75.
+- **R4 / #64:** planned target-specific tailoring and optional inference.
 - **R5 / #65:** planned application materials, interview preparation, follow-up, and portability.
 
-Accepted architecture:
+Accepted authority chain:
 
 ```text
 Source Artifact
@@ -219,7 +253,7 @@ Versioned Artifact
 Application Lifecycle
 ```
 
-No OCR provider, inference provider, agent framework, workflow engine, vector database, or managed-browser platform is required by R0-R2.
+R0-R3 require no OCR provider, inference provider, agent framework, workflow engine, vector database, or managed-browser platform.
 
 ## Runtime and Toolchain Baseline
 
@@ -241,25 +275,27 @@ The normal PR/main gate runs:
 
 1. `npm ci`;
 2. npm dependency audit;
-3. `npm run repo:health`;
-4. TypeScript checks;
-5. Vite production build;
-6. generated Electron desktop compilation;
-7. backend/career/resume-import smoke tests;
-8. deterministic requirement-mapper and persistence tests while R2 is present.
+3. TypeScript checks;
+4. Vite production build;
+5. generated Electron desktop compilation;
+6. backend smoke tests;
+7. Career persistence tests;
+8. resume-import tests;
+9. requirement-mapper and requirement-persistence tests;
+10. deterministic resume lifecycle tests.
 
-R1 additionally passed the full Electron Playwright suite and packaged-parser proof. R2 has passed repository health on its active implementation branch and a full serialized Electron Playwright validation of the user-facing evidence-coverage path.
+Additional product-level Electron Playwright validation is used for substantial desktop workflow changes. R1 and R2 each passed their user-facing Electron paths before merge. R3 adds a product-level test that proves confirmed Career Evidence can create and export a verified PDF through the actual desktop boundary.
 
 The current dependency audit reports zero known npm vulnerabilities.
 
 ## Known Product Gaps
 
+- The published v1.1.2 installers do not yet include R0-R3 work from `main`.
 - Users still need to know which employer career pages to add.
-- Published v1.1.2 installers do not yet include R0/R1 work from `main`.
-- Job ingestion does not yet preserve a canonical full description for every source, limiting R2 requirement completeness.
-- Scanned/image-only resume OCR is intentionally not implemented; those imports surface an explicit OCR-required state.
-- Generated resume/application artifacts are not implemented yet.
-- Target-specific tailoring and optional inference are not implemented.
+- Job ingestion does not preserve canonical full descriptions for every source, limiting R2 requirement completeness.
+- Scanned/image-only resume OCR is intentionally not implemented.
+- R3 resume creation is deterministic; target-specific rewriting and optional inference are R4 work.
+- Cover letters, richer interview preparation, follow-up/reminders, contacts/milestones, and full export/backup are R5 work.
 - Linux distribution is not currently a supported release path.
 - Signing/notarization behavior depends on release-environment credentials.
 - Source extraction remains inherently variable for dynamic third-party career sites.

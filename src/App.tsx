@@ -8,6 +8,7 @@ import { Filters } from "./pages/Filters";
 import { Settings } from "./pages/Settings";
 import { Applications } from "./pages/Applications";
 import { CareerProfile } from "./pages/CareerProfile";
+import { Resume } from "./pages/Resume";
 import { ErrorBoundary } from "./components/ErrorBoundary";
 import { ToastContainer } from "./components/ToastContainer";
 import { useAppContext } from "./context/AppContext";
@@ -22,6 +23,7 @@ function AppRoutes() {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/career-profile" element={<CareerProfile />} />
+        <Route path="/resume" element={<Resume />} />
         <Route path="/companies" element={<Companies />} />
         <Route path="/filters" element={<Filters />} />
         <Route path="/settings" element={<Settings />} />

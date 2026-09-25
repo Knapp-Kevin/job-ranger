@@ -140,6 +140,34 @@ export class SqliteClient {
     ]);
   }
 
+  /**
+   * Execute a set of statements atomically in one sqlite3 process.
+   *
+   * SqliteClient intentionally uses the sqlite3 CLI instead of holding a
+   * persistent connection. A transaction therefore cannot be assembled from
+   * multiple exec() calls because each call owns a different process/connection.
+   * Keep BEGIN, every mutation, and COMMIT in this single invocation instead.
+   */
+  async transaction(statements: readonly string[]): Promise<void> {
+    if (statements.length === 0) {
+      return;
+    }
+    await this.ensureDatabaseDirectory();
+    const transactionSql = [
+      "PRAGMA foreign_keys = ON;",
+      "BEGIN IMMEDIATE;",
+      ...statements,
+      "COMMIT;",
+    ].join("\n");
+    await execFileAsync(this.sqliteBinaryPath, [
+      "-bail",
+      "-cmd",
+      `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
+      this.databasePath,
+      transactionSql,
+    ]);
+  }
+
   async queryAll<T>(statement: string): Promise<T[]> {
     await this.ensureDatabaseDirectory();
     const { stdout } = await execFileAsync(this.sqliteBinaryPath, [

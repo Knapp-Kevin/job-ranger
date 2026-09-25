@@ -1,7 +1,8 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
+import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 
-const desktopApi: DesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -56,6 +57,16 @@ const desktopApi: DesktopApi = {
     track: (jobId) => ipcRenderer.invoke("applications:track", jobId),
     update: (id, update) => ipcRenderer.invoke("applications:update", id, update),
     delete: (id) => ipcRenderer.invoke("applications:delete", id),
+  },
+  resume: {
+    list: () => ipcRenderer.invoke("resume:list"),
+    create: (input) => ipcRenderer.invoke("resume:create", input),
+    get: (id) => ipcRenderer.invoke("resume:get", id),
+    updateStatement: (id, update) =>
+      ipcRenderer.invoke("resume:update-statement", id, update),
+    exportPdf: (request) => ipcRenderer.invoke("resume:export-pdf", request),
+    compareVersions: (fromArtifactId, toArtifactId) =>
+      ipcRenderer.invoke("resume:compare-versions", fromArtifactId, toArtifactId),
   },
 };
 
