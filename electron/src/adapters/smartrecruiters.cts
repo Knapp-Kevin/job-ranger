@@ -35,6 +35,7 @@ export const smartrecruitersAdapter: ScraperAdapter = {
       employmentType: job.experienceLevel?.label ?? null,
       url: `https://jobs.smartrecruiters.com/${companyId}/${job.uuid}`,
       descriptionSnippet: "",
+      descriptionText: null,
       salaryMin: null,
       salaryMax: null,
       salaryCurrency: null,

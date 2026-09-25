@@ -41,6 +41,7 @@ type JobRow = {
   employment_type: string | null;
   url: string;
   description_snippet: string;
+  description_text: string | null;
   salary_min: number | null;
   salary_max: number | null;
   salary_currency: string | null;
@@ -126,6 +127,7 @@ function mapJob(row: JobRow): Job {
     employmentType: row.employment_type,
     url: row.url,
     descriptionSnippet: row.description_snippet,
+    descriptionText: row.description_text ?? null,
     salaryMin: row.salary_min,
     salaryMax: row.salary_max,
     salaryCurrency: row.salary_currency,
@@ -343,6 +345,7 @@ export class JobScoutRepository {
     employmentType: string | null;
     url: string;
     descriptionSnippet: string;
+    descriptionText: string | null;
     salaryMin: number | null;
     salaryMax: number | null;
     salaryCurrency: string | null;
@@ -362,6 +365,7 @@ export class JobScoutRepository {
           employment_type,
           url,
           description_snippet,
+          description_text,
           salary_min,
           salary_max,
           salary_currency,
@@ -381,6 +385,7 @@ export class JobScoutRepository {
           ${input.employmentType},
           ${input.url},
           ${input.descriptionSnippet},
+          ${input.descriptionText},
           ${input.salaryMin},
           ${input.salaryMax},
           ${input.salaryCurrency},
@@ -399,6 +404,11 @@ export class JobScoutRepository {
           employment_type = excluded.employment_type,
           url = excluded.url,
           description_snippet = excluded.description_snippet,
+          description_text = excluded.description_text,
+          description_updated_at = CASE
+            WHEN excluded.description_text IS NOT jobs.description_text THEN excluded.last_seen_at
+            ELSE jobs.description_updated_at
+          END,
           salary_min = excluded.salary_min,
           salary_max = excluded.salary_max,
           salary_currency = excluded.salary_currency,

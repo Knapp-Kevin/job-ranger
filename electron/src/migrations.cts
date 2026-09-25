@@ -310,4 +310,19 @@ export const migrations: Migration[] = [
         ON application_artifact_links(application_id);
     `,
   },
+  {
+    version: 5,
+    name: "job_requirement_source_text",
+    sql: `
+      ALTER TABLE jobs ADD COLUMN description_text TEXT;
+      ALTER TABLE jobs ADD COLUMN description_updated_at TEXT;
+
+      CREATE TABLE IF NOT EXISTS job_requirement_analysis (
+        job_id TEXT PRIMARY KEY,
+        source_hash TEXT NOT NULL,
+        normalizer_version INTEGER NOT NULL,
+        analyzed_at TEXT NOT NULL
+      );
+    `,
+  },
 ];

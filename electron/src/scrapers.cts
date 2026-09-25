@@ -4,11 +4,11 @@ import { leverAdapter } from "./adapters/lever.cjs";
 import { smartrecruitersAdapter } from "./adapters/smartrecruiters.cjs";
 import { ashbyAdapter } from "./adapters/ashby.cjs";
 import { createGenericHtmlAdapter, browserRequiredAdapter } from "./adapters/generic-html.cjs";
-import { toSnippet, extractJobsFromHtml } from "./extractors.cjs";
+import { toSnippet, toDescriptionText, extractJobsFromHtml } from "./extractors.cjs";
 import { PLATFORM_SELECTORS, getSelectorsForSource } from "./platform-selectors.cjs";
 import { parseSalary } from "./salary-parser.cjs";
 
-export { toSnippet, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
+export { toSnippet, toDescriptionText, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
 
 export const genericHtmlSourceTypes = [
   "workday",
@@ -28,6 +28,7 @@ export interface ScrapedJob {
   employmentType: string | null;
   url: string;
   descriptionSnippet: string;
+  descriptionText: string | null;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;

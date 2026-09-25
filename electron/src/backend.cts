@@ -511,6 +511,7 @@ export class JobScoutBackend {
           employmentType: scrapedJob.employmentType,
           url: scrapedJob.url,
           descriptionSnippet: scrapedJob.descriptionSnippet,
+          descriptionText: scrapedJob.descriptionText,
           salaryMin: scrapedJob.salaryMin,
           salaryMax: scrapedJob.salaryMax,
           salaryCurrency: scrapedJob.salaryCurrency,

@@ -2,18 +2,29 @@ import type { CompanySourceType } from "../../src/shared/contracts.js";
 import type { ScrapedJob } from "./scrapers.cjs";
 import { parseSalary } from "./salary-parser.cjs";
 
-function stripHtml(html: string | null | undefined): string {
+export function toDescriptionText(html: string | null | undefined): string {
   if (!html) return "";
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
     .replace(/<style[\s\S]*?<\/style>/gi, " ")
+    .replace(/<br\s*\/?\s*>/gi, "\n")
+    .replace(/<\/(p|div|li|ul|ol|h[1-6]|section|article)>/gi, "\n")
+    .replace(/<li\b[^>]*>/gi, "- ")
     .replace(/<[^>]+>/g, " ")
     .replace(/&nbsp;/g, " ")
     .replace(/&amp;/g, "&")
     .replace(/&#39;/g, "'")
     .replace(/&quot;/g, '"')
-    .replace(/\s+/g, " ")
+    .replace(/\r/g, "")
+    .split("\n")
+    .map((line) => line.replace(/[ \t]+/g, " ").trim())
+    .filter(Boolean)
+    .join("\n")
     .trim();
+}
+
+function stripHtml(value: string | null | undefined): string {
+  return toDescriptionText(value).replace(/\s+/g, " ").trim();
 }
 
 export function toSnippet(value: string | null | undefined): string {
@@ -85,6 +96,7 @@ function extractJsonLdJobs(baseUrl: string, html: string, sourceType: CompanySou
           employmentType: typeof posting.employmentType === "string" ? posting.employmentType : null,
           url: jobUrl,
           descriptionSnippet: toSnippet(description),
+          descriptionText: toDescriptionText(description) || null,
           salaryMin: salary?.min ?? null,
           salaryMax: salary?.max ?? null,
           salaryCurrency: salary?.currency ?? null,
@@ -124,6 +136,7 @@ function extractAnchorJobs(baseUrl: string, html: string, sourceType: CompanySou
       employmentType: null,
       url: jobUrl,
       descriptionSnippet: `Extracted from ${new URL(baseUrl).hostname}`,
+      descriptionText: null,
       salaryMin: null, salaryMax: null, salaryCurrency: null, salaryText: null,
       postDate: null,
     });

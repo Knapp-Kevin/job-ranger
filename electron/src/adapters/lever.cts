@@ -1,5 +1,5 @@
 import type { ScraperAdapter, ScraperContext, ScrapedJob } from "../scrapers.cjs";
-import { fetchJson, toSnippet, parseSalary } from "../scrapers.cjs";
+import { fetchJson, toSnippet, toDescriptionText, parseSalary } from "../scrapers.cjs";
 
 interface LeverPosting {
   id: string;
@@ -33,6 +33,7 @@ export const leverAdapter: ScraperAdapter = {
         employmentType: job.categories?.commitment?.trim() || null,
         url: job.hostedUrl,
         descriptionSnippet: toSnippet(description),
+        descriptionText: toDescriptionText(description) || null,
         salaryMin: salary?.min ?? null,
         salaryMax: salary?.max ?? null,
         salaryCurrency: salary?.currency ?? null,

@@ -1,5 +1,5 @@
 import type { ScraperAdapter, ScraperContext, ScrapedJob } from "../scrapers.cjs";
-import { fetchJson, toSnippet } from "../scrapers.cjs";
+import { fetchJson, toSnippet, toDescriptionText } from "../scrapers.cjs";
 
 interface AshbyJob {
   id: string;
@@ -37,6 +37,7 @@ export const ashbyAdapter: ScraperAdapter = {
       employmentType: job.employmentType ?? null,
       url: job.jobUrl,
       descriptionSnippet: toSnippet(job.descriptionPlain),
+      descriptionText: toDescriptionText(job.descriptionPlain) || null,
       salaryMin: null,
       salaryMax: null,
       salaryCurrency: null,
