@@ -1,21 +1,20 @@
 name: R1 Parser Platform Audit
 
 on:
-  push:
-    branches:
-      - implementation/61-parser-benchmark
-    paths:
-      - '.github/workflows/r1-parser-platform-audit.yml'
-      - 'scripts/audit-resume-parser-platform.mjs'
-      - 'scripts/generate-resume-parser-fixtures.py'
-      - 'tests/fixtures/career-evidence/parser-benchmark/**'
+  workflow_dispatch:
 
 permissions:
   contents: read
 
 jobs:
-  windows-smoke:
-    runs-on: windows-2025
+  platform-smoke:
+    strategy:
+      fail-fast: false
+      matrix:
+        os:
+          - windows-2025
+          - macos-15
+    runs-on: ${{ matrix.os }}
     timeout-minutes: 15
     steps:
       - name: Check out repository
@@ -37,13 +36,13 @@ jobs:
       - name: Generate synthetic document fixtures
         run: python scripts/generate-resume-parser-fixtures.py
 
-      - name: Run Windows platform and license audit
+      - name: Run platform and license audit
         run: node scripts/audit-resume-parser-platform.mjs
 
-      - name: Upload Windows platform result
+      - name: Upload platform result
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: anydoc-0.2.4-Windows-X64-platform
+          name: anydoc-0.2.4-${{ runner.os }}-${{ runner.arch }}-platform
           path: tests/fixtures/career-evidence/parser-benchmark/results/*-platform.json
           if-no-files-found: error
