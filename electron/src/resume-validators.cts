@@ -8,6 +8,8 @@ import type {
   ResumeCreateInput,
   ResumeExportRequest,
   ResumeStatementUpdate,
+  ResumeTailoringApplyRequest,
+  ResumeTailoringPreviewRequest,
   ResumeTemplateId,
 } from "../../src/shared/resume-contracts.js";
 
@@ -24,9 +26,15 @@ function string(value: unknown, label: string, max = 5000): string {
   return value;
 }
 
+function id(value: unknown, label: string): string {
+  const parsed = string(value, label, 500).trim();
+  if (!parsed) throw new Error(`${label} is required`);
+  return parsed;
+}
+
 function nullableId(value: unknown, label: string): string | null {
   if (value === null || value === undefined || value === "") return null;
-  return string(value, label, 500).trim();
+  return id(value, label);
 }
 
 function stringArray(value: unknown, label: string, maxItems = 500): string[] {
@@ -80,6 +88,30 @@ export function validateResumeStatementUpdate(value: unknown): ResumeStatementUp
   return { text: string(input.text, "Resume statement", 1000) };
 }
 
+export function validateResumeTailoringPreviewRequest(
+  value: unknown,
+): ResumeTailoringPreviewRequest {
+  const input = record(value, "Resume tailoring preview request");
+  return {
+    sourceProjectionId: id(input.sourceProjectionId, "Source projection id"),
+    jobId: id(input.jobId, "Job id"),
+  };
+}
+
+export function validateResumeTailoringApplyRequest(
+  value: unknown,
+): ResumeTailoringApplyRequest {
+  const input = record(value, "Resume tailoring apply request");
+  const base = validateResumeTailoringPreviewRequest(input);
+  return {
+    ...base,
+    selectedEvidenceIds: stringArray(
+      input.selectedEvidenceIds,
+      "Selected evidence ids",
+    ).map((item) => item.trim()).filter(Boolean),
+  };
+}
+
 function purpose(value: unknown): ApplicationArtifactPurpose {
   if (value === "submitted" || value === "recruiter-copy" || value === "interview-copy" || value === "other") {
     return value;
@@ -90,7 +122,7 @@ function purpose(value: unknown): ApplicationArtifactPurpose {
 export function validateResumeExportRequest(value: unknown): ResumeExportRequest {
   const input = record(value, "Resume export request");
   return {
-    projectionId: string(input.projectionId, "Projection id", 500).trim(),
+    projectionId: id(input.projectionId, "Projection id"),
     applicationId: nullableId(input.applicationId, "Application id"),
     purpose: input.purpose === undefined ? undefined : purpose(input.purpose),
   };
