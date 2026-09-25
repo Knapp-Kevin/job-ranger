@@ -11,9 +11,15 @@ import type {
   TrackedApplication,
 } from "./career-contracts.js";
 import type { JobEvidenceCoverage } from "./requirement-coverage.js";
+import type {
+  CreateResumeProjectionInput,
+  ResumeProjectionBundle,
+  ReviseResumeProjectionInput,
+} from "./resume-workspace.js";
 
 export * from "./career-contracts.js";
 export * from "./requirement-coverage.js";
+export * from "./resume-workspace.js";
 
 export type CompanySourceType =
   | "greenhouse"
@@ -346,6 +352,18 @@ export interface DesktopApi {
       sourceId: string,
       targetId: string,
     ) => Promise<CandidateEvidence>;
+  };
+  resume: {
+    createProjection: (
+      input: CreateResumeProjectionInput,
+    ) => Promise<ResumeProjectionBundle>;
+    reviseProjection: (
+      input: ReviseResumeProjectionInput,
+    ) => Promise<ResumeProjectionBundle>;
+    getProjection: (id: string) => Promise<ResumeProjectionBundle>;
+    getLatestProjection: (jobId: string) => Promise<ResumeProjectionBundle | null>;
+    listProjections: (jobId: string) => Promise<ResumeProjectionBundle[]>;
+    markReviewed: (id: string) => Promise<ResumeProjectionBundle>;
   };
   applications: {
     list: () => Promise<TrackedApplication[]>;
