@@ -112,8 +112,7 @@ function mapStatement(row: StatementRow): ResumeStatement {
 }
 
 function parseSnapshot(value: string): ResumeArtifactSnapshot {
-  const parsed = JSON.parse(value) as ResumeArtifactSnapshot;
-  return parsed;
+  return JSON.parse(value) as ResumeArtifactSnapshot;
 }
 
 function mapArtifact(row: ArtifactRow): ResumeArtifactRecord {
@@ -133,6 +132,42 @@ function mapArtifact(row: ArtifactRow): ResumeArtifactRecord {
   };
 }
 
+const projectionSelect = `
+  SELECT
+    p.id,
+    p.job_id,
+    p.context,
+    p.page_format,
+    p.source_projection_id,
+    p.status,
+    p.sections_json,
+    p.selected_evidence_ids_json,
+    p.created_at,
+    p.updated_at,
+    m.template_id,
+    m.contact_json
+  FROM resume_projections p
+  JOIN resume_projection_metadata m ON m.projection_id = p.id
+`;
+
+const artifactSelect = `
+  SELECT
+    a.id,
+    a.projection_id,
+    a.version,
+    a.format,
+    a.managed_path,
+    a.content_hash,
+    a.page_count,
+    a.truth_gate_result,
+    a.parseability_result,
+    a.relevance_review_result,
+    a.created_at,
+    s.projection_snapshot_json
+  FROM resume_artifacts a
+  JOIN resume_artifact_snapshots s ON s.artifact_id = a.id
+`;
+
 export class ResumeRepository {
   constructor(private readonly sqlite: SqliteClient) {}
 
@@ -145,15 +180,21 @@ export class ResumeRepository {
       await this.sqlite.exec(sql`
         INSERT INTO resume_projections (
           id, job_id, context, page_format, source_projection_id, status,
-          sections_json, selected_evidence_ids_json, template_id, contact_json,
-          created_at, updated_at
+          sections_json, selected_evidence_ids_json, created_at, updated_at
         ) VALUES (
           ${projection.id}, ${projection.jobId}, ${projection.context},
           ${projection.pageFormat}, ${projection.sourceProjectionId},
           ${projection.status}, ${JSON.stringify(projection.sections)},
-          ${JSON.stringify(projection.selectedEvidenceIds)}, ${projection.templateId},
-          ${JSON.stringify(projection.contact)}, ${projection.createdAt},
+          ${JSON.stringify(projection.selectedEvidenceIds)}, ${projection.createdAt},
           ${projection.updatedAt}
+        );
+      `);
+
+      await this.sqlite.exec(sql`
+        INSERT INTO resume_projection_metadata (
+          projection_id, template_id, contact_json
+        ) VALUES (
+          ${projection.id}, ${projection.templateId}, ${JSON.stringify(projection.contact)}
         );
       `);
 
@@ -183,16 +224,16 @@ export class ResumeRepository {
 
   async listProjections(): Promise<ResumeProjectionRecord[]> {
     const rows = await this.sqlite.queryAll<ProjectionRow>(
-      "SELECT * FROM resume_projections ORDER BY updated_at DESC;",
+      `${projectionSelect} ORDER BY p.updated_at DESC;`,
     );
     return rows.map(mapProjection);
   }
 
   async getProjection(id: string): Promise<ResumeProjectionRecord | null> {
-    const row = await this.sqlite.queryOne<ProjectionRow>(
-      sql`SELECT * FROM resume_projections WHERE id = ${id} LIMIT 1;`,
+    const rows = await this.sqlite.queryAll<ProjectionRow>(
+      `${projectionSelect} WHERE p.id = ${sql.value(id)} LIMIT 1;`,
     );
-    return row ? mapProjection(row) : null;
+    return rows[0] ? mapProjection(rows[0]) : null;
   }
 
   async listStatements(projectionId: string): Promise<ResumeStatement[]> {
@@ -222,14 +263,14 @@ export class ResumeRepository {
     id: string,
     status: ResumeProjectionRecord["status"],
   ): Promise<ResumeProjectionRecord> {
-    const row = await this.sqlite.queryOne<ProjectionRow>(sql`
+    await this.sqlite.exec(sql`
       UPDATE resume_projections
       SET status = ${status}, updated_at = ${new Date().toISOString()}
-      WHERE id = ${id}
-      RETURNING *;
+      WHERE id = ${id};
     `);
+    const row = await this.getProjection(id);
     if (!row) throw new Error(`Resume projection ${id} not found`);
-    return mapProjection(row);
+    return row;
   }
 
   async nextArtifactVersion(projectionId: string): Promise<number> {
@@ -242,38 +283,50 @@ export class ResumeRepository {
   }
 
   async createArtifact(artifact: ResumeArtifactRecord): Promise<ResumeArtifactRecord> {
-    const row = await this.sqlite.queryOne<ArtifactRow>(sql`
-      INSERT INTO resume_artifacts (
-        id, projection_id, version, format, managed_path, content_hash,
-        page_count, truth_gate_result, parseability_result,
-        relevance_review_result, projection_snapshot_json, created_at
-      ) VALUES (
-        ${artifact.id}, ${artifact.projectionId}, ${artifact.version},
-        ${artifact.format}, ${artifact.managedPath}, ${artifact.contentHash},
-        ${artifact.pageCount}, ${artifact.truthGateResult},
-        ${artifact.parseabilityResult}, ${artifact.relevanceReviewResult},
-        ${JSON.stringify(artifact.projectionSnapshot)}, ${artifact.createdAt}
-      )
-      RETURNING *;
-    `);
-    if (!row) throw new Error("Failed to create resume artifact");
-    return mapArtifact(row);
+    await this.sqlite.exec("BEGIN IMMEDIATE;");
+    try {
+      await this.sqlite.exec(sql`
+        INSERT INTO resume_artifacts (
+          id, projection_id, version, format, managed_path, content_hash,
+          page_count, truth_gate_result, parseability_result,
+          relevance_review_result, created_at
+        ) VALUES (
+          ${artifact.id}, ${artifact.projectionId}, ${artifact.version},
+          ${artifact.format}, ${artifact.managedPath}, ${artifact.contentHash},
+          ${artifact.pageCount}, ${artifact.truthGateResult},
+          ${artifact.parseabilityResult}, ${artifact.relevanceReviewResult},
+          ${artifact.createdAt}
+        );
+      `);
+      await this.sqlite.exec(sql`
+        INSERT INTO resume_artifact_snapshots (
+          artifact_id, projection_snapshot_json
+        ) VALUES (
+          ${artifact.id}, ${JSON.stringify(artifact.projectionSnapshot)}
+        );
+      `);
+      await this.sqlite.exec("COMMIT;");
+    } catch (error) {
+      await this.sqlite.exec("ROLLBACK;").catch(() => undefined);
+      throw error;
+    }
+    const created = await this.getArtifact(artifact.id);
+    if (!created) throw new Error("Failed to create resume artifact");
+    return created;
   }
 
   async listArtifacts(projectionId: string): Promise<ResumeArtifactRecord[]> {
-    const rows = await this.sqlite.queryAll<ArtifactRow>(sql`
-      SELECT * FROM resume_artifacts
-      WHERE projection_id = ${projectionId}
-      ORDER BY version DESC, created_at DESC;
-    `);
+    const rows = await this.sqlite.queryAll<ArtifactRow>(
+      `${artifactSelect} WHERE a.projection_id = ${sql.value(projectionId)} ORDER BY a.version DESC, a.created_at DESC;`,
+    );
     return rows.map(mapArtifact);
   }
 
   async getArtifact(id: string): Promise<ResumeArtifactRecord | null> {
-    const row = await this.sqlite.queryOne<ArtifactRow>(
-      sql`SELECT * FROM resume_artifacts WHERE id = ${id} LIMIT 1;`,
+    const rows = await this.sqlite.queryAll<ArtifactRow>(
+      `${artifactSelect} WHERE a.id = ${sql.value(id)} LIMIT 1;`,
     );
-    return row ? mapArtifact(row) : null;
+    return rows[0] ? mapArtifact(rows[0]) : null;
   }
 
   async linkArtifactToApplication(
