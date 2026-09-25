@@ -6,7 +6,6 @@ import type {
   ResumeStatement,
 } from "../../src/shared/contracts.js";
 import type {
-  ResumeArtifactRecord,
   ResumeCreateInput,
   ResumeExportRequest,
   ResumeExportResult,
@@ -93,7 +92,11 @@ function contentTokens(value: string): string[] {
 }
 
 function normalizedText(value: string): string {
-  return value.toLowerCase().replace(/[^a-z0-9+#.-]+/g, " ").replace(/\s+/g, " ").trim();
+  return value
+    .toLowerCase()
+    .replace(/[^a-z0-9+#.-]+/g, " ")
+    .replace(/\s+/g, " ")
+    .trim();
 }
 
 function htmlEscape(value: string): string {
@@ -105,13 +108,17 @@ function htmlEscape(value: string): string {
     .replaceAll("'", "&#39;");
 }
 
-function validateContact(input: ResumeCreateInput["contact"]): ResumeCreateInput["contact"] {
+function validateContact(
+  input: ResumeCreateInput["contact"],
+): ResumeCreateInput["contact"] {
   const contact = {
     fullName: input.fullName.trim(),
     email: input.email.trim(),
     phone: input.phone.trim(),
     location: input.location.trim(),
-    links: Array.from(new Set(input.links.map((item) => item.trim()).filter(Boolean))),
+    links: Array.from(
+      new Set(input.links.map((item) => item.trim()).filter(Boolean)),
+    ),
   };
   if (!contact.fullName) throw new Error("A resume needs your name.");
   if (!contact.email && !contact.phone) {
@@ -123,7 +130,9 @@ function validateContact(input: ResumeCreateInput["contact"]): ResumeCreateInput
   return contact;
 }
 
-function safeTemplateCss(templateId: ResumeProjectionRecord["templateId"]): string {
+function safeTemplateCss(
+  templateId: ResumeProjectionRecord["templateId"],
+): string {
   const compact = templateId === "ats-compact-v1";
   return `
     @page { size: auto; margin: ${compact ? "0.42in" : "0.55in"}; }
@@ -154,7 +163,9 @@ function renderResumeHtml(
 
   const sections = projection.sections
     .map((section) => {
-      const items = statements.filter((statement) => statement.section === section);
+      const items = statements.filter(
+        (statement) => statement.section === section,
+      );
       if (items.length === 0) return "";
       return `<section><h2>${htmlEscape(section)}</h2><ul>${items
         .map((item) => `<li>${htmlEscape(item.text)}</li>`)
@@ -164,14 +175,20 @@ function renderResumeHtml(
 
   const html = `<!doctype html><html><head><meta charset="utf-8"><meta http-equiv="Content-Security-Policy" content="default-src 'none'; style-src 'unsafe-inline'; img-src data:"><style>${safeTemplateCss(projection.templateId)}</style></head><body><main><header><h1>${htmlEscape(projection.contact.fullName)}</h1><div class="contact">${contactItems.map((item) => `<span>${htmlEscape(item)}</span>`).join("")}</div></header>${sections}</main></body></html>`;
 
-  if (/display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$)|font-size\s*:\s*0(?:\D|$)/i.test(html)) {
+  if (
+    /display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$)|font-size\s*:\s*0(?:\D|$)/i.test(
+      html,
+    )
+  ) {
     throw new Error("Resume template contains hidden-content styling.");
   }
   return html;
 }
 
 function countPdfPages(bytes: Buffer): number | null {
-  const matches = bytes.toString("latin1").match(/\/Type\s*\/Page(?!s)\b/g);
+  const matches = bytes
+    .toString("latin1")
+    .match(/\/Type\s*\/Page(?!s)\b/g);
   return matches?.length ? matches.length : null;
 }
 
@@ -182,17 +199,26 @@ export class ResumeService {
   private readonly resumeDirectory: string;
 
   constructor(options: ResumeServiceOptions) {
-    this.sqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
+    this.sqlite = new SqliteClient(
+      options.databasePath,
+      options.sqliteBinaryPath,
+    );
     this.evidenceRepository = new CareerEvidenceRepository(this.sqlite);
     this.repository = new ResumeRepository(this.sqlite);
-    this.resumeDirectory = path.join(options.dataDirectory, "artifacts", "resumes");
+    this.resumeDirectory = path.join(
+      options.dataDirectory,
+      "artifacts",
+      "resumes",
+    );
   }
 
   async initialize(): Promise<void> {
     await fs.mkdir(this.resumeDirectory, { recursive: true });
   }
 
-  async createProjection(input: ResumeCreateInput): Promise<ResumeProjectionDetail> {
+  async createProjection(
+    input: ResumeCreateInput,
+  ): Promise<ResumeProjectionDetail> {
     const contact = validateContact(input.contact);
     const reviewItems = await this.evidenceRepository.listEvidenceReviewItems();
     const selectedIds = Array.from(new Set(input.selectedEvidenceIds));
@@ -200,17 +226,27 @@ export class ResumeService {
       .map((item) => item.evidence)
       .filter((evidence) => selectedIds.includes(evidence.id));
 
-    if (selected.length === 0) throw new Error("Select at least one confirmed Career Evidence item.");
-    const unsupported = selected.filter((item) => !canEvidenceSupportFactualClaim(item));
+    if (selected.length === 0) {
+      throw new Error("Select at least one confirmed Career Evidence item.");
+    }
+    const unsupported = selected.filter(
+      (item) => !canEvidenceSupportFactualClaim(item),
+    );
     if (unsupported.length > 0) {
-      throw new Error("Only user-confirmed or user-authored Career Evidence can enter a resume.");
+      throw new Error(
+        "Only user-confirmed or user-authored Career Evidence can enter a resume.",
+      );
     }
     if (selected.length !== selectedIds.length) {
-      throw new Error("One or more selected Career Evidence records no longer exist.");
+      throw new Error(
+        "One or more selected Career Evidence records no longer exist.",
+      );
     }
 
     const ordered = [...selected].sort((a, b) => {
-      const sectionDifference = sectionOrder.indexOf(sectionForEvidence(a)) - sectionOrder.indexOf(sectionForEvidence(b));
+      const sectionDifference =
+        sectionOrder.indexOf(sectionForEvidence(a)) -
+        sectionOrder.indexOf(sectionForEvidence(b));
       return sectionDifference || compareEvidence(a, b);
     });
     const sections = sectionOrder.filter((section) =>
@@ -268,7 +304,10 @@ export class ResumeService {
     };
   }
 
-  async updateStatement(id: string, update: ResumeStatementUpdate): Promise<ResumeStatement> {
+  async updateStatement(
+    id: string,
+    update: ResumeStatementUpdate,
+  ): Promise<ResumeStatement> {
     const text = update.text.trim();
     if (!text) throw new Error("Resume statement cannot be empty.");
     if (text.length > 1000) throw new Error("Resume statement is too long.");
@@ -294,7 +333,8 @@ export class ResumeService {
         issues.push({
           statementId: statement.id,
           code: "missing-evidence",
-          message: "This statement is not linked to supporting Career Evidence.",
+          message:
+            "This statement is not linked to supporting Career Evidence.",
           evidenceIds: missing,
         });
       }
@@ -302,7 +342,8 @@ export class ResumeService {
         issues.push({
           statementId: statement.id,
           code: "unconfirmed-evidence",
-          message: "This statement relies on Career Evidence that has not been confirmed.",
+          message:
+            "This statement relies on Career Evidence that has not been confirmed.",
           evidenceIds: unconfirmed,
         });
       }
@@ -311,38 +352,52 @@ export class ResumeService {
         const allowed = new Set(
           resolved.flatMap((item) =>
             item
-              ? contentTokens([
-                  item.statement,
-                  item.organization ?? "",
-                  item.titleOrName ?? "",
-                  ...item.skills,
-                  ...item.methodsOrTools,
-                  ...item.scope,
-                  ...item.outcomes,
-                  ...item.metrics,
-                ].join(" "))
+              ? contentTokens(
+                  [
+                    item.statement,
+                    item.organization ?? "",
+                    item.titleOrName ?? "",
+                    ...item.skills,
+                    ...item.methodsOrTools,
+                    ...item.scope,
+                    ...item.outcomes,
+                    ...item.metrics,
+                  ].join(" "),
+                )
               : [],
           ),
         );
-        const unsupported = contentTokens(statement.text).filter((token) => !allowed.has(token));
+        const unsupported = contentTokens(statement.text).filter(
+          (token) => !allowed.has(token),
+        );
         if (unsupported.length > 0) {
           issues.push({
             statementId: statement.id,
             code: "unsupported-edit",
-            message: `Edited text introduces unsupported factual terms: ${Array.from(new Set(unsupported)).slice(0, 8).join(", ")}.`,
+            message: `Edited text introduces unsupported factual terms: ${Array.from(
+              new Set(unsupported),
+            )
+              .slice(0, 8)
+              .join(", ")}.`,
             evidenceIds: statement.evidenceIds,
           });
         }
       }
     }
 
-    return { passed: issues.length === 0, checkedAt: new Date().toISOString(), issues };
+    return {
+      passed: issues.length === 0,
+      checkedAt: new Date().toISOString(),
+      issues,
+    };
   }
 
   async prepareRender(projectionId: string): Promise<PreparedResumeRender> {
     const detail = await this.getProjectionDetail(projectionId);
     if (!detail.truthGate.passed) {
-      throw new Error("Truth Gate failed. Resolve unsupported resume statements before export.");
+      throw new Error(
+        "Truth Gate failed. Resolve unsupported resume statements before export.",
+      );
     }
     const version = await this.repository.nextArtifactVersion(projectionId);
     return {
@@ -350,7 +405,10 @@ export class ResumeService {
       statements: detail.statements,
       truthGate: detail.truthGate,
       html: renderResumeHtml(detail.projection, detail.statements),
-      temporaryPath: path.join(this.resumeDirectory, `.${projectionId}-v${version}-${randomUUID()}.pdf`),
+      temporaryPath: path.join(
+        this.resumeDirectory,
+        `.${projectionId}-v${version}-${randomUUID()}.pdf`,
+      ),
     };
   }
 
@@ -374,7 +432,9 @@ export class ResumeService {
       };
     }
 
-    const version = await this.repository.nextArtifactVersion(prepared.projection.id);
+    const version = await this.repository.nextArtifactVersion(
+      prepared.projection.id,
+    );
     const finalPath = path.join(
       this.resumeDirectory,
       `${prepared.projection.id}-v${version}.pdf`,
@@ -398,7 +458,10 @@ export class ResumeService {
       },
       createdAt: new Date().toISOString(),
     });
-    await this.repository.setProjectionStatus(prepared.projection.id, "finalized");
+    await this.repository.setProjectionStatus(
+      prepared.projection.id,
+      "finalized",
+    );
 
     const applicationId = request.applicationId?.trim() || null;
     if (applicationId) {
@@ -417,11 +480,16 @@ export class ResumeService {
     };
   }
 
-  async compareArtifacts(fromId: string, toId: string): Promise<ResumeVersionDiff> {
+  async compareArtifacts(
+    fromId: string,
+    toId: string,
+  ): Promise<ResumeVersionDiff> {
     const from = await this.repository.getArtifact(fromId);
     const to = await this.repository.getArtifact(toId);
     if (!from || !to) throw new Error("Resume artifact version not found.");
-    const fromTexts = from.projectionSnapshot.statements.map((item) => item.text);
+    const fromTexts = from.projectionSnapshot.statements.map(
+      (item) => item.text,
+    );
     const toTexts = to.projectionSnapshot.statements.map((item) => item.text);
     return {
       fromArtifactId: fromId,
@@ -442,18 +510,38 @@ export class ResumeService {
     const bytes = await fs.readFile(pdfPath);
     const pageCount = countPdfPages(bytes);
 
-    if (/display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$)|font-size\s*:\s*0(?:\D|$)/i.test(html)) {
-      issues.push({ code: "hidden-content", severity: "critical", message: "Rendered template contains hidden content." });
+    if (
+      /display\s*:\s*none|visibility\s*:\s*hidden|opacity\s*:\s*0(?:\D|$)|font-size\s*:\s*0(?:\D|$)/i.test(
+        html,
+      )
+    ) {
+      issues.push({
+        code: "hidden-content",
+        severity: "critical",
+        message: "Rendered template contains hidden content.",
+      });
     }
 
     try {
       const parsed = await extractResumeDocument(pdfPath);
       const extracted = normalizedText(parsed.rawText);
-      const contactRequired = [projection.contact.fullName, projection.contact.email || projection.contact.phone].filter(Boolean);
+      const contactRequired = [
+        projection.contact.fullName,
+        projection.contact.email || projection.contact.phone,
+      ].filter(Boolean);
       for (const item of contactRequired) {
         const tokens = contentTokens(item);
-        if (tokens.length > 0 && tokens.filter((token) => extracted.includes(token)).length / tokens.length < 0.8) {
-          issues.push({ code: "contact-missing", severity: "critical", message: `Contact content was not reliably extractable: ${item}` });
+        if (
+          tokens.length > 0 &&
+          tokens.filter((token) => extracted.includes(token)).length /
+            tokens.length <
+            0.8
+        ) {
+          issues.push({
+            code: "contact-missing",
+            severity: "critical",
+            message: `Contact content was not reliably extractable: ${item}`,
+          });
         }
       }
 
@@ -463,7 +551,11 @@ export class ResumeService {
         const matched = tokens.filter((token) => extracted.includes(token));
         const coverage = tokens.length === 0 ? 1 : matched.length / tokens.length;
         if (coverage < 0.9) {
-          issues.push({ code: "statement-missing", severity: "critical", message: `Rendered PDF lost material statement content: ${statement.text}` });
+          issues.push({
+            code: "statement-missing",
+            severity: "critical",
+            message: `Rendered PDF lost material statement content: ${statement.text}`,
+          });
         }
         const anchor = tokens.slice(0, 3).join(" ");
         positions.push(anchor ? extracted.indexOf(anchor) : -1);
@@ -471,7 +563,12 @@ export class ResumeService {
       let last = -1;
       for (const position of positions.filter((value) => value >= 0)) {
         if (position < last) {
-          issues.push({ code: "reading-order", severity: "critical", message: "Extracted PDF reading order differs materially from the resume projection." });
+          issues.push({
+            code: "reading-order",
+            severity: "critical",
+            message:
+              "Extracted PDF reading order differs materially from the resume projection.",
+          });
           break;
         }
         last = position;
@@ -480,15 +577,26 @@ export class ResumeService {
       issues.push({
         code: "pdf-unreadable",
         severity: "critical",
-        message: error instanceof Error ? error.message : "Generated PDF could not be re-parsed.",
+        message:
+          error instanceof Error
+            ? error.message
+            : "Generated PDF could not be re-parsed.",
       });
     }
 
     if (pageCount !== null) {
       if (projection.context === "federal" && pageCount > 2) {
-        issues.push({ code: "page-count", severity: "critical", message: "Federal resume exceeds the current two-page application limit." });
+        issues.push({
+          code: "page-count",
+          severity: "critical",
+          message: "Federal resume exceeds the current two-page application limit.",
+        });
       } else if (projection.context !== "academic" && pageCount > 2) {
-        issues.push({ code: "page-count", severity: "advisory", message: `Resume is ${pageCount} pages; consider a more focused projection.` });
+        issues.push({
+          code: "page-count",
+          severity: "advisory",
+          message: `Resume is ${pageCount} pages; consider a more focused projection.`,
+        });
       }
     }
 
