@@ -51,6 +51,18 @@ const desktopApi: DesktopApi = {
     mergeEvidence: (sourceId, targetId) =>
       ipcRenderer.invoke("career:merge-evidence", sourceId, targetId),
   },
+  resume: {
+    createProjection: (input) =>
+      ipcRenderer.invoke("resume:create-projection", input),
+    reviseProjection: (input) =>
+      ipcRenderer.invoke("resume:revise-projection", input),
+    getProjection: (id) => ipcRenderer.invoke("resume:get-projection", id),
+    getLatestProjection: (jobId) =>
+      ipcRenderer.invoke("resume:get-latest-projection", jobId),
+    listProjections: (jobId) =>
+      ipcRenderer.invoke("resume:list-projections", jobId),
+    markReviewed: (id) => ipcRenderer.invoke("resume:mark-reviewed", id),
+  },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),
     track: (jobId) => ipcRenderer.invoke("applications:track", jobId),
