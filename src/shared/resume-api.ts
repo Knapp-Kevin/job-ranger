@@ -6,6 +6,9 @@ import type {
   ResumeProjectionDetail,
   ResumeProjectionRecord,
   ResumeStatementUpdate,
+  ResumeTailoringApplyRequest,
+  ResumeTailoringPlan,
+  ResumeTailoringPreviewRequest,
   ResumeVersionDiff,
 } from "./resume-contracts.js";
 
@@ -18,6 +21,12 @@ export interface ResumeDesktopApi {
       id: string,
       update: ResumeStatementUpdate,
     ) => Promise<ResumeStatement>;
+    previewTailoring: (
+      request: ResumeTailoringPreviewRequest,
+    ) => Promise<ResumeTailoringPlan>;
+    applyTailoring: (
+      request: ResumeTailoringApplyRequest,
+    ) => Promise<ResumeProjectionDetail>;
     exportPdf: (request: ResumeExportRequest) => Promise<ResumeExportResult>;
     compareVersions: (
       fromArtifactId: string,
