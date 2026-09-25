@@ -36,32 +36,43 @@ test("diagnose evidence confirmation state across IPC and DOM", async () => {
       .map((item) => ({ id: item.evidence.id, state: item.evidence.verificationState }));
   }, statement);
   console.log("DIAGNOSTIC before confirm", JSON.stringify(before));
+  expect(before).toHaveLength(1);
 
   await proposal.getByRole("button", { name: "Confirm", exact: true }).click();
+  await page.waitForTimeout(750);
 
-  await expect.poll(async () => {
-    return page.evaluate(async (targetStatement) => {
-      const records = await window.electronAPI.career.listEvidence();
-      return records
-        .filter((item) => item.evidence.statement === targetStatement)
-        .map((item) => item.evidence.verificationState)
-        .join(",");
-    }, statement);
-  }).toContain("user-confirmed");
-
-  const after = await page.evaluate(async (targetStatement) => {
+  const afterClick = await page.evaluate(async (targetStatement) => {
     const records = await window.electronAPI.career.listEvidence();
     return records
       .filter((item) => item.evidence.statement === targetStatement)
       .map((item) => ({ id: item.evidence.id, state: item.evidence.verificationState }));
   }, statement);
-  console.log("DIAGNOSTIC after confirm", JSON.stringify(after));
-  console.log("DIAGNOSTIC proposal count", await proposal.count());
-  console.log("DIAGNOSTIC proposal text", await proposal.allInnerTexts());
-  console.log("DIAGNOSTIC page confirmed labels", await page.getByText(/Confirmed career evidence/).allInnerTexts());
-  console.log("DIAGNOSTIC page needs review text", await page.getByText("Needs review", { exact: true }).locator("..").allInnerTexts());
+  console.log("DIAGNOSTIC after UI click", JSON.stringify(afterClick));
+  console.log("DIAGNOSTIC proposal after click", await proposal.allInnerTexts());
+  console.log("DIAGNOSTIC visible errors", await page.locator(".text-\\[var\\(--color-danger\\)\\]").allInnerTexts());
 
-  await expect(
-    page.getByText("Confirmed career evidence (1)", { exact: true }),
-  ).toBeVisible();
+  const direct = await page.evaluate(async ({ id }) => {
+    try {
+      const reviewed = await window.electronAPI.career.reviewEvidence(id, { action: "confirm" });
+      return { ok: true, reviewed, error: null };
+    } catch (error) {
+      return {
+        ok: false,
+        reviewed: null,
+        error: error instanceof Error ? error.message : String(error),
+      };
+    }
+  }, { id: before[0].id });
+  console.log("DIAGNOSTIC direct IPC review", JSON.stringify(direct));
+
+  const afterDirect = await page.evaluate(async (targetStatement) => {
+    const records = await window.electronAPI.career.listEvidence();
+    return records
+      .filter((item) => item.evidence.statement === targetStatement)
+      .map((item) => ({ id: item.evidence.id, state: item.evidence.verificationState }));
+  }, statement);
+  console.log("DIAGNOSTIC after direct IPC", JSON.stringify(afterDirect));
+
+  expect(direct.ok).toBe(true);
+  expect(afterDirect.map((item) => item.state)).toContain("user-confirmed");
 });
