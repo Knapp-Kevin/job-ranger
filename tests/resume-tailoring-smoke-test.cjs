@@ -186,7 +186,11 @@ async function run() {
     assert.equal(childProjection.selectedEvidenceIds.includes(unrelated.id), false);
 
     const child = await resumeService.getProjectionDetail(childProjection.id);
-    assert.equal(child.truthGate.passed, true);
+    assert.equal(
+      child.truthGate.passed,
+      true,
+      `tailored child Truth Gate issues: ${JSON.stringify(child.truthGate.issues)}`,
+    );
     const childDirect = child.statements.find((item) => item.evidenceIds.includes(direct.id));
     const childTransferable = child.statements.find((item) =>
       item.evidenceIds.includes(transferable.id),
