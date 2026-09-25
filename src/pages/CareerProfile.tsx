@@ -1,11 +1,27 @@
 import { useEffect, useMemo, useState } from "react";
-import { BadgeCheck, BriefcaseBusiness, Compass, MapPin, Save, Sparkles } from "lucide-react";
+import {
+  BadgeCheck,
+  BriefcaseBusiness,
+  Check,
+  ClipboardPaste,
+  Compass,
+  FileText,
+  FileUp,
+  GitMerge,
+  MapPin,
+  Pencil,
+  Save,
+  Sparkles,
+  X,
+} from "lucide-react";
 import { Layout } from "../components/Layout";
+import { useCareerEvidence } from "../career/evidence";
 import {
   emptyCareerProfile,
   type CareerProfile as CareerProfileValue,
   useCareerProfile,
 } from "../career/storage";
+import type { EvidenceSubjectType, SourceArtifact } from "../shared/contracts";
 
 function splitLines(value: string): string[] {
   return value
@@ -18,12 +34,54 @@ function joinLines(values: string[]): string {
   return values.join("\n");
 }
 
+function artifactStateLabel(state: SourceArtifact["extractionState"]): string {
+  switch (state) {
+    case "pending":
+      return "Processing";
+    case "extracted":
+      return "Extracted";
+    case "review-required":
+      return "Needs review";
+    case "needs-ocr":
+      return "Needs OCR";
+    case "encrypted":
+      return "Encrypted";
+    case "malformed":
+      return "Could not read";
+    case "unsupported":
+      return "Unsupported";
+    case "resource-limited":
+      return "Too large";
+    case "failed":
+      return "Import failed";
+  }
+}
+
+const subjectLabels: Record<EvidenceSubjectType, string> = {
+  role: "Role",
+  skill: "Skill",
+  credential: "Credential",
+  education: "Education",
+  project: "Project",
+  achievement: "Achievement",
+  publication: "Publication",
+  other: "Other",
+};
+
 export function CareerProfile() {
   const { profile, save, loading, error } = useCareerProfile();
+  const evidence = useCareerEvidence();
   const [draft, setDraft] = useState<CareerProfileValue>(emptyCareerProfile);
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState<string | null>(null);
+  const [pasteOpen, setPasteOpen] = useState(false);
+  const [pasteLabel, setPasteLabel] = useState("Previous resume");
+  const [pasteText, setPasteText] = useState("");
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingText, setEditingText] = useState("");
+  const [editingType, setEditingType] = useState<EvidenceSubjectType>("other");
+  const [mergeTargets, setMergeTargets] = useState<Record<string, string>>({});
 
   useEffect(() => {
     if (!loading) {
@@ -67,6 +125,38 @@ export function CareerProfile() {
     }
   };
 
+  const handlePasteImport = async () => {
+    if (!pasteText.trim()) return;
+    try {
+      await evidence.importPastedText({ label: pasteLabel, text: pasteText });
+      setPasteText("");
+      setPasteOpen(false);
+    } catch {
+      // The hook exposes the failure message in the page-level evidence error.
+    }
+  };
+
+  const beginEdit = (id: string, statement: string, subjectType: EvidenceSubjectType) => {
+    setEditingId(id);
+    setEditingText(statement);
+    setEditingType(subjectType);
+  };
+
+  const saveEdit = async () => {
+    if (!editingId || !editingText.trim()) return;
+    try {
+      await evidence.review(editingId, {
+        action: "edit",
+        statement: editingText,
+        subjectType: editingType,
+      });
+      setEditingId(null);
+      setEditingText("");
+    } catch {
+      // The hook exposes the failure message.
+    }
+  };
+
   return (
     <Layout>
       <section className="panel panel-strong px-6 py-7 sm:px-8">
@@ -76,13 +166,13 @@ export function CareerProfile() {
         </span>
         <h1 className="page-title mt-4">Tell Job Ranger what good work looks like for you.</h1>
         <p className="page-copy">
-          No technical setup. Add the work you want, where you can work, what you already know, and what matters to you. Job Ranger uses this only on your device to explain which listings look worth your time.
+          Add the work you want, where you can work, what you already know, and what matters to you. You can also import an existing resume to build a reusable record of career evidence without turning the document itself into the source of truth.
         </p>
       </section>
 
-      {(error || saveError) && (
+      {(error || saveError || evidence.error) && (
         <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
-          {saveError ?? error}
+          {saveError ?? evidence.error ?? error}
         </section>
       )}
 
@@ -109,9 +199,9 @@ export function CareerProfile() {
               <h2 className="text-xl font-semibold">What stays yours</h2>
             </div>
             <ul className="mt-4 space-y-3 text-sm text-[var(--color-text-secondary)]">
-              <li>Your career profile is stored locally in this app.</li>
-              <li>Job Ranger never invents credentials, skills, or experience for you.</li>
-              <li>The first match score is deterministic. No AI account is required.</li>
+              <li>Your career profile and imported evidence stay in Job Ranger&apos;s local data store.</li>
+              <li>Imported statements do not become confirmed facts until you approve them.</li>
+              <li>Job Ranger never invents credentials, skills, experience, or results for you.</li>
             </ul>
           </div>
         </aside>
@@ -294,10 +384,279 @@ export function CareerProfile() {
         </div>
       </section>
 
+      <section className="panel panel-strong mt-6 p-6 sm:p-8" aria-labelledby="career-evidence-heading">
+        <div className="flex flex-wrap items-start justify-between gap-4">
+          <div className="max-w-2xl">
+            <span className="metric-label">Career evidence</span>
+            <h2 id="career-evidence-heading" className="mt-2 text-2xl font-semibold">Build from work you can prove.</h2>
+            <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+              Import a DOCX, text-bearing PDF, or plain-text resume. Job Ranger preserves the original, extracts locally, and asks you to review each statement before it can support a future resume.
+            </p>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            <button
+              type="button"
+              className="primary-button"
+              onClick={() => void evidence.importFile()}
+              disabled={evidence.busy}
+            >
+              <FileUp className="h-4 w-4" />
+              {evidence.busy ? "Working..." : "Import resume"}
+            </button>
+            <button
+              type="button"
+              className="secondary-button"
+              onClick={() => setPasteOpen((value) => !value)}
+              disabled={evidence.busy}
+            >
+              <ClipboardPaste className="h-4 w-4" />
+              Paste text
+            </button>
+          </div>
+        </div>
+
+        {pasteOpen && (
+          <div className="panel panel-muted mt-5 p-4">
+            <div className="grid gap-4 sm:grid-cols-[0.4fr_1fr]">
+              <label>
+                <span className="metric-label">Source label</span>
+                <input
+                  className="input-shell mt-2"
+                  value={pasteLabel}
+                  onChange={(event) => setPasteLabel(event.target.value)}
+                  placeholder="Previous resume"
+                />
+              </label>
+              <label>
+                <span className="metric-label">Career history or resume text</span>
+                <textarea
+                  className="input-shell mt-2 min-h-36 resize-y py-3"
+                  value={pasteText}
+                  onChange={(event) => setPasteText(event.target.value)}
+                  placeholder="Paste resume text or career history here."
+                />
+              </label>
+            </div>
+            <div className="mt-4 flex justify-end">
+              <button
+                type="button"
+                className="primary-button"
+                onClick={() => void handlePasteImport()}
+                disabled={evidence.busy || !pasteText.trim()}
+              >
+                <ClipboardPaste className="h-4 w-4" />
+                Extract evidence
+              </button>
+            </div>
+          </div>
+        )}
+
+        {evidence.lastImport?.message && (
+          <div className={`support-note mt-5 px-4 py-3 text-sm ${evidence.lastImport.failureCode ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}>
+            {evidence.lastImport.message}
+          </div>
+        )}
+
+        <div className="mt-6 grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="panel panel-muted rounded-2xl px-4 py-3">
+            <div className="metric-label">Sources</div>
+            <div className="mt-1 text-2xl font-semibold">{evidence.artifacts.length}</div>
+          </div>
+          <div className="panel panel-muted rounded-2xl px-4 py-3">
+            <div className="metric-label">Needs review</div>
+            <div className="mt-1 text-2xl font-semibold">{evidence.pending.length}</div>
+          </div>
+          <div className="panel panel-muted rounded-2xl px-4 py-3">
+            <div className="metric-label">Confirmed facts</div>
+            <div className="mt-1 text-2xl font-semibold">{evidence.confirmed.length}</div>
+          </div>
+        </div>
+
+        {evidence.artifacts.length > 0 && (
+          <div className="mt-6">
+            <h3 className="text-base font-semibold">Imported sources</h3>
+            <div className="mt-3 grid gap-3 md:grid-cols-2">
+              {evidence.artifacts.map((artifact) => (
+                <div key={artifact.id} className="panel panel-muted flex items-start gap-3 rounded-2xl px-4 py-3">
+                  <FileText className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--color-primary)]" />
+                  <div className="min-w-0">
+                    <div className="truncate text-sm font-semibold">{artifact.originalName}</div>
+                    <div className="mt-1 text-xs text-[var(--color-text-muted)]">
+                      {artifactStateLabel(artifact.extractionState)}
+                      {artifact.parserId ? ` · ${artifact.parserId} ${artifact.parserVersion ?? ""}` : ""}
+                    </div>
+                    {artifact.warnings[0] && (
+                      <div className="mt-2 text-xs text-[var(--color-text-secondary)]">{artifact.warnings[0]}</div>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        <div className="mt-7">
+          <div className="flex items-center justify-between gap-3">
+            <div>
+              <h3 className="text-lg font-semibold">Review imported evidence</h3>
+              <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                Imported statements are proposals. Confirm, correct, merge, or reject them before Job Ranger treats them as facts.
+              </p>
+            </div>
+          </div>
+
+          {evidence.loading ? (
+            <div className="mt-4 text-sm text-[var(--color-text-muted)]">Loading career evidence...</div>
+          ) : evidence.pending.length === 0 ? (
+            <div className="support-note mt-4 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+              Nothing is waiting for review.
+            </div>
+          ) : (
+            <div className="mt-4 space-y-3">
+              {evidence.pending.map(({ evidence: item, sources }) => {
+                const editing = editingId === item.id;
+                const mergeTarget = mergeTargets[item.id] ?? "";
+                return (
+                  <article key={item.id} className="panel panel-muted rounded-2xl p-4">
+                    <div className="flex flex-wrap items-start justify-between gap-3">
+                      <div className="min-w-0 flex-1">
+                        <div className="metric-label">{subjectLabels[item.subjectType]}</div>
+                        {editing ? (
+                          <div className="mt-3 space-y-3">
+                            <select
+                              className="select-shell"
+                              aria-label="Evidence type"
+                              value={editingType}
+                              onChange={(event) => setEditingType(event.target.value as EvidenceSubjectType)}
+                            >
+                              {Object.entries(subjectLabels).map(([value, label]) => (
+                                <option key={value} value={value}>{label}</option>
+                              ))}
+                            </select>
+                            <textarea
+                              className="input-shell min-h-24 resize-y py-3"
+                              value={editingText}
+                              onChange={(event) => setEditingText(event.target.value)}
+                            />
+                          </div>
+                        ) : (
+                          <p className="mt-2 text-sm leading-6 text-[var(--color-text-primary)]">{item.statement}</p>
+                        )}
+                        {sources[0] && (
+                          <p className="mt-2 text-xs text-[var(--color-text-muted)]">
+                            From {sources[0].originalName}
+                            {sources[0].sourceLocator ? ` · ${sources[0].sourceLocator}` : ""}
+                          </p>
+                        )}
+                      </div>
+                    </div>
+
+                    {editing ? (
+                      <div className="mt-4 flex flex-wrap justify-end gap-2">
+                        <button
+                          type="button"
+                          className="surface-link-button text-sm font-semibold"
+                          onClick={() => setEditingId(null)}
+                          disabled={evidence.busy}
+                        >
+                          Cancel
+                        </button>
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={() => void saveEdit()}
+                          disabled={evidence.busy || !editingText.trim()}
+                        >
+                          <Check className="h-4 w-4" />
+                          Save and confirm
+                        </button>
+                      </div>
+                    ) : (
+                      <div className="mt-4 flex flex-wrap items-center gap-2">
+                        <button
+                          type="button"
+                          className="primary-button"
+                          onClick={() => void evidence.review(item.id, { action: "confirm" })}
+                          disabled={evidence.busy}
+                        >
+                          <Check className="h-4 w-4" />
+                          Confirm
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => beginEdit(item.id, item.statement, item.subjectType)}
+                          disabled={evidence.busy}
+                        >
+                          <Pencil className="h-4 w-4" />
+                          Edit
+                        </button>
+                        <button
+                          type="button"
+                          className="secondary-button"
+                          onClick={() => void evidence.review(item.id, { action: "reject" })}
+                          disabled={evidence.busy}
+                        >
+                          <X className="h-4 w-4" />
+                          Reject
+                        </button>
+
+                        {evidence.confirmed.length > 0 && (
+                          <div className="ml-auto flex min-w-[18rem] flex-1 flex-wrap items-center justify-end gap-2">
+                            <select
+                              className="select-shell min-w-0 flex-1"
+                              aria-label={`Merge target for ${item.statement}`}
+                              value={mergeTarget}
+                              onChange={(event) =>
+                                setMergeTargets((current) => ({ ...current, [item.id]: event.target.value }))
+                              }
+                            >
+                              <option value="">Merge duplicate into...</option>
+                              {evidence.confirmed.map(({ evidence: target }) => (
+                                <option key={target.id} value={target.id}>{target.statement}</option>
+                              ))}
+                            </select>
+                            <button
+                              type="button"
+                              className="secondary-button"
+                              onClick={() => mergeTarget && void evidence.merge(item.id, mergeTarget)}
+                              disabled={evidence.busy || !mergeTarget}
+                            >
+                              <GitMerge className="h-4 w-4" />
+                              Merge
+                            </button>
+                          </div>
+                        )}
+                      </div>
+                    )}
+                  </article>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        {evidence.confirmed.length > 0 && (
+          <details className="mt-7">
+            <summary className="cursor-pointer text-sm font-semibold text-[var(--color-text-primary)]">
+              Confirmed career evidence ({evidence.confirmed.length})
+            </summary>
+            <div className="mt-3 grid gap-2 md:grid-cols-2">
+              {evidence.confirmed.map(({ evidence: item }) => (
+                <div key={item.id} className="panel panel-muted rounded-2xl px-4 py-3">
+                  <div className="metric-label">{subjectLabels[item.subjectType]}</div>
+                  <p className="mt-2 text-sm leading-6">{item.statement}</p>
+                </div>
+              ))}
+            </div>
+          </details>
+        )}
+      </section>
+
       <section className="support-note mt-6 flex items-start gap-3 px-5 py-4 text-sm text-[var(--color-text-secondary)]">
         <BriefcaseBusiness className="mt-0.5 h-4 w-4 flex-shrink-0 text-[var(--color-primary)]" />
         <p>
-          Next, open Find Jobs. Listings will show plain-language fit guidance based only on the information you saved here and the job data Job Ranger has actually collected.
+          Next, open Find Jobs. Listings will show plain-language fit guidance based on information you saved here and job data Job Ranger actually collected. Confirmed career evidence will also become available to later resume and interview workflows.
         </p>
       </section>
     </Layout>
