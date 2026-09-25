@@ -29,6 +29,7 @@
     "electron:pack": "npm run repo:health && electron-builder --dir"
   },
   "dependencies": {
+    "@firecrawl/anydoc": "0.2.4",
     "clsx": "^2.1.1",
     "date-fns": "^4.1.0",
     "lucide-react": "^0.577.0",
