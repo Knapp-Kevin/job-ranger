@@ -14,6 +14,7 @@ const navigation = [
   { name: "Find Jobs", href: "/jobs", icon: Briefcase },
   { name: "Applications", href: "/applications", icon: FileText },
   { name: "Career Profile", href: "/career-profile", icon: UserRound },
+  { name: "Resume", href: "/resume", icon: FileText },
   { name: "Companies", href: "/companies", icon: Building2 },
   { name: "Filters", href: "/filters", icon: Bell },
   { name: "Settings", href: "/settings", icon: Settings },
@@ -60,7 +61,7 @@ export function Sidebar() {
       <div className="border-t border-white/10 px-6 py-5 text-sm !text-white/70">
         <p className="font-semibold !text-white/90">Your search, without the spreadsheet circus</p>
         <p className="mt-2 leading-6 !text-white/70">
-          Start with Career Profile, review promising jobs, then track what happens in Applications.
+          Build your Career Evidence, find promising jobs, create truthful resumes, then track what happens in Applications.
         </p>
       </div>
     </aside>
