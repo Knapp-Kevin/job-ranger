@@ -31,17 +31,15 @@ export interface ElectronAppFixture {
  */
 export async function launchElectronApp(): Promise<ElectronAppFixture> {
   const tempDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-e2e-"));
-  const mainPath = path.join(projectRoot, "electron/main.cjs");
   const electronExe = require("electron") as unknown as string;
 
-  console.log("Launching Electron with main:", mainPath);
+  console.log("Launching Electron app root:", projectRoot);
   console.log("Electron exe:", electronExe);
   console.log("Temp data dir:", tempDataDir);
-  console.log("Project root:", projectRoot);
 
   const electronApp = await electron.launch({
     executablePath: electronExe,
-    args: [mainPath],
+    args: [projectRoot],
     cwd: projectRoot,
     env: {
       ...process.env,

@@ -1,6 +1,5 @@
 import { Tray, Menu, Notification, nativeImage, BrowserWindow } from "electron";
 import { existsSync } from "node:fs";
-import path from "node:path";
 import type { Settings } from "../../src/shared/contracts.js";
 
 export interface ScrapeNotification {
@@ -12,11 +11,10 @@ export interface ScrapeNotification {
 let tray: Tray | null = null;
 
 export function createTray(
-  moduleDirectory: string,
+  iconPath: string,
   mainWindow: BrowserWindow | null,
   onQuit: () => void,
 ): Tray | null {
-  const iconPath = path.join(moduleDirectory, "../public/ICON.png");
   if (!existsSync(iconPath)) {
     return null;
   }

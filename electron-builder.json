@@ -9,10 +9,10 @@
     "files":  [
                   "dist/**/*",
                   "package.json",
-                  "electron/**/*"
+                  "electron-runtime/**/*"
               ],
     "extraMetadata":  {
-                          "main":  "electron/main.cjs"
+                          "main":  "electron-runtime/electron/src/main.cjs"
                       },
     "afterSign":  "scripts/notarize.cjs",
     "win":  {

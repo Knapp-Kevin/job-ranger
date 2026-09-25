@@ -28,6 +28,17 @@ let backend: JobScoutBackend | null = null;
 let careerBackend: CareerBackend | null = null;
 let isQuitting = false;
 
+function appAssetPath(fileName: string): string {
+  const root = app.getAppPath();
+  return process.env.NODE_ENV === "development"
+    ? path.join(root, "public", fileName)
+    : path.join(root, "dist", fileName);
+}
+
+function builtPagePath(fileName: string): string {
+  return path.join(app.getAppPath(), "dist", fileName);
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -42,14 +53,14 @@ function createWindow(): void {
       preload: path.join(moduleDirectory, "preload.cjs"),
       webSecurity: true,
     },
-    icon: path.join(moduleDirectory, "../public/ICON.png"),
+    icon: appAssetPath("ICON.png"),
   });
 
   if (process.env.NODE_ENV === "development") {
     void mainWindow.loadURL("http://localhost:5173");
     mainWindow.webContents.openDevTools({ mode: "detach" });
   } else {
-    void mainWindow.loadFile(path.join(moduleDirectory, "../dist/index.html"));
+    void mainWindow.loadFile(builtPagePath("index.html"));
   }
 
   mainWindow.once("ready-to-show", () => {
@@ -111,13 +122,13 @@ function openHelpWindow(): void {
       nodeIntegration: false,
       webSecurity: true,
     },
-    icon: path.join(moduleDirectory, "../public/ICON.png"),
+    icon: appAssetPath("ICON.png"),
   });
 
   if (process.env.NODE_ENV === "development") {
     void helpWindow.loadURL("http://localhost:5173/help.html");
   } else {
-    void helpWindow.loadFile(path.join(moduleDirectory, "../dist/help.html"));
+    void helpWindow.loadFile(builtPagePath("help.html"));
   }
 
   helpWindow.webContents.setWindowOpenHandler(({ url }) => {
@@ -300,7 +311,7 @@ app.whenReady().then(async () => {
     registerIpcHandlers();
     createWindow();
     createMenu();
-    createTray(moduleDirectory, mainWindow, () => app.quit());
+    createTray(appAssetPath("ICON.png"), mainWindow, () => app.quit());
 
     app.on("activate", () => {
       if (BrowserWindow.getAllWindows().length === 0) {

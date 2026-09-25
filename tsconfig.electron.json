@@ -6,7 +6,7 @@
     "moduleResolution": "NodeNext",
     "resolveJsonModule": true,
     "allowJs": false,
-    "outDir": "./electron",
+    "outDir": "./electron-runtime",
     "rootDir": ".",
     "removeComments": true,
     "strict": true,
@@ -23,5 +23,5 @@
     "electron/src/**/*.cts",
     "src/shared/**/*"
   ],
-  "exclude": ["node_modules", "dist", "desktop", "desktopsrc"]
+  "exclude": ["node_modules", "dist", "electron-runtime", "desktop", "desktopsrc"]
 }
