@@ -73,7 +73,7 @@ export function buildResumeTailoringPlan(
   coverage: JobEvidenceCoverage,
   now = new Date().toISOString(),
 ): ResumeTailoringPlan {
-  if (coverage.jobId !== source.jobId && !coverage.jobId) {
+  if (!coverage.jobId) {
     throw new Error("Target job coverage is missing a job id.");
   }
 
