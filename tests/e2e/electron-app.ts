@@ -9,11 +9,16 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
 const projectRoot = path.join(__dirname, "../..");
 const require = createRequire(import.meta.url);
+const onboardingDismissedKey = "job-ranger.onboarding.dismissed.v1";
 
 export interface ElectronAppFixture {
   electronApp: ElectronApplication;
   page: Page;
   tempDataDir: string;
+}
+
+interface LaunchElectronAppOptions {
+  showOnboarding?: boolean;
 }
 
 /**
@@ -29,7 +34,9 @@ export interface ElectronAppFixture {
  * 2. Use WSL on Windows
  * 3. Wait for Playwright/Electron compatibility fix
  */
-export async function launchElectronApp(): Promise<ElectronAppFixture> {
+export async function launchElectronApp(
+  options: LaunchElectronAppOptions = {},
+): Promise<ElectronAppFixture> {
   const tempDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-e2e-"));
   const electronExe = require("electron") as unknown as string;
 
@@ -39,7 +46,7 @@ export async function launchElectronApp(): Promise<ElectronAppFixture> {
 
   const electronApp = await electron.launch({
     executablePath: electronExe,
-    args: [projectRoot],
+    args: [projectRoot, `--user-data-dir=${tempDataDir}`],
     cwd: projectRoot,
     env: {
       ...process.env,
@@ -53,6 +60,13 @@ export async function launchElectronApp(): Promise<ElectronAppFixture> {
   console.log("Got first window, waiting for load...");
   await page.waitForLoadState("domcontentloaded");
   await page.waitForTimeout(2000);
+
+  if (!options.showOnboarding) {
+    await page.evaluate((key) => window.localStorage.setItem(key, "true"), onboardingDismissedKey);
+    await page.reload();
+    await page.waitForLoadState("domcontentloaded");
+  }
+
   console.log("App loaded successfully");
 
   return { electronApp, page, tempDataDir };
