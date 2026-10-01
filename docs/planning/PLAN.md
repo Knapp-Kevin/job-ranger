@@ -1,6 +1,6 @@
 # Job Ranger Roadmap
 
-**Current as of:** 2026-09-25
+**Current as of:** 2026-10-01
 
 This is the active roadmap. Historical phase/remediation plans under `docs/` remain implementation provenance only.
 
@@ -19,11 +19,17 @@ The product should help a user:
 
 Core functionality remains useful without inference. Optional inference may improve guidance and language, but it does not own factual authority or determine whether the application is usable.
 
+The universal product contract is now expressed through user stories rather than occupation-specific assumptions:
+
+> **US-0:** As a job seeker, I want Job Ranger to adapt to the way my career works without requiring me to understand how Job Ranger works.
+
+See [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md) and program issue #81.
+
 ## Current Release Boundary
 
 The published installers remain **v1.1.2**.
 
-Development on `main` is materially ahead of that release. R0-R3 of the Career Evidence program are implemented on `main` once PR #75 merges, but are not yet represented by a published installer.
+Development on `main` is materially ahead of that release. R0-R3 of the Career Evidence program are implemented on `main`, but are not yet represented by a published installer.
 
 ## Completed Foundation
 
@@ -59,6 +65,67 @@ Development on `main` is materially ahead of that release. R0-R3 of the Career E
 - [x] Applications workspace, statuses, and notes
 - [x] consumer-oriented navigation
 - [x] Career-Ops attribution and independence boundary
+
+## Universal User Stories Program / #81
+
+**Status: active.**
+
+This program makes user stories the normative product contract and uses diverse career contexts as validation fixtures. It does not replace the Career Evidence program; it coordinates consumer-facing behavior across it.
+
+### U1 / #82: progressive first-run onboarding
+
+- [ ] resume-first onboarding
+- [ ] no-resume guided evidence entry
+- [ ] goal-first onboarding
+- [ ] partial profiles remain valid and resumable
+- [ ] no technical/provider configuration required
+
+### U2 / #83: target tracks, preferences, and constraints
+
+- [ ] multiple target tracks
+- [ ] explicit required vs preferred vs target semantics
+- [ ] work arrangement, schedule, travel, relocation, geography, and work-mode preferences where relevant
+- [ ] hourly/annual compensation floors and targets preserve meaning
+- [ ] migration preserves existing Career Profile intent
+
+### U3 / #84: extensible Career Evidence
+
+- [ ] represent conventional and nontraditional career evidence without separate truth stores
+- [ ] model credentials/licenses with relevant structured facts
+- [ ] preserve provenance and authority state through edit/merge/reject/supersede
+- [ ] allow matching to consume relevant non-employment evidence
+
+### U4 / #85: consumer-friendly opportunity/source discovery
+
+- [ ] define native `SourceDiscoveryProvider`
+- [ ] discover employers/sources from target track + geography
+- [ ] normalize discovery across appropriate source classes without exposing ATS internals
+- [ ] require approval before discovered sources become monitored/trusted
+- [ ] preserve support/trust/provenance metadata
+
+### U5 / #86: explainable opportunity assessment
+
+- [ ] separate eligibility/blockers from evidence coverage
+- [ ] assess career-track alignment separately from profile-title similarity
+- [ ] distinguish hard constraints from preference misses
+- [ ] show unknown/missing/uncertain information explicitly
+- [ ] do not present one opaque percentage as hiring probability or universal fit truth
+
+### U6 / #88: downstream story reconciliation
+
+- [ ] #64 satisfies US-19/US-20 for truthful target-specific resume work
+- [ ] #65 satisfies application-material, submitted-artifact, contact, reminder, interview, and recurring-gap stories
+- [ ] add observed outcome analytics for US-28 without causal overclaiming
+- [ ] add evidence-based strategy signals for US-29 without activity quotas
+
+### U7 / #87: cross-career validation
+
+- [ ] maintain a version-controlled US-0 through US-30 validation matrix
+- [ ] maintain synthetic fixtures for materially different career contexts
+- [ ] validate UX relevance, not only type/schema acceptance
+- [ ] use automated domain/Electron coverage where practical
+
+The program completion rule is defined in #81 and [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md).
 
 ## Career Evidence and Resume Intelligence Program
 
@@ -141,7 +208,7 @@ Known limitation: requirement coverage can only reason over job text actually co
 
 ### R3 / #63: deterministic resume creation and artifact lifecycle
 
-**Status: implemented by PR #75, pending final merge validation.**
+**Status: complete on `main` through PR #75.**
 
 - [x] structured `ResumeProjection` / `ResumeStatement` lifecycle
 - [x] Job Ranger-owned ATS-safe standard template
@@ -159,14 +226,14 @@ Known limitation: requirement coverage can only reason over job text actually co
 - [x] Resume workspace and top-level navigation
 - [x] artifact reveal/version UX
 - [x] deterministic lifecycle smoke coverage
-- [ ] final Electron product validation on the merge candidate
-- [ ] merge PR #75 and close #63
+- [x] Electron product validation on the merge candidate
+- [x] PR #75 merged
 
-R3 remains deterministic and does not require AI. The milestone is not complete merely because Chromium can emit a PDF; truth, parseability, versioning, and lifecycle linkage are part of the product contract.
+R3 remains deterministic and does not require AI. Truth, parseability, versioning, and lifecycle linkage are part of the product contract.
 
 ### R4 / #64: target-specific tailoring and optional inference
 
-**Status: next planned implementation phase after R3.**
+**Status: next planned implementation phase.**
 
 Deterministic first:
 
@@ -209,26 +276,15 @@ Do not introduce a generic agent framework, vector database, or provider-specifi
 
 ## Parallel Consumer Experience Track
 
-### First-run experience
+The previous first-run and source-discovery bullets are now governed by the Universal User Stories program rather than existing as a disconnected parallel list.
 
-- [ ] route an unconfigured first launch into guided setup
-- [x] allow resume import from Career Profile
-- [ ] offer guided evidence entry for users without a resume
-- [ ] improve role entry and adjacent-role suggestions without occupation assumptions
-- [ ] clarify location/commute behavior
-- [ ] improve credential/license capture
-- [ ] require no GitHub, YAML, terminal, or provider configuration
-
-### Consumer-friendly source discovery
-
-- [ ] define native `SourceDiscoveryProvider` contract
-- [ ] discover employer/source candidates from role + geography
-- [ ] require approval before discovered sources become monitored
-- [ ] preserve source trust/support metadata
-- [ ] keep discovery separate from extraction adapters
-- [ ] add external search only behind an optional provider seam if measured benefit justifies it
-
-The Technical Capability Catalog review did not identify a browser/search platform that should replace Job Ranger's native source architecture.
+- onboarding: #82
+- target tracks/constraints: #83
+- Career Evidence breadth: #84
+- source discovery: #85
+- opportunity assessment: #86
+- cross-career validation: #87
+- downstream story reconciliation: #88
 
 ## Source Reliability Track
 
@@ -261,7 +317,7 @@ Job Ranger should remain useful without any of them configured.
 - [x] self-contained Windows SQLite runtime
 - [x] deterministic macOS SQLite release smoke boundary
 - [x] native Anydoc package behavior validated for Windows/macOS targets
-- [ ] publish a release containing the accumulated R0-R3 product work after R3 reaches `main`
+- [ ] publish a release containing the accumulated R0-R3 product work
 - [ ] repeat Windows packaging validation on that release candidate
 - [ ] repeat macOS x64/arm64 packaging validation on the immutable release tag
 - [ ] validate production Apple notarization whenever credentials are available
