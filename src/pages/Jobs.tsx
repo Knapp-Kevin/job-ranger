@@ -1,4 +1,4 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Building2,
@@ -15,21 +15,60 @@ import { Layout } from "../components/Layout";
 import { JobEvidenceCoveragePanel } from "../components/JobEvidenceCoverage";
 import { useAppContext } from "../context/AppContext";
 import { getDesktopApi } from "../services/api";
-import { evaluateJobFit } from "../career/match";
-import { trackJob, useCareerProfile } from "../career/storage";
+import type { CareerTargetTrack } from "../shared/contracts";
+import { trackJob } from "../career/storage";
 
 export function Jobs() {
   const { jobs, companies, markJobAsSeen, loading } = useAppContext();
-  const { profile, configured, loading: profileLoading } = useCareerProfile();
   const navigate = useNavigate();
   const [searchTerm, setSearchTerm] = useState("");
   const [locationTerm, setLocationTerm] = useState("");
   const [companyFilter, setCompanyFilter] = useState("all");
-  const [sortBy, setSortBy] = useState<"fit" | "newest">("fit");
+  const [targetTracks, setTargetTracks] = useState<CareerTargetTrack[]>([]);
+  const [selectedTargetTrackId, setSelectedTargetTrackId] = useState("");
+  const [targetTracksLoading, setTargetTracksLoading] = useState(true);
+  const [targetTrackError, setTargetTrackError] = useState<string | null>(null);
   const [trackError, setTrackError] = useState<string | null>(null);
 
+  useEffect(() => {
+    let cancelled = false;
+    setTargetTracksLoading(true);
+    setTargetTrackError(null);
+
+    void getDesktopApi()
+      .career.listTargetTracks()
+      .then((tracks) => {
+        if (cancelled) return;
+        const active = tracks.filter((track) => track.isActive);
+        setTargetTracks(active);
+        setSelectedTargetTrackId((current) =>
+          current && active.some((track) => track.id === current)
+            ? current
+            : (active[0]?.id ?? ""),
+        );
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setTargetTrackError(
+          error instanceof Error ? error.message : "Unable to load target tracks",
+        );
+      })
+      .finally(() => {
+        if (!cancelled) setTargetTracksLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  const selectedTargetTrack = useMemo(
+    () => targetTracks.find((track) => track.id === selectedTargetTrackId) ?? null,
+    [selectedTargetTrackId, targetTracks],
+  );
+
   const filteredJobs = useMemo(() => {
-    const next = jobs
+    return jobs
       .filter((job) => {
         const query = searchTerm.trim().toLowerCase();
         const location = locationTerm.trim().toLowerCase();
@@ -43,26 +82,11 @@ export function Jobs() {
 
         return matchesSearch && matchesLocation && matchesCompany;
       })
-      .map((job) => ({
-        job,
-        fit: profileLoading ? null : evaluateJobFit(job, profile),
-      }));
-
-    if (sortBy === "fit" && configured) {
-      next.sort((a, b) => (b.fit?.score ?? -1) - (a.fit?.score ?? -1));
-    }
-
-    return next;
-  }, [
-    jobs,
-    searchTerm,
-    locationTerm,
-    companyFilter,
-    sortBy,
-    configured,
-    profile,
-    profileLoading,
-  ]);
+      .sort(
+        (left, right) =>
+          new Date(right.createdAt).getTime() - new Date(left.createdAt).getTime(),
+      );
+  }, [jobs, searchTerm, locationTerm, companyFilter]);
 
   const handleTrackJob = async (job: (typeof jobs)[number]) => {
     setTrackError(null);
@@ -101,35 +125,33 @@ export function Jobs() {
           Spend your time on the jobs that look worth it.
         </h1>
         <p className="page-copy">
-          Job Ranger compares each saved listing with your Career Profile and
-          explains the evidence it can actually see. The score is a local,
-          deterministic guide, not a hiring prediction.
+          Job Ranger compares each listing with the target track you choose and the Career Evidence you have actually confirmed. Eligibility, evidence coverage, career direction, preferences, blockers, and unknowns stay separate instead of being collapsed into a pretend hiring probability.
         </p>
       </section>
 
-      {!profileLoading && !configured && (
+      {!targetTracksLoading && targetTracks.length === 0 && (
         <section className="support-note mt-6 flex flex-col gap-3 px-5 py-4 sm:flex-row sm:items-center sm:justify-between">
           <div>
             <p className="font-semibold text-[var(--color-text-primary)]">
-              Set up your Career Profile to see match explanations.
+              Add a target track to assess opportunities.
             </p>
             <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
-              It takes a couple of minutes and stays on this device.
+              A target track describes what you want and what you require. Career Evidence remains the factual record of what you can prove.
             </p>
           </div>
           <button
             type="button"
             className="primary-button"
-            onClick={() => navigate("/career-profile")}
+            onClick={() => navigate("/target-tracks")}
           >
-            Create Career Profile
+            Set up target tracks
           </button>
         </section>
       )}
 
-      {trackError && (
+      {(trackError || targetTrackError) && (
         <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
-          {trackError}
+          {trackError ?? targetTrackError}
         </section>
       )}
 
@@ -171,14 +193,21 @@ export function Jobs() {
           <label className="relative">
             <Target className="pointer-events-none absolute left-4 top-1/2 h-4 w-4 -translate-y-1/2 text-[var(--color-text-muted)]" />
             <select
-              value={sortBy}
-              onChange={(event) =>
-                setSortBy(event.target.value as "fit" | "newest")
-              }
+              aria-label="Assessment target track"
+              value={selectedTargetTrackId}
+              onChange={(event) => setSelectedTargetTrackId(event.target.value)}
               className="select-shell pl-11"
+              disabled={targetTracksLoading || targetTracks.length === 0}
             >
-              <option value="fit">Best fit first</option>
-              <option value="newest">Newest first</option>
+              {targetTracksLoading && <option value="">Loading target tracks...</option>}
+              {!targetTracksLoading && targetTracks.length === 0 && (
+                <option value="">No active target track</option>
+              )}
+              {targetTracks.map((track) => (
+                <option key={track.id} value={track.id}>
+                  {track.name}
+                </option>
+              ))}
             </select>
           </label>
         </div>
@@ -193,17 +222,11 @@ export function Jobs() {
           </div>
         )}
 
-        {filteredJobs.map(({ job, fit }) => {
+        {filteredJobs.map((job) => {
           const company = companies.find(
             (candidate) => candidate.id === job.companyId,
           );
           const companyName = company?.name ?? "Unknown company";
-          const fitClass =
-            fit?.band === "strong"
-              ? "soft-badge-success"
-              : fit?.band === "good" || fit?.band === "possible"
-                ? "soft-badge-warning"
-                : "soft-badge-danger";
 
           return (
             <article
@@ -213,10 +236,10 @@ export function Jobs() {
               <div className="flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between">
                 <div>
                   <div className="flex flex-wrap items-center gap-2">
-                    {fit && (
-                      <span className={`soft-badge ${fitClass}`}>
+                    {selectedTargetTrack && (
+                      <span className="soft-badge">
                         <Target className="h-3.5 w-3.5" />
-                        {fit.label} · {fit.score}%
+                        {selectedTargetTrack.name}
                       </span>
                     )}
                     {job.isNew && (
@@ -276,42 +299,13 @@ export function Jobs() {
                 {job.descriptionSnippet}
               </p>
 
-              {fit && (
-                <div className="mt-5 grid grid-cols-1 gap-4 lg:grid-cols-2">
-                  <div className="panel panel-muted rounded-2xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      Why it may fit
-                    </p>
-                    <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                      {fit.reasons.slice(0, 3).map((reason) => (
-                        <li key={reason}>✓ {reason}</li>
-                      ))}
-                    </ul>
-                  </div>
-                  <div className="panel panel-muted rounded-2xl p-4">
-                    <p className="text-sm font-semibold text-[var(--color-text-primary)]">
-                      What to check
-                    </p>
-                    {fit.concerns.length > 0 ? (
-                      <ul className="mt-3 space-y-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-                        {fit.concerns.slice(0, 3).map((concern) => (
-                          <li key={concern}>• {concern}</li>
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="mt-3 text-sm text-[var(--color-text-secondary)]">
-                        No obvious concern surfaced from the data Job Ranger
-                        currently has.
-                      </p>
-                    )}
-                  </div>
-                </div>
+              {selectedTargetTrack && (
+                <JobEvidenceCoveragePanel
+                  job={job}
+                  targetTrack={selectedTargetTrack}
+                  onPrepareResume={() => void handlePrepareResume(job)}
+                />
               )}
-
-              <JobEvidenceCoveragePanel
-                jobId={job.id}
-                onPrepareResume={() => void handlePrepareResume(job)}
-              />
 
               <div className="border-divider mt-4 flex flex-wrap items-center gap-4 border-t pt-4 text-xs text-[var(--color-text-muted)]">
                 <span>
@@ -331,8 +325,10 @@ export function Jobs() {
                     ? "Still active on source"
                     : "Marked inactive on source"}
                 </span>
-                {fit && (
-                  <span>Fit score uses only saved profile + collected listing data</span>
+                {selectedTargetTrack && (
+                  <span>
+                    Assessment uses {selectedTargetTrack.name} + confirmed Career Evidence
+                  </span>
                 )}
               </div>
             </article>
