@@ -62,8 +62,9 @@ test.describe("progressive first-run onboarding", () => {
     ).toBeVisible();
   });
 
-  test("manual-entry path hands off to the canonical Career Profile", async () => {
+  test("manual-entry path creates durable user-authored Career Evidence", async () => {
     const { page } = fixture;
+    const statement = "Built a volunteer scheduling tool for a community food pantry.";
 
     await page.evaluate(() => {
       window.location.hash = "#/onboarding";
@@ -73,6 +74,42 @@ test.describe("progressive first-run onboarding", () => {
     ).toBeVisible();
 
     await page.getByRole("button", { name: "Enter my background", exact: true }).click();
+    await expect(
+      page.getByRole("heading", {
+        name: "Build your career evidence one fact at a time.",
+        exact: true,
+      }),
+    ).toBeVisible();
+
+    await page.getByRole("combobox", { name: "Evidence type", exact: true }).selectOption("project");
+    await page
+      .getByText("What did you do, know, earn, or accomplish?", { exact: true })
+      .locator("..")
+      .getByRole("textbox")
+      .fill(statement);
+    await page.getByRole("button", { name: "Add career evidence", exact: true }).click();
+    await expect(page.getByText("Saved as user-authored evidence", { exact: true })).toBeVisible();
+
+    const authored = await page.evaluate(async (expectedStatement) => {
+      const items = await window.electronAPI.career.listEvidence();
+      return items.find(({ evidence }) => evidence.statement === expectedStatement) ?? null;
+    }, statement);
+    expect(authored).not.toBeNull();
+    expect(authored?.evidence.verificationState).toBe("user-authored");
+    expect(authored?.sources).toEqual([]);
+
+    await page.reload();
+    const persisted = await page.evaluate(async (expectedStatement) => {
+      const items = await window.electronAPI.career.listEvidence();
+      return items.some(
+        ({ evidence }) =>
+          evidence.statement === expectedStatement &&
+          evidence.verificationState === "user-authored",
+      );
+    }, statement);
+    expect(persisted).toBe(true);
+
+    await page.getByRole("button", { name: "Continue to Career Profile", exact: true }).click();
     await expect(
       page.getByRole("heading", {
         name: "Tell Job Ranger what good work looks like for you.",
