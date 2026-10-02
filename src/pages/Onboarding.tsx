@@ -12,11 +12,21 @@ import { Layout } from "../components/Layout";
 import { useCareerEvidence } from "../career/evidence";
 import { useOnboardingPreference } from "../career/onboarding";
 import type { CareerProfile, PayBasis } from "../career/storage";
+import { getDesktopApi } from "../services/api";
+import type { PreferenceStrength, WorkMode } from "../shared/contracts";
 
 interface OnboardingProps {
   profile: CareerProfile;
   saveProfile: (profile: CareerProfile) => Promise<CareerProfile>;
 }
+
+type AuthoredStrength = Exclude<PreferenceStrength, "unspecified" | "target">;
+
+const workModeOptions: Array<{ value: WorkMode; label: string }> = [
+  { value: "remote", label: "Remote" },
+  { value: "hybrid", label: "Hybrid" },
+  { value: "on-site", label: "On-site" },
+];
 
 function splitTargets(value: string): string[] {
   return Array.from(
@@ -29,16 +39,26 @@ function splitTargets(value: string): string[] {
   );
 }
 
+function toggleValue<T extends string>(values: T[], value: T, checked: boolean): T[] {
+  return checked
+    ? Array.from(new Set([...values, value]))
+    : values.filter((item) => item !== value);
+}
+
 export function Onboarding({ profile, saveProfile }: OnboardingProps) {
   const navigate = useNavigate();
   const evidence = useCareerEvidence();
   const { dismiss } = useOnboardingPreference();
   const [targetText, setTargetText] = useState(profile.targetTitles.join("\n"));
   const [homeLocation, setHomeLocation] = useState(profile.homeLocation);
+  const [locationStrength, setLocationStrength] = useState<AuthoredStrength>("preferred");
+  const [workModes, setWorkModes] = useState<WorkMode[]>([]);
+  const [workModeStrength, setWorkModeStrength] = useState<AuthoredStrength>("preferred");
   const [minimumPay, setMinimumPay] = useState(
     profile.minimumPay === null ? "" : String(profile.minimumPay),
   );
   const [payBasis, setPayBasis] = useState<PayBasis>(profile.payBasis);
+  const [payStrength, setPayStrength] = useState<AuthoredStrength>("preferred");
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -72,6 +92,10 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
       setError("Add at least one kind of work you want to pursue.");
       return;
     }
+    if (workModeStrength === "required" && workModes.length === 0) {
+      setError("Choose at least one work mode before making work mode a requirement.");
+      return;
+    }
 
     setSaving(true);
     setError(null);
@@ -82,13 +106,63 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
         return;
       }
 
-      await saveProfile({
+      const normalizedHomeLocation = homeLocation.trim();
+      const savedProfile = await saveProfile({
         ...profile,
-        homeLocation,
+        homeLocation: normalizedHomeLocation,
         minimumPay: parsedMinimumPay,
         payBasis,
         targetTitles: targets,
       });
+
+      const trackInput = {
+        name: "Primary search",
+        relation: "target" as const,
+        roleTitles: targets,
+        seniority: null,
+        direction: null,
+        constraints: {
+          geography: {
+            locations: normalizedHomeLocation ? [normalizedHomeLocation] : [],
+            radiusMiles: savedProfile.radiusMiles,
+            strength:
+              normalizedHomeLocation || savedProfile.radiusMiles !== null
+                ? locationStrength
+                : ("preferred" as const),
+          },
+          workModes: {
+            values: workModes,
+            strength: workModes.length > 0 ? workModeStrength : ("preferred" as const),
+          },
+          employmentArrangements: {
+            values: [],
+            strength: "preferred" as const,
+          },
+          compensation: {
+            floor: parsedMinimumPay,
+            target: null,
+            basis: payBasis,
+            floorStrength: parsedMinimumPay !== null ? payStrength : ("preferred" as const),
+          },
+          onCall: {
+            value: "either" as const,
+            strength: "preferred" as const,
+          },
+          industries: {
+            values: [],
+            strength: "preferred" as const,
+          },
+        },
+        isActive: true,
+      };
+
+      const desktopApi = getDesktopApi();
+      const tracks = await desktopApi.career.listTargetTracks();
+      if (tracks.some((track) => track.id === "legacy-default")) {
+        await desktopApi.career.updateTargetTrack("legacy-default", trackInput);
+      } else {
+        await desktopApi.career.createTargetTrack(trackInput);
+      }
       finish();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save your starting goals");
@@ -174,7 +248,7 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
           </div>
           <h2 className="story-title mt-3">I know what I want to look for</h2>
           <p className="story-copy">
-            Give Job Ranger enough direction to start. These are search goals and preferences, not claims about experience.
+            Give Job Ranger enough direction to start. These are search goals and constraints, not claims about experience.
           </p>
 
           <div className="mt-5 space-y-4">
@@ -187,20 +261,80 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
                 placeholder={"One role or direction per line\nAdjacent role\nStretch role"}
               />
             </label>
-            <label>
-              <span className="metric-label">Home area</span>
+
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="metric-label">Home area</span>
+                <select
+                  className="select-shell w-auto min-w-28"
+                  aria-label="Onboarding location importance"
+                  value={locationStrength}
+                  onChange={(event) => setLocationStrength(event.target.value as AuthoredStrength)}
+                >
+                  <option value="preferred">Preferred</option>
+                  <option value="required">Required</option>
+                </select>
+              </div>
               <input
                 className="input-shell mt-2"
+                aria-label="Home area"
                 value={homeLocation}
                 onChange={(event) => setHomeLocation(event.target.value)}
                 placeholder="Optional city, state, or region"
               />
-            </label>
-            <label>
-              <span className="metric-label">Minimum pay</span>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="metric-label">Work mode</span>
+                <select
+                  className="select-shell w-auto min-w-28"
+                  aria-label="Onboarding work mode importance"
+                  value={workModeStrength}
+                  onChange={(event) => setWorkModeStrength(event.target.value as AuthoredStrength)}
+                >
+                  <option value="preferred">Preferred</option>
+                  <option value="required">Required</option>
+                </select>
+              </div>
+              <div className="mt-2 flex flex-wrap gap-2">
+                {workModeOptions.map((option) => (
+                  <label
+                    key={option.value}
+                    className="panel panel-muted flex cursor-pointer items-center gap-2 rounded-xl px-3 py-2 text-sm"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={workModes.includes(option.value)}
+                      onChange={(event) =>
+                        setWorkModes((current) =>
+                          toggleValue(current, option.value, event.target.checked),
+                        )
+                      }
+                    />
+                    {option.label}
+                  </label>
+                ))}
+              </div>
+            </div>
+
+            <div>
+              <div className="flex items-center justify-between gap-3">
+                <span className="metric-label">Minimum pay</span>
+                <select
+                  className="select-shell w-auto min-w-28"
+                  aria-label="Onboarding pay importance"
+                  value={payStrength}
+                  onChange={(event) => setPayStrength(event.target.value as AuthoredStrength)}
+                >
+                  <option value="preferred">Preferred</option>
+                  <option value="required">Required</option>
+                </select>
+              </div>
               <div className="mt-2 grid grid-cols-[minmax(0,1fr)_auto] gap-2">
                 <input
                   className="input-shell"
+                  aria-label="Onboarding minimum pay"
                   type="number"
                   min="0"
                   step={payBasis === "hourly" ? "0.50" : "1000"}
@@ -218,7 +352,7 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
                   <option value="annual">per year</option>
                 </select>
               </div>
-            </label>
+            </div>
           </div>
 
           <button
