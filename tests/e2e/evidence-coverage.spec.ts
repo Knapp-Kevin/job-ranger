@@ -39,6 +39,8 @@ test("Find Jobs shows evidence coverage and Prepare resume handoff", async () =>
   const status = await page.evaluate(() => window.electronAPI.system.getStatus());
   const now = "2026-09-25T17:00:00.000Z";
   const sql = `
+    PRAGMA busy_timeout = 5000;
+    BEGIN IMMEDIATE;
     INSERT INTO companies (
       name, url, source_type, source_identifier, frequency_minutes, is_active,
       last_run_at, last_run_status, last_error_message, created_at, updated_at,
@@ -57,6 +59,7 @@ test("Find Jobs shows evidence coverage and Prepare resume handoff", async () =>
       'Must coordinate vendor schedules and maintain office records. Project management certification preferred.',
       NULL, NULL, NULL, NULL, NULL, '${now}', '${now}', 1, 1, 0
     );
+    COMMIT;
   `;
   await execFile(status.sqliteBinaryPath, [status.databasePath, sql]);
 
