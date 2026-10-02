@@ -115,7 +115,9 @@ function detectWorkMode(job: AssessableJob): WorkMode | null {
   const text = normalize(`${job.location} ${job.descriptionSnippet}`);
   if (/\bhybrid\b/.test(text)) return "hybrid";
   if (/\bremote\b|\bwork from home\b|\bwfh\b/.test(text)) return "remote";
-  if (/\bon-site\b|\bonsite\b|\bon site\b|\bin-person\b|\bin person\b/.test(text)) return "on-site";
+  if (/\bon-site\b|\bonsite\b|\bon site\b|\bin-person\b|\bin person\b/.test(text)) {
+    return "on-site";
+  }
   return null;
 }
 
@@ -136,10 +138,6 @@ function supplied(strength: PreferenceStrength, hasValue: boolean): boolean {
   return hasValue && strength !== "unspecified";
 }
 
-function isRequired(strength: PreferenceStrength): boolean {
-  return strength === "required";
-}
-
 function addConstraintResult(
   strength: PreferenceStrength,
   result: "match" | "miss" | "unknown",
@@ -156,11 +154,11 @@ function addConstraintResult(
   }
   if (result === "miss") {
     misses.push(detail);
-    if (isRequired(strength)) blockers.push(detail);
+    if (strength === "required") blockers.push(detail);
     return;
   }
   unknowns.push(detail);
-  if (isRequired(strength)) potentialBlockers.push(detail);
+  if (strength === "required") potentialBlockers.push(detail);
 }
 
 function evidenceStatus(coverage: JobEvidenceCoverage): EvidenceCoverageStatus {
@@ -189,25 +187,29 @@ export function buildOpportunityAssessment(
   const preferenceUnknowns: string[] = [];
   let configuredPreferenceCount = 0;
 
-  const requiredEvidenceConcerns = coverage.items.filter(
-    (item) =>
-      (item.requirement.kind === "must-have" || item.requirement.kind === "credential") &&
-      (item.mapping.classification === "gap" || item.mapping.classification === "ambiguous"),
-  );
-  for (const item of requiredEvidenceConcerns) {
-    potentialBlockers.push(
-      `${item.requirement.text} (${item.mapping.classification === "gap" ? "no confirmed support" : "support needs confirmation"}).`,
-    );
+  for (const item of coverage.items) {
+    const potentiallyBlocking =
+      item.requirement.kind === "must-have" || item.requirement.kind === "credential";
+    const unsupported =
+      item.mapping.classification === "gap" || item.mapping.classification === "ambiguous";
+    if (potentiallyBlocking && unsupported) {
+      potentialBlockers.push(
+        `${item.requirement.text} (${item.mapping.classification === "gap" ? "no confirmed support" : "support needs confirmation"}).`,
+      );
+    }
   }
 
   const geography = track.constraints.geography;
   if (supplied(geography.strength, geography.locations.length > 0)) {
     configuredPreferenceCount += 1;
     const jobLocation = normalize(job.location);
-    const matchedLocation = geography.locations.find((location) => {
-      const target = normalize(location);
-      return target && (jobLocation.includes(target) || target.includes(jobLocation));
-    });
+    const matchedLocation = jobLocation
+      ? geography.locations.find((location) => {
+          const target = normalize(location);
+          return Boolean(target && (jobLocation.includes(target) || target.includes(jobLocation)));
+        })
+      : undefined;
+
     if (matchedLocation) {
       addConstraintResult(
         geography.strength,
@@ -219,7 +221,7 @@ export function buildOpportunityAssessment(
         blockers,
         potentialBlockers,
       );
-    } else if (!job.location.trim()) {
+    } else if (!jobLocation) {
       addConstraintResult(
         geography.strength,
         "unknown",
@@ -248,118 +250,79 @@ export function buildOpportunityAssessment(
   if (supplied(workModes.strength, workModes.values.length > 0)) {
     configuredPreferenceCount += 1;
     const detected = detectWorkMode(job);
-    if (!detected) {
-      addConstraintResult(
-        workModes.strength,
-        "unknown",
-        `The listing does not explicitly identify a work mode; your track allows ${workModes.values.join(", ")}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    } else {
-      addConstraintResult(
-        workModes.strength,
-        workModes.values.includes(detected) ? "match" : "miss",
-        `Work mode is listed as ${detected}; your track allows ${workModes.values.join(", ")}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    }
+    addConstraintResult(
+      workModes.strength,
+      detected === null ? "unknown" : workModes.values.includes(detected) ? "match" : "miss",
+      detected === null
+        ? `The listing does not explicitly identify a work mode; your track allows ${workModes.values.join(", ")}.`
+        : `Work mode is listed as ${detected}; your track allows ${workModes.values.join(", ")}.`,
+      matches,
+      misses,
+      preferenceUnknowns,
+      blockers,
+      potentialBlockers,
+    );
   }
 
   const arrangements = track.constraints.employmentArrangements;
   if (supplied(arrangements.strength, arrangements.values.length > 0)) {
     configuredPreferenceCount += 1;
     const detected = detectEmploymentArrangement(job.employmentType);
-    if (!detected) {
-      addConstraintResult(
-        arrangements.strength,
-        "unknown",
-        `The listing does not provide a usable employment arrangement; your track allows ${arrangements.values.join(", ")}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    } else {
-      addConstraintResult(
-        arrangements.strength,
-        arrangements.values.includes(detected) ? "match" : "miss",
-        `Employment arrangement is ${detected}; your track allows ${arrangements.values.join(", ")}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    }
+    addConstraintResult(
+      arrangements.strength,
+      detected === null
+        ? "unknown"
+        : arrangements.values.includes(detected)
+          ? "match"
+          : "miss",
+      detected === null
+        ? `The listing does not provide a usable employment arrangement; your track allows ${arrangements.values.join(", ")}.`
+        : `Employment arrangement is ${detected}; your track allows ${arrangements.values.join(", ")}.`,
+      matches,
+      misses,
+      preferenceUnknowns,
+      blockers,
+      potentialBlockers,
+    );
   }
 
   const compensation = track.constraints.compensation;
   if (supplied(compensation.floorStrength, compensation.floor !== null)) {
     configuredPreferenceCount += 1;
+    const floor = compensation.floor ?? 0;
     const comparable = payEquivalent(job, compensation.basis);
-    if (comparable === null) {
-      addConstraintResult(
-        compensation.floorStrength,
-        "unknown",
-        `The listing does not provide enough pay detail to verify your ${formatPay(compensation.floor ?? 0, compensation.basis)} floor.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    } else {
-      addConstraintResult(
-        compensation.floorStrength,
-        comparable >= (compensation.floor ?? 0) ? "match" : "miss",
-        `Listed starting pay is approximately ${formatPay(comparable, compensation.basis)} versus your ${formatPay(compensation.floor ?? 0, compensation.basis)} floor.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    }
+    addConstraintResult(
+      compensation.floorStrength,
+      comparable === null ? "unknown" : comparable >= floor ? "match" : "miss",
+      comparable === null
+        ? `The listing does not provide enough pay detail to verify your ${formatPay(floor, compensation.basis)} floor.`
+        : `Listed starting pay is approximately ${formatPay(comparable, compensation.basis)} versus your ${formatPay(floor, compensation.basis)} floor.`,
+      matches,
+      misses,
+      preferenceUnknowns,
+      blockers,
+      potentialBlockers,
+    );
   }
 
   const onCall = track.constraints.onCall;
   if (supplied(onCall.strength, onCall.value !== "either")) {
     configuredPreferenceCount += 1;
-    const listingMentionsOnCall = /\bon[- ]?call\b/.test(
+    const mentioned = /\bon[- ]?call\b/.test(
       normalize(`${job.title} ${job.descriptionSnippet}`),
     );
-    if (!listingMentionsOnCall) {
-      addConstraintResult(
-        onCall.strength,
-        "unknown",
-        `The listing does not establish whether on-call work is required; your track says ${onCall.value}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    } else {
-      addConstraintResult(
-        onCall.strength,
-        onCall.value === "yes" ? "match" : "miss",
-        `The listing explicitly mentions on-call work; your track says ${onCall.value}.`,
-        matches,
-        misses,
-        preferenceUnknowns,
-        blockers,
-        potentialBlockers,
-      );
-    }
+    addConstraintResult(
+      onCall.strength,
+      !mentioned ? "unknown" : onCall.value === "yes" ? "match" : "miss",
+      !mentioned
+        ? `The listing does not establish whether on-call work is required; your track says ${onCall.value}.`
+        : `The listing explicitly mentions on-call work; your track says ${onCall.value}.`,
+      matches,
+      misses,
+      preferenceUnknowns,
+      blockers,
+      potentialBlockers,
+    );
   }
 
   const industries = track.constraints.industries;
@@ -391,7 +354,7 @@ export function buildOpportunityAssessment(
       careerReasons.push(`The role title partially overlaps with your ${best.title} target.`);
     } else {
       careerStatus = "misaligned";
-      careerReasons.push(`The role title does not clearly overlap with this track's saved target roles.`);
+      careerReasons.push("The role title does not clearly overlap with this track's saved target roles.");
     }
   } else {
     careerReasons.push("This target track does not yet include a role title to compare.");
@@ -399,15 +362,16 @@ export function buildOpportunityAssessment(
 
   if (track.seniority) {
     const seniority = normalize(track.seniority);
-    if (seniority && normalize(job.title).includes(seniority)) {
-      careerReasons.push(`The job title explicitly matches the track's ${track.seniority} seniority.`);
-    } else {
-      careerReasons.push(`The track requests ${track.seniority} seniority, but the normalized listing does not establish that clearly.`);
-    }
+    careerReasons.push(
+      seniority && normalize(job.title).includes(seniority)
+        ? `The job title explicitly matches the track's ${track.seniority} seniority.`
+        : `The track requests ${track.seniority} seniority, but the normalized listing does not establish that clearly.`,
+    );
   }
-
   if (track.direction) {
-    careerReasons.push(`Track direction: ${track.direction}. This free-text direction is shown for context rather than semantically scored.`);
+    careerReasons.push(
+      `Track direction: ${track.direction}. This free-text direction is shown for context rather than semantically scored.`,
+    );
   }
 
   let preferenceStatus: AlignmentStatus;
@@ -430,11 +394,7 @@ export function buildOpportunityAssessment(
   if (sourceUnknown) unknowns.push(sourceUnknown);
 
   const eligibility: EligibilityStatus =
-    blockers.length > 0
-      ? "unlikely"
-      : potentialBlockers.length > 0
-        ? "unclear"
-        : "likely";
+    blockers.length > 0 ? "unlikely" : potentialBlockers.length > 0 ? "unclear" : "likely";
 
   return {
     jobId: job.id,
