@@ -73,6 +73,14 @@ test.describe("progressive first-run onboarding", () => {
   test("goal-first setup persists an explicit target track and enters the workspace", async () => {
     const { page } = fixture;
 
+    await page.evaluate(() => {
+      window.location.hash = "#/onboarding";
+    });
+    await page.reload();
+    await expect(
+      page.getByRole("heading", { name: "Start with what you already have.", exact: true }),
+    ).toBeVisible();
+
     await page.getByLabel("Work I want to pursue", { exact: true }).fill(
       "Customer Success Manager\nImplementation Manager",
     );
