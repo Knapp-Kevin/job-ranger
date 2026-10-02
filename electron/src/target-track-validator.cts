@@ -46,9 +46,14 @@ function nullableNumber(value: unknown, label: string): number | null {
   return value;
 }
 
-function preferenceStrength(value: unknown, label: string): Exclude<PreferenceStrength, "unspecified"> {
-  if (value !== "required" && value !== "preferred" && value !== "target") {
-    throw new Error(`${label} must be required, preferred, or target`);
+function preferenceStrength(value: unknown, label: string): PreferenceStrength {
+  if (
+    value !== "required" &&
+    value !== "preferred" &&
+    value !== "target" &&
+    value !== "unspecified"
+  ) {
+    throw new Error(`${label} must be required, preferred, target, or unspecified`);
   }
   return value;
 }
@@ -86,7 +91,7 @@ function enumArray<T extends string>(
 
 function requireValuesWhenRequired(
   values: readonly unknown[],
-  strength: Exclude<PreferenceStrength, "unspecified">,
+  strength: PreferenceStrength,
   label: string,
 ): void {
   if (strength === "required" && values.length === 0) {
