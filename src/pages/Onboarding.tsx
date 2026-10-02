@@ -160,7 +160,7 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
           <button
             type="button"
             className="secondary-button mt-5 w-fit"
-            onClick={() => finish("/career-profile")}
+            onClick={() => navigate("/career-evidence/new")}
           >
             Enter my background
             <ArrowRight className="h-4 w-4" />
