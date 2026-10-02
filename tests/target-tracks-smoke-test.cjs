@@ -24,6 +24,47 @@ async function readLegacyTrack(sqlite) {
   );
 }
 
+function trackInput(overrides = {}) {
+  return {
+    name: "Hourly local operations",
+    relation: "target",
+    roleTitles: ["Operations Coordinator"],
+    seniority: null,
+    direction: null,
+    constraints: {
+      geography: {
+        locations: ["Annapolis, MD"],
+        radiusMiles: 20,
+        strength: "required",
+      },
+      workModes: {
+        values: ["on-site", "hybrid"],
+        strength: "required",
+      },
+      employmentArrangements: {
+        values: ["full-time", "part-time"],
+        strength: "preferred",
+      },
+      compensation: {
+        floor: 32,
+        target: 38,
+        basis: "hourly",
+        floorStrength: "required",
+      },
+      onCall: {
+        value: "no",
+        strength: "preferred",
+      },
+      industries: {
+        values: ["Operations"],
+        strength: "preferred",
+      },
+    },
+    isActive: true,
+    ...overrides,
+  };
+}
+
 async function run() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-target-tracks-"));
 
@@ -96,20 +137,67 @@ async function run() {
       "migration must not invent required/preferred semantics",
     );
 
+    const promoted = await career.updateTargetTrack(
+      "legacy-default",
+      trackInput({
+        name: "Primary local search",
+        roleTitles: ["Program Coordinator"],
+      }),
+    );
+    assert.equal(promoted.id, "legacy-default");
+    assert.equal(promoted.origin, "user", "editing the bridge must promote it to user authority");
+    assert.deepEqual(promoted.roleTitles, ["Program Coordinator"]);
+    assert.equal(promoted.constraints.workModes.strength, "required");
+
     await career.saveProfile({
       ...first,
       homeLocation: "Baltimore, MD",
-      targetTitles: ["Program Coordinator"],
+      targetTitles: ["Should Not Replace Promoted Track"],
       minimumPay: 90000,
       payBasis: "annual",
     });
 
     row = await readLegacyTrack(sqlite);
-    assert.deepEqual(JSON.parse(row.role_titles_json), ["Program Coordinator"]);
-    const updatedConstraints = JSON.parse(row.constraints_json);
-    assert.deepEqual(updatedConstraints.geography.locations, ["Baltimore, MD"]);
-    assert.equal(updatedConstraints.compensation.floor, 90000);
-    assert.equal(updatedConstraints.compensation.basis, "annual");
+    assert.equal(row.origin, "user");
+    assert.deepEqual(
+      JSON.parse(row.role_titles_json),
+      ["Program Coordinator"],
+      "legacy profile synchronization must stop after promotion",
+    );
+    assert.equal(JSON.parse(row.constraints_json).compensation.basis, "hourly");
+
+    const contractTrack = await career.createTargetTrack(
+      trackInput({
+        name: "Contract delivery",
+        relation: "adjacent",
+        roleTitles: ["Implementation Consultant"],
+        constraints: {
+          ...trackInput().constraints,
+          workModes: { values: ["remote"], strength: "preferred" },
+          employmentArrangements: {
+            values: ["contract", "freelance"],
+            strength: "required",
+          },
+          compensation: {
+            floor: 65,
+            target: 85,
+            basis: "hourly",
+            floorStrength: "required",
+          },
+        },
+      }),
+    );
+    assert.match(contractTrack.id, /^track-/);
+    assert.equal(contractTrack.origin, "user");
+
+    let listed = await career.listTargetTracks();
+    assert.equal(listed.length, 2);
+    assert.equal(listed.some((track) => track.name === "Contract delivery"), true);
+
+    await assert.rejects(
+      () => career.deleteTargetTrack("missing-track"),
+      /not found/i,
+    );
 
     await backend.dispose();
 
@@ -121,15 +209,26 @@ async function run() {
       },
     });
     await reloadedBackend.initialize();
-    const reloadedStatus = await reloadedBackend.getSystemStatus(process.platform);
-    const reloadedSqlite = new SqliteClient(
-      reloadedStatus.databasePath,
-      reloadedStatus.sqliteBinaryPath,
-    );
-    const persisted = await readLegacyTrack(reloadedSqlite);
-    assert.ok(persisted, "bridge target track must survive restart");
-    assert.deepEqual(JSON.parse(persisted.role_titles_json), ["Program Coordinator"]);
-    assert.equal(JSON.parse(persisted.constraints_json).compensation.floor, 90000);
+    const { career: reloadedCareer } = await createCareer(reloadedBackend, tempDir);
+
+    listed = await reloadedCareer.listTargetTracks();
+    assert.equal(listed.length, 2, "user tracks and promoted bridge must survive restart");
+    const persistedPromoted = listed.find((track) => track.id === "legacy-default");
+    assert.ok(persistedPromoted);
+    assert.equal(persistedPromoted.origin, "user");
+    assert.deepEqual(persistedPromoted.roleTitles, ["Program Coordinator"]);
+
+    const persistedContract = listed.find((track) => track.id === contractTrack.id);
+    assert.ok(persistedContract);
+    assert.deepEqual(persistedContract.constraints.employmentArrangements.values, [
+      "contract",
+      "freelance",
+    ]);
+
+    await reloadedCareer.deleteTargetTrack(contractTrack.id);
+    listed = await reloadedCareer.listTargetTracks();
+    assert.equal(listed.length, 1);
+    assert.equal(listed[0].id, "legacy-default");
 
     await reloadedBackend.dispose();
   } finally {
