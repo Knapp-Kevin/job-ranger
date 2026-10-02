@@ -10,9 +10,11 @@ import type {
   SourceArtifact,
   TrackedApplication,
 } from "./career-contracts.js";
+import type { UserAuthoredEvidenceInput } from "./evidence-authoring.js";
 import type { JobEvidenceCoverage } from "./requirement-coverage.js";
 
 export * from "./career-contracts.js";
+export * from "./evidence-authoring.js";
 export * from "./requirement-coverage.js";
 
 export type CompanySourceType =
@@ -336,6 +338,7 @@ export interface DesktopApi {
     migrateLegacy: (payload: LegacyCareerMigration) => Promise<void>;
     selectResumeImport: () => Promise<ResumeImportResult | null>;
     importPastedText: (input: PastedResumeInput) => Promise<ResumeImportResult>;
+    createUserEvidence: (input: UserAuthoredEvidenceInput) => Promise<CandidateEvidence>;
     listSourceArtifacts: () => Promise<SourceArtifact[]>;
     listEvidence: () => Promise<CandidateEvidenceReviewItem[]>;
     reviewEvidence: (
