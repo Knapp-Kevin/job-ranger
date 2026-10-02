@@ -165,6 +165,25 @@ function mapTargetTrack(row: TargetTrackRow): CareerTargetTrack {
   };
 }
 
+function hasUnspecifiedStrength(constraints: CareerSearchConstraints): boolean {
+  return (
+    constraints.geography.strength === "unspecified" ||
+    constraints.workModes.strength === "unspecified" ||
+    constraints.employmentArrangements.strength === "unspecified" ||
+    constraints.compensation.floorStrength === "unspecified" ||
+    constraints.onCall.strength === "unspecified" ||
+    constraints.industries.strength === "unspecified"
+  );
+}
+
+function assertAuthoredStrengths(input: CareerTargetTrackInput): void {
+  if (hasUnspecifiedStrength(input.constraints)) {
+    throw new Error(
+      "New user-authored target tracks must use explicit required, preferred, or target strengths.",
+    );
+  }
+}
+
 function mapApplication(row: ApplicationRow): TrackedApplication {
   return {
     id: row.id,
@@ -204,6 +223,7 @@ export class CareerRepository {
   }
 
   async createTargetTrack(input: CareerTargetTrackInput): Promise<CareerTargetTrack> {
+    assertAuthoredStrengths(input);
     const now = new Date().toISOString();
     const row = await this.sqlite.queryOne<TargetTrackRow>(sql`
       INSERT INTO career_target_tracks (
@@ -226,6 +246,9 @@ export class CareerRepository {
   ): Promise<CareerTargetTrack> {
     const current = await this.getTargetTrackById(id);
     if (!current) throw new Error(`Target track ${id} not found`);
+    if (id !== "legacy-default") {
+      assertAuthoredStrengths(input);
+    }
 
     const row = await this.sqlite.queryOne<TargetTrackRow>(sql`
       UPDATE career_target_tracks
