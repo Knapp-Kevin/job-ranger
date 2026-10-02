@@ -1,0 +1,384 @@
+{
+  "version": 1,
+  "description": "Synthetic cross-career fixtures for Universal User Story validation. These records contain no real people or sensitive personal characteristics.",
+  "fixtures": [
+    {
+      "code": "HL",
+      "context": "Hourly/local worker",
+      "targetTrack": {
+        "name": "Local retail leadership",
+        "relation": "target",
+        "roleTitles": ["Retail Shift Supervisor"],
+        "constraints": {
+          "geography": { "locations": ["Annapolis, MD"], "radiusMiles": 15, "strength": "required" },
+          "workModes": { "values": ["on-site"], "strength": "required" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "preferred" },
+          "compensation": { "floor": 20, "target": 24, "basis": "hourly", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "role",
+          "titleOrName": "Retail Team Lead",
+          "statement": "Operated point-of-sale systems and coordinated closing procedures for a busy retail location.",
+          "skills": ["point-of-sale operations", "closing procedures"]
+        }
+      ],
+      "job": {
+        "sourceType": "greenhouse",
+        "title": "Retail Shift Supervisor",
+        "location": "Annapolis, MD",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Must operate point-of-sale systems and coordinate closing procedures. This is an on-site role.",
+        "salaryMin": 24,
+        "salaryText": "$24 per hour"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["shift and schedule availability is not yet a first-class target-track constraint"]
+    },
+    {
+      "code": "TR",
+      "context": "Skilled trades",
+      "targetTrack": {
+        "name": "Commercial HVAC service",
+        "relation": "current",
+        "roleTitles": ["Commercial HVAC Technician"],
+        "constraints": {
+          "geography": { "locations": ["Baltimore, MD"], "radiusMiles": 35, "strength": "required" },
+          "workModes": { "values": ["on-site"], "strength": "required" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "required" },
+          "compensation": { "floor": 32, "target": 38, "basis": "hourly", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "credential",
+          "titleOrName": "EPA Section 608 Universal Certification",
+          "statement": "EPA Section 608 Universal certification for refrigerant handling.",
+          "skills": ["EPA Section 608"]
+        },
+        {
+          "subjectType": "role",
+          "titleOrName": "HVAC Technician",
+          "statement": "Diagnosed and repaired commercial HVAC systems for customer facilities.",
+          "skills": ["commercial HVAC", "diagnostics", "repair"]
+        }
+      ],
+      "job": {
+        "sourceType": "smartrecruiters",
+        "title": "Commercial HVAC Technician",
+        "location": "Baltimore, MD",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "EPA Section 608 certification required. Must diagnose and repair commercial HVAC systems. This is an on-site role.",
+        "salaryMin": 36,
+        "salaryText": "$36 per hour"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 2, "hasCredentialRequirement": true },
+      "knownModelPressures": ["credential issuer, jurisdiction, status, and expiration need richer structured Career Evidence"]
+    },
+    {
+      "code": "HC",
+      "context": "Licensed healthcare",
+      "targetTrack": {
+        "name": "Maryland registered nursing",
+        "relation": "current",
+        "roleTitles": ["Registered Nurse"],
+        "constraints": {
+          "geography": { "locations": ["Baltimore, MD"], "radiusMiles": 25, "strength": "required" },
+          "workModes": { "values": ["on-site"], "strength": "required" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "preferred" },
+          "compensation": { "floor": 45, "target": 52, "basis": "hourly", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "credential",
+          "titleOrName": "Registered Nurse License",
+          "statement": "Active Maryland Registered Nurse license.",
+          "skills": ["registered nursing"]
+        },
+        {
+          "subjectType": "role",
+          "titleOrName": "Registered Nurse",
+          "statement": "Administered medications and coordinated patient care with interdisciplinary teams.",
+          "skills": ["medication administration", "patient care"]
+        }
+      ],
+      "job": {
+        "sourceType": "greenhouse",
+        "title": "Registered Nurse",
+        "location": "Baltimore, MD",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Active Maryland Registered Nurse license required. Administer medications and coordinate patient care. This is an on-site role.",
+        "salaryMin": 48,
+        "salaryText": "$48 per hour"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 2, "hasCredentialRequirement": true },
+      "knownModelPressures": ["shift availability is not yet first-class", "license jurisdiction and expiration need structured evidence fields"]
+    },
+    {
+      "code": "TE",
+      "context": "Technical/portfolio-heavy",
+      "targetTrack": {
+        "name": "Remote platform engineering",
+        "relation": "target",
+        "roleTitles": ["Platform Engineer"],
+        "constraints": {
+          "geography": { "locations": [], "radiusMiles": null, "strength": "preferred" },
+          "workModes": { "values": ["remote"], "strength": "required" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "preferred" },
+          "compensation": { "floor": 150000, "target": 175000, "basis": "annual", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "project",
+          "titleOrName": "Open-source deployment platform",
+          "statement": "Built TypeScript APIs and maintained cloud services for an open-source deployment platform.",
+          "skills": ["TypeScript", "APIs", "cloud services"]
+        }
+      ],
+      "job": {
+        "sourceType": "ashby",
+        "title": "Platform Engineer",
+        "location": "Remote",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Must build TypeScript APIs and maintain cloud services. This is a remote role.",
+        "salaryMin": 165000,
+        "salaryText": "$165,000 per year"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["portfolio and work-sample references need explicit safe-link/local-reference support"]
+    },
+    {
+      "code": "GR",
+      "context": "Recent graduate/first job",
+      "targetTrack": {
+        "name": "Entry data analysis",
+        "relation": "target",
+        "roleTitles": ["Junior Data Analyst", "Data Analyst"],
+        "constraints": {
+          "geography": { "locations": ["Washington, DC"], "radiusMiles": 30, "strength": "preferred" },
+          "workModes": { "values": ["hybrid"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["full-time", "internship"], "strength": "preferred" },
+          "compensation": { "floor": 65000, "target": 80000, "basis": "annual", "floorStrength": "preferred" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "project",
+          "titleOrName": "Capstone analytics project",
+          "statement": "Used SQL and data visualization to analyze customer-support trends and communicated findings to business teams.",
+          "skills": ["SQL", "data visualization", "analysis"]
+        },
+        {
+          "subjectType": "education",
+          "titleOrName": "Bachelor degree",
+          "statement": "Completed undergraduate coursework in statistics, databases, and applied analytics.",
+          "skills": ["statistics", "databases"]
+        }
+      ],
+      "job": {
+        "sourceType": "lever",
+        "title": "Junior Data Analyst",
+        "location": "Washington, DC",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Use SQL and data visualization to analyze business trends and communicate findings to business teams. This is a hybrid role.",
+        "salaryMin": 72000,
+        "salaryText": "$72,000 per year"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["sparse conventional employment must not be treated as negative evidence"]
+    },
+    {
+      "code": "EX",
+      "context": "Senior executive/confidential search",
+      "targetTrack": {
+        "name": "Executive CX leadership",
+        "relation": "target",
+        "roleTitles": ["VP Customer Experience", "Chief Customer Officer"],
+        "constraints": {
+          "geography": { "locations": ["New York, NY"], "radiusMiles": 40, "strength": "preferred" },
+          "workModes": { "values": ["hybrid"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "required" },
+          "compensation": { "floor": 200000, "target": 250000, "basis": "annual", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "role",
+          "titleOrName": "Vice President, Customer Experience",
+          "statement": "Led enterprise customer experience strategy and executive operating reviews across a multi-region organization.",
+          "skills": ["customer experience strategy", "executive leadership"]
+        }
+      ],
+      "job": {
+        "sourceType": "greenhouse",
+        "title": "VP Customer Experience",
+        "location": "New York, NY",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Must lead enterprise customer experience strategy and executive operating reviews. This is a hybrid role.",
+        "salaryMin": 230000,
+        "salaryText": "$230,000 per year"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["confidential-search/discretion preferences are not yet modeled", "travel tolerance is not yet a target-track constraint"]
+    },
+    {
+      "code": "CC",
+      "context": "Career changer",
+      "targetTrack": {
+        "name": "Implementation leadership transition",
+        "relation": "adjacent",
+        "roleTitles": ["Implementation Manager"],
+        "constraints": {
+          "geography": { "locations": [], "radiusMiles": null, "strength": "preferred" },
+          "workModes": { "values": ["remote"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "preferred" },
+          "compensation": { "floor": 110000, "target": 130000, "basis": "annual", "floorStrength": "preferred" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "role",
+          "titleOrName": "Operations Program Manager",
+          "statement": "Led cross-functional launch planning and onboarding programs across operational teams.",
+          "skills": ["program management", "launch planning", "onboarding"]
+        }
+      ],
+      "job": {
+        "sourceType": "lever",
+        "title": "Implementation Manager",
+        "location": "Remote",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Must lead enterprise implementation programs across customer onboarding and launch planning. This is a remote role.",
+        "salaryMin": 120000,
+        "salaryText": "$120,000 per year"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1, "hasTransferableRequirement": true },
+      "knownModelPressures": ["transferable evidence must remain visible as transfer rather than being rewritten into direct experience"]
+    },
+    {
+      "code": "FG",
+      "context": "Federal/government applicant",
+      "targetTrack": {
+        "name": "Federal program analysis",
+        "relation": "target",
+        "roleTitles": ["Program Analyst"],
+        "constraints": {
+          "geography": { "locations": ["Washington, DC"], "radiusMiles": 35, "strength": "required" },
+          "workModes": { "values": ["on-site", "hybrid"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["full-time"], "strength": "required" },
+          "compensation": { "floor": 105000, "target": 125000, "basis": "annual", "floorStrength": "preferred" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "role",
+          "titleOrName": "Program Operations Analyst",
+          "statement": "Analyzed program operations and prepared performance reports for executive review.",
+          "skills": ["program analysis", "performance reporting"]
+        }
+      ],
+      "job": {
+        "sourceType": "generic-html",
+        "title": "Program Analyst",
+        "location": "Washington, DC",
+        "employmentType": "Full-time",
+        "descriptionSnippet": "Must have specialized experience analyzing program operations and preparing performance reports. This role is on-site.",
+        "salaryMin": 118000,
+        "salaryText": "$118,000 per year"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["federal grade/series and eligibility semantics are not yet first-class", "federal resume/application artifact rules differ from private-sector projections"]
+    },
+    {
+      "code": "CF",
+      "context": "Contractor/freelancer",
+      "targetTrack": {
+        "name": "UX research consulting",
+        "relation": "current",
+        "roleTitles": ["UX Research Consultant"],
+        "constraints": {
+          "geography": { "locations": [], "radiusMiles": null, "strength": "preferred" },
+          "workModes": { "values": ["remote"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["contract", "freelance"], "strength": "required" },
+          "compensation": { "floor": 85, "target": 110, "basis": "hourly", "floorStrength": "required" },
+          "onCall": { "value": "either", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "project",
+          "titleOrName": "Independent product research engagement",
+          "statement": "Planned user research studies and synthesized findings for product teams during independent client engagements.",
+          "skills": ["user research", "research synthesis"]
+        }
+      ],
+      "job": {
+        "sourceType": "ashby",
+        "title": "UX Research Consultant",
+        "location": "Remote",
+        "employmentType": "Contract",
+        "descriptionSnippet": "Must plan user research studies and synthesize findings for product teams. This is a remote contract engagement.",
+        "salaryMin": 95,
+        "salaryText": "$95 per hour"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["engagement/project chronology should not be forced into permanent-employment semantics", "portfolio/work-sample references remain an evidence-model gap"]
+    },
+    {
+      "code": "RT",
+      "context": "Return-to-work/nonlinear history",
+      "targetTrack": {
+        "name": "Operations coordination return",
+        "relation": "target",
+        "roleTitles": ["Operations Coordinator"],
+        "constraints": {
+          "geography": { "locations": ["Annapolis, MD"], "radiusMiles": 25, "strength": "preferred" },
+          "workModes": { "values": ["hybrid"], "strength": "preferred" },
+          "employmentArrangements": { "values": ["full-time", "part-time"], "strength": "preferred" },
+          "compensation": { "floor": 28, "target": 34, "basis": "hourly", "floorStrength": "preferred" },
+          "onCall": { "value": "no", "strength": "preferred" },
+          "industries": { "values": [], "strength": "preferred" }
+        }
+      },
+      "evidence": [
+        {
+          "subjectType": "project",
+          "titleOrName": "Community volunteer operations",
+          "statement": "Coordinated volunteer schedules and maintained operational records for a community organization.",
+          "skills": ["scheduling", "operations coordination", "record keeping"]
+        }
+      ],
+      "job": {
+        "sourceType": "smartrecruiters",
+        "title": "Operations Coordinator",
+        "location": "Annapolis, MD",
+        "employmentType": "Part-time",
+        "descriptionSnippet": "Must coordinate schedules and maintain operational records. This is a hybrid role with no on-call requirement.",
+        "salaryMin": 30,
+        "salaryText": "$30 per hour"
+      },
+      "expected": { "eligibility": "likely", "careerAlignment": "aligned", "preferenceAlignment": "aligned", "minSupportedRequirements": 1 },
+      "knownModelPressures": ["timeline gaps must remain neutral", "volunteer/project evidence must participate without requiring conventional employment chronology"]
+    }
+  ]
+}
