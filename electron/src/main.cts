@@ -23,6 +23,7 @@ import {
   validatePastedResumeInput,
   validateUserAuthoredEvidenceInput,
 } from "./career-validators.cjs";
+import { validateCareerTargetTrackInput } from "./target-track-validator.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
 
@@ -287,6 +288,23 @@ function registerIpcHandlers(): void {
   ipcMain.handle("career:get-profile", () => requireCareerBackend().getProfile());
   ipcMain.handle("career:save-profile", (_event, profile) =>
     requireCareerBackend().saveProfile(validateCareerProfile(profile)),
+  );
+  ipcMain.handle("career:list-target-tracks", () =>
+    requireCareerBackend().listTargetTracks(),
+  );
+  ipcMain.handle("career:create-target-track", (_event, input) =>
+    requireCareerBackend().createTargetTrack(validateCareerTargetTrackInput(input)),
+  );
+  ipcMain.handle("career:update-target-track", (_event, id: string, input) =>
+    requireCareerBackend().updateTargetTrack(
+      validateCareerEntityId(id, "Target track id"),
+      validateCareerTargetTrackInput(input),
+    ),
+  );
+  ipcMain.handle("career:delete-target-track", (_event, id: string) =>
+    requireCareerBackend().deleteTargetTrack(
+      validateCareerEntityId(id, "Target track id"),
+    ),
   );
   ipcMain.handle("career:migrate-legacy", (_event, payload) =>
     requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
