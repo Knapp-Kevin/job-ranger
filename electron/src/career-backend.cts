@@ -202,6 +202,11 @@ export class CareerBackend {
   }
 
   async deleteTargetTrack(id: string): Promise<void> {
+    if (id === "legacy-default") {
+      throw new Error(
+        "The Career Profile bridge cannot be deleted until the legacy profile transition is retired.",
+      );
+    }
     await this.repository.deleteTargetTrack(id);
   }
 
