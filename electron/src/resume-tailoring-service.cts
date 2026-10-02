@@ -22,6 +22,13 @@ interface ResumeTailoringServiceOptions {
   sqliteBinaryPath: string;
 }
 
+type TailoredStatementDraft = Pick<
+  ResumeStatement,
+  "section" | "text" | "evidenceIds" | "generationMode" | "userEdited"
+> & {
+  rank: number;
+};
+
 export class ResumeTailoringService {
   private readonly evidenceRepository: CareerEvidenceRepository;
   private readonly requirementBackend: RequirementBackend;
@@ -110,18 +117,63 @@ export class ResumeTailoringService {
       );
     });
 
-    const sections = Array.from(
-      new Set(ordered.map((item) => resumeSectionForEvidence(item))),
-    ).sort((left, right) => resumeSectionRank(left) - resumeSectionRank(right));
+    const selectedIdSet = new Set(selectedIds);
+    const consumedEvidenceIds = new Set<string>();
+    const statementDrafts: TailoredStatementDraft[] = [];
 
-    const sourceStatementByEvidenceId = new Map<string, ResumeStatement>();
-    for (const statement of sourceStatements) {
-      for (const evidenceId of statement.evidenceIds) {
-        if (!sourceStatementByEvidenceId.has(evidenceId)) {
-          sourceStatementByEvidenceId.set(evidenceId, statement);
-        }
+    // A user edit can combine facts from more than one Career Evidence record.
+    // Preserve that sentence only when every supporting evidence record remains
+    // selected. Otherwise fall back to canonical evidence text so tailoring
+    // cannot silently detach part of the statement's provenance.
+    for (const sourceStatement of sourceStatements) {
+      if (!sourceStatement.userEdited || sourceStatement.evidenceIds.length === 0) {
+        continue;
+      }
+      const fullyRetained = sourceStatement.evidenceIds.every(
+        (evidenceId) => selectedIdSet.has(evidenceId) && evidenceById.has(evidenceId),
+      );
+      if (!fullyRetained) continue;
+      if (sourceStatement.evidenceIds.some((evidenceId) => consumedEvidenceIds.has(evidenceId))) {
+        continue;
+      }
+
+      const ranks = sourceStatement.evidenceIds.map(
+        (evidenceId) => candidateRank.get(evidenceId) ?? Number.MAX_SAFE_INTEGER,
+      );
+      statementDrafts.push({
+        section: sourceStatement.section,
+        text: sourceStatement.text,
+        evidenceIds: [...sourceStatement.evidenceIds],
+        generationMode: sourceStatement.generationMode,
+        userEdited: true,
+        rank: Math.min(...ranks),
+      });
+      for (const evidenceId of sourceStatement.evidenceIds) {
+        consumedEvidenceIds.add(evidenceId);
       }
     }
+
+    for (const evidence of ordered) {
+      if (consumedEvidenceIds.has(evidence.id)) continue;
+      statementDrafts.push({
+        section: resumeSectionForEvidence(evidence),
+        text: evidence.statement.trim(),
+        evidenceIds: [evidence.id],
+        generationMode: "deterministic",
+        userEdited: false,
+        rank: candidateRank.get(evidence.id) ?? Number.MAX_SAFE_INTEGER,
+      });
+    }
+
+    statementDrafts.sort((left, right) => {
+      const sectionDifference = resumeSectionRank(left.section) - resumeSectionRank(right.section);
+      if (sectionDifference) return sectionDifference;
+      return left.rank - right.rank;
+    });
+
+    const sections = Array.from(new Set(statementDrafts.map((item) => item.section))).sort(
+      (left, right) => resumeSectionRank(left) - resumeSectionRank(right),
+    );
 
     const id = `resume-projection-${randomUUID()}`;
     const now = new Date().toISOString();
@@ -140,19 +192,16 @@ export class ResumeTailoringService {
       updatedAt: now,
     };
 
-    const statements: ResumeStatement[] = ordered.map((evidence, index) => {
-      const sourceStatement = sourceStatementByEvidenceId.get(evidence.id);
-      return {
-        id: `resume-statement-${randomUUID()}`,
-        projectionId: id,
-        section: resumeSectionForEvidence(evidence),
-        order: index,
-        text: sourceStatement?.text ?? evidence.statement.trim(),
-        evidenceIds: [evidence.id],
-        generationMode: sourceStatement?.generationMode ?? "deterministic",
-        userEdited: sourceStatement?.userEdited ?? false,
-      };
-    });
+    const statements: ResumeStatement[] = statementDrafts.map((draft, index) => ({
+      id: `resume-statement-${randomUUID()}`,
+      projectionId: id,
+      section: draft.section,
+      order: index,
+      text: draft.text,
+      evidenceIds: [...draft.evidenceIds],
+      generationMode: draft.generationMode,
+      userEdited: draft.userEdited,
+    }));
 
     await this.resumeRepository.createProjection(projection, statements);
     return projection;
