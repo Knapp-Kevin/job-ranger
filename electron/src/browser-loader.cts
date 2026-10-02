@@ -1,6 +1,10 @@
 import { BrowserWindow } from "electron";
 import type { BrowserPageLoaderOptions } from "./backend.cjs";
-import { validateExternalUrl } from "./validators.cjs";
+import {
+  AcquisitionNetworkPolicyError,
+  assertPublicAcquisitionUrl,
+  validateAcquisitionUrlSyntax,
+} from "./acquisition-network-policy.cjs";
 
 interface BrowserLoadOptions {
   url: string;
@@ -94,10 +98,38 @@ async function extractHtmlAfterLoad(
 function attachNavigationGuard(webContents: Electron.WebContents): void {
   webContents.on("will-navigate", (event, targetUrl) => {
     try {
-      validateExternalUrl(targetUrl);
+      validateAcquisitionUrlSyntax(targetUrl);
     } catch {
       event.preventDefault();
     }
+  });
+}
+
+function isNonNetworkBrowserUrl(rawUrl: string): boolean {
+  try {
+    const protocol = new URL(rawUrl).protocol;
+    return protocol === "data:" || protocol === "blob:" || protocol === "about:";
+  } catch {
+    return false;
+  }
+}
+
+function attachPublicNetworkRequestGuard(
+  webContents: Electron.WebContents,
+  onPolicyViolation: () => void,
+): void {
+  webContents.session.webRequest.onBeforeRequest((details, callback) => {
+    if (isNonNetworkBrowserUrl(details.url)) {
+      callback({ cancel: false });
+      return;
+    }
+
+    void assertPublicAcquisitionUrl(details.url)
+      .then(() => callback({ cancel: false }))
+      .catch(() => {
+        callback({ cancel: true });
+        onPolicyViolation();
+      });
   });
 }
 
@@ -131,6 +163,10 @@ function createBrowserSession(
 
   window.webContents.once("did-finish-load", () => { didFinishLoad = true; });
 
+  attachPublicNetworkRequestGuard(window.webContents, () => {
+    finalize(() => reject(new AcquisitionNetworkPolicyError()));
+  });
+
   return { window, finalize };
 }
 
@@ -154,7 +190,7 @@ function createScraperWindow(partition: string, userAgent: string): BrowserWindo
 export async function loadPageHtmlWithOptions(
   options: BrowserLoadOptions & { userAgent: string },
 ): Promise<string> {
-  const url = validateExternalUrl(options.url);
+  const url = await assertPublicAcquisitionUrl(options.url);
   const partition = `jobscout-scraper-${Date.now()}-${Math.random().toString(36).slice(2)}`;
 
   return new Promise<string>((resolve, reject) => {
