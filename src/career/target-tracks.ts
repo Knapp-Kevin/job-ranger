@@ -19,7 +19,7 @@ export const emptyTargetTrackInput: CareerTargetTrackInput = {
       floor: null,
       target: null,
       basis: "annual",
-      floorStrength: "required",
+      floorStrength: "preferred",
     },
     onCall: { value: "either", strength: "preferred" },
     industries: { values: [], strength: "preferred" },
