@@ -140,6 +140,7 @@ function coverage(items) {
       coverage([]),
       now,
     );
+    assert.equal(result.eligibility.status, 'unclear');
     assert.equal(result.careerAlignment.status, 'misaligned');
     assert.equal(result.evidenceCoverage.status, 'unknown');
     assert.ok(result.unknowns.some((item) => item.includes('No explicit job requirements')));
