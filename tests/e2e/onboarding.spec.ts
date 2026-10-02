@@ -29,6 +29,47 @@ test.describe("progressive first-run onboarding", () => {
     await expect(page.getByRole("button", { name: "Skip setup for now", exact: true })).toBeVisible();
   });
 
+  test("required goal constraints fail closed until they have values", async () => {
+    const { page } = fixture;
+
+    await page.getByLabel("Work I want to pursue", { exact: true }).fill("Operations Coordinator");
+
+    await page
+      .getByRole("combobox", { name: "Onboarding location importance", exact: true })
+      .selectOption("required");
+    await page.getByRole("button", { name: "Save goals and continue", exact: true }).click();
+    await expect(
+      page.getByText("Add a home area before making location a requirement.", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("combobox", { name: "Onboarding location importance", exact: true })
+      .selectOption("preferred");
+
+    await page
+      .getByRole("combobox", { name: "Onboarding work mode importance", exact: true })
+      .selectOption("required");
+    await page.getByRole("button", { name: "Save goals and continue", exact: true }).click();
+    await expect(
+      page.getByText("Choose at least one work mode before making work mode a requirement.", {
+        exact: true,
+      }),
+    ).toBeVisible();
+    await page
+      .getByRole("combobox", { name: "Onboarding work mode importance", exact: true })
+      .selectOption("preferred");
+
+    await page
+      .getByRole("combobox", { name: "Onboarding pay importance", exact: true })
+      .selectOption("required");
+    await page.getByRole("button", { name: "Save goals and continue", exact: true }).click();
+    await expect(
+      page.getByText("Add a minimum pay before making compensation a requirement.", { exact: true }),
+    ).toBeVisible();
+    await page
+      .getByRole("combobox", { name: "Onboarding pay importance", exact: true })
+      .selectOption("preferred");
+  });
+
   test("goal-first setup persists an explicit target track and enters the workspace", async () => {
     const { page } = fixture;
 
