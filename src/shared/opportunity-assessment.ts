@@ -128,7 +128,8 @@ function detectOnCallRequirement(job: AssessableJob): OnCallRequirement {
   if (!/\bon[- ]?call\b/.test(text)) return "unknown";
 
   const explicitlyNotRequired =
-    /\b(no|without)\s+on[- ]?call\b/.test(text) ||
+    /\b(no|without)\s+(?:regular\s+)?on[- ]?call\b/.test(text) ||
+    /\bnot\s+(?:an?\s+)?on[- ]?call\b/.test(text) ||
     /\bdoes not require\b.{0,30}\bon[- ]?call\b/.test(text) ||
     /\bon[- ]?call\b.{0,40}\b(not required|not expected|optional|none)\b/.test(text);
 

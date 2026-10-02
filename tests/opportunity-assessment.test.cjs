@@ -183,21 +183,29 @@ function coverage(items) {
   }
 
   {
-    const result = buildOpportunityAssessment(
-      job({
-        title: 'Operations Coordinator',
-        descriptionSnippet: 'Hybrid role with no on-call requirement.',
-      }),
-      track({
-        roleTitles: ['Operations Coordinator'],
-        onCall: { value: 'no', strength: 'required' },
-      }),
-      coverage([requirement('r-oncall-negated', 'responsibility', 'Coordinate operations.', 'direct', { id: 'e-oncall' })]),
-      now,
-    );
-    assert.equal(result.preferenceAlignment.status, 'aligned');
-    assert.equal(result.eligibility.status, 'likely');
-    assert.ok(result.preferenceAlignment.matches.some((item) => item.includes('not required')));
+    const negatedOnCallDescriptions = [
+      'Hybrid role with no on-call requirement.',
+      'Hybrid role. On-call is not required.',
+      'Hybrid role. This is not an on-call role.',
+      'Hybrid role with no regular on-call rotation.',
+    ];
+    for (const descriptionSnippet of negatedOnCallDescriptions) {
+      const result = buildOpportunityAssessment(
+        job({ title: 'Operations Coordinator', descriptionSnippet }),
+        track({
+          roleTitles: ['Operations Coordinator'],
+          onCall: { value: 'no', strength: 'required' },
+        }),
+        coverage([requirement('r-oncall-negated', 'responsibility', 'Coordinate operations.', 'direct', { id: 'e-oncall' })]),
+        now,
+      );
+      assert.equal(result.preferenceAlignment.status, 'aligned', descriptionSnippet);
+      assert.equal(result.eligibility.status, 'likely', descriptionSnippet);
+      assert.ok(
+        result.preferenceAlignment.matches.some((item) => item.includes('not required')),
+        descriptionSnippet,
+      );
+    }
   }
 
   console.log('opportunity assessment tests passed');
