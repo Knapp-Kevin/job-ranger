@@ -6,6 +6,8 @@ import type {
   CandidateEvidence,
   CandidateEvidenceReviewItem,
   CareerProfile,
+  CareerTargetTrack,
+  CareerTargetTrackInput,
   EvidenceReviewUpdate,
   ExtractionSnapshot,
   LegacyCareerMigration,
@@ -182,6 +184,25 @@ export class CareerBackend {
 
   async saveProfile(profile: CareerProfile): Promise<CareerProfile> {
     return this.repository.saveProfile(normalizeProfile(profile));
+  }
+
+  async listTargetTracks(): Promise<CareerTargetTrack[]> {
+    return this.repository.listTargetTracks();
+  }
+
+  async createTargetTrack(input: CareerTargetTrackInput): Promise<CareerTargetTrack> {
+    return this.repository.createTargetTrack(input);
+  }
+
+  async updateTargetTrack(
+    id: string,
+    input: CareerTargetTrackInput,
+  ): Promise<CareerTargetTrack> {
+    return this.repository.updateTargetTrack(id, input);
+  }
+
+  async deleteTargetTrack(id: string): Promise<void> {
+    await this.repository.deleteTargetTrack(id);
   }
 
   async listApplications(): Promise<TrackedApplication[]> {
