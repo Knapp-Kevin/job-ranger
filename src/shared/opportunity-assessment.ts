@@ -121,6 +121,20 @@ function detectWorkMode(job: AssessableJob): WorkMode | null {
   return null;
 }
 
+type OnCallRequirement = "required" | "not-required" | "unknown";
+
+function detectOnCallRequirement(job: AssessableJob): OnCallRequirement {
+  const text = normalize(`${job.title} ${job.descriptionSnippet}`);
+  if (!/\bon[- ]?call\b/.test(text)) return "unknown";
+
+  const explicitlyNotRequired =
+    /\b(no|without)\s+on[- ]?call\b/.test(text) ||
+    /\bdoes not require\b.{0,30}\bon[- ]?call\b/.test(text) ||
+    /\bon[- ]?call\b.{0,40}\b(not required|not expected|optional|none)\b/.test(text);
+
+  return explicitlyNotRequired ? "not-required" : "required";
+}
+
 function detectEmploymentArrangement(value: string | null): EmploymentArrangement | null {
   const text = normalize(value ?? "");
   if (!text) return null;
@@ -316,15 +330,23 @@ export function buildOpportunityAssessment(
   const onCall = track.constraints.onCall;
   if (supplied(onCall.strength, onCall.value !== "either")) {
     configuredPreferenceCount += 1;
-    const mentioned = /\bon[- ]?call\b/.test(
-      normalize(`${job.title} ${job.descriptionSnippet}`),
-    );
+    const requirement = detectOnCallRequirement(job);
+    const result =
+      requirement === "unknown"
+        ? "unknown"
+        : onCall.value === "yes" || requirement === "not-required"
+          ? "match"
+          : "miss";
+    const detail =
+      requirement === "unknown"
+        ? `The listing does not establish whether on-call work is required; your track says ${onCall.value}.`
+        : requirement === "not-required"
+          ? `The listing explicitly says on-call work is not required; your track says ${onCall.value}.`
+          : `The listing explicitly requires on-call work; your track says ${onCall.value}.`;
     addConstraintResult(
       onCall.strength,
-      !mentioned ? "unknown" : onCall.value === "yes" ? "match" : "miss",
-      !mentioned
-        ? `The listing does not establish whether on-call work is required; your track says ${onCall.value}.`
-        : `The listing explicitly mentions on-call work; your track says ${onCall.value}.`,
+      result,
+      detail,
       matches,
       misses,
       preferenceUnknowns,
