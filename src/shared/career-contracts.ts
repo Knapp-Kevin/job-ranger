@@ -24,6 +24,75 @@ export interface CareerProfile {
   updatedAt: string | null;
 }
 
+/**
+ * `unspecified` is reserved for migrated legacy values whose original UI did
+ * not distinguish hard requirements from preferences. New user-authored
+ * target-track values should use required, preferred, or target explicitly.
+ */
+export type PreferenceStrength =
+  | "required"
+  | "preferred"
+  | "target"
+  | "unspecified";
+
+export type TargetTrackRelation = "current" | "adjacent" | "stretch" | "target";
+export type WorkMode = "remote" | "hybrid" | "on-site";
+export type EmploymentArrangement =
+  | "full-time"
+  | "part-time"
+  | "contract"
+  | "temporary"
+  | "internship"
+  | "freelance"
+  | "seasonal"
+  | "other";
+
+export interface PreferenceSet<T extends string> {
+  values: T[];
+  strength: PreferenceStrength;
+}
+
+export interface GeographyPreference {
+  locations: string[];
+  radiusMiles: number | null;
+  strength: PreferenceStrength;
+}
+
+export interface CompensationPreference {
+  floor: number | null;
+  target: number | null;
+  basis: PayBasis;
+  floorStrength: PreferenceStrength;
+}
+
+export interface CareerSearchConstraints {
+  geography: GeographyPreference;
+  workModes: PreferenceSet<WorkMode>;
+  employmentArrangements: PreferenceSet<EmploymentArrangement>;
+  compensation: CompensationPreference;
+  onCall: {
+    value: OnCallPreference;
+    strength: PreferenceStrength;
+  };
+  industries: PreferenceSet<string>;
+}
+
+export type CareerTargetTrackOrigin = "legacy-profile" | "user";
+
+export interface CareerTargetTrack {
+  id: string;
+  name: string;
+  relation: TargetTrackRelation;
+  roleTitles: string[];
+  seniority: string | null;
+  direction: string | null;
+  constraints: CareerSearchConstraints;
+  origin: CareerTargetTrackOrigin;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
 export interface TrackedApplication {
   id: string;
   jobId: string;
