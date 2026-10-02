@@ -15,6 +15,7 @@ import type {
   SourceArtifact,
   SourceArtifactExtractionState,
   TrackedApplication,
+  UserAuthoredEvidenceInput,
 } from "../../src/shared/contracts.js";
 import { CareerRepository } from "./career-repository.cjs";
 import { CareerEvidenceRepository } from "./career-evidence-repository.cjs";
@@ -41,6 +42,11 @@ function cleanList(values: string[]): string[] {
   return Array.from(
     new Set(values.map((value) => value.trim()).filter(Boolean)),
   );
+}
+
+function cleanOptional(value: string | null | undefined): string | null {
+  const normalized = value?.trim() ?? "";
+  return normalized || null;
 }
 
 function normalizeProfile(profile: CareerProfile): CareerProfile {
@@ -214,6 +220,32 @@ export class CareerBackend {
 
   async listEvidence(): Promise<CandidateEvidenceReviewItem[]> {
     return this.evidenceRepository.listEvidenceReviewItems();
+  }
+
+  async createUserEvidence(
+    input: UserAuthoredEvidenceInput,
+  ): Promise<CandidateEvidence> {
+    const now = new Date().toISOString();
+    return this.evidenceRepository.createUserAuthoredEvidence({
+      id: `evidence-${randomUUID()}`,
+      subjectType: input.subjectType,
+      organization: cleanOptional(input.organization),
+      titleOrName: cleanOptional(input.titleOrName),
+      startDate: cleanOptional(input.startDate),
+      endDate: cleanOptional(input.endDate),
+      statement: input.statement.trim(),
+      action: null,
+      context: null,
+      skills: cleanList(input.skills ?? []),
+      methodsOrTools: cleanList(input.methodsOrTools ?? []),
+      scope: cleanList(input.scope ?? []),
+      outcomes: cleanList(input.outcomes ?? []),
+      metrics: cleanList(input.metrics ?? []),
+      verificationState: "user-authored",
+      confidence: null,
+      createdAt: now,
+      updatedAt: now,
+    });
   }
 
   async reviewEvidence(
