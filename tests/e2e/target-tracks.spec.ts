@@ -43,10 +43,14 @@ test("promotes the legacy bridge and maintains multiple independent target track
   ).toBeVisible();
   await expect(page.getByText("Imported from Career Profile", { exact: true })).toBeVisible();
 
+  const rolesInput = () =>
+    page
+      .getByText("Roles in this track", { exact: true })
+      .locator("..")
+      .getByRole("textbox");
+
   await page.getByLabel("Track name", { exact: true }).fill("Primary local search");
-  await page.getByLabel("Roles in this track", { exact: true }).fill(
-    "Operations Coordinator\nProgram Coordinator",
-  );
+  await rolesInput().fill("Operations Coordinator\nProgram Coordinator");
   await page.getByLabel("Remote", { exact: true }).check();
   await page.getByLabel("Work mode importance", { exact: true }).selectOption("required");
   await page.getByRole("button", { name: "Save target track", exact: true }).click();
@@ -65,7 +69,7 @@ test("promotes the legacy bridge and maintains multiple independent target track
   await page.getByRole("button", { name: "New", exact: true }).click();
   await page.getByLabel("Track name", { exact: true }).fill("Contract delivery");
   await page.getByLabel("Relationship to my career", { exact: true }).selectOption("adjacent");
-  await page.getByLabel("Roles in this track", { exact: true }).fill("Implementation Consultant");
+  await rolesInput().fill("Implementation Consultant");
   await page.getByLabel("Remote", { exact: true }).check();
   await page.getByLabel("Contract", { exact: true }).check();
   await page.getByLabel("Freelance", { exact: true }).check();
