@@ -174,6 +174,16 @@ function sourceUncertainty(sourceType: string): string | null {
   return "This source may not expose every requirement or field, so missing listing data remains uncertain.";
 }
 
+function requirementCanBlock(
+  kind: JobEvidenceCoverage["items"][number]["requirement"]["kind"],
+  text: string,
+): boolean {
+  if (kind === "must-have") return true;
+  if (kind !== "credential") return false;
+  const normalized = normalize(text);
+  return !/\b(prefer|preferred|nice to have|plus|bonus|desirable)\b/.test(normalized);
+}
+
 export function buildOpportunityAssessment(
   job: AssessableJob,
   track: CareerTargetTrack,
@@ -188,11 +198,9 @@ export function buildOpportunityAssessment(
   let configuredPreferenceCount = 0;
 
   for (const item of coverage.items) {
-    const potentiallyBlocking =
-      item.requirement.kind === "must-have" || item.requirement.kind === "credential";
     const unsupported =
       item.mapping.classification === "gap" || item.mapping.classification === "ambiguous";
-    if (potentiallyBlocking && unsupported) {
+    if (requirementCanBlock(item.requirement.kind, item.requirement.text) && unsupported) {
       potentialBlockers.push(
         `${item.requirement.text} (${item.mapping.classification === "gap" ? "no confirmed support" : "support needs confirmation"}).`,
       );
