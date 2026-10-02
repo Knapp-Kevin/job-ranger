@@ -29,6 +29,67 @@ type TailoredStatementDraft = Pick<
   rank: number;
 };
 
+export function buildTailoredStatementDrafts(
+  sourceStatements: readonly ResumeStatement[],
+  orderedEvidence: readonly CandidateEvidence[],
+  candidateRank: ReadonlyMap<string, number>,
+): TailoredStatementDraft[] {
+  const selectedIdSet = new Set(orderedEvidence.map((item) => item.id));
+  const consumedEvidenceIds = new Set<string>();
+  const drafts: TailoredStatementDraft[] = [];
+
+  // A user edit can combine facts from more than one Career Evidence record.
+  // Preserve that sentence only when every supporting evidence record remains
+  // selected. Otherwise fall back to canonical evidence text so tailoring
+  // cannot silently detach part of the statement's provenance.
+  for (const sourceStatement of sourceStatements) {
+    if (!sourceStatement.userEdited || sourceStatement.evidenceIds.length === 0) {
+      continue;
+    }
+    if (!sourceStatement.evidenceIds.every((evidenceId) => selectedIdSet.has(evidenceId))) {
+      continue;
+    }
+    if (sourceStatement.evidenceIds.some((evidenceId) => consumedEvidenceIds.has(evidenceId))) {
+      continue;
+    }
+
+    const ranks = sourceStatement.evidenceIds.map(
+      (evidenceId) => candidateRank.get(evidenceId) ?? Number.MAX_SAFE_INTEGER,
+    );
+    drafts.push({
+      section: sourceStatement.section,
+      text: sourceStatement.text,
+      evidenceIds: [...sourceStatement.evidenceIds],
+      generationMode: sourceStatement.generationMode,
+      userEdited: true,
+      rank: Math.min(...ranks),
+    });
+    for (const evidenceId of sourceStatement.evidenceIds) {
+      consumedEvidenceIds.add(evidenceId);
+    }
+  }
+
+  for (const evidence of orderedEvidence) {
+    if (consumedEvidenceIds.has(evidence.id)) continue;
+    drafts.push({
+      section: resumeSectionForEvidence(evidence),
+      text: evidence.statement.trim(),
+      evidenceIds: [evidence.id],
+      generationMode: "deterministic",
+      userEdited: false,
+      rank: candidateRank.get(evidence.id) ?? Number.MAX_SAFE_INTEGER,
+    });
+  }
+
+  drafts.sort((left, right) => {
+    const sectionDifference = resumeSectionRank(left.section) - resumeSectionRank(right.section);
+    if (sectionDifference) return sectionDifference;
+    return left.rank - right.rank;
+  });
+
+  return drafts;
+}
+
 export class ResumeTailoringService {
   private readonly evidenceRepository: CareerEvidenceRepository;
   private readonly requirementBackend: RequirementBackend;
@@ -117,60 +178,11 @@ export class ResumeTailoringService {
       );
     });
 
-    const selectedIdSet = new Set(selectedIds);
-    const consumedEvidenceIds = new Set<string>();
-    const statementDrafts: TailoredStatementDraft[] = [];
-
-    // A user edit can combine facts from more than one Career Evidence record.
-    // Preserve that sentence only when every supporting evidence record remains
-    // selected. Otherwise fall back to canonical evidence text so tailoring
-    // cannot silently detach part of the statement's provenance.
-    for (const sourceStatement of sourceStatements) {
-      if (!sourceStatement.userEdited || sourceStatement.evidenceIds.length === 0) {
-        continue;
-      }
-      const fullyRetained = sourceStatement.evidenceIds.every(
-        (evidenceId) => selectedIdSet.has(evidenceId) && evidenceById.has(evidenceId),
-      );
-      if (!fullyRetained) continue;
-      if (sourceStatement.evidenceIds.some((evidenceId) => consumedEvidenceIds.has(evidenceId))) {
-        continue;
-      }
-
-      const ranks = sourceStatement.evidenceIds.map(
-        (evidenceId) => candidateRank.get(evidenceId) ?? Number.MAX_SAFE_INTEGER,
-      );
-      statementDrafts.push({
-        section: sourceStatement.section,
-        text: sourceStatement.text,
-        evidenceIds: [...sourceStatement.evidenceIds],
-        generationMode: sourceStatement.generationMode,
-        userEdited: true,
-        rank: Math.min(...ranks),
-      });
-      for (const evidenceId of sourceStatement.evidenceIds) {
-        consumedEvidenceIds.add(evidenceId);
-      }
-    }
-
-    for (const evidence of ordered) {
-      if (consumedEvidenceIds.has(evidence.id)) continue;
-      statementDrafts.push({
-        section: resumeSectionForEvidence(evidence),
-        text: evidence.statement.trim(),
-        evidenceIds: [evidence.id],
-        generationMode: "deterministic",
-        userEdited: false,
-        rank: candidateRank.get(evidence.id) ?? Number.MAX_SAFE_INTEGER,
-      });
-    }
-
-    statementDrafts.sort((left, right) => {
-      const sectionDifference = resumeSectionRank(left.section) - resumeSectionRank(right.section);
-      if (sectionDifference) return sectionDifference;
-      return left.rank - right.rank;
-    });
-
+    const statementDrafts = buildTailoredStatementDrafts(
+      sourceStatements,
+      ordered,
+      candidateRank,
+    );
     const sections = Array.from(new Set(statementDrafts.map((item) => item.section))).sort(
       (left, right) => resumeSectionRank(left) - resumeSectionRank(right),
     );
