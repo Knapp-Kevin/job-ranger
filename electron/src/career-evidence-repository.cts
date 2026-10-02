@@ -255,10 +255,7 @@ export class CareerEvidenceRepository {
     return row ? mapSnapshot(row) : null;
   }
 
-  async createEvidenceProposal(
-    evidence: CandidateEvidence,
-    link: Omit<EvidenceSourceLink, "id" | "evidenceId" | "createdAt">,
-  ): Promise<CandidateEvidence> {
+  private async insertEvidence(evidence: CandidateEvidence): Promise<CandidateEvidence> {
     const inserted = await this.sqlite.queryOne<CandidateEvidenceRow>(sql`
       INSERT INTO candidate_evidence (
         id, subject_type, organization, title_or_name, start_date, end_date,
@@ -277,6 +274,14 @@ export class CareerEvidenceRepository {
       RETURNING *;
     `);
     if (!inserted) throw new Error("Failed to create candidate evidence");
+    return mapEvidence(inserted);
+  }
+
+  async createEvidenceProposal(
+    evidence: CandidateEvidence,
+    link: Omit<EvidenceSourceLink, "id" | "evidenceId" | "createdAt">,
+  ): Promise<CandidateEvidence> {
+    const inserted = await this.insertEvidence(evidence);
 
     await this.sqlite.exec(sql`
       INSERT INTO evidence_source_links (
@@ -289,7 +294,14 @@ export class CareerEvidenceRepository {
       );
     `);
 
-    return mapEvidence(inserted);
+    return inserted;
+  }
+
+  async createUserAuthoredEvidence(evidence: CandidateEvidence): Promise<CandidateEvidence> {
+    if (evidence.verificationState !== "user-authored") {
+      throw new Error("Directly authored evidence must use user-authored authority");
+    }
+    return this.insertEvidence(evidence);
   }
 
   async getEvidenceById(id: string): Promise<CandidateEvidence | null> {
@@ -357,7 +369,11 @@ export class CareerEvidenceRepository {
     }
 
     const verificationState =
-      update.action === "reject" ? "rejected" : "user-confirmed";
+      update.action === "reject"
+        ? "rejected"
+        : current.verificationState === "user-authored"
+          ? "user-authored"
+          : "user-confirmed";
     const row = await this.sqlite.queryOne<CandidateEvidenceRow>(sql`
       UPDATE candidate_evidence
       SET
