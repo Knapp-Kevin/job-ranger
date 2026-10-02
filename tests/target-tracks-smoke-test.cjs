@@ -143,6 +143,27 @@ async function run() {
       "the migration bridge must remain reserved while Career Profile can recreate it",
     );
 
+    const legacyTrack = (await career.listTargetTracks()).find(
+      (track) => track.id === "legacy-default",
+    );
+    assert.ok(legacyTrack);
+    const renamedOnly = await career.updateTargetTrack("legacy-default", {
+      name: "Primary local search",
+      relation: legacyTrack.relation,
+      roleTitles: [...legacyTrack.roleTitles],
+      seniority: legacyTrack.seniority,
+      direction: legacyTrack.direction,
+      constraints: legacyTrack.constraints,
+      isActive: legacyTrack.isActive,
+    });
+    assert.equal(renamedOnly.origin, "user");
+    assert.equal(
+      renamedOnly.constraints.geography.strength,
+      "unspecified",
+      "promoting a legacy track must not silently invent preference semantics",
+    );
+    assert.equal(renamedOnly.constraints.compensation.floorStrength, "unspecified");
+
     const promoted = await career.updateTargetTrack(
       "legacy-default",
       trackInput({
@@ -159,6 +180,22 @@ async function run() {
       () => career.deleteTargetTrack("legacy-default"),
       /cannot be deleted/i,
       "promotion must not make the reserved bridge deletable before legacy retirement",
+    );
+
+    await assert.rejects(
+      () =>
+        career.createTargetTrack({
+          ...trackInput(),
+          constraints: {
+            ...trackInput().constraints,
+            geography: {
+              ...trackInput().constraints.geography,
+              strength: "unspecified",
+            },
+          },
+        }),
+      /must use explicit required, preferred, or target strengths/i,
+      "new user-authored tracks must not use migration-only unspecified semantics",
     );
 
     await career.saveProfile({
