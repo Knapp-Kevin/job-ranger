@@ -402,7 +402,11 @@ export function buildOpportunityAssessment(
   if (sourceUnknown) unknowns.push(sourceUnknown);
 
   const eligibility: EligibilityStatus =
-    blockers.length > 0 ? "unlikely" : potentialBlockers.length > 0 ? "unclear" : "likely";
+    blockers.length > 0
+      ? "unlikely"
+      : potentialBlockers.length > 0 || coverage.totalCount === 0
+        ? "unclear"
+        : "likely";
 
   return {
     jobId: job.id,
