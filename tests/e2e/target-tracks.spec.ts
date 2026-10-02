@@ -48,6 +48,11 @@ test("promotes the legacy bridge and maintains multiple independent target track
       .getByText("Roles in this track", { exact: true })
       .locator("..")
       .getByRole("textbox");
+  const relationshipSelect = () =>
+    page
+      .getByText("Relationship to my career", { exact: true })
+      .locator("..")
+      .getByRole("combobox");
 
   await page.getByLabel("Track name", { exact: true }).fill("Primary local search");
   await rolesInput().fill("Operations Coordinator\nProgram Coordinator");
@@ -68,7 +73,7 @@ test("promotes the legacy bridge and maintains multiple independent target track
 
   await page.getByRole("button", { name: "New", exact: true }).click();
   await page.getByLabel("Track name", { exact: true }).fill("Contract delivery");
-  await page.getByLabel("Relationship to my career", { exact: true }).selectOption("adjacent");
+  await relationshipSelect().selectOption("adjacent");
   await rolesInput().fill("Implementation Consultant");
   await page.getByLabel("Remote", { exact: true }).check();
   await page.getByLabel("Contract", { exact: true }).check();
