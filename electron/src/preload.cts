@@ -44,6 +44,8 @@ const desktopApi: DesktopApi & ResumeDesktopApi = {
     selectResumeImport: () => ipcRenderer.invoke("career:select-resume-import"),
     importPastedText: (input) =>
       ipcRenderer.invoke("career:import-pasted-text", input),
+    createUserEvidence: (input) =>
+      ipcRenderer.invoke("career:create-user-evidence", input),
     listSourceArtifacts: () =>
       ipcRenderer.invoke("career:list-source-artifacts"),
     listEvidence: () => ipcRenderer.invoke("career:list-evidence"),
