@@ -326,4 +326,28 @@ export const migrations: Migration[] = [
       );
     `,
   },
+  {
+    version: 6,
+    name: "career_target_tracks",
+    sql: `
+      CREATE TABLE IF NOT EXISTS career_target_tracks (
+        id TEXT PRIMARY KEY,
+        name TEXT NOT NULL,
+        relation TEXT NOT NULL,
+        role_titles_json TEXT NOT NULL DEFAULT '[]',
+        seniority TEXT,
+        direction TEXT,
+        constraints_json TEXT NOT NULL,
+        origin TEXT NOT NULL,
+        is_active INTEGER NOT NULL DEFAULT 1,
+        created_at TEXT NOT NULL,
+        updated_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_career_target_tracks_active
+        ON career_target_tracks(is_active, updated_at DESC);
+      CREATE INDEX IF NOT EXISTS idx_career_target_tracks_origin
+        ON career_target_tracks(origin);
+    `,
+  },
 ];

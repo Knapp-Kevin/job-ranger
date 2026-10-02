@@ -1,6 +1,8 @@
 import type {
   ApplicationUpdate,
   CareerProfile,
+  CareerSearchConstraints,
+  CareerTargetTrack,
   TrackedApplication,
 } from "../../src/shared/contracts.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
@@ -20,6 +22,20 @@ type CareerProfileRow = {
   on_call_preference: CareerProfile["onCallPreference"];
   full_time_only: number;
   updated_at: string | null;
+};
+
+type TargetTrackRow = {
+  id: string;
+  name: string;
+  relation: CareerTargetTrack["relation"];
+  role_titles_json: string;
+  seniority: string | null;
+  direction: string | null;
+  constraints_json: string;
+  origin: CareerTargetTrack["origin"];
+  is_active: number;
+  created_at: string;
+  updated_at: string;
 };
 
 type ApplicationRow = {
@@ -73,6 +89,80 @@ function mapProfile(row: CareerProfileRow): CareerProfile {
   };
 }
 
+function legacyConstraints(profile: CareerProfile): CareerSearchConstraints {
+  return {
+    geography: {
+      locations: profile.homeLocation ? [profile.homeLocation] : [],
+      radiusMiles: profile.radiusMiles,
+      strength: "unspecified",
+    },
+    workModes: {
+      values: [],
+      strength: "unspecified",
+    },
+    employmentArrangements: {
+      values: profile.fullTimeOnly ? ["full-time"] : [],
+      strength: "unspecified",
+    },
+    compensation: {
+      floor: profile.minimumPay,
+      target: null,
+      basis: profile.payBasis,
+      floorStrength: "unspecified",
+    },
+    onCall: {
+      value: profile.onCallPreference,
+      strength: "unspecified",
+    },
+    industries: {
+      values: [...profile.sectors],
+      strength: "unspecified",
+    },
+  };
+}
+
+function emptyConstraints(): CareerSearchConstraints {
+  return {
+    geography: { locations: [], radiusMiles: null, strength: "unspecified" },
+    workModes: { values: [], strength: "unspecified" },
+    employmentArrangements: { values: [], strength: "unspecified" },
+    compensation: {
+      floor: null,
+      target: null,
+      basis: "annual",
+      floorStrength: "unspecified",
+    },
+    onCall: { value: "either", strength: "unspecified" },
+    industries: { values: [], strength: "unspecified" },
+  };
+}
+
+function parseConstraints(value: string): CareerSearchConstraints {
+  try {
+    const parsed = JSON.parse(value) as CareerSearchConstraints;
+    if (!parsed || typeof parsed !== "object") return emptyConstraints();
+    return parsed;
+  } catch {
+    return emptyConstraints();
+  }
+}
+
+function mapTargetTrack(row: TargetTrackRow): CareerTargetTrack {
+  return {
+    id: row.id,
+    name: row.name,
+    relation: row.relation,
+    roleTitles: parseStringArray(row.role_titles_json),
+    seniority: row.seniority,
+    direction: row.direction,
+    constraints: parseConstraints(row.constraints_json),
+    origin: row.origin,
+    isActive: Boolean(row.is_active),
+    createdAt: row.created_at,
+    updatedAt: row.updated_at,
+  };
+}
+
 function mapApplication(row: ApplicationRow): TrackedApplication {
   return {
     id: row.id,
@@ -95,6 +185,33 @@ export class CareerRepository {
       "SELECT * FROM career_profile WHERE id = 1 LIMIT 1;",
     );
     return row ? mapProfile(row) : null;
+  }
+
+  async listTargetTracks(): Promise<CareerTargetTrack[]> {
+    const rows = await this.sqlite.queryAll<TargetTrackRow>(
+      "SELECT * FROM career_target_tracks ORDER BY is_active DESC, updated_at DESC, created_at ASC;",
+    );
+    return rows.map(mapTargetTrack);
+  }
+
+  async syncLegacyTargetTrack(profile: CareerProfile): Promise<void> {
+    const now = profile.updatedAt ?? new Date().toISOString();
+    const constraints = legacyConstraints(profile);
+    await this.sqlite.exec(sql`
+      INSERT INTO career_target_tracks (
+        id, name, relation, role_titles_json, seniority, direction,
+        constraints_json, origin, is_active, created_at, updated_at
+      ) VALUES (
+        ${"legacy-default"}, ${"Primary search"}, ${"target"},
+        ${JSON.stringify(profile.targetTitles)}, ${null}, ${null},
+        ${JSON.stringify(constraints)}, ${"legacy-profile"}, ${true}, ${now}, ${now}
+      )
+      ON CONFLICT (id) DO UPDATE SET
+        role_titles_json = excluded.role_titles_json,
+        constraints_json = excluded.constraints_json,
+        updated_at = excluded.updated_at
+      WHERE career_target_tracks.origin = 'legacy-profile';
+    `);
   }
 
   async saveProfile(profile: CareerProfile): Promise<CareerProfile> {
@@ -150,7 +267,9 @@ export class CareerRepository {
     if (!row) {
       throw new Error("Failed to save Career Profile");
     }
-    return mapProfile(row);
+    const saved = mapProfile(row);
+    await this.syncLegacyTargetTrack(saved);
+    return saved;
   }
 
   async listApplications(): Promise<TrackedApplication[]> {
