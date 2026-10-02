@@ -1,0 +1,221 @@
+import { randomUUID } from "node:crypto";
+import type { CandidateEvidence, ResumeStatement } from "../../src/shared/contracts.js";
+import type {
+  ResumeProjectionRecord,
+  ResumeTailoringApplyRequest,
+  ResumeTailoringPlan,
+  ResumeTailoringPreviewRequest,
+} from "../../src/shared/resume-contracts.js";
+import { canEvidenceSupportFactualClaim } from "../../src/shared/career-contracts.js";
+import { CareerEvidenceRepository } from "./career-evidence-repository.cjs";
+import { RequirementBackend } from "./requirement-backend.cjs";
+import { ResumeRepository } from "./resume-repository.cjs";
+import {
+  buildResumeTailoringPlan,
+  resumeSectionForEvidence,
+  resumeSectionRank,
+} from "./resume-tailoring.cjs";
+import { SqliteClient } from "./sqlite.cjs";
+
+interface ResumeTailoringServiceOptions {
+  databasePath: string;
+  sqliteBinaryPath: string;
+}
+
+type TailoredStatementDraft = Pick<
+  ResumeStatement,
+  "section" | "text" | "evidenceIds" | "generationMode" | "userEdited"
+> & {
+  rank: number;
+};
+
+export function buildTailoredStatementDrafts(
+  sourceStatements: readonly ResumeStatement[],
+  orderedEvidence: readonly CandidateEvidence[],
+  candidateRank: ReadonlyMap<string, number>,
+): TailoredStatementDraft[] {
+  const selectedIdSet = new Set(orderedEvidence.map((item) => item.id));
+  const consumedEvidenceIds = new Set<string>();
+  const drafts: TailoredStatementDraft[] = [];
+
+  // A user edit can combine facts from more than one Career Evidence record.
+  // Preserve that sentence only when every supporting evidence record remains
+  // selected. Otherwise fall back to canonical evidence text so tailoring
+  // cannot silently detach part of the statement's provenance.
+  for (const sourceStatement of sourceStatements) {
+    if (!sourceStatement.userEdited || sourceStatement.evidenceIds.length === 0) {
+      continue;
+    }
+    if (!sourceStatement.evidenceIds.every((evidenceId) => selectedIdSet.has(evidenceId))) {
+      continue;
+    }
+    if (sourceStatement.evidenceIds.some((evidenceId) => consumedEvidenceIds.has(evidenceId))) {
+      continue;
+    }
+
+    const ranks = sourceStatement.evidenceIds.map(
+      (evidenceId) => candidateRank.get(evidenceId) ?? Number.MAX_SAFE_INTEGER,
+    );
+    drafts.push({
+      section: sourceStatement.section,
+      text: sourceStatement.text,
+      evidenceIds: [...sourceStatement.evidenceIds],
+      generationMode: sourceStatement.generationMode,
+      userEdited: true,
+      rank: Math.min(...ranks),
+    });
+    for (const evidenceId of sourceStatement.evidenceIds) {
+      consumedEvidenceIds.add(evidenceId);
+    }
+  }
+
+  for (const evidence of orderedEvidence) {
+    if (consumedEvidenceIds.has(evidence.id)) continue;
+    drafts.push({
+      section: resumeSectionForEvidence(evidence),
+      text: evidence.statement.trim(),
+      evidenceIds: [evidence.id],
+      generationMode: "deterministic",
+      userEdited: false,
+      rank: candidateRank.get(evidence.id) ?? Number.MAX_SAFE_INTEGER,
+    });
+  }
+
+  drafts.sort((left, right) => {
+    const sectionDifference = resumeSectionRank(left.section) - resumeSectionRank(right.section);
+    if (sectionDifference) return sectionDifference;
+    return left.rank - right.rank;
+  });
+
+  return drafts;
+}
+
+export class ResumeTailoringService {
+  private readonly evidenceRepository: CareerEvidenceRepository;
+  private readonly requirementBackend: RequirementBackend;
+  private readonly resumeRepository: ResumeRepository;
+
+  constructor(options: ResumeTailoringServiceOptions) {
+    const sqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
+    this.evidenceRepository = new CareerEvidenceRepository(sqlite);
+    this.resumeRepository = new ResumeRepository(sqlite);
+    this.requirementBackend = new RequirementBackend(options);
+  }
+
+  async preview(
+    request: ResumeTailoringPreviewRequest,
+  ): Promise<ResumeTailoringPlan> {
+    const source = await this.resumeRepository.getProjection(
+      request.sourceProjectionId,
+    );
+    if (!source) {
+      throw new Error(`Resume projection ${request.sourceProjectionId} not found`);
+    }
+
+    const [coverage, reviewItems] = await Promise.all([
+      this.requirementBackend.getJobEvidenceCoverage(request.jobId),
+      this.evidenceRepository.listEvidenceReviewItems(),
+    ]);
+
+    return buildResumeTailoringPlan(
+      source,
+      reviewItems.map((item) => item.evidence),
+      coverage,
+    );
+  }
+
+  async apply(
+    request: ResumeTailoringApplyRequest,
+  ): Promise<ResumeProjectionRecord> {
+    const source = await this.resumeRepository.getProjection(
+      request.sourceProjectionId,
+    );
+    if (!source) {
+      throw new Error(`Resume projection ${request.sourceProjectionId} not found`);
+    }
+
+    const [plan, reviewItems, sourceStatements] = await Promise.all([
+      this.preview(request),
+      this.evidenceRepository.listEvidenceReviewItems(),
+      this.resumeRepository.listStatements(source.id),
+    ]);
+
+    const selectedIds = Array.from(new Set(request.selectedEvidenceIds));
+    if (selectedIds.length === 0) {
+      throw new Error("Select at least one Career Evidence item for the tailored resume.");
+    }
+
+    const allowed = new Set(plan.candidates.map((candidate) => candidate.evidenceId));
+    const outsidePlan = selectedIds.filter((id) => !allowed.has(id));
+    if (outsidePlan.length > 0) {
+      throw new Error("Tailored resume selection contains evidence outside the reviewed plan.");
+    }
+
+    const evidenceById = new Map(
+      reviewItems.map((item) => [item.evidence.id, item.evidence] as const),
+    );
+    const selected = selectedIds.map((id) => evidenceById.get(id)).filter(
+      (item): item is CandidateEvidence => Boolean(item),
+    );
+    if (selected.length !== selectedIds.length) {
+      throw new Error("One or more selected Career Evidence records no longer exist.");
+    }
+    if (selected.some((item) => !canEvidenceSupportFactualClaim(item))) {
+      throw new Error("Only confirmed Career Evidence can enter a tailored resume.");
+    }
+
+    const candidateRank = new Map(
+      plan.candidates.map((candidate, index) => [candidate.evidenceId, index] as const),
+    );
+    const ordered = [...selected].sort((left, right) => {
+      const sectionDifference =
+        resumeSectionRank(resumeSectionForEvidence(left)) -
+        resumeSectionRank(resumeSectionForEvidence(right));
+      if (sectionDifference) return sectionDifference;
+      return (
+        (candidateRank.get(left.id) ?? Number.MAX_SAFE_INTEGER) -
+        (candidateRank.get(right.id) ?? Number.MAX_SAFE_INTEGER)
+      );
+    });
+
+    const statementDrafts = buildTailoredStatementDrafts(
+      sourceStatements,
+      ordered,
+      candidateRank,
+    );
+    const sections = Array.from(new Set(statementDrafts.map((item) => item.section))).sort(
+      (left, right) => resumeSectionRank(left) - resumeSectionRank(right),
+    );
+
+    const id = `resume-projection-${randomUUID()}`;
+    const now = new Date().toISOString();
+    const projection: ResumeProjectionRecord = {
+      id,
+      jobId: request.jobId,
+      context: source.context,
+      pageFormat: source.pageFormat,
+      sourceProjectionId: source.id,
+      status: "draft",
+      sections,
+      selectedEvidenceIds: ordered.map((item) => item.id),
+      templateId: source.templateId,
+      contact: { ...source.contact, links: [...source.contact.links] },
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const statements: ResumeStatement[] = statementDrafts.map((draft, index) => ({
+      id: `resume-statement-${randomUUID()}`,
+      projectionId: id,
+      section: draft.section,
+      order: index,
+      text: draft.text,
+      evidenceIds: [...draft.evidenceIds],
+      generationMode: draft.generationMode,
+      userEdited: draft.userEdited,
+    }));
+
+    await this.resumeRepository.createProjection(projection, statements);
+    return projection;
+  }
+}

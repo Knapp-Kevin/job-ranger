@@ -1,6 +1,7 @@
 import type {
   ApplicationArtifactPurpose,
   CandidateEvidence,
+  JobRequirementKind,
   ResumeArtifact,
   ResumeContext,
   ResumePageFormat,
@@ -106,4 +107,51 @@ export interface ResumeVersionDiff {
   addedStatements: string[];
   removedStatements: string[];
   unchangedStatements: string[];
+}
+
+export type ResumeTailoringSupport = "direct" | "transferable" | "source-only";
+
+export interface ResumeTailoringCandidate {
+  evidenceId: string;
+  statement: string;
+  section: string;
+  support: ResumeTailoringSupport;
+  score: number;
+  matchedRequirementIds: string[];
+  reasons: string[];
+}
+
+export interface ResumeTailoringGap {
+  requirementId: string;
+  kind: JobRequirementKind;
+  text: string;
+  importance: number | null;
+  state: "gap" | "ambiguous";
+  evidenceId: string | null;
+  explanation: string;
+}
+
+export interface ResumeTailoringPlan {
+  sourceProjectionId: string;
+  jobId: string;
+  generatedAt: string;
+  suggestedEvidenceIds: string[];
+  retainedSourceEvidenceIds: string[];
+  addedEvidenceIds: string[];
+  omittedSourceEvidenceIds: string[];
+  candidates: ResumeTailoringCandidate[];
+  gaps: ResumeTailoringGap[];
+  directCount: number;
+  transferableCount: number;
+  ambiguousCount: number;
+  gapCount: number;
+}
+
+export interface ResumeTailoringPreviewRequest {
+  sourceProjectionId: string;
+  jobId: string;
+}
+
+export interface ResumeTailoringApplyRequest extends ResumeTailoringPreviewRequest {
+  selectedEvidenceIds: string[];
 }

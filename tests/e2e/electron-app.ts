@@ -22,7 +22,7 @@ interface LaunchElectronAppOptions {
 }
 
 /**
- * Launch the Electron app for E2E testing.
+ * Launch the Electron app for E2E testing with an isolated user-data directory.
  *
  * Note: On some Windows environments, Playwright's Electron launcher may fail
  * with "bad option: --remote-debugging-port=0". This is a known compatibility
@@ -42,7 +42,7 @@ export async function launchElectronApp(
 
   console.log("Launching Electron app root:", projectRoot);
   console.log("Electron exe:", electronExe);
-  console.log("Temp data dir:", tempDataDir);
+  console.log("Temp user data dir:", tempDataDir);
 
   const electronApp = await electron.launch({
     executablePath: electronExe,
