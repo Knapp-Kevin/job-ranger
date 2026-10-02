@@ -28,9 +28,6 @@ export const emptyTargetTrackInput: CareerTargetTrackInput = {
 };
 
 export function toTargetTrackInput(track: CareerTargetTrack): CareerTargetTrackInput {
-  const normalizeStrength = (value: string) =>
-    value === "required" || value === "target" ? value : "preferred";
-
   return {
     name: track.name,
     relation: track.relation,
@@ -41,27 +38,24 @@ export function toTargetTrackInput(track: CareerTargetTrack): CareerTargetTrackI
       geography: {
         ...track.constraints.geography,
         locations: [...track.constraints.geography.locations],
-        strength: normalizeStrength(track.constraints.geography.strength),
       },
       workModes: {
         values: [...track.constraints.workModes.values],
-        strength: normalizeStrength(track.constraints.workModes.strength),
+        strength: track.constraints.workModes.strength,
       },
       employmentArrangements: {
         values: [...track.constraints.employmentArrangements.values],
-        strength: normalizeStrength(track.constraints.employmentArrangements.strength),
+        strength: track.constraints.employmentArrangements.strength,
       },
       compensation: {
         ...track.constraints.compensation,
-        floorStrength: normalizeStrength(track.constraints.compensation.floorStrength),
       },
       onCall: {
         ...track.constraints.onCall,
-        strength: normalizeStrength(track.constraints.onCall.strength),
       },
       industries: {
         values: [...track.constraints.industries.values],
-        strength: normalizeStrength(track.constraints.industries.strength),
+        strength: track.constraints.industries.strength,
       },
     },
     isActive: track.isActive,
