@@ -1,8 +1,10 @@
+import { randomUUID } from "node:crypto";
 import type {
   ApplicationUpdate,
   CareerProfile,
   CareerSearchConstraints,
   CareerTargetTrack,
+  CareerTargetTrackInput,
   TrackedApplication,
 } from "../../src/shared/contracts.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
@@ -192,6 +194,67 @@ export class CareerRepository {
       "SELECT * FROM career_target_tracks ORDER BY is_active DESC, updated_at DESC, created_at ASC;",
     );
     return rows.map(mapTargetTrack);
+  }
+
+  async getTargetTrackById(id: string): Promise<CareerTargetTrack | null> {
+    const row = await this.sqlite.queryOne<TargetTrackRow>(
+      sql`SELECT * FROM career_target_tracks WHERE id = ${id} LIMIT 1;`,
+    );
+    return row ? mapTargetTrack(row) : null;
+  }
+
+  async createTargetTrack(input: CareerTargetTrackInput): Promise<CareerTargetTrack> {
+    const now = new Date().toISOString();
+    const row = await this.sqlite.queryOne<TargetTrackRow>(sql`
+      INSERT INTO career_target_tracks (
+        id, name, relation, role_titles_json, seniority, direction,
+        constraints_json, origin, is_active, created_at, updated_at
+      ) VALUES (
+        ${`track-${randomUUID()}`}, ${input.name}, ${input.relation},
+        ${JSON.stringify(input.roleTitles)}, ${input.seniority}, ${input.direction},
+        ${JSON.stringify(input.constraints)}, ${"user"}, ${input.isActive}, ${now}, ${now}
+      )
+      RETURNING *;
+    `);
+    if (!row) throw new Error("Failed to create target track");
+    return mapTargetTrack(row);
+  }
+
+  async updateTargetTrack(
+    id: string,
+    input: CareerTargetTrackInput,
+  ): Promise<CareerTargetTrack> {
+    const current = await this.getTargetTrackById(id);
+    if (!current) throw new Error(`Target track ${id} not found`);
+
+    const row = await this.sqlite.queryOne<TargetTrackRow>(sql`
+      UPDATE career_target_tracks
+      SET
+        name = ${input.name},
+        relation = ${input.relation},
+        role_titles_json = ${JSON.stringify(input.roleTitles)},
+        seniority = ${input.seniority},
+        direction = ${input.direction},
+        constraints_json = ${JSON.stringify(input.constraints)},
+        origin = ${"user"},
+        is_active = ${input.isActive},
+        updated_at = ${new Date().toISOString()}
+      WHERE id = ${id}
+      RETURNING *;
+    `);
+    if (!row) throw new Error(`Failed to update target track ${id}`);
+    return mapTargetTrack(row);
+  }
+
+  async deleteTargetTrack(id: string): Promise<void> {
+    const current = await this.getTargetTrackById(id);
+    if (!current) throw new Error(`Target track ${id} not found`);
+    if (current.origin === "legacy-profile") {
+      throw new Error(
+        "Edit the Career Profile bridge track before deleting it so it is not recreated by legacy profile synchronization.",
+      );
+    }
+    await this.sqlite.exec(sql`DELETE FROM career_target_tracks WHERE id = ${id};`);
   }
 
   async syncLegacyTargetTrack(profile: CareerProfile): Promise<void> {
