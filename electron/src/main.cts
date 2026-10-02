@@ -56,6 +56,7 @@ function createWindow(): void {
     webPreferences: {
       nodeIntegration: false,
       contextIsolation: true,
+      sandbox: true,
       preload: path.join(moduleDirectory, "preload.cjs"),
       webSecurity: true,
     },
