@@ -7,6 +7,7 @@ const {
   isPublicIpv6,
   validateAcquisitionUrlSyntax,
 } = require("../electron-runtime/electron/src/acquisition-network-policy.cjs");
+const { fetchJson } = require("../electron-runtime/electron/src/scrapers.cjs");
 
 function assertPolicyRejects(operation) {
   return assert.rejects(operation, (error) => {
@@ -86,6 +87,31 @@ async function run() {
       throw new Error("dns lookup detail that should not escape");
     }),
   );
+
+  const fetchCalls = [];
+  const redirectingFetch = async (url) => {
+    fetchCalls.push(String(url));
+    if (String(url) === "https://public.example/jobs") {
+      return new Response(null, {
+        status: 302,
+        headers: { location: "http://internal.example/admin" },
+      });
+    }
+    throw new Error("The private redirect target must never be fetched");
+  };
+  const redirectResolver = async (hostname) =>
+    hostname === "public.example" ? ["93.184.216.34"] : ["10.0.0.5"];
+
+  await assertPolicyRejects(() =>
+    fetchJson("https://public.example/jobs", {
+      fetchImpl: redirectingFetch,
+      userAgent: "Job Ranger Test",
+      timeoutMs: 1000,
+      retryCount: 0,
+      resolveHost: redirectResolver,
+    }),
+  );
+  assert.deepEqual(fetchCalls, ["https://public.example/jobs"]);
 
   console.log("Acquisition network policy tests passed!");
 }
