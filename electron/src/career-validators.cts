@@ -10,6 +10,7 @@ import type {
   PastedResumeInput,
   PayBasis,
   TrackedApplication,
+  UserAuthoredEvidenceInput,
 } from "../../src/shared/contracts.js";
 
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
@@ -27,6 +28,15 @@ function requireString(value: unknown, label: string, maxLength = 10000): string
     throw new Error(`${label} is too long`);
   }
   return value;
+}
+
+function optionalString(
+  value: unknown,
+  label: string,
+  maxLength = 1000,
+): string | undefined {
+  if (value === undefined || value === null) return undefined;
+  return requireString(value, label, maxLength).trim() || undefined;
 }
 
 /**
@@ -63,6 +73,10 @@ function stringArray(value: unknown, label: string): string[] {
     throw new Error(`${label} contains too many items`);
   }
   return value.map((item, index) => requireString(item, `${label}[${index}]`, 500));
+}
+
+function optionalStringArray(value: unknown, label: string): string[] | undefined {
+  return value === undefined ? undefined : stringArray(value, label);
 }
 
 function applicationStatus(value: unknown): ApplicationStatus {
@@ -194,6 +208,30 @@ export function validatePastedResumeInput(value: unknown): PastedResumeInput {
   return {
     label: label || "Pasted career evidence",
     text,
+  };
+}
+
+export function validateUserAuthoredEvidenceInput(
+  value: unknown,
+): UserAuthoredEvidenceInput {
+  const record = requireRecord(value, "User-authored Career Evidence");
+  const statement = requireString(record.statement, "Evidence statement", 20_000).trim();
+  if (!statement) {
+    throw new Error("Evidence statement cannot be empty");
+  }
+
+  return {
+    subjectType: evidenceSubjectType(record.subjectType),
+    statement,
+    organization: optionalString(record.organization, "Evidence organization"),
+    titleOrName: optionalString(record.titleOrName, "Evidence title or name"),
+    startDate: optionalString(record.startDate, "Evidence start date", 100),
+    endDate: optionalString(record.endDate, "Evidence end date", 100),
+    skills: optionalStringArray(record.skills, "Evidence skills"),
+    methodsOrTools: optionalStringArray(record.methodsOrTools, "Evidence methods or tools"),
+    scope: optionalStringArray(record.scope, "Evidence scope"),
+    outcomes: optionalStringArray(record.outcomes, "Evidence outcomes"),
+    metrics: optionalStringArray(record.metrics, "Evidence metrics"),
   };
 }
 
