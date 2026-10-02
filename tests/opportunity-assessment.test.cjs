@@ -135,6 +135,30 @@ function coverage(items) {
 
   {
     const result = buildOpportunityAssessment(
+      job({ title: 'Customer Success Manager', descriptionSnippet: 'Lead customer onboarding programs.' }),
+      track({ roleTitles: ['Customer Success Manager'] }),
+      coverage([requirement('r5', 'responsibility', 'Lead customer onboarding programs.', 'transferable', { id: 'e5' })]),
+      now,
+    );
+    assert.equal(result.eligibility.status, 'likely');
+    assert.equal(result.evidenceCoverage.transferableCount, 1);
+    assert.equal(result.evidenceCoverage.status, 'strong');
+  }
+
+  {
+    const result = buildOpportunityAssessment(
+      job({ title: 'Warehouse Supervisor', location: 'Baltimore, MD', descriptionSnippet: 'Lead warehouse operations and inventory control.' }),
+      track({ roleTitles: ['Warehouse Supervisor'], workModes: { values: ['on-site'], strength: 'required' } }),
+      coverage([requirement('r6', 'responsibility', 'Lead warehouse operations.', 'direct', { id: 'e6' })]),
+      now,
+    );
+    assert.equal(result.eligibility.status, 'unclear');
+    assert.equal(result.preferenceAlignment.status, 'mixed');
+    assert.ok(result.preferenceAlignment.unknowns.some((item) => item.includes('does not explicitly identify a work mode')));
+  }
+
+  {
+    const result = buildOpportunityAssessment(
       job({ title: 'Software Engineer', descriptionSnippet: 'Build production services and APIs.' }),
       track({ roleTitles: ['Customer Success Manager'] }),
       coverage([]),
