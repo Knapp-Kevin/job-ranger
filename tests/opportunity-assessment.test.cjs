@@ -135,7 +135,7 @@ function coverage(items) {
 
   {
     const result = buildOpportunityAssessment(
-      job({ title: 'Implementation Project Manager', descriptionSnippet: 'Lead implementation programs.' }),
+      job({ title: 'Software Engineer', descriptionSnippet: 'Build production services and APIs.' }),
       track({ roleTitles: ['Customer Success Manager'] }),
       coverage([]),
       now,
