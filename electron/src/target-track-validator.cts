@@ -84,6 +84,16 @@ function enumArray<T extends string>(
   return values as T[];
 }
 
+function requireValuesWhenRequired(
+  values: readonly unknown[],
+  strength: Exclude<PreferenceStrength, "unspecified">,
+  label: string,
+): void {
+  if (strength === "required" && values.length === 0) {
+    throw new Error(`${label} cannot be required without at least one value`);
+  }
+}
+
 function validateConstraints(value: unknown): CareerSearchConstraints {
   const record = requireRecord(value, "Target track constraints");
   const geography = requireRecord(record.geography, "Geography preference");
@@ -96,11 +106,25 @@ function validateConstraints(value: unknown): CareerSearchConstraints {
   const onCall = requireRecord(record.onCall, "On-call preference");
   const industries = requireRecord(record.industries, "Industry preference");
 
+  const geographyLocations = stringArray(geography.locations, "Geography locations");
+  const geographyRadius = nullableNumber(geography.radiusMiles, "Geography radius");
+  const geographyStrength = preferenceStrength(geography.strength, "Geography strength");
+  if (
+    geographyStrength === "required" &&
+    geographyLocations.length === 0 &&
+    geographyRadius === null
+  ) {
+    throw new Error("Geography cannot be required without a location or radius");
+  }
+
   const workModeValues = enumArray<WorkMode>(
     workModes.values,
     "Work modes",
     ["remote", "hybrid", "on-site"],
   );
+  const workModeStrength = preferenceStrength(workModes.strength, "Work mode strength");
+  requireValuesWhenRequired(workModeValues, workModeStrength, "Work mode");
+
   const arrangementValues = enumArray<EmploymentArrangement>(
     arrangements.values,
     "Employment arrangements",
@@ -115,37 +139,60 @@ function validateConstraints(value: unknown): CareerSearchConstraints {
       "other",
     ],
   );
+  const arrangementStrength = preferenceStrength(
+    arrangements.strength,
+    "Employment arrangement strength",
+  );
+  requireValuesWhenRequired(
+    arrangementValues,
+    arrangementStrength,
+    "Employment arrangement",
+  );
+
+  const floor = nullableNumber(compensation.floor, "Compensation floor");
+  const target = nullableNumber(compensation.target, "Compensation target");
+  const floorStrength = preferenceStrength(
+    compensation.floorStrength,
+    "Compensation floor strength",
+  );
+  if (floorStrength === "required" && floor === null) {
+    throw new Error("Compensation floor cannot be required without a floor value");
+  }
+  if (floor !== null && target !== null && target < floor) {
+    throw new Error("Compensation target cannot be below the compensation floor");
+  }
+
+  const industryValues = stringArray(industries.values, "Industries");
+  const industryStrength = preferenceStrength(industries.strength, "Industry strength");
+  requireValuesWhenRequired(industryValues, industryStrength, "Industry preference");
 
   return {
     geography: {
-      locations: stringArray(geography.locations, "Geography locations"),
-      radiusMiles: nullableNumber(geography.radiusMiles, "Geography radius"),
-      strength: preferenceStrength(geography.strength, "Geography strength"),
+      locations: geographyLocations,
+      radiusMiles: geographyRadius,
+      strength: geographyStrength,
     },
     workModes: {
       values: workModeValues,
-      strength: preferenceStrength(workModes.strength, "Work mode strength"),
+      strength: workModeStrength,
     },
     employmentArrangements: {
       values: arrangementValues,
-      strength: preferenceStrength(arrangements.strength, "Employment arrangement strength"),
+      strength: arrangementStrength,
     },
     compensation: {
-      floor: nullableNumber(compensation.floor, "Compensation floor"),
-      target: nullableNumber(compensation.target, "Compensation target"),
+      floor,
+      target,
       basis: payBasis(compensation.basis),
-      floorStrength: preferenceStrength(
-        compensation.floorStrength,
-        "Compensation floor strength",
-      ),
+      floorStrength,
     },
     onCall: {
       value: onCallPreference(onCall.value),
       strength: preferenceStrength(onCall.strength, "On-call strength"),
     },
     industries: {
-      values: stringArray(industries.values, "Industries"),
-      strength: preferenceStrength(industries.strength, "Industry strength"),
+      values: industryValues,
+      strength: industryStrength,
     },
   };
 }
