@@ -14,7 +14,7 @@ test.afterAll(async () => {
   await closeElectronApp(fixture);
 });
 
-test("Find Jobs shows evidence coverage and Prepare resume handoff", async () => {
+test("Find Jobs explains a selected-track opportunity assessment without a fit percentage", async () => {
   const { page } = fixture;
 
   await page.getByRole("link", { name: "Career Profile", exact: true }).click();
@@ -35,6 +35,46 @@ test("Find Jobs shows evidence coverage and Prepare resume handoff", async () =>
   });
   await expect(proposal).toBeVisible();
   await proposal.getByRole("button", { name: "Confirm", exact: true }).click();
+
+  await page.evaluate(async () => {
+    await window.electronAPI.career.createTargetTrack({
+      name: "Admin local search",
+      relation: "target",
+      roleTitles: ["Administrative Coordinator"],
+      seniority: null,
+      direction: "Local administrative operations work",
+      constraints: {
+        geography: {
+          locations: ["Annapolis, MD"],
+          radiusMiles: 25,
+          strength: "required",
+        },
+        workModes: {
+          values: [],
+          strength: "preferred",
+        },
+        employmentArrangements: {
+          values: ["full-time"],
+          strength: "required",
+        },
+        compensation: {
+          floor: null,
+          target: null,
+          basis: "annual",
+          floorStrength: "preferred",
+        },
+        onCall: {
+          value: "either",
+          strength: "preferred",
+        },
+        industries: {
+          values: [],
+          strength: "preferred",
+        },
+      },
+      isActive: true,
+    });
+  });
 
   const status = await page.evaluate(() => window.electronAPI.system.getStatus());
   const now = "2026-09-25T17:00:00.000Z";
@@ -66,13 +106,22 @@ test("Find Jobs shows evidence coverage and Prepare resume handoff", async () =>
   await page.reload();
   await page.getByRole("link", { name: "Find Jobs", exact: true }).click();
   await expect(page.getByText("Administrative Coordinator", { exact: true })).toBeVisible();
+  await expect(page.getByRole("combobox", { name: "Assessment target track", exact: true })).toHaveValue(/track-/);
 
-  await page.getByRole("button", { name: /Evidence coverage/ }).click();
-  await expect(page.getByText(/supported/).first()).toBeVisible();
-  await expect(page.getByText("Transferable", { exact: true }).or(page.getByText("Supported", { exact: true })).first()).toBeVisible();
-  await expect(page.getByText(/Gaps stay gaps/)).toBeVisible();
+  const jobCard = page.locator("article").filter({ hasText: "Administrative Coordinator" });
+  await expect(jobCard).not.toContainText(/\d+%/);
 
-  await page.getByRole("button", { name: "Prepare resume", exact: true }).click();
+  await jobCard.getByRole("button", { name: /Opportunity assessment/ }).click();
+  await expect(jobCard.getByText("Eligibility · Likely", { exact: true })).toBeVisible();
+  await expect(jobCard.getByText("Career · Aligned", { exact: true })).toBeVisible();
+  await expect(jobCard.getByText("Preferences · Aligned", { exact: true })).toBeVisible();
+  await expect(jobCard.getByText("Evidence · Partial", { exact: true })).toBeVisible();
+  await expect(jobCard.getByText("Supported", { exact: true }).first()).toBeVisible();
+  await expect(jobCard.getByText("Gap", { exact: true }).first()).toBeVisible();
+  await expect(jobCard.getByText("What Job Ranger still does not know", { exact: true })).toBeVisible();
+  await expect(jobCard.getByText(/not a hiring prediction/)).toBeVisible();
+
+  await jobCard.getByRole("button", { name: "Prepare resume", exact: true }).click();
   await expect(
     page.getByRole("heading", {
       name: "Build the document from facts you have actually confirmed.",
