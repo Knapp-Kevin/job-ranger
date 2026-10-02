@@ -137,6 +137,12 @@ async function run() {
       "migration must not invent required/preferred semantics",
     );
 
+    await assert.rejects(
+      () => career.deleteTargetTrack("legacy-default"),
+      /cannot be deleted/i,
+      "the migration bridge must remain reserved while Career Profile can recreate it",
+    );
+
     const promoted = await career.updateTargetTrack(
       "legacy-default",
       trackInput({
@@ -148,6 +154,12 @@ async function run() {
     assert.equal(promoted.origin, "user", "editing the bridge must promote it to user authority");
     assert.deepEqual(promoted.roleTitles, ["Program Coordinator"]);
     assert.equal(promoted.constraints.workModes.strength, "required");
+
+    await assert.rejects(
+      () => career.deleteTargetTrack("legacy-default"),
+      /cannot be deleted/i,
+      "promotion must not make the reserved bridge deletable before legacy retirement",
+    );
 
     await career.saveProfile({
       ...first,
