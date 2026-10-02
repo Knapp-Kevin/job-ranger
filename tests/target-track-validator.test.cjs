@@ -59,21 +59,21 @@ assert.throws(
   /target cannot be below/i,
 );
 
-assert.throws(
-  () =>
-    validateCareerTargetTrackInput({
-      ...validTrack(),
-      constraints: {
-        ...validTrack().constraints,
-        geography: {
-          locations: ["Annapolis, MD"],
-          radiusMiles: 25,
-          strength: "unspecified",
-        },
-      },
-    }),
-  /required, preferred, or target/i,
-  "unspecified is migration-only and must not be accepted from authored IPC input",
+const migrated = validateCareerTargetTrackInput({
+  ...validTrack(),
+  constraints: {
+    ...validTrack().constraints,
+    geography: {
+      locations: ["Annapolis, MD"],
+      radiusMiles: 25,
+      strength: "unspecified",
+    },
+  },
+});
+assert.equal(
+  migrated.constraints.geography.strength,
+  "unspecified",
+  "structural validation must preserve migration-only authority state; repository writes decide whether it is allowed",
 );
 
 assert.throws(
