@@ -74,6 +74,7 @@ test("promotes the legacy bridge and maintains multiple independent target track
     .selectOption("required");
   await page.getByLabel("Compensation floor", { exact: true }).fill("65");
   await page.getByLabel("Compensation target", { exact: true }).fill("85");
+  await page.getByLabel("Compensation floor importance", { exact: true }).selectOption("required");
   await page.getByLabel("Track pay basis", { exact: true }).selectOption("hourly");
   await page.getByRole("button", { name: "Save target track", exact: true }).click();
   await expect(page.getByText("Saved", { exact: true })).toBeVisible();
