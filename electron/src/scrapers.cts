@@ -7,6 +7,11 @@ import { createGenericHtmlAdapter, browserRequiredAdapter } from "./adapters/gen
 import { toSnippet, extractJobsFromHtml } from "./extractors.cjs";
 import { PLATFORM_SELECTORS, getSelectorsForSource } from "./platform-selectors.cjs";
 import { parseSalary } from "./salary-parser.cjs";
+import {
+  assertPublicAcquisitionUrl,
+  validateAcquisitionUrlSyntax,
+  type AcquisitionHostResolver,
+} from "./acquisition-network-policy.cjs";
 
 export { toSnippet, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
 
@@ -41,6 +46,7 @@ export interface ScraperContext {
   timeoutMs: number;
   retryCount: number;
   loadPageHtml?: (url: string) => Promise<string>;
+  resolveHost?: AcquisitionHostResolver;
 }
 
 export interface SourceDetectionResult {
@@ -82,7 +88,7 @@ function isKnownBrowserPortal(host: string): boolean {
 
 export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
   try {
-    const parsed = new URL(rawUrl);
+    const parsed = validateAcquisitionUrlSyntax(rawUrl);
     const normalizedUrl = parsed.toString();
     const host = parsed.hostname.toLowerCase();
     const pathname = parsed.pathname.toLowerCase();
@@ -132,6 +138,42 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
   return { sourceType: "unsupported", sourceIdentifier: null };
 }
 
+const redirectStatuses = new Set([301, 302, 303, 307, 308]);
+const maxRedirects = 5;
+
+async function validateContextUrl(url: string, context: ScraperContext): Promise<string> {
+  if (context.resolveHost) {
+    return assertPublicAcquisitionUrl(url, context.resolveHost);
+  }
+  return validateAcquisitionUrlSyntax(url).toString();
+}
+
+async function fetchWithAcquisitionPolicy(
+  url: string,
+  context: ScraperContext,
+  init: RequestInit,
+): Promise<Response> {
+  let currentUrl = await validateContextUrl(url, context);
+
+  for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
+    const response = await context.fetchImpl(currentUrl, {
+      ...init,
+      redirect: "manual",
+    });
+
+    if (!redirectStatuses.has(response.status)) return response;
+
+    const location = response.headers.get("location");
+    if (!location) return response;
+    if (redirectCount === maxRedirects) {
+      throw new Error("Too many redirects while fetching this source.");
+    }
+
+    currentUrl = await validateContextUrl(new URL(location, currentUrl).toString(), context);
+  }
+
+  throw new Error("Too many redirects while fetching this source.");
+}
 
 export async function fetchJson<T>(url: string, context: ScraperContext): Promise<T> {
   let lastError: Error | null = null;
@@ -139,11 +181,11 @@ export async function fetchJson<T>(url: string, context: ScraperContext): Promis
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), context.timeoutMs);
     try {
-      const response = await context.fetchImpl(url, {
+      const response = await fetchWithAcquisitionPolicy(url, context, {
         headers: { Accept: "application/json", "User-Agent": context.userAgent },
         signal: controller.signal,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status} while fetching ${url}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status} while fetching a source endpoint`);
       return (await response.json()) as T;
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
@@ -151,7 +193,7 @@ export async function fetchJson<T>(url: string, context: ScraperContext): Promis
       clearTimeout(timeout);
     }
   }
-  throw lastError ?? new Error(`Failed to fetch ${url}`);
+  throw lastError ?? new Error("Failed to fetch source data");
 }
 
 async function fetchText(url: string, context: ScraperContext): Promise<string> {
@@ -160,11 +202,11 @@ async function fetchText(url: string, context: ScraperContext): Promise<string> 
     const controller = new AbortController();
     const timeout = setTimeout(() => controller.abort(), context.timeoutMs);
     try {
-      const response = await context.fetchImpl(url, {
+      const response = await fetchWithAcquisitionPolicy(url, context, {
         headers: { Accept: "text/html,application/xhtml+xml", "User-Agent": context.userAgent },
         signal: controller.signal,
       });
-      if (!response.ok) throw new Error(`HTTP ${response.status} while fetching ${url}`);
+      if (!response.ok) throw new Error(`HTTP ${response.status} while fetching a source page`);
       return await response.text();
     } catch (error) {
       lastError = error instanceof Error ? error : new Error(String(error));
@@ -172,9 +214,8 @@ async function fetchText(url: string, context: ScraperContext): Promise<string> 
       clearTimeout(timeout);
     }
   }
-  throw lastError ?? new Error(`Failed to fetch ${url}`);
+  throw lastError ?? new Error("Failed to fetch source page");
 }
-
 
 export async function extractJobsFromRemotePage(
   url: string,
@@ -182,16 +223,17 @@ export async function extractJobsFromRemotePage(
   context: ScraperContext,
   preferBrowser = false,
 ): Promise<ScrapedJob[]> {
+  const safeUrl = await validateContextUrl(url, context);
   const loaders: Array<() => Promise<string>> = [];
-  if (preferBrowser && context.loadPageHtml) loaders.push(() => context.loadPageHtml!(url));
-  loaders.push(() => fetchText(url, context));
-  if (!preferBrowser && context.loadPageHtml) loaders.push(() => context.loadPageHtml!(url));
+  if (preferBrowser && context.loadPageHtml) loaders.push(() => context.loadPageHtml!(safeUrl));
+  loaders.push(() => fetchText(safeUrl, context));
+  if (!preferBrowser && context.loadPageHtml) loaders.push(() => context.loadPageHtml!(safeUrl));
 
   let lastError: Error | null = null;
   for (const loadHtml of loaders) {
     try {
       const html = await loadHtml();
-      const jobs = extractJobsFromHtml(url, html, sourceType);
+      const jobs = extractJobsFromHtml(safeUrl, html, sourceType);
       if (jobs.length > 0) return jobs;
       lastError = new Error("No job listings extracted. A dedicated adapter may be required.");
     } catch (error) {
