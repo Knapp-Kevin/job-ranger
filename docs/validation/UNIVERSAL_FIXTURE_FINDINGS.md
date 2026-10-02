@@ -24,6 +24,19 @@ The regression test runs every fixture through the production requirement extrac
 | CF | Contractor/freelancer | contract/freelance arrangements, project evidence, hourly pay | Core flow works without assuming permanent employment; engagement chronology and portfolio references need richer semantics. |
 | RT | Return-to-work/nonlinear history | volunteer/project evidence, non-linear chronology | Core flow works without penalizing timeline gaps or requiring conventional employment chronology. |
 
+## Defect exposed by the suite
+
+The initial RT run exposed a production assessment bug: a listing that explicitly said `no on-call requirement` was treated as though on-call work were required because the deterministic evaluator only detected the presence of the phrase `on-call` and ignored negation.
+
+The assessment now preserves on-call polarity:
+
+- explicit on-call requirement + user avoids on-call => mismatch;
+- explicit no-on-call requirement + user avoids on-call => match;
+- explicit no-on-call requirement + user is okay with on-call => match;
+- listing does not establish on-call status => unknown.
+
+A focused regression test now covers the negated case in addition to the RT fixture. This is the intended fixture-program behavior: a reasonable fixture changed production behavior rather than being weakened to preserve a green test.
+
 ## Cross-cutting findings
 
 ### Proven by the current fixture suite
@@ -43,13 +56,12 @@ These are candidates for generic model expansion because more than one materiall
 1. **Schedule / shift availability**: exposed by hourly/local and licensed-healthcare contexts. This belongs in target-track constraints rather than an occupation-specific UI.
 2. **Richer credential semantics**: issuer, jurisdiction, status, expiration/valid-through, and possibly credential identifier where the user chooses to store it. Exposed by trades and healthcare.
 3. **Portfolio / work-sample references**: exposed by technical and contractor/freelancer contexts. The representation should support safe links or local references without turning the evidence model into a document dump.
-4. **Travel tolerance**: exposed by executive work and plausibly other roles. It belongs in optional search constraints if validated further.
 
-### Gaps that remain context-specific until broader evidence appears
+### Candidates that still need broader evidence
 
-- federal grade/series/eligibility semantics;
-- federal resume/application artifact rules;
-- confidential-search/discretion preferences.
+- **Travel tolerance** is exposed by the executive fixture and is already part of #83's required-model discussion, but this fixture version has not yet demonstrated it across multiple materially different contexts.
+- **Confidential-search/discretion preferences** are currently executive-specific.
+- **Federal grade/series/eligibility semantics** and **federal resume/application artifact rules** remain government-specific.
 
 Those should not become global required fields merely because one fixture needs them. The governing question remains whether a generic optional capability improves more than one legitimate workflow without contaminating everyone else's UI.
 
