@@ -1,10 +1,27 @@
-name: R4 Electron Validation
+name: Electron E2E
 
 on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'electron/**'
+      - 'src/**'
+      - 'tests/e2e/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
+      - '.github/workflows/r4-electron-validation.yml'
   push:
     branches:
       - implementation/64-deterministic-tailoring
     paths:
+      - 'electron/**'
+      - 'src/**'
+      - 'tests/e2e/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'playwright.config.ts'
       - '.github/workflows/r4-electron-validation.yml'
 
 permissions:
