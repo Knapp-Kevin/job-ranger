@@ -40,6 +40,13 @@ const desktopApi: DesktopApi & ResumeDesktopApi = {
   career: {
     getProfile: () => ipcRenderer.invoke("career:get-profile"),
     saveProfile: (profile) => ipcRenderer.invoke("career:save-profile", profile),
+    listTargetTracks: () => ipcRenderer.invoke("career:list-target-tracks"),
+    createTargetTrack: (input) =>
+      ipcRenderer.invoke("career:create-target-track", input),
+    updateTargetTrack: (id, input) =>
+      ipcRenderer.invoke("career:update-target-track", id, input),
+    deleteTargetTrack: (id) =>
+      ipcRenderer.invoke("career:delete-target-track", id),
     migrateLegacy: (payload) => ipcRenderer.invoke("career:migrate-legacy", payload),
     selectResumeImport: () => ipcRenderer.invoke("career:select-resume-import"),
     importPastedText: (input) =>
