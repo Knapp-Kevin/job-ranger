@@ -3,6 +3,7 @@ import type {
   CandidateEvidence,
   CandidateEvidenceReviewItem,
   CareerProfile,
+  CareerTargetTrack,
   EvidenceReviewUpdate,
   LegacyCareerMigration,
   PastedResumeInput,
@@ -12,10 +13,12 @@ import type {
 } from "./career-contracts.js";
 import type { UserAuthoredEvidenceInput } from "./evidence-authoring.js";
 import type { JobEvidenceCoverage } from "./requirement-coverage.js";
+import type { CareerTargetTrackInput } from "./target-track-input.js";
 
 export * from "./career-contracts.js";
 export * from "./evidence-authoring.js";
 export * from "./requirement-coverage.js";
+export * from "./target-track-input.js";
 
 export type CompanySourceType =
   | "greenhouse"
@@ -335,6 +338,13 @@ export interface DesktopApi {
   career: {
     getProfile: () => Promise<CareerProfile | null>;
     saveProfile: (profile: CareerProfile) => Promise<CareerProfile>;
+    listTargetTracks: () => Promise<CareerTargetTrack[]>;
+    createTargetTrack: (input: CareerTargetTrackInput) => Promise<CareerTargetTrack>;
+    updateTargetTrack: (
+      id: string,
+      input: CareerTargetTrackInput,
+    ) => Promise<CareerTargetTrack>;
+    deleteTargetTrack: (id: string) => Promise<void>;
     migrateLegacy: (payload: LegacyCareerMigration) => Promise<void>;
     selectResumeImport: () => Promise<ResumeImportResult | null>;
     importPastedText: (input: PastedResumeInput) => Promise<ResumeImportResult>;
