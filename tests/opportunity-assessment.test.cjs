@@ -182,6 +182,24 @@ function coverage(items) {
     assert.ok(result.unknowns.some((item) => item.includes('may not expose every requirement or field')));
   }
 
+  {
+    const result = buildOpportunityAssessment(
+      job({
+        title: 'Operations Coordinator',
+        descriptionSnippet: 'Hybrid role with no on-call requirement.',
+      }),
+      track({
+        roleTitles: ['Operations Coordinator'],
+        onCall: { value: 'no', strength: 'required' },
+      }),
+      coverage([requirement('r-oncall-negated', 'responsibility', 'Coordinate operations.', 'direct', { id: 'e-oncall' })]),
+      now,
+    );
+    assert.equal(result.preferenceAlignment.status, 'aligned');
+    assert.equal(result.eligibility.status, 'likely');
+    assert.ok(result.preferenceAlignment.matches.some((item) => item.includes('not required')));
+  }
+
   console.log('opportunity assessment tests passed');
 })().catch((error) => {
   console.error(error);
