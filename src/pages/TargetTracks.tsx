@@ -45,18 +45,21 @@ function StrengthSelect({
   label,
 }: {
   value: PreferenceStrength;
-  onChange: (value: Exclude<PreferenceStrength, "unspecified">) => void;
+  onChange: (value: PreferenceStrength) => void;
   label: string;
 }) {
   return (
     <select
       className="select-shell w-full sm:w-auto sm:min-w-32"
       aria-label={label}
-      value={value === "unspecified" ? "preferred" : value}
-      onChange={(event) =>
-        onChange(event.target.value as Exclude<PreferenceStrength, "unspecified">)
-      }
+      value={value}
+      onChange={(event) => onChange(event.target.value as PreferenceStrength)}
     >
+      {value === "unspecified" && (
+        <option value="unspecified" disabled>
+          Not specified
+        </option>
+      )}
       <option value="required">Required</option>
       <option value="preferred">Preferred</option>
       <option value="target">Target</option>
@@ -227,7 +230,7 @@ export function TargetTracks() {
 
           {editingTrack?.origin === "legacy-profile" && (
             <div className="support-note mt-5 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
-              This mirrors the older Career Profile. Saving changes promotes it to user authority, after which Career Profile edits no longer overwrite it.
+              This mirrors the older Career Profile. Saving changes promotes it to user authority, after which Career Profile edits no longer overwrite it. Settings marked Not specified remain unknown until you choose a meaning for them.
             </div>
           )}
           {editingId === "legacy-default" && editingTrack?.origin === "user" && (
