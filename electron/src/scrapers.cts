@@ -145,6 +145,9 @@ async function validateContextUrl(url: string, context: ScraperContext): Promise
   if (context.resolveHost) {
     return assertPublicAcquisitionUrl(url, context.resolveHost);
   }
+  if (context.fetchImpl === globalThis.fetch) {
+    return assertPublicAcquisitionUrl(url);
+  }
   return validateAcquisitionUrlSyntax(url).toString();
 }
 
