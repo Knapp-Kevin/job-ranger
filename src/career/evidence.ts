@@ -6,6 +6,7 @@ import type {
   PastedResumeInput,
   ResumeImportResult,
   SourceArtifact,
+  UserAuthoredEvidenceInput,
 } from "../shared/contracts";
 import { getDesktopApi } from "../services/api";
 
@@ -89,6 +90,29 @@ export function useCareerEvidence() {
     [runImport],
   );
 
+  const create = useCallback(
+    async (input: UserAuthoredEvidenceInput) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const created = await getDesktopApi().career.createUserEvidence(input);
+        await refresh();
+        window.dispatchEvent(new CustomEvent(evidenceEvent));
+        return created;
+      } catch (createError) {
+        setError(
+          createError instanceof Error
+            ? createError.message
+            : "Unable to add career evidence",
+        );
+        throw createError;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [refresh],
+  );
+
   const review = useCallback(
     async (id: string, update: EvidenceReviewUpdate) => {
       setBusy(true);
@@ -96,10 +120,6 @@ export function useCareerEvidence() {
       try {
         const reviewed = await getDesktopApi().career.reviewEvidence(id, update);
 
-        // The backend write is authoritative. Reflect that returned state immediately
-        // instead of making the user wait for a second IPC round trip before the
-        // review queue changes. A canonical refresh still follows to reconcile source
-        // metadata and any concurrent changes.
         setItems((current) =>
           current.map((item) =>
             item.evidence.id === reviewed.id
@@ -181,6 +201,7 @@ export function useCareerEvidence() {
     refresh,
     importFile,
     importPastedText,
+    create,
     review,
     merge,
   };

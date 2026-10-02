@@ -21,6 +21,7 @@ import {
   validateEvidenceReviewUpdate,
   validateLegacyCareerMigration,
   validatePastedResumeInput,
+  validateUserAuthoredEvidenceInput,
 } from "./career-validators.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
@@ -306,6 +307,9 @@ function registerIpcHandlers(): void {
   });
   ipcMain.handle("career:import-pasted-text", (_event, input) =>
     requireCareerBackend().importPastedText(validatePastedResumeInput(input)),
+  );
+  ipcMain.handle("career:create-user-evidence", (_event, input) =>
+    requireCareerBackend().createUserEvidence(validateUserAuthoredEvidenceInput(input)),
   );
   ipcMain.handle("career:list-source-artifacts", () =>
     requireCareerBackend().listSourceArtifacts(),
