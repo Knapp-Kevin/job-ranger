@@ -92,24 +92,36 @@ export function Onboarding({ profile, saveProfile }: OnboardingProps) {
       setError("Add at least one kind of work you want to pursue.");
       return;
     }
+
+    const normalizedHomeLocation = homeLocation.trim();
+    if (locationStrength === "required" && !normalizedHomeLocation) {
+      setError("Add a home area before making location a requirement.");
+      return;
+    }
     if (workModeStrength === "required" && workModes.length === 0) {
       setError("Choose at least one work mode before making work mode a requirement.");
       return;
     }
 
+    const parsedMinimumPay = minimumPay.trim() ? Number(minimumPay) : null;
+    if (parsedMinimumPay !== null && (!Number.isFinite(parsedMinimumPay) || parsedMinimumPay < 0)) {
+      setError("Minimum pay must be a non-negative number.");
+      return;
+    }
+    if (payStrength === "required" && parsedMinimumPay === null) {
+      setError("Add a minimum pay before making compensation a requirement.");
+      return;
+    }
+
+    const normalizedRadiusMiles = normalizedHomeLocation ? profile.radiusMiles : null;
+
     setSaving(true);
     setError(null);
     try {
-      const parsedMinimumPay = minimumPay.trim() ? Number(minimumPay) : null;
-      if (parsedMinimumPay !== null && (!Number.isFinite(parsedMinimumPay) || parsedMinimumPay < 0)) {
-        setError("Minimum pay must be a non-negative number.");
-        return;
-      }
-
-      const normalizedHomeLocation = homeLocation.trim();
       const savedProfile = await saveProfile({
         ...profile,
         homeLocation: normalizedHomeLocation,
+        radiusMiles: normalizedRadiusMiles,
         minimumPay: parsedMinimumPay,
         payBasis,
         targetTitles: targets,
