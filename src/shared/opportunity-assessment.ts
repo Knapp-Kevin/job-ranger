@@ -4,6 +4,7 @@ import type {
   PayBasis,
   PreferenceStrength,
   WorkMode,
+  WorkSchedule,
 } from "./career-contracts.js";
 import type { JobEvidenceCoverage } from "./requirement-coverage.js";
 
@@ -119,6 +120,36 @@ function detectWorkMode(job: AssessableJob): WorkMode | null {
     return "on-site";
   }
   return null;
+}
+
+function detectWorkSchedules(job: AssessableJob): WorkSchedule[] {
+  const text = normalize(`${job.title} ${job.descriptionSnippet}`);
+  const schedules = new Set<WorkSchedule>();
+
+  if (/\bday shift\b|\bdaytime\b|\bfirst shift\b|\b1st shift\b/.test(text)) {
+    schedules.add("day");
+  }
+  if (/\bevening shift\b|\bswing shift\b|\bsecond shift\b|\b2nd shift\b/.test(text)) {
+    schedules.add("evening");
+  }
+  if (/\bnight shift\b|\bovernight\b|\bgraveyard\b|\bthird shift\b|\b3rd shift\b/.test(text)) {
+    schedules.add("night");
+  }
+
+  const weekendsExplicitlyExcluded =
+    /\bno weekends?\b/.test(text) ||
+    /\bweekends? off\b/.test(text) ||
+    /\bdoes not require\b.{0,30}\bweekends?\b/.test(text) ||
+    /\bweekend work\b.{0,30}\b(not required|optional|none)\b/.test(text);
+  if (!weekendsExplicitlyExcluded && /\bweekends?\b/.test(text)) {
+    schedules.add("weekend");
+  }
+
+  if (/\brotating shifts?\b|\bshift rotation\b|\brotating schedule\b/.test(text)) {
+    schedules.add("rotating");
+  }
+
+  return [...schedules];
 }
 
 type OnCallRequirement = "required" | "not-required" | "unknown";
@@ -301,6 +332,37 @@ export function buildOpportunityAssessment(
       detected === null
         ? `The listing does not provide a usable employment arrangement; your track allows ${arrangements.values.join(", ")}.`
         : `Employment arrangement is ${detected}; your track allows ${arrangements.values.join(", ")}.`,
+      matches,
+      misses,
+      preferenceUnknowns,
+      blockers,
+      potentialBlockers,
+    );
+  }
+
+  const schedules = track.constraints.schedules;
+  if (schedules && supplied(schedules.strength, schedules.values.length > 0)) {
+    configuredPreferenceCount += 1;
+    const detected = detectWorkSchedules(job);
+    const allowed = detected.filter((schedule) => schedules.values.includes(schedule));
+    const result =
+      detected.length === 0
+        ? "unknown"
+        : allowed.length === detected.length
+          ? "match"
+          : allowed.length === 0
+            ? "miss"
+            : "unknown";
+    const detail =
+      detected.length === 0
+        ? `The listing does not explicitly identify a work schedule; your track allows ${schedules.values.join(", ")}.`
+        : result === "unknown"
+          ? `The listing mentions multiple schedules (${detected.join(", ")}) and only some overlap with your allowed schedules (${schedules.values.join(", ")}); whether the role can honor your availability is unclear.`
+          : `Work schedule is listed as ${detected.join(", ")}; your track allows ${schedules.values.join(", ")}.`;
+    addConstraintResult(
+      schedules.strength,
+      result,
+      detail,
       matches,
       misses,
       preferenceUnknowns,
