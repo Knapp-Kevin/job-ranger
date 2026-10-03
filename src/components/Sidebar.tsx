@@ -1,6 +1,7 @@
 import { Link, useLocation } from "react-router-dom";
 import {
   Bell,
+  BookOpenText,
   Briefcase,
   Building2,
   Compass,
@@ -17,6 +18,7 @@ const navigation = [
   { name: "Applications", href: "/applications", icon: FileText },
   { name: "Career Profile", href: "/career-profile", icon: UserRound },
   { name: "Career Evidence", href: "/career-evidence/new", icon: Library },
+  { name: "Career Stories", href: "/career-stories", icon: BookOpenText },
   { name: "Target Tracks", href: "/target-tracks", icon: Compass },
   { name: "Resume", href: "/resume", icon: FileText },
   { name: "Companies", href: "/companies", icon: Building2 },
@@ -65,7 +67,7 @@ export function Sidebar() {
       <div className="border-t border-white/10 px-6 py-5 text-sm !text-white/70">
         <p className="font-semibold !text-white/90">Your search, without the spreadsheet circus</p>
         <p className="mt-2 leading-6 !text-white/70">
-          Build your Career Evidence, find promising jobs, create truthful resumes, then track what happens in Applications.
+          Build Career Evidence, turn it into reusable stories and truthful resumes, find promising jobs, then track what happens in Applications.
         </p>
       </div>
     </aside>
