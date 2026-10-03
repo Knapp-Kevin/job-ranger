@@ -7,6 +7,7 @@ import type {
   PreferenceStrength,
   TargetTrackRelation,
   WorkMode,
+  WorkSchedule,
 } from "../../src/shared/contracts.js";
 
 function requireRecord(value: unknown, label: string): Record<string, unknown> {
@@ -107,6 +108,9 @@ function validateConstraints(value: unknown): CareerSearchConstraints {
     record.employmentArrangements,
     "Employment arrangement preference",
   );
+  const schedules = record.schedules === undefined
+    ? null
+    : requireRecord(record.schedules, "Schedule availability");
   const compensation = requireRecord(record.compensation, "Compensation preference");
   const onCall = requireRecord(record.onCall, "On-call preference");
   const industries = requireRecord(record.industries, "Industry preference");
@@ -154,6 +158,21 @@ function validateConstraints(value: unknown): CareerSearchConstraints {
     "Employment arrangement",
   );
 
+  let scheduleValues: WorkSchedule[] = [];
+  let scheduleStrength: PreferenceStrength = "preferred";
+  if (schedules) {
+    scheduleValues = enumArray<WorkSchedule>(
+      schedules.values,
+      "Schedule availability",
+      ["day", "evening", "night", "weekend", "rotating"],
+    );
+    scheduleStrength = preferenceStrength(schedules.strength, "Schedule strength");
+    if (scheduleStrength === "unspecified") {
+      throw new Error("Schedule strength cannot be unspecified because no legacy schedule meaning exists");
+    }
+    requireValuesWhenRequired(scheduleValues, scheduleStrength, "Schedule availability");
+  }
+
   const floor = nullableNumber(compensation.floor, "Compensation floor");
   const target = nullableNumber(compensation.target, "Compensation target");
   const floorStrength = preferenceStrength(
@@ -184,6 +203,10 @@ function validateConstraints(value: unknown): CareerSearchConstraints {
     employmentArrangements: {
       values: arrangementValues,
       strength: arrangementStrength,
+    },
+    schedules: {
+      values: scheduleValues,
+      strength: scheduleStrength,
     },
     compensation: {
       floor,

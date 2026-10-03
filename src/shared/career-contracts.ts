@@ -37,6 +37,7 @@ export type PreferenceStrength =
 
 export type TargetTrackRelation = "current" | "adjacent" | "stretch" | "target";
 export type WorkMode = "remote" | "hybrid" | "on-site";
+export type WorkSchedule = "day" | "evening" | "night" | "weekend" | "rotating";
 export type EmploymentArrangement =
   | "full-time"
   | "part-time"
@@ -69,6 +70,12 @@ export interface CareerSearchConstraints {
   geography: GeographyPreference;
   workModes: PreferenceSet<WorkMode>;
   employmentArrangements: PreferenceSet<EmploymentArrangement>;
+  /**
+   * Optional for backward compatibility with target tracks persisted before
+   * schedule availability became a first-class constraint. New writes
+   * normalize this field through the target-track validator.
+   */
+  schedules?: PreferenceSet<WorkSchedule>;
   compensation: CompensationPreference;
   onCall: {
     value: OnCallPreference;

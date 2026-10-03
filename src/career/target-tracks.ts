@@ -15,6 +15,7 @@ export const emptyTargetTrackInput: CareerTargetTrackInput = {
     geography: { locations: [], radiusMiles: null, strength: "preferred" },
     workModes: { values: [], strength: "preferred" },
     employmentArrangements: { values: [], strength: "preferred" },
+    schedules: { values: [], strength: "preferred" },
     compensation: {
       floor: null,
       target: null,
@@ -47,6 +48,12 @@ export function toTargetTrackInput(track: CareerTargetTrack): CareerTargetTrackI
         values: [...track.constraints.employmentArrangements.values],
         strength: track.constraints.employmentArrangements.strength,
       },
+      schedules: track.constraints.schedules
+        ? {
+            values: [...track.constraints.schedules.values],
+            strength: track.constraints.schedules.strength,
+          }
+        : { values: [], strength: "preferred" },
       compensation: {
         ...track.constraints.compensation,
       },
