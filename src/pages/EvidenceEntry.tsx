@@ -4,7 +4,7 @@ import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useCareerEvidence } from "../career/evidence";
 import { useOnboardingPreference } from "../career/onboarding";
-import type { EvidenceSubjectType } from "../shared/contracts";
+import type { CredentialStatus, EvidenceSubjectType } from "../shared/contracts";
 
 const evidenceTypes: Array<{ value: EvidenceSubjectType; label: string }> = [
   { value: "role", label: "Job or role" },
@@ -39,6 +39,11 @@ export function EvidenceEntry() {
   const [startDate, setStartDate] = useState("");
   const [endDate, setEndDate] = useState("");
   const [skills, setSkills] = useState("");
+  const [credentialIssuer, setCredentialIssuer] = useState("");
+  const [credentialJurisdiction, setCredentialJurisdiction] = useState("");
+  const [credentialStatus, setCredentialStatus] = useState<CredentialStatus | "">("");
+  const [credentialExpiration, setCredentialExpiration] = useState("");
+  const [credentialId, setCredentialId] = useState("");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -49,6 +54,11 @@ export function EvidenceEntry() {
     setStartDate("");
     setEndDate("");
     setSkills("");
+    setCredentialIssuer("");
+    setCredentialJurisdiction("");
+    setCredentialStatus("");
+    setCredentialExpiration("");
+    setCredentialId("");
   };
 
   const handleSave = async () => {
@@ -67,6 +77,16 @@ export function EvidenceEntry() {
         startDate: startDate || undefined,
         endDate: endDate || undefined,
         skills: splitList(skills),
+        credential:
+          subjectType === "credential"
+            ? {
+                issuer: credentialIssuer || null,
+                jurisdiction: credentialJurisdiction || null,
+                status: credentialStatus || null,
+                expirationDate: credentialExpiration || null,
+                credentialId: credentialId || null,
+              }
+            : null,
       });
       setSaved(true);
       clearForNext();
@@ -108,7 +128,10 @@ export function EvidenceEntry() {
                 className="select-shell mt-2"
                 aria-label="Evidence type"
                 value={subjectType}
-                onChange={(event) => setSubjectType(event.target.value as EvidenceSubjectType)}
+                onChange={(event) => {
+                  setSubjectType(event.target.value as EvidenceSubjectType);
+                  setSaved(false);
+                }}
               >
                 {evidenceTypes.map((option) => (
                   <option key={option.value} value={option.value}>{option.label}</option>
@@ -182,6 +205,75 @@ export function EvidenceEntry() {
               />
             </label>
           </div>
+
+          {subjectType === "credential" && (
+            <section className="border-divider mt-7 border-t pt-6">
+              <div>
+                <h2 className="text-lg font-semibold">Credential details</h2>
+                <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+                  Add only what you know. Status and expiration can affect whether a credential actually establishes current eligibility; Job Ranger will not assume an old license is active.
+                </p>
+              </div>
+              <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+                <label>
+                  <span className="metric-label">Issuer</span>
+                  <input
+                    className="input-shell mt-2"
+                    aria-label="Credential issuer"
+                    value={credentialIssuer}
+                    onChange={(event) => setCredentialIssuer(event.target.value)}
+                    placeholder="Optional"
+                  />
+                </label>
+                <label>
+                  <span className="metric-label">Jurisdiction</span>
+                  <input
+                    className="input-shell mt-2"
+                    aria-label="Credential jurisdiction"
+                    value={credentialJurisdiction}
+                    onChange={(event) => setCredentialJurisdiction(event.target.value)}
+                    placeholder="Optional, e.g. Maryland"
+                  />
+                </label>
+                <label>
+                  <span className="metric-label">Status</span>
+                  <select
+                    className="select-shell mt-2"
+                    aria-label="Credential status"
+                    value={credentialStatus}
+                    onChange={(event) => setCredentialStatus(event.target.value as CredentialStatus | "")}
+                  >
+                    <option value="">Not specified</option>
+                    <option value="active">Active</option>
+                    <option value="pending">Pending</option>
+                    <option value="inactive">Inactive</option>
+                    <option value="expired">Expired</option>
+                  </select>
+                </label>
+                <label>
+                  <span className="metric-label">Expiration date</span>
+                  <input
+                    className="input-shell mt-2"
+                    aria-label="Credential expiration date"
+                    type="date"
+                    value={credentialExpiration}
+                    onChange={(event) => setCredentialExpiration(event.target.value)}
+                  />
+                </label>
+                <label className="sm:col-span-2">
+                  <span className="metric-label">Credential or license number</span>
+                  <input
+                    className="input-shell mt-2"
+                    aria-label="Credential identifier"
+                    value={credentialId}
+                    onChange={(event) => setCredentialId(event.target.value)}
+                    placeholder="Optional"
+                    autoComplete="off"
+                  />
+                </label>
+              </div>
+            </section>
+          )}
 
           <div className="border-divider mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
             <div className="text-sm text-[var(--color-text-secondary)]">
