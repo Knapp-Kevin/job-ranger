@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import { Bell, Database, Save, Settings2, SwatchBook } from "lucide-react";
 import { BackupRestorePanel } from "../components/BackupRestorePanel";
+import { JsonResumePanel } from "../components/JsonResumePanel";
 import { Layout } from "../components/Layout";
 import { useAppContext } from "../context/AppContext";
 import { useTheme } from "../theme/ThemeProvider";
@@ -215,6 +216,7 @@ export function Settings() {
         </section>
 
         <BackupRestorePanel />
+        <JsonResumePanel />
 
         <section className="grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
           <div>

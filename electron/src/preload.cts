@@ -7,10 +7,11 @@ import type { BackupDesktopApi } from "../../src/shared/backup.js";
 import type { CareerStoriesDesktopApi } from "../../src/shared/career-stories.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { InterviewPrepDesktopApi } from "../../src/shared/interview-prep.js";
+import type { JsonResumeDesktopApi } from "../../src/shared/json-resume.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi & JsonResumeDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -129,6 +130,10 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     create: () => ipcRenderer.invoke("backups:create"),
     selectRestore: () => ipcRenderer.invoke("backups:select-restore"),
     stageRestore: (bundlePath) => ipcRenderer.invoke("backups:stage-restore", bundlePath),
+  },
+  jsonResume: {
+    importFile: () => ipcRenderer.invoke("json-resume:import"),
+    exportFile: () => ipcRenderer.invoke("json-resume:export"),
   },
   interviewPrep: {
     get: (applicationId) => ipcRenderer.invoke("interview-prep:get", applicationId),

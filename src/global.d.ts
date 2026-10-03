@@ -8,6 +8,7 @@ import type { BackupDesktopApi } from "./shared/backup";
 import type { CareerStoriesDesktopApi } from "./shared/career-stories";
 import type { EvidenceExtensionDesktopApi } from "./shared/evidence-extensions";
 import type { InterviewPrepDesktopApi } from "./shared/interview-prep";
+import type { JsonResumeDesktopApi } from "./shared/json-resume";
 import type { ResumeDesktopApi } from "./shared/resume-api";
 import type { SourceDiscoveryDesktopApi } from "./shared/source-discovery";
 
@@ -22,7 +23,8 @@ declare global {
       CareerStoriesDesktopApi &
       ApplicationMaterialsDesktopApi &
       BackupDesktopApi &
-      ApplicationInsightsDesktopApi;
+      ApplicationInsightsDesktopApi &
+      JsonResumeDesktopApi;
   }
 }
 
