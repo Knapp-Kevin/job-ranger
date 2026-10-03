@@ -19,7 +19,6 @@ export interface ElectronAppFixture {
 
 interface LaunchElectronAppOptions {
   showOnboarding?: boolean;
-  mockDiscovery?: boolean;
 }
 
 /**
@@ -40,10 +39,6 @@ export async function launchElectronApp(
 ): Promise<ElectronAppFixture> {
   const tempDataDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-e2e-"));
   const electronExe = require("electron") as unknown as string;
-  const discoveryMockPath = path.join(__dirname, "mock-discovery-fetch.cjs");
-  const nodeOptions = options.mockDiscovery
-    ? [process.env.NODE_OPTIONS, `--require=${discoveryMockPath}`].filter(Boolean).join(" ")
-    : process.env.NODE_OPTIONS;
 
   console.log("Launching Electron app root:", projectRoot);
   console.log("Electron exe:", electronExe);
@@ -56,8 +51,6 @@ export async function launchElectronApp(
     env: {
       ...process.env,
       NODE_ENV: "production",
-      ...(nodeOptions ? { NODE_OPTIONS: nodeOptions } : {}),
-      ...(options.mockDiscovery ? { JOB_RANGER_E2E_DISCOVERY_MOCK: "1" } : {}),
     },
     timeout: 60000,
   });
