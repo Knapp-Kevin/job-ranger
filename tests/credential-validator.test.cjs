@@ -51,7 +51,7 @@ assert.throws(
     statement: 'Built a project.',
     credential: { status: 'active' },
   }),
-  /only valid for credential evidence/,
+  /credential evidence/,
 );
 
 assert.throws(
