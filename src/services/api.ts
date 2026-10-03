@@ -1,6 +1,7 @@
 import type { DesktopApi } from "../shared/contracts";
 import type { ApplicationLifecycleDesktopApi } from "../shared/application-lifecycle";
 import type { EvidenceExtensionDesktopApi } from "../shared/evidence-extensions";
+import type { InterviewPrepDesktopApi } from "../shared/interview-prep";
 import type { ResumeDesktopApi } from "../shared/resume-api";
 import type { SourceDiscoveryDesktopApi } from "../shared/source-discovery";
 
@@ -8,7 +9,8 @@ export type JobRangerDesktopApi = DesktopApi &
   ResumeDesktopApi &
   EvidenceExtensionDesktopApi &
   SourceDiscoveryDesktopApi &
-  ApplicationLifecycleDesktopApi;
+  ApplicationLifecycleDesktopApi &
+  InterviewPrepDesktopApi;
 
 export class DesktopApiError extends Error {
   constructor(message: string) {
