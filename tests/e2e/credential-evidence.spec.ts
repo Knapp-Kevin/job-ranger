@@ -2,7 +2,6 @@ import { test, expect } from "@playwright/test";
 import {
   closeElectronApp,
   launchElectronApp,
-  navigateTo,
   type ElectronAppFixture,
 } from "./electron-app";
 
@@ -18,7 +17,15 @@ test.afterAll(async () => {
 
 test("authors structured credential evidence without flattening eligibility facts into prose", async () => {
   const { page } = fixture;
-  await navigateTo(page, "/evidence-entry");
+  await page.evaluate(() => {
+    window.location.hash = "#/evidence-entry";
+  });
+  await expect(
+    page.getByRole("heading", {
+      name: "Build your career evidence one fact at a time.",
+      exact: true,
+    }),
+  ).toBeVisible();
 
   await page.getByRole("combobox", { name: "Evidence type", exact: true }).selectOption("credential");
   await expect(page.getByRole("heading", { name: "Credential details", exact: true })).toBeVisible();
