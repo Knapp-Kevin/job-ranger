@@ -7,6 +7,7 @@ import {
 } from "./application-lifecycle-validator.cjs";
 import { validateCareerEntityId } from "./career-validators.cjs";
 import { initializeInterviewPrepIpc } from "./interview-prep-ipc.cjs";
+import { initializeApplicationMaterialsIpc } from "./application-materials-ipc.cjs";
 
 export function initializeApplicationLifecycleIpc(options: {
   databasePath: string;
@@ -18,6 +19,7 @@ export function initializeApplicationLifecycleIpc(options: {
   );
   const ready = backend.initialize();
   initializeInterviewPrepIpc(options);
+  initializeApplicationMaterialsIpc(options);
 
   ipcMain.handle("application-lifecycle:get", async (_event, applicationId: string) => {
     await ready;
