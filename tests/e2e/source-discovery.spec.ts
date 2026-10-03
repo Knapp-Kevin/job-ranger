@@ -1,4 +1,5 @@
 import { test, expect } from "@playwright/test";
+import type { CareerTargetTrackInput } from "../../src/shared/target-track-input";
 import {
   closeElectronApp,
   launchElectronApp,
@@ -9,9 +10,9 @@ import {
 let fixture: ElectronAppFixture;
 let trackId = "";
 
-const targetTrackInput = {
+const targetTrackInput: CareerTargetTrackInput = {
   name: "Customer success search",
-  relation: "target" as const,
+  relation: "target",
   roleTitles: ["Customer Success Manager"],
   seniority: null,
   direction: null,
@@ -19,22 +20,22 @@ const targetTrackInput = {
     geography: {
       locations: ["Baltimore, MD"],
       radiusMiles: 40,
-      strength: "preferred" as const,
+      strength: "preferred",
     },
-    workModes: { values: ["remote"] as const, strength: "preferred" as const },
+    workModes: { values: ["remote"], strength: "preferred" },
     employmentArrangements: {
-      values: ["full-time"] as const,
-      strength: "preferred" as const,
+      values: ["full-time"],
+      strength: "preferred",
     },
-    schedules: { values: [] as never[], strength: "preferred" as const },
+    schedules: { values: [], strength: "preferred" },
     compensation: {
       floor: null,
       target: null,
-      basis: "annual" as const,
-      floorStrength: "preferred" as const,
+      basis: "annual",
+      floorStrength: "preferred",
     },
-    onCall: { value: "either" as const, strength: "preferred" as const },
-    industries: { values: [] as string[], strength: "preferred" as const },
+    onCall: { value: "either", strength: "preferred" },
+    industries: { values: [], strength: "preferred" },
   },
   isActive: true,
 };
