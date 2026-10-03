@@ -6,6 +6,7 @@ import type {
   SourceDiscoveryResult,
 } from "../../src/shared/source-discovery.js";
 import { getSourceProfile } from "../../src/shared/contracts.js";
+import { fetchDiscoveryJson } from "./source-discovery-fetch.cjs";
 import { detectSourceFromUrl } from "./scrapers.cjs";
 
 const REMOTE_OK_ENDPOINT = "https://remoteok.com/api";
@@ -246,25 +247,6 @@ function monitoringCandidate(
   };
 }
 
-async function fetchJson<T>(url: string, fetchImpl: typeof fetch): Promise<T> {
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 12000);
-  try {
-    const response = await fetchImpl(url, {
-      headers: {
-        Accept: "application/json",
-        "User-Agent": "Job Ranger Desktop/1.0 source discovery",
-      },
-      redirect: "follow",
-      signal: controller.signal,
-    });
-    if (!response.ok) throw new Error(`HTTP ${response.status}`);
-    return (await response.json()) as T;
-  } finally {
-    clearTimeout(timeout);
-  }
-}
-
 function remoteOkCandidates(
   rows: RemoteOkJob[],
   request: SourceDiscoveryRequest,
@@ -343,8 +325,8 @@ export async function discoverPublicJobFeeds(
   ];
 
   const [remoteOk, arbeitnow] = await Promise.allSettled([
-    fetchJson<RemoteOkJob[]>(REMOTE_OK_ENDPOINT, context.fetchImpl),
-    fetchJson<ArbeitnowResponse>(ARBEITNOW_ENDPOINT, context.fetchImpl),
+    fetchDiscoveryJson<RemoteOkJob[]>(REMOTE_OK_ENDPOINT, context.fetchImpl),
+    fetchDiscoveryJson<ArbeitnowResponse>(ARBEITNOW_ENDPOINT, context.fetchImpl),
   ]);
 
   let candidates: SourceDiscoveryCandidate[] = [];
