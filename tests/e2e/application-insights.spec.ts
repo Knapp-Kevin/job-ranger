@@ -87,10 +87,8 @@ test("application context and offer survive reload and feed cautious search insi
   await expect(card.getByLabel("Application target track")).toHaveValue(/.+/);
 
   await card.getByRole("button", { name: "Add offer details", exact: true }).click();
-  await card.getByText("Base pay", { exact: true }).locator(".. ").getByRole("spinbutton").fill("145000").catch(async () => {
-    await card.locator('input[type="number"]').fill("145000");
-  });
-  await card.getByText("Negotiation notes", { exact: true }).locator("..").getByRole("textbox").fill("Clarify remote policy.");
+  await card.getByLabel("Base pay").fill("145000");
+  await card.getByLabel("Negotiation notes").fill("Clarify remote policy.");
   await card.getByRole("button", { name: "Save offer details", exact: true }).click();
 
   await page.reload();
@@ -98,8 +96,8 @@ test("application context and offer survive reload and feed cautious search insi
   const reloadedCard = page.locator("article").filter({ hasText: application.title });
   await reloadedCard.getByRole("button", { name: "Search context & offer", exact: false }).click();
   await expect(reloadedCard.getByLabel("Application target track")).toHaveValue(/.+/);
-  await expect(reloadedCard.locator('input[type="number"]')).toHaveValue("145000");
-  await expect(reloadedCard.getByText("Clarify remote policy.", { exact: true })).toBeVisible();
+  await expect(reloadedCard.getByLabel("Base pay")).toHaveValue("145000");
+  await expect(reloadedCard.getByLabel("Negotiation notes")).toHaveValue("Clarify remote policy.");
 
   await navigateTo(page, "/search-insights");
   await expect(page.getByRole("heading", { name: /saved search history actually shows/i })).toBeVisible();
