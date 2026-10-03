@@ -2,13 +2,14 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
 import type { ApplicationLifecycleDesktopApi } from "../../src/shared/application-lifecycle.js";
 import type { ApplicationMaterialsDesktopApi } from "../../src/shared/application-materials.js";
+import type { BackupDesktopApi } from "../../src/shared/backup.js";
 import type { CareerStoriesDesktopApi } from "../../src/shared/career-stories.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { InterviewPrepDesktopApi } from "../../src/shared/interview-prep.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -112,6 +113,11 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
       ipcRenderer.invoke("application-materials:create-cover-letter", applicationId),
     delete: (projectionId) =>
       ipcRenderer.invoke("application-materials:delete", projectionId),
+  },
+  backups: {
+    create: () => ipcRenderer.invoke("backups:create"),
+    selectRestore: () => ipcRenderer.invoke("backups:select-restore"),
+    stageRestore: (bundlePath) => ipcRenderer.invoke("backups:stage-restore", bundlePath),
   },
   interviewPrep: {
     get: (applicationId) => ipcRenderer.invoke("interview-prep:get", applicationId),
