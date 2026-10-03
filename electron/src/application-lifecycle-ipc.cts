@@ -6,6 +6,7 @@ import {
   validateApplicationEventUpdate,
 } from "./application-lifecycle-validator.cjs";
 import { validateCareerEntityId } from "./career-validators.cjs";
+import { initializeInterviewPrepIpc } from "./interview-prep-ipc.cjs";
 
 export function initializeApplicationLifecycleIpc(options: {
   databasePath: string;
@@ -16,6 +17,7 @@ export function initializeApplicationLifecycleIpc(options: {
     options.sqliteBinaryPath,
   );
   const ready = backend.initialize();
+  initializeInterviewPrepIpc(options);
 
   ipcMain.handle("application-lifecycle:get", async (_event, applicationId: string) => {
     await ready;
