@@ -4,7 +4,10 @@ import type {
   ApplicationMaterialProjection,
   ApplicationMaterialSection,
 } from "../../src/shared/application-materials.js";
-import type { CandidateEvidence } from "../../src/shared/contracts.js";
+import type {
+  CandidateEvidence,
+  EvidenceVerificationState,
+} from "../../src/shared/contracts.js";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { sql, SqliteClient } from "./sqlite.cjs";
 
@@ -50,6 +53,12 @@ type MaterialRow = {
   updated_at: string;
 };
 
+type EvidenceStateRow = {
+  id: string;
+  verification_state: EvidenceVerificationState;
+  updated_at: string;
+};
+
 function parseStringArray(value: string): string[] {
   try {
     const parsed = JSON.parse(value);
@@ -59,6 +68,15 @@ function parseStringArray(value: string): string[] {
   } catch {
     return [];
   }
+}
+
+function isStringRecord(value: unknown): value is Record<string, string> {
+  return Boolean(
+    value &&
+      typeof value === "object" &&
+      !Array.isArray(value) &&
+      Object.values(value).every((item) => typeof item === "string"),
+  );
 }
 
 function parseSections(value: string): ApplicationMaterialSection[] {
@@ -72,7 +90,8 @@ function parseSections(value: string): ApplicationMaterialSection[] {
           (item.label === "opening" || item.label === "evidence" || item.label === "closing") &&
           typeof item.text === "string" &&
           Array.isArray(item.evidenceIds) &&
-          item.evidenceIds.every((id: unknown) => typeof id === "string"),
+          item.evidenceIds.every((id: unknown) => typeof id === "string") &&
+          isStringRecord(item.evidenceUpdatedAtById),
       ),
     );
   } catch {
@@ -84,6 +103,10 @@ function sentence(value: string): string {
   const trimmed = value.replace(/\s+/g, " ").trim();
   if (!trimmed) return trimmed;
   return /[.!?]$/.test(trimmed) ? trimmed : `${trimmed}.`;
+}
+
+function isCurrentEvidence(state: EvidenceVerificationState): boolean {
+  return state === "user-authored" || state === "user-confirmed";
 }
 
 export class ApplicationMaterialsBackend {
@@ -124,8 +147,8 @@ export class ApplicationMaterialsBackend {
       WHERE application_id = ${applicationId}
       ORDER BY version DESC, created_at DESC;
     `);
-    const stale = await this.currentlyNonAuthoritativeEvidenceIds();
-    return rows.map((row) => this.mapMaterial(row, stale));
+    const evidenceStates = await this.currentEvidenceStates();
+    return rows.map((row) => this.mapMaterial(row, evidenceStates));
   }
 
   async createCoverLetter(applicationId: string): Promise<ApplicationMaterialCreateResult> {
@@ -174,18 +197,21 @@ export class ApplicationMaterialsBackend {
         label: "opening",
         text: `Dear Hiring Team,\n\nI am applying for the ${application.title} role at ${application.company_name}.`,
         evidenceIds: [],
+        evidenceUpdatedAtById: {},
       },
       ...chosen.map((evidence, index) => ({
         id: `${id}-evidence-${index + 1}`,
         label: "evidence" as const,
         text: `One relevant example from my confirmed career record: ${sentence(evidence.statement)}`,
         evidenceIds: [evidence.id],
+        evidenceUpdatedAtById: { [evidence.id]: evidence.updatedAt },
       })),
       {
         id: `${id}-closing`,
         label: "closing",
         text: `I would welcome the opportunity to discuss how this experience could contribute to the role.\n\nSincerely,\n${signoff}`,
         evidenceIds: [],
+        evidenceUpdatedAtById: {},
       },
     ];
     const selectedEvidenceIds = chosen.map((item) => item.id);
@@ -217,8 +243,18 @@ export class ApplicationMaterialsBackend {
       );
     }
 
+    const evidenceStates = new Map<string, EvidenceStateRow>(
+      chosen.map((evidence) => [
+        evidence.id,
+        {
+          id: evidence.id,
+          verification_state: evidence.verificationState,
+          updated_at: evidence.updatedAt,
+        },
+      ]),
+    );
     return {
-      projection: this.mapMaterial(row, new Set()),
+      projection: this.mapMaterial(row, evidenceStates),
       warnings,
     };
   }
@@ -252,16 +288,27 @@ export class ApplicationMaterialsBackend {
     return row?.next_version ?? 1;
   }
 
-  private async currentlyNonAuthoritativeEvidenceIds(): Promise<Set<string>> {
-    const rows = await this.sqlite.queryAll<{ id: string }>(`
-      SELECT id FROM candidate_evidence
-      WHERE verification_state NOT IN ('user-authored', 'user-confirmed');
+  private async currentEvidenceStates(): Promise<Map<string, EvidenceStateRow>> {
+    const rows = await this.sqlite.queryAll<EvidenceStateRow>(`
+      SELECT id, verification_state, updated_at FROM candidate_evidence;
     `);
-    return new Set(rows.map((row) => row.id));
+    return new Map(rows.map((row) => [row.id, row]));
   }
 
-  private mapMaterial(row: MaterialRow, stale: Set<string>): ApplicationMaterialProjection {
+  private mapMaterial(
+    row: MaterialRow,
+    evidenceStates: Map<string, EvidenceStateRow>,
+  ): ApplicationMaterialProjection {
+    const sections = parseSections(row.sections_json);
     const selectedEvidenceIds = parseStringArray(row.selected_evidence_ids_json);
+    const staleEvidenceIds = selectedEvidenceIds.filter((id) => {
+      const current = evidenceStates.get(id);
+      if (!current || !isCurrentEvidence(current.verification_state)) return true;
+      const snapshot = sections.find((section) => section.evidenceIds.includes(id))
+        ?.evidenceUpdatedAtById[id];
+      return !snapshot || snapshot !== current.updated_at;
+    });
+
     return {
       id: row.id,
       applicationId: row.application_id,
@@ -269,9 +316,9 @@ export class ApplicationMaterialsBackend {
       kind: row.kind,
       version: row.version,
       status: row.status,
-      sections: parseSections(row.sections_json),
+      sections,
       selectedEvidenceIds,
-      staleEvidenceIds: selectedEvidenceIds.filter((id) => stale.has(id)),
+      staleEvidenceIds,
       createdAt: row.created_at,
       updatedAt: row.updated_at,
     };
