@@ -167,7 +167,7 @@ async function run() {
     assert.ok(afterRestart.some((item) => item.staleEvidenceIds.includes(submittedEvidence.id)));
 
     await career.deleteApplication(applicationId);
-    const remaining = await sqlite.queryOne<{ count: number }>(
+    const remaining = await sqlite.queryOne(
       "SELECT COUNT(*) AS count FROM application_materials;",
     );
     assert.equal(remaining?.count, 0, 'application deletion should cascade prepared materials');
