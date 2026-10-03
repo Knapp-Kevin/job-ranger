@@ -48,7 +48,7 @@ test.describe("Job Ranger E2E Tests", () => {
     await sourceAction.click();
     await expect(
       page.getByRole("heading", {
-        name: "Bring in real career pages, then let Job Ranger adapt its extraction strategy.",
+        name: "Find places to look, then choose what Job Ranger should monitor.",
         exact: true,
       }),
     ).toBeVisible();
@@ -144,7 +144,7 @@ test.describe("Job Ranger E2E Tests", () => {
     await navigateTo(page, "Companies");
     await expect(
       page.getByRole("heading", {
-        name: "Bring in real career pages, then let Job Ranger adapt its extraction strategy.",
+        name: "Find places to look, then choose what Job Ranger should monitor.",
         exact: true,
       }),
     ).toBeVisible();
@@ -210,14 +210,14 @@ test.describe("Job Ranger E2E Tests", () => {
     const { page } = fixture;
 
     await navigateTo(page, "Companies");
-    await expect(page.getByText("Total sources", { exact: true })).toBeVisible();
+    await expect(page.getByText("Monitored sources", { exact: true })).toBeVisible();
   });
 
   test("can open add company modal", async () => {
     const { page } = fixture;
 
     await navigateTo(page, "Companies");
-    await page.getByRole("button", { name: "Add source", exact: true }).click();
+    await page.getByRole("button", { name: "Add a source manually", exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "Add job source", exact: true });
     await expect(dialog).toBeVisible();
@@ -232,7 +232,7 @@ test.describe("Job Ranger E2E Tests", () => {
     const { page } = fixture;
 
     await navigateTo(page, "Companies");
-    await page.getByRole("button", { name: "Add source", exact: true }).click();
+    await page.getByRole("button", { name: "Add a source manually", exact: true }).click();
 
     const dialog = page.getByRole("dialog", { name: "Add job source", exact: true });
     await dialog.locator("#company-name").fill("Test Company");
