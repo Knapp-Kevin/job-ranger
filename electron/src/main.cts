@@ -5,6 +5,8 @@ import { CareerBackend } from "./career-backend.cjs";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { initializeResumeIpc } from "./resume-ipc.cjs";
 import { initializeEvidenceExtensionIpc } from "./evidence-extension-ipc.cjs";
+import { discoverPublicJobFeeds } from "./source-discovery.cjs";
+import { validateSourceDiscoveryRequest } from "./source-discovery-validator.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -251,6 +253,13 @@ function registerIpcHandlers(): void {
   );
   ipcMain.handle("companies:run-scrape", (_event, id: string) =>
     requireBackend().runCompanyScrape(validateId(id, "Company id")),
+  );
+
+  ipcMain.handle("discovery:discover", async (_event, request) =>
+    discoverPublicJobFeeds(validateSourceDiscoveryRequest(request), {
+      fetchImpl: fetch,
+      existingCompanies: await requireBackend().listCompanies(),
+    }),
   );
 
   ipcMain.handle("jobs:list", () => requireBackend().listJobs());
