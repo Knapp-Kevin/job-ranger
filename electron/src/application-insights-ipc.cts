@@ -8,29 +8,38 @@ export function initializeApplicationInsightsIpc(options: {
   sqliteBinaryPath: string;
 }): void {
   const backend = new ApplicationInsightsBackend(options.databasePath, options.sqliteBinaryPath);
-  void backend.initialize();
+  const ready = backend.initialize();
 
-  ipcMain.handle("application-insights:get", (_event, applicationId: string) =>
-    backend.getApplicationDetail(validateCareerEntityId(applicationId, "Application id")),
-  );
+  ipcMain.handle("application-insights:get", async (_event, applicationId: string) => {
+    await ready;
+    return backend.getApplicationDetail(validateCareerEntityId(applicationId, "Application id"));
+  });
   ipcMain.handle(
     "application-insights:set-target-track",
-    (_event, applicationId: string, targetTrackId: string | null) =>
-      backend.setTargetTrack(
+    async (_event, applicationId: string, targetTrackId: string | null) => {
+      await ready;
+      return backend.setTargetTrack(
         validateCareerEntityId(applicationId, "Application id"),
         targetTrackId === null ? null : validateCareerEntityId(targetTrackId, "Target track id"),
-      ),
+      );
+    },
   );
   ipcMain.handle(
     "application-insights:save-offer",
-    (_event, applicationId: string, input: unknown) =>
-      backend.saveOffer(
+    async (_event, applicationId: string, input: unknown) => {
+      await ready;
+      return backend.saveOffer(
         validateCareerEntityId(applicationId, "Application id"),
         validateApplicationOfferInput(input),
-      ),
+      );
+    },
   );
-  ipcMain.handle("application-insights:delete-offer", (_event, applicationId: string) =>
-    backend.deleteOffer(validateCareerEntityId(applicationId, "Application id")),
-  );
-  ipcMain.handle("application-insights:search-learning", () => backend.getSearchLearning());
+  ipcMain.handle("application-insights:delete-offer", async (_event, applicationId: string) => {
+    await ready;
+    await backend.deleteOffer(validateCareerEntityId(applicationId, "Application id"));
+  });
+  ipcMain.handle("application-insights:search-learning", async () => {
+    await ready;
+    return backend.getSearchLearning();
+  });
 }
