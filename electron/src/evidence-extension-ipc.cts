@@ -1,6 +1,7 @@
 import { ipcMain } from "electron";
 import { EvidenceExtensionBackend } from "./evidence-extension-backend.cjs";
 import { initializeApplicationLifecycleIpc } from "./application-lifecycle-ipc.cjs";
+import { initializeCareerStoryIpc } from "./career-story-ipc.cjs";
 import {
   validateEvidenceReferences,
   validateEvidenceSupersedeInput,
@@ -13,6 +14,7 @@ export function initializeEvidenceExtensionIpc(options: {
 }): void {
   const backend = new EvidenceExtensionBackend(options);
   initializeApplicationLifecycleIpc(options);
+  initializeCareerStoryIpc(options);
 
   ipcMain.handle("career-evidence:list-metadata", () => backend.listMetadata());
   ipcMain.handle(

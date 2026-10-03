@@ -8,6 +8,7 @@ import { Filters } from "./pages/Filters";
 import { Settings } from "./pages/Settings";
 import { Applications } from "./pages/Applications";
 import { CareerProfile } from "./pages/CareerProfile";
+import { CareerStories } from "./pages/CareerStories";
 import { EvidenceEntry } from "./pages/EvidenceEntry";
 import { TargetTracks } from "./pages/TargetTracks";
 import { Resume } from "./pages/Resume";
@@ -49,6 +50,7 @@ function AppRoutes() {
         <Route path="/" element={<HomeRoute />} />
         <Route path="/onboarding" element={<OnboardingRoute />} />
         <Route path="/career-evidence/new" element={<EvidenceEntry />} />
+        <Route path="/career-stories" element={<CareerStories />} />
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/career-profile" element={<CareerProfile />} />
