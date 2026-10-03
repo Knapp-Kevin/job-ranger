@@ -1,6 +1,7 @@
 /// <reference types="vite/client" />
 
 import type { DesktopApi } from "./shared/contracts";
+import type { ApplicationInsightsDesktopApi } from "./shared/application-insights";
 import type { ApplicationLifecycleDesktopApi } from "./shared/application-lifecycle";
 import type { ApplicationMaterialsDesktopApi } from "./shared/application-materials";
 import type { BackupDesktopApi } from "./shared/backup";
@@ -20,7 +21,8 @@ declare global {
       InterviewPrepDesktopApi &
       CareerStoriesDesktopApi &
       ApplicationMaterialsDesktopApi &
-      BackupDesktopApi;
+      BackupDesktopApi &
+      ApplicationInsightsDesktopApi;
   }
 }
 
