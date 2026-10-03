@@ -18,7 +18,7 @@ test.afterAll(async () => {
 test("authors structured credential evidence without flattening eligibility facts into prose", async () => {
   const { page } = fixture;
   await page.evaluate(() => {
-    window.location.hash = "#/evidence-entry";
+    window.location.hash = "#/career-evidence/new";
   });
   await expect(
     page.getByRole("heading", {
