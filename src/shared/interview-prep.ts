@@ -1,6 +1,6 @@
 import type {
   JobRequirementKind,
-  RequirementMappingClassification,
+  RequirementEvidenceClassification,
 } from "./career-contracts.js";
 
 export interface InterviewPrepApplication {
@@ -37,7 +37,7 @@ export interface InterviewPrepRequirement {
   kind: JobRequirementKind;
   text: string;
   importance: number | null;
-  classification: RequirementMappingClassification;
+  classification: RequirementEvidenceClassification;
   explanation: string;
   evidenceId: string | null;
   evidenceStatement: string | null;
