@@ -94,7 +94,7 @@ test("application lifecycle preserves submitted file, contact, event, and remind
   await applicationCard.getByLabel("Event notes", { exact: true }).fill("Bring customer program examples.");
   await applicationCard.getByRole("button", { name: "Save event", exact: true }).click();
   await expect(applicationCard.getByText("Panel interview", { exact: true })).toBeVisible();
-  await expect(applicationCard.getByText(/reminder/i)).toBeVisible();
+  await expect(applicationCard.getByText(/· reminder /)).toBeVisible();
 
   await page.reload();
   await page.waitForLoadState("domcontentloaded");
