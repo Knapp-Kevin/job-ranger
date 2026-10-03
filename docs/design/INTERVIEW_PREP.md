@@ -18,12 +18,15 @@ No new factual truth store is introduced.
 
 Confirmed evidence and submitted evidence are not the same thing.
 
-A Career Evidence fact may legitimately support a requirement even when it did not appear on the resume sent to the employer. Interview prep therefore records both:
+A Career Evidence fact may legitimately support a requirement even when it did not appear on the resume sent to the employer. Career Evidence may also be corrected after an application is submitted. Interview prep therefore preserves three submission relationships for the evidence currently supporting a requirement:
 
-- whether confirmed evidence supports the requirement;
-- whether a submitted-resume statement linked to that exact evidence ID was present in the immutable artifact snapshot.
+- `exact`: the current evidence record itself was linked to a statement in the submitted artifact;
+- `superseded`: an explicit predecessor of the current evidence record was linked to a submitted statement, so the employer saw an earlier claim while the current Career Evidence record has since changed;
+- `none`: neither the current evidence record nor one of its explicit superseded predecessors appeared in the submitted artifact.
 
-When evidence was not submitted, Job Ranger explicitly tells the user to treat it as additional context rather than implying the employer already saw it.
+The immutable artifact snapshot remains authoritative for the exact wording Job Ranger knows the employer received. Career Evidence remains authoritative for the user's current factual record. Evidence lineage connects those authorities without rewriting either one.
+
+When evidence was not submitted, Job Ranger explicitly tells the user to treat it as additional context rather than implying the employer already saw it. When a submitted predecessor has since been superseded, Job Ranger shows both the earlier submitted wording and the current evidence, and prompts the user to explain the current record accurately rather than repeat outdated wording.
 
 ## Requirement preparation
 
@@ -34,9 +37,15 @@ Each extracted requirement retains the existing deterministic classification:
 - ambiguous;
 - gap.
 
-The preparation cue is derived from that classification and evidence linkage. It does not predict an interview question, hiring probability, or recruiter reaction.
+The preparation cue is derived from that classification, current Career Evidence, submission relationship, and immutable submitted artifact. It does not predict an interview question, hiring probability, or recruiter reaction.
 
 A gap remains a gap. Job Ranger tells the user to decide how to address it honestly rather than fabricating a substitute experience.
+
+## Submitted-artifact selection
+
+When more than one resume artifact is recorded as `submitted` for an application, interview prep uses the most recently recorded submission. Ordering is deterministic: recorded time, artifact version, artifact creation time, then artifact ID.
+
+If the newest submitted artifact snapshot is unreadable, Job Ranger warns rather than silently substituting an older artifact and pretending that older file was the latest submission.
 
 ## Missing-context behavior
 
@@ -55,7 +64,8 @@ A future optional inference provider may propose better practice questions or ev
 
 - establish new Career Evidence;
 - rewrite a gap into support;
-- change whether evidence was actually submitted;
+- change whether evidence or one of its predecessors was actually submitted;
+- erase the distinction between current evidence and earlier submitted wording;
 - claim that a predicted question will be asked;
 - generate unsupported STAR stories as factual career history.
 
@@ -66,7 +76,8 @@ Repository health proves:
 - preparation is grounded in a real tracked job;
 - exact submitted artifact snapshot/version is identified;
 - submitted evidence and confirmed-but-not-submitted evidence remain distinct;
+- a submitted evidence record that is later superseded remains visible as the employer-facing earlier claim while its successor remains current Career Evidence;
 - missing artifact/job state produces warnings rather than invented context;
 - gaps/ambiguity remain visible.
 
-Electron E2E proves the consumer view displays the exact submitted claim, additional confirmed evidence, and their different submission states without a fit percentage or hiring-probability claim.
+Electron E2E proves the ordinary consumer view displays the exact submitted claim, additional confirmed evidence, and their different submission states without a fit percentage or hiring-probability claim.
