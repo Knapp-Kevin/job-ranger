@@ -150,6 +150,9 @@ function evidenceSearchText(evidence: CandidateEvidence): string {
     ...evidence.scope,
     ...evidence.outcomes,
     ...evidence.metrics,
+    evidence.credential?.issuer,
+    evidence.credential?.jurisdiction,
+    evidence.credential?.credentialId,
   ]
     .filter((value): value is string => Boolean(value))
     .join(" ");
@@ -167,6 +170,38 @@ function overlapScore(requirement: JobRequirement, evidence: CandidateEvidence):
 
 function isConfirmed(state: EvidenceVerificationState): boolean {
   return state === "user-confirmed" || state === "user-authored";
+}
+
+type CredentialStanding = { usable: true } | { usable: false; reason: string };
+
+function credentialStanding(
+  evidence: CandidateEvidence,
+  now: string,
+): CredentialStanding {
+  if (evidence.subjectType !== "credential" || !evidence.credential) {
+    return { usable: true };
+  }
+  const details = evidence.credential;
+  if (details.status === "expired") {
+    return { usable: false, reason: "the saved credential is marked expired" };
+  }
+  if (details.status === "inactive") {
+    return { usable: false, reason: "the saved credential is marked inactive" };
+  }
+  if (details.status === "pending") {
+    return { usable: false, reason: "the saved credential is still pending" };
+  }
+  if (details.expirationDate) {
+    const expiration = Date.parse(`${details.expirationDate}T23:59:59.999Z`);
+    const reference = Date.parse(now);
+    if (!Number.isNaN(expiration) && !Number.isNaN(reference) && expiration < reference) {
+      return {
+        usable: false,
+        reason: `the saved credential expired on ${details.expirationDate}`,
+      };
+    }
+  }
+  return { usable: true };
 }
 
 function makeMapping(
@@ -192,16 +227,15 @@ function makeMapping(
   };
 }
 
-function bestEvidence(
+function rankedEvidence(
   requirement: JobRequirement,
   evidence: readonly CandidateEvidence[],
-): { evidence: CandidateEvidence; score: number } | null {
-  const ranked = evidence
+): Array<{ evidence: CandidateEvidence; score: number }> {
+  return evidence
     .filter((item) => item.verificationState !== "rejected")
     .map((item) => ({ evidence: item, score: overlapScore(requirement, item) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);
-  return ranked[0] ?? null;
 }
 
 export function mapRequirementToEvidence(
@@ -209,7 +243,11 @@ export function mapRequirementToEvidence(
   evidence: readonly CandidateEvidence[],
   now = new Date().toISOString(),
 ): { mapping: RequirementEvidenceMap; evidence: CandidateEvidence | null } {
-  const best = bestEvidence(requirement, evidence);
+  const ranked = rankedEvidence(requirement, evidence);
+  const best =
+    requirement.kind === "credential"
+      ? ranked.find((item) => credentialStanding(item.evidence, now).usable) ?? ranked[0] ?? null
+      : ranked[0] ?? null;
   if (!best) {
     return {
       mapping: makeMapping(
@@ -246,6 +284,22 @@ export function mapRequirementToEvidence(
       ),
       evidence: null,
     };
+  }
+
+  if (requirement.kind === "credential") {
+    const standing = credentialStanding(best.evidence, now);
+    if (!standing.usable) {
+      return {
+        mapping: makeMapping(
+          requirement,
+          best.evidence,
+          "gap",
+          `Saved Career Evidence matches this credential requirement, but ${standing.reason}; current eligibility is not established.`,
+          now,
+        ),
+        evidence: best.evidence,
+      };
+    }
   }
 
   if (best.score >= 0.7) {
