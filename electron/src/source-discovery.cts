@@ -1,5 +1,5 @@
 import { createHash } from "node:crypto";
-import type { Company } from "../../src/shared/contracts.js";
+import type { Company, CompanySourceType } from "../../src/shared/contracts.js";
 import type {
   SourceDiscoveryCandidate,
   SourceDiscoveryRequest,
@@ -10,7 +10,7 @@ import { detectSourceFromUrl } from "./scrapers.cjs";
 
 const REMOTE_OK_ENDPOINT = "https://remoteok.com/api";
 const ARBEITNOW_ENDPOINT = "https://www.arbeitnow.com/api/job-board-api?page=1";
-const STRUCTURED_MONITORABLE_TYPES = new Set([
+const STRUCTURED_MONITORABLE_TYPES = new Set<CompanySourceType>([
   "greenhouse",
   "lever",
   "smartrecruiters",
@@ -134,9 +134,50 @@ function toIsoFromEpoch(epoch: number | undefined): string | null {
 function isAggregatorUrl(rawUrl: string): boolean {
   try {
     const host = new URL(rawUrl).hostname.toLowerCase();
-    return host === "remoteok.com" || host.endsWith(".remoteok.com") || host === "arbeitnow.com" || host.endsWith(".arbeitnow.com");
+    return (
+      host === "remoteok.com" ||
+      host.endsWith(".remoteok.com") ||
+      host === "arbeitnow.com" ||
+      host.endsWith(".arbeitnow.com")
+    );
   } catch {
     return true;
+  }
+}
+
+function firstPathSegment(rawUrl: string): string | null {
+  try {
+    return new URL(rawUrl).pathname.split("/").filter(Boolean)[0] ?? null;
+  } catch {
+    return null;
+  }
+}
+
+function sourceIdentity(sourceType: CompanySourceType, sourceIdentifier: string): string | null {
+  if (sourceType === "greenhouse" || sourceType === "lever") {
+    return normalize(sourceIdentifier);
+  }
+  if (sourceType === "smartrecruiters" || sourceType === "ashby") {
+    const board = firstPathSegment(sourceIdentifier);
+    return board ? normalize(board) : null;
+  }
+  return null;
+}
+
+function canonicalSourceUrl(sourceType: CompanySourceType, sourceIdentifier: string): string | null {
+  const identity = sourceIdentity(sourceType, sourceIdentifier);
+  if (!identity) return null;
+  switch (sourceType) {
+    case "greenhouse":
+      return `https://boards.greenhouse.io/${identity}`;
+    case "lever":
+      return `https://jobs.lever.co/${identity}`;
+    case "smartrecruiters":
+      return `https://jobs.smartrecruiters.com/${identity}`;
+    case "ashby":
+      return `https://jobs.ashbyhq.com/${identity}`;
+    default:
+      return null;
   }
 }
 
@@ -176,15 +217,27 @@ function monitoringCandidate(
     };
   }
 
+  const identity = sourceIdentity(detected.sourceType, detected.sourceIdentifier);
+  const sourceUrl = canonicalSourceUrl(detected.sourceType, detected.sourceIdentifier);
+  if (!identity || !sourceUrl) {
+    return {
+      sourceUrl: null,
+      sourceType: null,
+      sourceSupportLevel: null,
+      sourceLabel: null,
+      canMonitor: false,
+      duplicateCompanyId: null,
+    };
+  }
+
   const profile = getSourceProfile(detected.sourceType);
-  const duplicate = existingCompanies.find(
-    (company) =>
-      company.sourceType === detected.sourceType &&
-      company.sourceIdentifier === detected.sourceIdentifier,
-  );
+  const duplicate = existingCompanies.find((company) => {
+    if (company.sourceType !== detected.sourceType || !company.sourceIdentifier) return false;
+    return sourceIdentity(company.sourceType, company.sourceIdentifier) === identity;
+  });
 
   return {
-    sourceUrl: applyUrl,
+    sourceUrl,
     sourceType: detected.sourceType,
     sourceSupportLevel: profile.supportLevel,
     sourceLabel: `${employerName} · ${profile.label}`,
@@ -238,7 +291,9 @@ function remoteOkCandidates(
         publishedAt: row.date?.trim() || null,
         ...monitor,
         provenanceUrl: opportunityUrl,
-        summary: snippet(row.description) || `Remote OK listing tagged ${(row.tags ?? []).slice(0, 4).join(", ") || "without structured tags"}.`,
+        summary:
+          snippet(row.description) ||
+          `Remote OK listing tagged ${(row.tags ?? []).slice(0, 4).join(", ") || "without structured tags"}.`,
       };
     });
 }
@@ -271,7 +326,9 @@ function arbeitnowCandidates(
         canMonitor: false,
         duplicateCompanyId: null,
         provenanceUrl: opportunityUrl,
-        summary: snippet(row.description) || `Arbeitnow listing tagged ${(row.tags ?? []).slice(0, 4).join(", ") || "without structured tags"}.`,
+        summary:
+          snippet(row.description) ||
+          `Arbeitnow listing tagged ${(row.tags ?? []).slice(0, 4).join(", ") || "without structured tags"}.`,
       };
     });
 }
@@ -297,14 +354,18 @@ export async function discoverPublicJobFeeds(
     providerSuccesses += 1;
     candidates.push(...remoteOkCandidates(remoteOk.value, request, context.existingCompanies));
   } else {
-    warnings.push(`Remote OK was unavailable for this discovery run: ${remoteOk.reason instanceof Error ? remoteOk.reason.message : String(remoteOk.reason)}`);
+    warnings.push(
+      `Remote OK was unavailable for this discovery run: ${remoteOk.reason instanceof Error ? remoteOk.reason.message : String(remoteOk.reason)}`,
+    );
   }
 
   if (arbeitnow.status === "fulfilled") {
     providerSuccesses += 1;
     candidates.push(...arbeitnowCandidates(arbeitnow.value, request));
   } else {
-    warnings.push(`Arbeitnow was unavailable for this discovery run: ${arbeitnow.reason instanceof Error ? arbeitnow.reason.message : String(arbeitnow.reason)}`);
+    warnings.push(
+      `Arbeitnow was unavailable for this discovery run: ${arbeitnow.reason instanceof Error ? arbeitnow.reason.message : String(arbeitnow.reason)}`,
+    );
   }
 
   const seen = new Set<string>();
