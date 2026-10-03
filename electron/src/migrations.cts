@@ -350,4 +350,11 @@ export const migrations: Migration[] = [
         ON career_target_tracks(origin);
     `,
   },
+  {
+    version: 7,
+    name: "credential_evidence_details",
+    sql: `
+      ALTER TABLE candidate_evidence ADD COLUMN credential_json TEXT;
+    `,
+  },
 ];
