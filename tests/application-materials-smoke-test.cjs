@@ -114,9 +114,12 @@ async function run() {
     assert.ok(first.projection.selectedEvidenceIds.includes(submittedEvidence.id));
     assert.ok(
       first.projection.sections.some(
-        (section) => section.evidenceIds.includes(submittedEvidence.id) && /TypeScript services and APIs/.test(section.text),
+        (section) =>
+          section.evidenceIds.includes(submittedEvidence.id) &&
+          section.evidenceUpdatedAtById[submittedEvidence.id] === submittedEvidence.updatedAt &&
+          /TypeScript services and APIs/.test(section.text),
       ),
-      'factual cover-letter paragraph should remain linked to confirmed evidence',
+      'factual cover-letter paragraph should snapshot and link confirmed evidence',
     );
     assert.ok(
       first.warnings.some((warning) => /unsupported or ambiguous/i.test(warning)),
@@ -125,6 +128,17 @@ async function run() {
 
     const second = await materials.createCoverLetter(applicationId);
     assert.equal(second.projection.version, 2, 'new drafts should preserve version history');
+
+    await career.reviewEvidence(submittedEvidence.id, {
+      action: 'edit',
+      statement: 'Built production TypeScript APIs for internal systems.',
+      subjectType: 'achievement',
+    });
+    const afterEdit = await materials.list(applicationId);
+    assert.ok(
+      afterEdit.every((item) => item.staleEvidenceIds.includes(submittedEvidence.id)),
+      'historical materials must become stale after an in-place factual evidence edit',
+    );
 
     const extensions = new EvidenceExtensionBackend({
       databasePath: status.databasePath,
@@ -140,7 +154,7 @@ async function run() {
     assert.ok(firstAfterCorrection);
     assert.ok(
       firstAfterCorrection.staleEvidenceIds.includes(submittedEvidence.id),
-      'old material must become visibly stale when supporting evidence is superseded',
+      'old material must remain visibly stale when supporting evidence is superseded',
     );
 
     const restarted = new ApplicationMaterialsBackend({
