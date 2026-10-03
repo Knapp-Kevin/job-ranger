@@ -27,7 +27,6 @@ interface AdapterOptions {
 }
 
 type JsonObject = Record<string, unknown>;
-
 type EvidenceProposal = {
   evidence: CandidateEvidence;
   sourceLocator: string;
@@ -41,8 +40,7 @@ function isObject(value: unknown): value is JsonObject {
 function text(value: unknown, max = 20_000): string | null {
   if (typeof value !== "string") return null;
   const trimmed = value.trim();
-  if (!trimmed) return null;
-  return trimmed.slice(0, max);
+  return trimmed ? trimmed.slice(0, max) : null;
 }
 
 function textArray(value: unknown, maxItems = 200): string[] {
@@ -60,15 +58,15 @@ function section(value: unknown, name: string): JsonObject[] {
   return value.filter(isObject);
 }
 
-function hashBytes(bytes: Buffer): string {
-  return createHash("sha256").update(bytes).digest("hex");
-}
-
 function unique(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-function proposal(
+function hashBytes(bytes: Buffer): string {
+  return createHash("sha256").update(bytes).digest("hex");
+}
+
+function makeProposal(
   subjectType: EvidenceSubjectType,
   input: {
     organization?: string | null;
@@ -112,32 +110,51 @@ function proposal(
   };
 }
 
-function parseImport(root: JsonObject, now: string): { proposals: EvidenceProposal[]; warnings: string[] } {
+function parseImport(root: JsonObject, now: string): {
+  proposals: EvidenceProposal[];
+  warnings: string[];
+} {
   const proposals: EvidenceProposal[] = [];
   const warnings: string[] = [];
 
   section(root.work, "work").forEach((item, index) => {
     const organization = text(item.name);
     const position = text(item.position);
-    const summary = text(item.summary);
-    const fallback = [position, organization].filter(Boolean).join(" at ") || "Imported work experience";
-    const roleStatement = summary ?? fallback;
-    proposals.push(proposal("role", {
-      organization,
-      titleOrName: position,
-      startDate: text(item.startDate),
-      endDate: text(item.endDate),
-      statement: roleStatement,
-    }, `work[${index}]`, JSON.stringify(item), now));
-
+    const statement =
+      text(item.summary) ??
+      [position, organization].filter(Boolean).join(" at ") ??
+      "Imported work experience";
+    proposals.push(
+      makeProposal(
+        "role",
+        {
+          organization,
+          titleOrName: position,
+          startDate: text(item.startDate),
+          endDate: text(item.endDate),
+          statement: statement || "Imported work experience",
+        },
+        `work[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
     textArray(item.highlights).forEach((highlight, highlightIndex) => {
-      proposals.push(proposal("achievement", {
-        organization,
-        titleOrName: position,
-        startDate: text(item.startDate),
-        endDate: text(item.endDate),
-        statement: highlight,
-      }, `work[${index}].highlights[${highlightIndex}]`, highlight, now));
+      proposals.push(
+        makeProposal(
+          "achievement",
+          {
+            organization,
+            titleOrName: position,
+            startDate: text(item.startDate),
+            endDate: text(item.endDate),
+            statement: highlight,
+          },
+          `work[${index}].highlights[${highlightIndex}]`,
+          highlight,
+          now,
+        ),
+      );
     });
   });
 
@@ -146,73 +163,119 @@ function parseImport(root: JsonObject, now: string): { proposals: EvidencePropos
     const area = text(item.area);
     const studyType = text(item.studyType);
     const label = [studyType, area].filter(Boolean).join(" in ");
-    proposals.push(proposal("education", {
-      organization: institution,
-      titleOrName: label || area || studyType,
-      startDate: text(item.startDate),
-      endDate: text(item.endDate),
-      statement: [label || area || studyType || "Education", institution].filter(Boolean).join(" at "),
-    }, `education[${index}]`, JSON.stringify(item), now));
+    proposals.push(
+      makeProposal(
+        "education",
+        {
+          organization: institution,
+          titleOrName: label || area || studyType,
+          startDate: text(item.startDate),
+          endDate: text(item.endDate),
+          statement: [label || area || studyType || "Education", institution]
+            .filter(Boolean)
+            .join(" at "),
+        },
+        `education[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
   });
 
   section(root.skills, "skills").forEach((item, index) => {
     const name = text(item.name);
     const keywords = textArray(item.keywords);
     if (!name && keywords.length === 0) return;
-    proposals.push(proposal("skill", {
-      titleOrName: name ?? keywords[0],
-      statement: name ?? keywords.join(", "),
-      skills: unique([...(name ? [name] : []), ...keywords]),
-    }, `skills[${index}]`, JSON.stringify(item), now));
+    proposals.push(
+      makeProposal(
+        "skill",
+        {
+          titleOrName: name ?? keywords[0],
+          statement: name ?? keywords.join(", "),
+          skills: unique([...(name ? [name] : []), ...keywords]),
+        },
+        `skills[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
   });
 
   section(root.certificates, "certificates").forEach((item, index) => {
     const name = text(item.name);
     if (!name) return;
-    proposals.push(proposal("credential", {
-      organization: text(item.issuer),
-      titleOrName: name,
-      startDate: text(item.date),
-      statement: [name, text(item.issuer)].filter(Boolean).join(" — "),
-      credential: {
-        issuer: text(item.issuer),
-        jurisdiction: null,
-        status: null,
-        expirationDate: null,
-        credentialId: null,
-      },
-    }, `certificates[${index}]`, JSON.stringify(item), now));
+    const issuer = text(item.issuer);
+    proposals.push(
+      makeProposal(
+        "credential",
+        {
+          organization: issuer,
+          titleOrName: name,
+          startDate: text(item.date),
+          statement: [name, issuer].filter(Boolean).join(" — "),
+          credential: {
+            issuer,
+            jurisdiction: null,
+            status: null,
+            expirationDate: null,
+            credentialId: null,
+          },
+        },
+        `certificates[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
   });
 
   section(root.projects, "projects").forEach((item, index) => {
     const name = text(item.name);
     const description = text(item.description);
     const highlights = textArray(item.highlights);
-    if (!name && !description && highlights.length === 0) return;
-    proposals.push(proposal("project", {
-      titleOrName: name,
-      startDate: text(item.startDate),
-      endDate: text(item.endDate),
-      statement: description ?? name ?? highlights[0],
-      outcomes: highlights,
-      methodsOrTools: textArray(item.keywords),
-    }, `projects[${index}]`, JSON.stringify(item), now));
+    const statement = description ?? name ?? highlights[0];
+    if (!statement) return;
+    proposals.push(
+      makeProposal(
+        "project",
+        {
+          titleOrName: name,
+          startDate: text(item.startDate),
+          endDate: text(item.endDate),
+          statement,
+          outcomes: highlights,
+          methodsOrTools: textArray(item.keywords),
+        },
+        `projects[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
   });
 
   section(root.publications, "publications").forEach((item, index) => {
     const name = text(item.name);
     if (!name) return;
-    proposals.push(proposal("publication", {
-      organization: text(item.publisher),
-      titleOrName: name,
-      startDate: text(item.releaseDate),
-      statement: text(item.summary) ?? name,
-    }, `publications[${index}]`, JSON.stringify(item), now));
+    proposals.push(
+      makeProposal(
+        "publication",
+        {
+          organization: text(item.publisher),
+          titleOrName: name,
+          startDate: text(item.releaseDate),
+          statement: text(item.summary) ?? name,
+        },
+        `publications[${index}]`,
+        JSON.stringify(item),
+        now,
+      ),
+    );
   });
 
-  for (const sectionName of ["volunteer", "awards", "languages", "interests", "references"] as const) {
-    if (Array.isArray(root[sectionName]) && root[sectionName].length > 0) {
-      warnings.push(`${sectionName} is preserved in the source artifact but is not automatically converted to Career Evidence in adapter v1.`);
+  for (const name of ["volunteer", "awards", "languages", "interests", "references"] as const) {
+    if (Array.isArray(root[name]) && root[name].length > 0) {
+      warnings.push(
+        `${name} is preserved in the source artifact but is not automatically converted to Career Evidence in adapter v1.`,
+      );
     }
   }
   if (proposals.length === 0) {
@@ -224,38 +287,44 @@ function parseImport(root: JsonObject, now: string): { proposals: EvidencePropos
 function exportJsonResume(
   profile: Awaited<ReturnType<CareerRepository["getProfile"]>>,
   evidence: CandidateEvidence[],
-): { document: JsonObject; exportedEvidenceCount: number; omittedEvidenceCount: number; warnings: string[] } {
+): {
+  document: JsonObject;
+  exportedEvidenceCount: number;
+  omittedEvidenceCount: number;
+  warnings: string[];
+} {
   const current = evidence.filter(
-    (item) => item.verificationState === "user-confirmed" || item.verificationState === "user-authored",
+    (item) =>
+      item.verificationState === "user-confirmed" ||
+      item.verificationState === "user-authored",
   );
   const consumed = new Set<string>();
-
   const roleGroups = new Map<string, CandidateEvidence[]>();
-  for (const item of current.filter((candidate) => candidate.subjectType === "role")) {
-    const key = [item.organization ?? "", item.titleOrName ?? "", item.startDate ?? "", item.endDate ?? ""].join("\u001f");
-    const group = roleGroups.get(key) ?? [];
-    group.push(item);
-    roleGroups.set(key, group);
+
+  for (const role of current.filter((item) => item.subjectType === "role")) {
+    const key = [role.organization ?? "", role.titleOrName ?? "", role.startDate ?? "", role.endDate ?? ""].join("\u001f");
+    roleGroups.set(key, [...(roleGroups.get(key) ?? []), role]);
   }
-  for (const achievement of current.filter((candidate) => candidate.subjectType === "achievement")) {
+  for (const achievement of current.filter((item) => item.subjectType === "achievement")) {
     const key = [achievement.organization ?? "", achievement.titleOrName ?? "", achievement.startDate ?? "", achievement.endDate ?? ""].join("\u001f");
-    if (roleGroups.has(key)) roleGroups.get(key)!.push(achievement);
+    const group = roleGroups.get(key);
+    if (group) group.push(achievement);
   }
 
   const work = Array.from(roleGroups.values()).map((items) => {
     const role = items.find((item) => item.subjectType === "role") ?? items[0];
     items.forEach((item) => consumed.add(item.id));
-    const highlights = items
-      .filter((item) => item.id !== role.id)
-      .flatMap((item) => [item.statement, ...item.outcomes])
-      .filter(Boolean);
     return {
       name: role.organization ?? "",
       position: role.titleOrName ?? "",
       startDate: role.startDate ?? "",
       endDate: role.endDate ?? "",
       summary: role.statement,
-      highlights: unique(highlights),
+      highlights: unique(
+        items
+          .filter((item) => item.id !== role.id)
+          .flatMap((item) => [item.statement, ...item.outcomes]),
+      ),
     };
   });
 
@@ -269,7 +338,6 @@ function exportJsonResume(
       endDate: item.endDate ?? "",
     };
   });
-
   const skills = current.filter((item) => item.subjectType === "skill").map((item) => {
     consumed.add(item.id);
     return {
@@ -277,7 +345,6 @@ function exportJsonResume(
       keywords: unique([...item.skills, ...item.methodsOrTools]),
     };
   });
-
   const certificates = current.filter((item) => item.subjectType === "credential").map((item) => {
     consumed.add(item.id);
     return {
@@ -287,7 +354,6 @@ function exportJsonResume(
       url: "",
     };
   });
-
   const projects = current.filter((item) => item.subjectType === "project").map((item) => {
     consumed.add(item.id);
     return {
@@ -299,7 +365,6 @@ function exportJsonResume(
       keywords: unique([...item.skills, ...item.methodsOrTools]),
     };
   });
-
   const publications = current.filter((item) => item.subjectType === "publication").map((item) => {
     consumed.add(item.id);
     return {
@@ -311,10 +376,6 @@ function exportJsonResume(
   });
 
   const omittedEvidenceCount = current.filter((item) => !consumed.has(item.id)).length;
-  const warnings = omittedEvidenceCount > 0
-    ? [`${omittedEvidenceCount} current Career Evidence record${omittedEvidenceCount === 1 ? " was" : "s were"} omitted because adapter v1 has no unambiguous standard JSON Resume section for them.`]
-    : [];
-
   return {
     document: {
       basics: {
@@ -327,10 +388,18 @@ function exportJsonResume(
       certificates,
       projects,
       publications,
+      meta: { canonical: "https://jsonresume.org/schema/" },
     },
     exportedEvidenceCount: consumed.size,
     omittedEvidenceCount,
-    warnings,
+    warnings:
+      omittedEvidenceCount > 0
+        ? [
+            `${omittedEvidenceCount} current Career Evidence record${
+              omittedEvidenceCount === 1 ? " was" : "s were"
+            } omitted because adapter v1 has no unambiguous standard JSON Resume section for them.`,
+          ]
+        : [],
   };
 }
 
@@ -340,7 +409,7 @@ export class JsonResumeAdapter {
   private readonly careerRepository: CareerRepository;
   private readonly sourceRoot: string;
 
-  constructor(private readonly options: AdapterOptions) {
+  constructor(options: AdapterOptions) {
     this.sqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
     this.evidenceRepository = new CareerEvidenceRepository(this.sqlite);
     this.careerRepository = new CareerRepository(this.sqlite);
@@ -353,7 +422,6 @@ export class JsonResumeAdapter {
       throw new Error("JSON Resume import must be a regular JSON file under 10 MB");
     }
     const bytes = await fs.readFile(filePath);
-    const contentHash = hashBytes(bytes);
     const raw = bytes.toString("utf8");
     let parsed: unknown;
     try {
@@ -363,18 +431,21 @@ export class JsonResumeAdapter {
     }
     if (!isObject(parsed)) throw new Error("JSON Resume root must be an object");
 
+    const contentHash = hashBytes(bytes);
     const now = new Date().toISOString();
     const basics = isObject(parsed.basics) ? parsed.basics : {};
     const profileNameProposal = text(basics.name, 500);
     const extracted = parseImport(parsed, now);
-
     const duplicate = await this.evidenceRepository.getSourceArtifactByHash(contentHash);
     if (duplicate) {
       return {
         artifact: duplicate,
         proposedEvidence: await this.evidenceRepository.listEvidenceForArtifact(duplicate.id),
         duplicate: true,
-        warnings: ["This JSON Resume was already imported. Existing candidate evidence was reused.", ...extracted.warnings],
+        warnings: [
+          "This JSON Resume was already imported. Existing candidate evidence was reused.",
+          ...extracted.warnings,
+        ],
         profileNameProposal,
       };
     }
@@ -436,7 +507,10 @@ export class JsonResumeAdapter {
       };
     } catch (error) {
       if (createdEvidenceIds.length > 0) {
-        await this.sqlite.exec(`DELETE FROM candidate_evidence WHERE id IN (${createdEvidenceIds.map((id) => `'${id.replace(/'/g, "''")}'`).join(",")});`);
+        const escaped = createdEvidenceIds
+          .map((id) => `'${id.replace(/'/g, "''")}'`)
+          .join(",");
+        await this.sqlite.exec(`DELETE FROM candidate_evidence WHERE id IN (${escaped});`);
       }
       await this.sqlite.exec(sql`DELETE FROM source_artifacts WHERE id = ${artifactId};`);
       await fs.rm(artifactDirectory, { recursive: true, force: true });
@@ -447,7 +521,10 @@ export class JsonResumeAdapter {
   async exportFile(filePath: string): Promise<JsonResumeExportResult> {
     const profile = await this.careerRepository.getProfile();
     const reviewItems = await this.evidenceRepository.listEvidenceReviewItems();
-    const exported = exportJsonResume(profile, reviewItems.map((item) => item.evidence));
+    const exported = exportJsonResume(
+      profile,
+      reviewItems.map((item) => item.evidence),
+    );
     await fs.mkdir(path.dirname(filePath), { recursive: true });
     await fs.writeFile(filePath, `${JSON.stringify(exported.document, null, 2)}\n`, "utf8");
     return {
