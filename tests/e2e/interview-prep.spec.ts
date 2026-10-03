@@ -108,14 +108,31 @@ test("interview prep distinguishes submitted claims from additional confirmed ev
   await card.getByRole("button", { name: "Interview prep", exact: false }).click();
 
   await expect(card.getByText("Exact PDF v1 recorded", { exact: true })).toBeVisible();
-  await expect(card.getByText("Built production TypeScript services and APIs.", { exact: true })).toBeVisible();
-  await expect(card.getByText("Evidence was submitted", { exact: true }).first()).toBeVisible();
 
+  const submittedRequirement = card
+    .locator("article")
+    .filter({ hasText: "Evidence was submitted" })
+    .filter({ hasText: "Built production TypeScript services and APIs." });
+  await expect(submittedRequirement).toHaveCount(1);
+  await expect(submittedRequirement.getByText("Confirmed evidence", { exact: true })).toBeVisible();
   await expect(
-    card.getByText("Designed AI workflow orchestration for customer-facing products.", { exact: true }),
+    submittedRequirement.getByText("What the submitted resume said", { exact: true }),
   ).toBeVisible();
-  await expect(card.getByText("Evidence not on submitted resume", { exact: true }).first()).toBeVisible();
-  await expect(card.getByText(/additional context/i).first()).toBeVisible();
+  await expect(
+    submittedRequirement.getByText("Built production TypeScript services and APIs.", { exact: true }),
+  ).toHaveCount(2);
+
+  const additionalRequirement = card
+    .locator("article")
+    .filter({ hasText: "Evidence not on submitted resume" })
+    .filter({ hasText: "Designed AI workflow orchestration for customer-facing products." });
+  await expect(additionalRequirement).toHaveCount(1);
+  await expect(
+    additionalRequirement.getByText("Designed AI workflow orchestration for customer-facing products.", {
+      exact: true,
+    }),
+  ).toHaveCount(1);
+  await expect(additionalRequirement.getByText(/additional context/i).first()).toBeVisible();
 
   await expect(card.getByText(/not predicted interview questions or hiring probabilities/i)).toBeVisible();
   await expect(card).not.toContainText(/\d+%/);
