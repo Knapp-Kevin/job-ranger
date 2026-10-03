@@ -32,6 +32,8 @@ export interface InterviewPrepSubmittedResume {
   }>;
 }
 
+export type InterviewPrepSubmissionRelation = "exact" | "superseded" | "none";
+
 export interface InterviewPrepRequirement {
   requirementId: string;
   kind: JobRequirementKind;
@@ -41,7 +43,13 @@ export interface InterviewPrepRequirement {
   explanation: string;
   evidenceId: string | null;
   evidenceStatement: string | null;
+  /** True only when the current evidence record itself appeared in the submitted artifact. */
   evidenceWasSubmitted: boolean;
+  /**
+   * `superseded` means the submitted artifact used an earlier evidence record that
+   * is now an explicit predecessor of the current evidence record.
+   */
+  submissionRelation: InterviewPrepSubmissionRelation;
   submittedStatementTexts: string[];
   preparationPrompt: string;
 }
