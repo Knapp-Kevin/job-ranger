@@ -51,7 +51,7 @@ async function run() {
           ${7101}, ${7100}, ${'interview-prep-job'}, ${'generic-html'},
           ${'AI Product Engineer'}, ${'Remote'}, ${'Full-time'},
           ${'https://example.com/jobs/ai-product-engineer'},
-          ${'Must have TypeScript experience. Build production AI workflows and APIs. Python preferred.'},
+          ${'Must have built production TypeScript services and APIs. Must have designed AI workflow orchestration for customer-facing products. Python preferred.'},
           ${null}, ${null}, ${null}, ${null}, ${null}, ${now}, ${now}, ${1}, ${1}, ${0}
         );
       `,
@@ -84,7 +84,7 @@ async function run() {
       statement: 'Designed AI workflow orchestration for customer-facing products.',
       titleOrName: 'AI workflow orchestration',
       organization: 'Example Labs',
-      skills: ['AI workflows'],
+      skills: ['AI workflows', 'orchestration'],
     });
 
     const projectionId = 'resume-projection-interview-prep';
