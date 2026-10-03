@@ -267,6 +267,7 @@ export class CareerBackend {
       scope: cleanList(input.scope ?? []),
       outcomes: cleanList(input.outcomes ?? []),
       metrics: cleanList(input.metrics ?? []),
+      credential: input.subjectType === "credential" ? input.credential ?? null : null,
       verificationState: "user-authored",
       confidence: null,
       createdAt: now,
