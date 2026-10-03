@@ -6,6 +6,7 @@ export interface ApplicationMaterialSection {
   label: "opening" | "evidence" | "closing";
   text: string;
   evidenceIds: string[];
+  evidenceUpdatedAtById: Record<string, string>;
 }
 
 export interface ApplicationMaterialProjection {
