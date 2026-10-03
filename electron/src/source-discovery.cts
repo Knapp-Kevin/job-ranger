@@ -263,7 +263,7 @@ function remoteOkCandidates(
       return {
         id: stableId(`remoteok\n${String(row.id ?? row.slug ?? opportunityUrl)}`),
         providerId: "public-job-feeds" as const,
-        providerName: "Public job feeds",
+        providerName: "Remote OK",
         employerName,
         opportunityTitle: row.position!.trim(),
         opportunityUrl,
@@ -293,7 +293,7 @@ function arbeitnowCandidates(
       return {
         id: stableId(`arbeitnow\n${row.slug ?? opportunityUrl}`),
         providerId: "public-job-feeds" as const,
-        providerName: "Public job feeds",
+        providerName: "Arbeitnow",
         employerName: row.company_name!.trim(),
         opportunityTitle: row.title!.trim(),
         opportunityUrl,
