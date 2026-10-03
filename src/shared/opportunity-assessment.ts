@@ -126,6 +126,25 @@ function detectWorkSchedules(job: AssessableJob): WorkSchedule[] {
   const text = normalize(`${job.title} ${job.descriptionSnippet}`);
   const schedules = new Set<WorkSchedule>();
 
+  const coordinatedShiftPhrase =
+    /\b(day|evening|night)\s+(?:or|and|\/)\s+(day|evening|night)\s+shifts?\b/g;
+  for (const match of text.matchAll(coordinatedShiftPhrase)) {
+    schedules.add(match[1] as WorkSchedule);
+    schedules.add(match[2] as WorkSchedule);
+  }
+
+  const coordinatedNamedShiftPhrase =
+    /\b(first|1st|second|2nd|third|3rd)\s+(?:or|and|\/)\s+(first|1st|second|2nd|third|3rd)\s+shifts?\b/g;
+  const namedShift = (value: string): WorkSchedule => {
+    if (value === "first" || value === "1st") return "day";
+    if (value === "second" || value === "2nd") return "evening";
+    return "night";
+  };
+  for (const match of text.matchAll(coordinatedNamedShiftPhrase)) {
+    schedules.add(namedShift(match[1]));
+    schedules.add(namedShift(match[2]));
+  }
+
   if (/\bday shift\b|\bdaytime\b|\bfirst shift\b|\b1st shift\b/.test(text)) {
     schedules.add("day");
   }
