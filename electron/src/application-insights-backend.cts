@@ -10,7 +10,7 @@ import type {
   SearchLearningTotals,
   StrategySignal,
 } from "../../src/shared/application-insights.js";
-import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
+import { sql, SqliteClient } from "./sqlite.cjs";
 
 const APPLICATION_INSIGHTS_MIGRATION_VERSION = 1004;
 const APPLICATION_INSIGHTS_MIGRATION_NAME = "application_insights_and_offers";
