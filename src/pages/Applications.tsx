@@ -1,5 +1,6 @@
 import { ExternalLink, FileText, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ApplicationLifecyclePanel } from "../components/ApplicationLifecyclePanel";
 import { Layout } from "../components/Layout";
 import { useApplications, type ApplicationStatus } from "../career/storage";
 import { getDesktopApi } from "../services/api";
@@ -25,7 +26,7 @@ export function Applications() {
         </span>
         <h1 className="page-title mt-4">Keep track of what happens after a job looks promising.</h1>
         <p className="page-copy">
-          Save a listing from Find Jobs, then move it through the real process: interested, applied, interview, offer, or closed. Everything here stays on this device.
+          Save a listing from Find Jobs, then move it through the real process: interested, applied, interview, offer, or closed. Contacts, milestones, reminders, and the exact resume files you submitted stay attached to the application on this device.
         </p>
       </section>
 
@@ -106,9 +107,11 @@ export function Applications() {
                 onChange={(event) =>
                   void update(application.id, { notes: event.target.value })
                 }
-                placeholder="Contact name, interview date, follow-up note, what you liked about the role..."
+                placeholder="What you liked about the role, context you want to remember, or anything that does not belong to a specific person or milestone..."
               />
             </label>
+
+            <ApplicationLifecyclePanel applicationId={application.id} />
           </article>
         ))}
       </div>
