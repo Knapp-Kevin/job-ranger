@@ -4,6 +4,7 @@ import { JobScoutBackend } from "./backend.cjs";
 import { CareerBackend } from "./career-backend.cjs";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { initializeResumeIpc } from "./resume-ipc.cjs";
+import { initializeEvidenceExtensionIpc } from "./evidence-extension-ipc.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -386,6 +387,10 @@ app.whenReady().then(async () => {
     });
     await careerBackend.initialize();
     requirementBackend = new RequirementBackend({
+      databasePath: systemStatus.databasePath,
+      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+    });
+    initializeEvidenceExtensionIpc({
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
     });
