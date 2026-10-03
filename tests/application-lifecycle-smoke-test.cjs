@@ -95,6 +95,18 @@ async function run() {
     });
     assert.equal(contact.applicationId, application.id);
 
+    await assert.rejects(
+      () =>
+        runtime.lifecycle.createEvent(application.id, {
+          kind: 'follow-up',
+          title: 'Impossible reminder',
+          eventAt: '2026-10-10T15:00:00.000Z',
+          reminderAt: '2026-10-10T16:00:00.000Z',
+          notes: '',
+        }),
+      /Reminder time cannot be after the event time/,
+    );
+
     const event = await runtime.lifecycle.createEvent(application.id, {
       kind: 'interview',
       title: 'Panel interview',
@@ -103,6 +115,11 @@ async function run() {
       notes: 'Bring portfolio examples.',
     });
     assert.equal(event.completedAt, null);
+
+    await assert.rejects(
+      () => runtime.lifecycle.updateEvent(event.id, { reminderAt: '2026-10-10T17:00:00.000Z' }),
+      /Reminder time cannot be after the event time/,
+    );
 
     let detail = await runtime.lifecycle.getLifecycle(application.id);
     assert.equal(detail.contacts.length, 1);
