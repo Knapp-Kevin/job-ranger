@@ -1,10 +1,11 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
+import type { ApplicationLifecycleDesktopApi } from "../../src/shared/application-lifecycle.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -78,6 +79,21 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     track: (jobId) => ipcRenderer.invoke("applications:track", jobId),
     update: (id, update) => ipcRenderer.invoke("applications:update", id, update),
     delete: (id) => ipcRenderer.invoke("applications:delete", id),
+  },
+  applicationLifecycle: {
+    get: (applicationId) => ipcRenderer.invoke("application-lifecycle:get", applicationId),
+    createContact: (applicationId, input) =>
+      ipcRenderer.invoke("application-lifecycle:create-contact", applicationId, input),
+    updateContact: (contactId, input) =>
+      ipcRenderer.invoke("application-lifecycle:update-contact", contactId, input),
+    deleteContact: (contactId) =>
+      ipcRenderer.invoke("application-lifecycle:delete-contact", contactId),
+    createEvent: (applicationId, input) =>
+      ipcRenderer.invoke("application-lifecycle:create-event", applicationId, input),
+    updateEvent: (eventId, update) =>
+      ipcRenderer.invoke("application-lifecycle:update-event", eventId, update),
+    deleteEvent: (eventId) =>
+      ipcRenderer.invoke("application-lifecycle:delete-event", eventId),
   },
   resume: {
     list: () => ipcRenderer.invoke("resume:list"),
