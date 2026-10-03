@@ -2,6 +2,7 @@ import type { ResumeArtifactSnapshot } from "../../src/shared/resume-contracts.j
 import type {
   InterviewPrepRequirement,
   InterviewPrepResult,
+  InterviewPrepSubmissionRelation,
   InterviewPrepSubmittedResume,
 } from "../../src/shared/interview-prep.js";
 import type { RequirementCoverageItem } from "../../src/shared/requirement-coverage.js";
@@ -37,6 +38,16 @@ type SubmittedArtifactRow = {
   projection_snapshot_json: string;
 };
 
+type LineageRow = {
+  predecessor_evidence_id: string;
+  successor_evidence_id: string;
+};
+
+type SubmissionContext = {
+  relation: InterviewPrepSubmissionRelation;
+  statementTexts: string[];
+};
+
 function clip(value: string, max = 170): string {
   const normalized = value.replace(/\s+/g, " ").trim();
   return normalized.length <= max ? normalized : `${normalized.slice(0, max - 3).trimEnd()}...`;
@@ -52,23 +63,97 @@ function parseSnapshot(value: string): ResumeArtifactSnapshot | null {
   }
 }
 
+function predecessorMap(rows: LineageRow[]): Map<string, string[]> {
+  const map = new Map<string, string[]>();
+  for (const row of rows) {
+    const existing = map.get(row.successor_evidence_id) ?? [];
+    existing.push(row.predecessor_evidence_id);
+    map.set(row.successor_evidence_id, existing);
+  }
+  return map;
+}
+
+function ancestorEvidenceIds(
+  evidenceId: string,
+  predecessorsBySuccessor: Map<string, string[]>,
+): Set<string> {
+  const ancestors = new Set<string>();
+  const pending = [...(predecessorsBySuccessor.get(evidenceId) ?? [])];
+  while (pending.length > 0) {
+    const predecessor = pending.pop();
+    if (!predecessor || ancestors.has(predecessor)) continue;
+    ancestors.add(predecessor);
+    pending.push(...(predecessorsBySuccessor.get(predecessor) ?? []));
+  }
+  return ancestors;
+}
+
+function submissionContext(
+  evidenceId: string | null,
+  submittedResume: InterviewPrepSubmittedResume | null,
+  predecessorsBySuccessor: Map<string, string[]>,
+): SubmissionContext {
+  if (!evidenceId || !submittedResume) {
+    return { relation: "none", statementTexts: [] };
+  }
+
+  const exactStatements = submittedResume.statements.filter((statement) =>
+    statement.evidenceIds.includes(evidenceId),
+  );
+  if (exactStatements.length > 0) {
+    return {
+      relation: "exact",
+      statementTexts: exactStatements.map((statement) => statement.text),
+    };
+  }
+
+  const ancestors = ancestorEvidenceIds(evidenceId, predecessorsBySuccessor);
+  if (ancestors.size === 0) {
+    return { relation: "none", statementTexts: [] };
+  }
+
+  const predecessorStatements = submittedResume.statements.filter((statement) =>
+    statement.evidenceIds.some((id) => ancestors.has(id)),
+  );
+  if (predecessorStatements.length === 0) {
+    return { relation: "none", statementTexts: [] };
+  }
+
+  return {
+    relation: "superseded",
+    statementTexts: predecessorStatements.map((statement) => statement.text),
+  };
+}
+
 function buildPrompt(
   item: RequirementCoverageItem,
-  evidenceWasSubmitted: boolean,
+  submissionRelation: InterviewPrepSubmissionRelation,
 ): string {
   const requirement = clip(item.requirement.text, 150);
   const evidence = item.evidence ? clip(item.evidence.statement, 170) : null;
+  const changedSinceSubmission = submissionRelation === "superseded";
 
   switch (item.mapping.classification) {
     case "direct":
-      return evidenceWasSubmitted
-        ? `Be ready to expand on the submitted evidence that supports “${requirement}”: ${evidence}.`
-        : `You have confirmed evidence for “${requirement},” but it was not in the submitted resume. Use it as additional context if asked, without implying the employer already saw it: ${evidence}.`;
+      if (submissionRelation === "exact") {
+        return `Be ready to expand on the submitted evidence that supports “${requirement}”: ${evidence}.`;
+      }
+      if (changedSinceSubmission) {
+        return `An earlier evidence-linked claim for “${requirement}” appeared on the submitted resume, but your current confirmed record has since changed. Prepare to explain the current record accurately and distinguish it from the wording the employer saw: ${evidence}.`;
+      }
+      return `You have confirmed evidence for “${requirement},” but it was not in the submitted resume. Use it as additional context if asked, without implying the employer already saw it: ${evidence}.`;
     case "transferable":
-      return evidenceWasSubmitted
-        ? `Prepare a concise explanation connecting this submitted transferable evidence to “${requirement}”: ${evidence}.`
-        : `Prepare to connect this confirmed transferable evidence to “${requirement}.” It was not in the submitted resume, so present it as additional context: ${evidence}.`;
+      if (submissionRelation === "exact") {
+        return `Prepare a concise explanation connecting this submitted transferable evidence to “${requirement}”: ${evidence}.`;
+      }
+      if (changedSinceSubmission) {
+        return `The submitted resume contained an earlier evidence-linked claim related to “${requirement},” and the current transferable evidence has since changed. Explain the current record accurately and be clear about what wording the employer originally saw: ${evidence}.`;
+      }
+      return `Prepare to connect this confirmed transferable evidence to “${requirement}.” It was not in the submitted resume, so present it as additional context: ${evidence}.`;
     case "ambiguous":
+      if (changedSinceSubmission) {
+        return `The submitted resume contained an earlier related claim for “${requirement},” but the current evidence is ambiguous and has since changed. Prepare an honest clarification of the current record and what was originally submitted.`;
+      }
       return evidence
         ? `The current evidence is ambiguous for “${requirement}.” Prepare an honest clarification of what you did and did not do: ${evidence}.`
         : `The current evidence is ambiguous for “${requirement}.” Prepare to clarify your actual experience without stretching the claim.`;
@@ -80,12 +165,14 @@ function buildPrompt(
 function requirementPrep(
   item: RequirementCoverageItem,
   submittedResume: InterviewPrepSubmittedResume | null,
+  predecessorsBySuccessor: Map<string, string[]>,
 ): InterviewPrepRequirement {
   const evidenceId = item.evidence?.id ?? null;
-  const submittedStatements = evidenceId && submittedResume
-    ? submittedResume.statements.filter((statement) => statement.evidenceIds.includes(evidenceId))
-    : [];
-  const evidenceWasSubmitted = submittedStatements.length > 0;
+  const submitted = submissionContext(
+    evidenceId,
+    submittedResume,
+    predecessorsBySuccessor,
+  );
 
   return {
     requirementId: item.requirement.id,
@@ -96,9 +183,10 @@ function requirementPrep(
     explanation: item.mapping.explanation,
     evidenceId,
     evidenceStatement: item.evidence?.statement ?? null,
-    evidenceWasSubmitted,
-    submittedStatementTexts: submittedStatements.map((statement) => statement.text),
-    preparationPrompt: buildPrompt(item, evidenceWasSubmitted),
+    evidenceWasSubmitted: submitted.relation === "exact",
+    submissionRelation: submitted.relation,
+    submittedStatementTexts: submitted.statementTexts,
+    preparationPrompt: buildPrompt(item, submitted.relation),
   };
 }
 
@@ -182,11 +270,22 @@ export class InterviewPrepBackend {
       }
     }
 
+    const lineageRows = submittedResume
+      ? await this.sqlite.queryAll<LineageRow>(`
+          SELECT predecessor_evidence_id, successor_evidence_id
+          FROM evidence_lineage
+          WHERE relation = 'supersedes';
+        `)
+      : [];
+    const predecessorsBySuccessor = predecessorMap(lineageRows);
+
     let requirements: InterviewPrepRequirement[] = [];
     if (job) {
       try {
         const coverage = await this.requirementBackend.getJobEvidenceCoverage(application.job_id);
-        requirements = coverage.items.map((item) => requirementPrep(item, submittedResume));
+        requirements = coverage.items.map((item) =>
+          requirementPrep(item, submittedResume, predecessorsBySuccessor),
+        );
         if (coverage.totalCount === 0) {
           warnings.push(
             "No explicit job requirements could be extracted from the saved listing text. Use the job context and submitted resume, but treat requirement coverage as unknown.",
@@ -205,8 +304,11 @@ export class InterviewPrepBackend {
     const suggestedQuestions = [
       `Why are you interested in ${application.title} at ${application.company_name}?`,
       submittedResume
-        ? "Which claim on the resume you submitted is most relevant to this role, and what evidence supports it?"
+        ? "Which claim on the resume you submitted is most relevant to this role, and what evidence supports it now?"
         : "Which confirmed Career Evidence example best demonstrates your fit for this role?",
+      ...(requirements.some((item) => item.submissionRelation === "superseded")
+        ? ["Has any evidence-linked claim changed since you submitted the resume, and how will you explain the current record accurately?"]
+        : []),
       ...(gaps.length > 0
         ? ["How will you address requirements that are gaps or ambiguous without overstating your experience?"]
         : []),
