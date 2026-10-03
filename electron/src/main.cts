@@ -5,6 +5,8 @@ import { CareerBackend } from "./career-backend.cjs";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { initializeResumeIpc } from "./resume-ipc.cjs";
 import { initializeEvidenceExtensionIpc } from "./evidence-extension-ipc.cjs";
+import { initializeBackupIpc } from "./backup-ipc.cjs";
+import { applyPendingRestore } from "./backup-service.cjs";
 import { publicJobFeedDiscoveryProvider } from "./source-discovery-provider.cjs";
 import { validateSourceDiscoveryRequest } from "./source-discovery-validator.cjs";
 import {
@@ -381,7 +383,10 @@ function registerIpcHandlers(): void {
 
 app.whenReady().then(async () => {
   try {
-    const dataDirectory = path.join(app.getPath("userData"), "data");
+    const userDataDirectory = app.getPath("userData");
+    const dataDirectory = path.join(userDataDirectory, "data");
+    await applyPendingRestore({ userDataDirectory, dataDirectory });
+
     backend = new JobScoutBackend({
       dataDirectory,
       browserPageLoader: loadPageHtmlInHiddenWindow,
@@ -407,6 +412,13 @@ app.whenReady().then(async () => {
       dataDirectory,
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+    });
+    initializeBackupIpc({
+      dataDirectory,
+      userDataDirectory,
+      databasePath: systemStatus.databasePath,
+      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+      appVersion: app.getVersion(),
     });
 
     registerIpcHandlers();

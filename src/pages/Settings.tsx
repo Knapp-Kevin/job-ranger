@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { Bell, Database, Save, Settings2, SwatchBook } from "lucide-react";
+import { BackupRestorePanel } from "../components/BackupRestorePanel";
 import { Layout } from "../components/Layout";
 import { useAppContext } from "../context/AppContext";
 import { useTheme } from "../theme/ThemeProvider";
@@ -213,6 +214,8 @@ export function Settings() {
           </div>
         </section>
 
+        <BackupRestorePanel />
+
         <section className="grid grid-cols-1 gap-8 xl:grid-cols-[0.9fr_1.1fr]">
           <div>
             <div className="flex items-center gap-3">
@@ -244,6 +247,3 @@ export function Settings() {
     </Layout>
   );
 }
-
-
-
