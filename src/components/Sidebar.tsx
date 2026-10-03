@@ -6,6 +6,7 @@ import {
   Compass,
   FileText,
   LayoutDashboard,
+  Library,
   Settings,
   UserRound,
 } from "lucide-react";
@@ -15,6 +16,7 @@ const navigation = [
   { name: "Find Jobs", href: "/jobs", icon: Briefcase },
   { name: "Applications", href: "/applications", icon: FileText },
   { name: "Career Profile", href: "/career-profile", icon: UserRound },
+  { name: "Career Evidence", href: "/career-evidence/new", icon: Library },
   { name: "Target Tracks", href: "/target-tracks", icon: Compass },
   { name: "Resume", href: "/resume", icon: FileText },
   { name: "Companies", href: "/companies", icon: Building2 },
@@ -36,7 +38,7 @@ export function Sidebar() {
         </div>
       </div>
 
-      <nav className="flex-1 space-y-1 px-4 py-5" aria-label="Primary navigation">
+      <nav className="flex-1 space-y-1 overflow-y-auto px-4 py-5" aria-label="Primary navigation">
         {navigation.map((item) => {
           const isActive = location.pathname === item.href;
           return (
