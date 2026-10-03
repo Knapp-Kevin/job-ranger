@@ -38,7 +38,11 @@ function base(overrides = {}) {
     expirationDate: null,
     credentialId: '',
   } }));
-  assert.equal(result.credential, null, 'empty optional credential structure should collapse to null');
+  assert.equal(
+    result.credential,
+    undefined,
+    'empty optional credential structure should disappear at the IPC input boundary',
+  );
 }
 
 assert.throws(
@@ -57,7 +61,7 @@ assert.throws(
 
 assert.throws(
   () => validateUserAuthoredEvidenceInput(base({ credential: { expirationDate: '2027-02-31' } })),
-  /valid YYYY-MM-DD/,
+  /valid calendar date/,
 );
 
 console.log('credential validator tests passed');
