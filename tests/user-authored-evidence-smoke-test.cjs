@@ -40,11 +40,37 @@ async function run() {
     assert.equal(created.confidence, null);
     assert.equal(created.organization, "Harbor Food Pantry");
     assert.deepEqual(created.skills, ["TypeScript", "Scheduling"]);
+    assert.equal(created.credential, null);
+
+    const credential = await career.createUserEvidence({
+      subjectType: "credential",
+      statement: "Active Maryland Registered Nurse license.",
+      titleOrName: "Registered Nurse License",
+      skills: ["registered nursing"],
+      credential: {
+        issuer: "Maryland Board of Nursing",
+        jurisdiction: "Maryland",
+        status: "active",
+        expirationDate: "2027-12-31",
+        credentialId: "RN-EXAMPLE-001",
+      },
+    });
+    assert.equal(credential.verificationState, "user-authored");
+    assert.deepEqual(credential.credential, {
+      issuer: "Maryland Board of Nursing",
+      jurisdiction: "Maryland",
+      status: "active",
+      expirationDate: "2027-12-31",
+      credentialId: "RN-EXAMPLE-001",
+    });
 
     const listed = await career.listEvidence();
     const item = listed.find(({ evidence }) => evidence.id === created.id);
     assert.ok(item, "user-authored evidence must participate in the canonical evidence list");
     assert.deepEqual(item.sources, [], "user-authored evidence must not invent a source artifact");
+    const credentialItem = listed.find(({ evidence }) => evidence.id === credential.id);
+    assert.ok(credentialItem, "credential evidence must participate in the canonical evidence list");
+    assert.deepEqual(credentialItem.sources, [], "direct credential evidence must not invent a source artifact");
 
     const edited = await career.reviewEvidence(created.id, {
       action: "edit",
@@ -74,12 +100,27 @@ async function run() {
       sqliteBinaryPath: reloadedStatus.sqliteBinaryPath,
     });
     await reloadedCareer.initialize();
-    const persisted = (await reloadedCareer.listEvidence()).find(
+    const reloadedEvidence = await reloadedCareer.listEvidence();
+    const persisted = reloadedEvidence.find(
       ({ evidence }) => evidence.id === created.id,
     );
     assert.ok(persisted, "user-authored evidence must survive restart");
     assert.equal(persisted.evidence.verificationState, "user-authored");
     assert.match(persisted.evidence.statement, /Built and maintained/);
+
+    const persistedCredential = reloadedEvidence.find(
+      ({ evidence }) => evidence.id === credential.id,
+    );
+    assert.ok(persistedCredential, "structured credential evidence must survive restart");
+    assert.equal(persistedCredential.evidence.verificationState, "user-authored");
+    assert.deepEqual(persistedCredential.evidence.credential, credential.credential);
+
+    const retyped = await reloadedCareer.reviewEvidence(credential.id, {
+      action: "edit",
+      statement: "Completed RN preparation coursework.",
+      subjectType: "education",
+    });
+    assert.equal(retyped.credential, null, "changing a fact away from credential must clear credential-only structure");
 
     await reloadedBackend.dispose();
   } finally {

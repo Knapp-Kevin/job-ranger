@@ -2,6 +2,7 @@ import type {
   ApplicationStatus,
   ApplicationUpdate,
   CareerProfile,
+  CredentialDetails,
   EvidenceReviewAction,
   EvidenceReviewUpdate,
   EvidenceSubjectType,
@@ -155,6 +156,51 @@ function isoLikeString(value: unknown, label: string): string {
   return raw;
 }
 
+function optionalIsoDate(value: unknown, label: string): string | null {
+  if (value === undefined || value === null || value === "") return null;
+  const raw = requireString(value, label, 10).trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
+    throw new Error(`${label} must use YYYY-MM-DD`);
+  }
+  const parsed = new Date(`${raw}T00:00:00.000Z`);
+  if (Number.isNaN(parsed.valueOf()) || parsed.toISOString().slice(0, 10) !== raw) {
+    throw new Error(`${label} must be a valid calendar date`);
+  }
+  return raw;
+}
+
+function credentialDetails(
+  value: unknown,
+  subjectType: EvidenceSubjectType,
+): CredentialDetails | undefined {
+  if (value === undefined || value === null) return undefined;
+  if (subjectType !== "credential") {
+    throw new Error("Credential details can only be attached to credential evidence");
+  }
+  const record = requireRecord(value, "Credential details");
+  const issuer = optionalString(record.issuer, "Credential issuer", 500) ?? null;
+  const jurisdiction = optionalString(record.jurisdiction, "Credential jurisdiction", 500) ?? null;
+  const credentialId = optionalString(record.credentialId, "Credential identifier", 500) ?? null;
+  const expirationDate = optionalIsoDate(record.expirationDate, "Credential expiration date");
+  const status =
+    record.status === undefined || record.status === null || record.status === ""
+      ? null
+      : record.status;
+  if (
+    status !== null &&
+    status !== "active" &&
+    status !== "expired" &&
+    status !== "inactive" &&
+    status !== "pending"
+  ) {
+    throw new Error("Credential status is invalid");
+  }
+  if (!issuer && !jurisdiction && !status && !expirationDate && !credentialId) {
+    return undefined;
+  }
+  return { issuer, jurisdiction, status, expirationDate, credentialId };
+}
+
 export function validateCareerProfile(value: unknown): CareerProfile {
   const record = requireRecord(value, "Career Profile");
   if (record.version !== 2) {
@@ -219,9 +265,10 @@ export function validateUserAuthoredEvidenceInput(
   if (!statement) {
     throw new Error("Evidence statement cannot be empty");
   }
+  const subjectType = evidenceSubjectType(record.subjectType);
 
   return {
-    subjectType: evidenceSubjectType(record.subjectType),
+    subjectType,
     statement,
     organization: optionalString(record.organization, "Evidence organization"),
     titleOrName: optionalString(record.titleOrName, "Evidence title or name"),
@@ -232,6 +279,7 @@ export function validateUserAuthoredEvidenceInput(
     scope: optionalStringArray(record.scope, "Evidence scope"),
     outcomes: optionalStringArray(record.outcomes, "Evidence outcomes"),
     metrics: optionalStringArray(record.metrics, "Evidence metrics"),
+    credential: credentialDetails(record.credential, subjectType),
   };
 }
 

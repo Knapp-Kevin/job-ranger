@@ -20,6 +20,7 @@ function evidence(id, statement, options = {}) {
     scope: [],
     outcomes: [],
     metrics: [],
+    credential: options.credential ?? null,
     verificationState: options.verificationState ?? 'user-confirmed',
     confidence: 1,
     createdAt: '2026-09-25T00:00:00.000Z',
@@ -142,6 +143,95 @@ const now = '2026-09-25T12:00:00.000Z';
   assert.ok(requirements.filter((item) => item.kind === 'credential').length >= 2, 'credential-heavy role should preserve distinct credential requirements');
   assert.ok(coverage.supportedCount >= 1, 'confirmed credentials should map to credential requirements');
   assert.ok(coverage.items.every((item) => item.mapping.classification !== 'ambiguous' || !item.mapping.userConfirmed), 'ambiguous mappings must not self-confirm');
+}
+
+{
+  const target = job('6', 'Registered Nurse', 'Active Maryland RN license required.');
+  const requirements = extractJobRequirements(target, now);
+  const active = evidence('e-active-rn', 'Maryland Registered Nurse license.', {
+    subjectType: 'credential',
+    skills: ['RN license'],
+    credential: {
+      issuer: 'Maryland Board of Nursing',
+      jurisdiction: 'Maryland',
+      status: 'active',
+      expirationDate: '2027-12-31',
+      credentialId: null,
+    },
+  });
+  const coverage = buildJobEvidenceCoverage(target.id, requirements, [active], now);
+  assert.ok(coverage.directCount >= 1, 'active non-expired credential should support a matching requirement');
+}
+
+for (const status of ['expired', 'inactive', 'pending']) {
+  const target = job(`7-${status}`, 'Registered Nurse', 'Active Maryland RN license required.');
+  const requirements = extractJobRequirements(target, now);
+  const saved = evidence(`e-rn-${status}`, 'Active Maryland Registered Nurse license.', {
+    subjectType: 'credential',
+    skills: ['RN license'],
+    credential: {
+      issuer: 'Maryland Board of Nursing',
+      jurisdiction: 'Maryland',
+      status,
+      expirationDate: null,
+      credentialId: null,
+    },
+  });
+  const coverage = buildJobEvidenceCoverage(target.id, requirements, [saved], now);
+  const credentialItem = coverage.items.find((item) => item.requirement.kind === 'credential');
+  assert.ok(credentialItem, `${status}: credential requirement should exist`);
+  assert.equal(credentialItem.mapping.classification, 'gap', `${status}: credential standing must not establish current eligibility`);
+  assert.equal(credentialItem.evidence?.id, saved.id, `${status}: invalid matching credential should remain visible as evidence for the gap`);
+  assert.match(credentialItem.mapping.explanation, new RegExp(status), `${status}: mapping should explain why standing does not qualify`);
+}
+
+{
+  const target = job('8', 'Registered Nurse', 'Active Maryland RN license required.');
+  const requirements = extractJobRequirements(target, now);
+  const expiredByDate = evidence('e-date-expired', 'Active Maryland Registered Nurse license.', {
+    subjectType: 'credential',
+    skills: ['RN license'],
+    credential: {
+      issuer: 'Maryland Board of Nursing',
+      jurisdiction: 'Maryland',
+      status: 'active',
+      expirationDate: '2026-09-24',
+      credentialId: null,
+    },
+  });
+  const coverage = buildJobEvidenceCoverage(target.id, requirements, [expiredByDate], now);
+  const credentialItem = coverage.items.find((item) => item.requirement.kind === 'credential');
+  assert.equal(credentialItem.mapping.classification, 'gap');
+  assert.match(credentialItem.mapping.explanation, /expired on 2026-09-24/);
+}
+
+{
+  const target = job('9', 'Registered Nurse', 'Active Maryland RN license required.');
+  const requirements = extractJobRequirements(target, now);
+  const expired = evidence('e-old-rn', 'Maryland Registered Nurse license.', {
+    subjectType: 'credential',
+    credential: {
+      issuer: 'Maryland Board of Nursing',
+      jurisdiction: 'Maryland',
+      status: 'expired',
+      expirationDate: '2024-12-31',
+      credentialId: null,
+    },
+  });
+  const active = evidence('e-current-rn', 'Registered Nurse license for Maryland.', {
+    subjectType: 'credential',
+    credential: {
+      issuer: 'Maryland Board of Nursing',
+      jurisdiction: 'Maryland',
+      status: 'active',
+      expirationDate: '2027-12-31',
+      credentialId: null,
+    },
+  });
+  const coverage = buildJobEvidenceCoverage(target.id, requirements, [expired, active], now);
+  const credentialItem = coverage.items.find((item) => item.requirement.kind === 'credential');
+  assert.notEqual(credentialItem.mapping.classification, 'gap', 'valid current credential should be preferred over an expired textual match');
+  assert.equal(credentialItem.evidence?.id, active.id);
 }
 
 console.log('requirement mapper tests passed');

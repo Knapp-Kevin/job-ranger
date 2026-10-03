@@ -1,4 +1,7 @@
-import type { EvidenceSubjectType } from "./career-contracts.js";
+import type {
+  CredentialDetails,
+  EvidenceSubjectType,
+} from "./career-contracts.js";
 
 /**
  * Facts a user enters directly are authoritative user-authored Career Evidence,
@@ -17,4 +20,5 @@ export interface UserAuthoredEvidenceInput {
   scope?: string[];
   outcomes?: string[];
   metrics?: string[];
+  credential?: CredentialDetails | null;
 }

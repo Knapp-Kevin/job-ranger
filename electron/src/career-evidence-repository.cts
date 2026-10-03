@@ -2,6 +2,7 @@ import { randomUUID } from "node:crypto";
 import type {
   CandidateEvidence,
   CandidateEvidenceReviewItem,
+  CredentialDetails,
   EvidenceReviewUpdate,
   EvidenceSourceLink,
   EvidenceReviewSource,
@@ -52,6 +53,7 @@ type CandidateEvidenceRow = {
   scope_json: string;
   outcomes_json: string;
   metrics_json: string;
+  credential_json: string | null;
   verification_state: CandidateEvidence["verificationState"];
   confidence: number | null;
   created_at: string;
@@ -88,6 +90,28 @@ function parseUnknown(value: string | null): unknown | null {
   } catch {
     return null;
   }
+}
+
+function parseCredential(value: string | null): CredentialDetails | null {
+  const parsed = parseUnknown(value);
+  if (!parsed || typeof parsed !== "object" || Array.isArray(parsed)) return null;
+  const record = parsed as Record<string, unknown>;
+  const text = (candidate: unknown): string | null =>
+    typeof candidate === "string" && candidate.trim() ? candidate.trim() : null;
+  const status =
+    record.status === "active" ||
+    record.status === "expired" ||
+    record.status === "inactive" ||
+    record.status === "pending"
+      ? record.status
+      : null;
+  return {
+    issuer: text(record.issuer),
+    jurisdiction: text(record.jurisdiction),
+    status,
+    expirationDate: text(record.expirationDate),
+    credentialId: text(record.credentialId),
+  };
 }
 
 function mapArtifact(row: SourceArtifactRow): SourceArtifact {
@@ -137,6 +161,7 @@ function mapEvidence(row: CandidateEvidenceRow): CandidateEvidence {
     scope: parseStringArray(row.scope_json),
     outcomes: parseStringArray(row.outcomes_json),
     metrics: parseStringArray(row.metrics_json),
+    credential: parseCredential(row.credential_json),
     verificationState: row.verification_state,
     confidence: row.confidence,
     createdAt: row.created_at,
@@ -260,16 +285,18 @@ export class CareerEvidenceRepository {
       INSERT INTO candidate_evidence (
         id, subject_type, organization, title_or_name, start_date, end_date,
         statement, action, context, skills_json, methods_or_tools_json,
-        scope_json, outcomes_json, metrics_json, verification_state, confidence,
-        created_at, updated_at
+        scope_json, outcomes_json, metrics_json, credential_json,
+        verification_state, confidence, created_at, updated_at
       ) VALUES (
         ${evidence.id}, ${evidence.subjectType}, ${evidence.organization},
         ${evidence.titleOrName}, ${evidence.startDate}, ${evidence.endDate},
         ${evidence.statement}, ${evidence.action}, ${evidence.context},
         ${JSON.stringify(evidence.skills)}, ${JSON.stringify(evidence.methodsOrTools)},
         ${JSON.stringify(evidence.scope)}, ${JSON.stringify(evidence.outcomes)},
-        ${JSON.stringify(evidence.metrics)}, ${evidence.verificationState},
-        ${evidence.confidence}, ${evidence.createdAt}, ${evidence.updatedAt}
+        ${JSON.stringify(evidence.metrics)},
+        ${evidence.credential ? JSON.stringify(evidence.credential) : null},
+        ${evidence.verificationState}, ${evidence.confidence},
+        ${evidence.createdAt}, ${evidence.updatedAt}
       )
       RETURNING *;
     `);
@@ -368,6 +395,7 @@ export class CareerEvidenceRepository {
       throw new Error("Edited evidence statement cannot be empty");
     }
 
+    const nextSubjectType = update.subjectType ?? current.subjectType;
     const verificationState =
       update.action === "reject"
         ? "rejected"
@@ -377,8 +405,9 @@ export class CareerEvidenceRepository {
     const row = await this.sqlite.queryOne<CandidateEvidenceRow>(sql`
       UPDATE candidate_evidence
       SET
-        subject_type = ${update.subjectType ?? current.subjectType},
+        subject_type = ${nextSubjectType},
         statement = ${nextStatement},
+        credential_json = ${nextSubjectType === "credential" && current.credential ? JSON.stringify(current.credential) : null},
         verification_state = ${verificationState},
         updated_at = ${new Date().toISOString()}
       WHERE id = ${id}

@@ -209,6 +209,21 @@ export type EvidenceVerificationState =
   | "inferred-pending"
   | "rejected";
 
+export type CredentialStatus = "active" | "expired" | "inactive" | "pending";
+
+/**
+ * Structured credential facts are deliberately bounded. They carry the small
+ * set of facts that can materially change eligibility without turning Career
+ * Evidence into an unbounded attribute bag.
+ */
+export interface CredentialDetails {
+  issuer: string | null;
+  jurisdiction: string | null;
+  status: CredentialStatus | null;
+  expirationDate: string | null;
+  credentialId: string | null;
+}
+
 export interface CandidateEvidence {
   id: string;
   subjectType: EvidenceSubjectType;
@@ -224,6 +239,11 @@ export interface CandidateEvidence {
   scope: string[];
   outcomes: string[];
   metrics: string[];
+  /**
+   * Optional for migration compatibility. Only credential evidence should
+   * carry this structure; validators enforce that rule on direct authoring.
+   */
+  credential?: CredentialDetails | null;
   verificationState: EvidenceVerificationState;
   confidence: number | null;
   createdAt: string;
