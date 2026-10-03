@@ -152,6 +152,7 @@ function evidenceSearchText(evidence: CandidateEvidence): string {
     ...evidence.metrics,
     evidence.credential?.issuer,
     evidence.credential?.jurisdiction,
+    evidence.credential?.status,
     evidence.credential?.credentialId,
   ]
     .filter((value): value is string => Boolean(value))
