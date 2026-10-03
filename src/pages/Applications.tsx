@@ -1,5 +1,6 @@
 import { ExternalLink, FileText, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
+import { ApplicationInsightsPanel } from "../components/ApplicationInsightsPanel";
 import { ApplicationLifecyclePanel } from "../components/ApplicationLifecyclePanel";
 import { ApplicationMaterialsPanel } from "../components/ApplicationMaterialsPanel";
 import { InterviewPrepPanel } from "../components/InterviewPrepPanel";
@@ -28,7 +29,7 @@ export function Applications() {
         </span>
         <h1 className="page-title mt-4">Keep track of what happens after a job looks promising.</h1>
         <p className="page-copy">
-          Save a listing from Find Jobs, then move it through the real process: interested, applied, interview, offer, or closed. Contacts, milestones, reminders, exact submitted resumes, factual application materials, and grounded interview preparation stay attached to the application on this device.
+          Save a listing from Find Jobs, then move it through the real process: interested, applied, interview, offer, or closed. Contacts, milestones, reminders, exact submitted resumes, factual application materials, grounded interview preparation, target-track context, and offer details stay attached to the application on this device.
         </p>
       </section>
 
@@ -114,6 +115,7 @@ export function Applications() {
             </label>
 
             <ApplicationLifecyclePanel applicationId={application.id} />
+            <ApplicationInsightsPanel applicationId={application.id} />
             <ApplicationMaterialsPanel applicationId={application.id} />
             <div className="mt-4">
               <InterviewPrepPanel applicationId={application.id} />
