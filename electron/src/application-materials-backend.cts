@@ -8,7 +8,7 @@ import type { CandidateEvidence } from "../../src/shared/contracts.js";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { sql, SqliteClient } from "./sqlite.cjs";
 
-const APPLICATION_MATERIALS_MIGRATION_VERSION = 1002;
+const APPLICATION_MATERIALS_MIGRATION_VERSION = 1003;
 const APPLICATION_MATERIALS_MIGRATION_NAME = "application_material_projections";
 
 const APPLICATION_MATERIALS_SCHEMA = `
