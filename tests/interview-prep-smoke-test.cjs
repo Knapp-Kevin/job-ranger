@@ -5,6 +5,7 @@ const path = require('node:path');
 
 const { JobScoutBackend } = require('../electron-runtime/electron/src/backend.cjs');
 const { CareerBackend } = require('../electron-runtime/electron/src/career-backend.cjs');
+const { EvidenceExtensionBackend } = require('../electron-runtime/electron/src/evidence-extension-backend.cjs');
 const { InterviewPrepBackend } = require('../electron-runtime/electron/src/interview-prep-backend.cjs');
 const { SqliteClient, sql } = require('../electron-runtime/electron/src/sqlite.cjs');
 
@@ -29,6 +30,10 @@ async function run() {
       sqliteBinaryPath: status.sqliteBinaryPath,
     });
     await career.initialize();
+    const extensions = new EvidenceExtensionBackend({
+      databasePath: status.databasePath,
+      sqliteBinaryPath: status.sqliteBinaryPath,
+    });
 
     await sqlite.transaction([
       sql`
@@ -156,6 +161,11 @@ async function run() {
       `,
     ]);
 
+    const correctedEvidence = await extensions.supersedeEvidence(submittedEvidence.id, {
+      subjectType: 'achievement',
+      statement: 'Built and maintained production TypeScript services and APIs.',
+    });
+
     const prepBackend = new InterviewPrepBackend({
       databasePath: status.databasePath,
       sqliteBinaryPath: status.sqliteBinaryPath,
@@ -166,19 +176,30 @@ async function run() {
     assert.equal(prep.submittedResume?.artifactId, artifactId);
     assert.equal(prep.submittedResume?.version, 1);
 
-    const submittedSupport = prep.requirements.find(
-      (item) => item.evidenceId === submittedEvidence.id,
+    const changedSubmittedSupport = prep.requirements.find(
+      (item) => item.evidenceId === correctedEvidence.id,
     );
-    assert.ok(submittedSupport, 'submitted evidence should support at least one requirement');
-    assert.equal(submittedSupport.evidenceWasSubmitted, true);
-    assert.deepEqual(submittedSupport.submittedStatementTexts, [submittedEvidence.statement]);
-    assert.match(submittedSupport.preparationPrompt, /submitted evidence/i);
+    assert.ok(
+      changedSubmittedSupport,
+      'current successor evidence should support the requirement after the submitted evidence is superseded',
+    );
+    assert.equal(changedSubmittedSupport.evidenceWasSubmitted, false);
+    assert.equal(changedSubmittedSupport.submissionRelation, 'superseded');
+    assert.equal(changedSubmittedSupport.evidenceStatement, correctedEvidence.statement);
+    assert.deepEqual(changedSubmittedSupport.submittedStatementTexts, [submittedEvidence.statement]);
+    assert.match(changedSubmittedSupport.preparationPrompt, /earlier evidence-linked claim/i);
+    assert.match(changedSubmittedSupport.preparationPrompt, /current confirmed record has since changed/i);
+    assert.ok(
+      prep.suggestedQuestions.some((question) => /claim changed since you submitted/i.test(question)),
+      'changed submitted evidence should add an explicit correction-preparation question',
+    );
 
     const extraSupport = prep.requirements.find(
       (item) => item.evidenceId === additionalEvidence.id,
     );
     assert.ok(extraSupport, 'confirmed non-submitted evidence should remain available for preparation');
     assert.equal(extraSupport.evidenceWasSubmitted, false);
+    assert.equal(extraSupport.submissionRelation, 'none');
     assert.equal(extraSupport.submittedStatementTexts.length, 0);
     assert.match(extraSupport.preparationPrompt, /not in the submitted resume|not on the submitted resume/i);
     assert.match(extraSupport.preparationPrompt, /additional context/i);
