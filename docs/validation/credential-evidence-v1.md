@@ -26,6 +26,8 @@ For credential requirements, a textually matching credential does not establish 
 
 When both stale and currently usable matching credentials exist, deterministic mapping prefers the usable credential rather than the stronger stale textual match.
 
+When standing is not provided, Job Ranger preserves the pre-existing evidence behavior rather than inventing an inactive or active state. Unknown standing can still support a textual credential requirement if the evidence itself is confirmed, but Job Ranger does not manufacture jurisdiction, issuer, status, or expiration facts.
+
 ## Privacy and UX
 
 Credential structure is progressively disclosed only for credential evidence. The user is not required to enter an identifier, jurisdiction, issuer, status, or expiration date. Job Ranger does not infer these fields from occupation or title alone.
