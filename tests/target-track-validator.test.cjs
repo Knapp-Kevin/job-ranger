@@ -15,6 +15,7 @@ function validTrack() {
       geography: { locations: [], radiusMiles: null, strength: "preferred" },
       workModes: { values: [], strength: "preferred" },
       employmentArrangements: { values: [], strength: "preferred" },
+      schedules: { values: [], strength: "preferred" },
       compensation: {
         floor: null,
         target: null,
@@ -30,6 +31,14 @@ function validTrack() {
 
 assert.equal(validateCareerTargetTrackInput(validTrack()).name, "Flexible search");
 
+const normalizedLegacyShape = validTrack();
+delete normalizedLegacyShape.constraints.schedules;
+assert.deepEqual(
+  validateCareerTargetTrackInput(normalizedLegacyShape).constraints.schedules,
+  { values: [], strength: "preferred" },
+  "tracks persisted before schedule availability should normalize without a migration rewrite",
+);
+
 assert.throws(
   () =>
     validateCareerTargetTrackInput({
@@ -40,6 +49,42 @@ assert.throws(
       },
     }),
   /cannot be required without at least one value/i,
+);
+
+assert.throws(
+  () =>
+    validateCareerTargetTrackInput({
+      ...validTrack(),
+      constraints: {
+        ...validTrack().constraints,
+        schedules: { values: [], strength: "required" },
+      },
+    }),
+  /schedule availability cannot be required without at least one value/i,
+);
+
+assert.throws(
+  () =>
+    validateCareerTargetTrackInput({
+      ...validTrack(),
+      constraints: {
+        ...validTrack().constraints,
+        schedules: { values: ["midnight-special"], strength: "preferred" },
+      },
+    }),
+  /schedule availability contains an invalid value/i,
+);
+
+assert.throws(
+  () =>
+    validateCareerTargetTrackInput({
+      ...validTrack(),
+      constraints: {
+        ...validTrack().constraints,
+        schedules: { values: ["day"], strength: "unspecified" },
+      },
+    }),
+  /schedule strength cannot be unspecified/i,
 );
 
 assert.throws(
