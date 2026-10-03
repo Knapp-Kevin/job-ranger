@@ -120,7 +120,8 @@ function parseImport(root: JsonObject, now: string): { proposals: EvidencePropos
     const organization = text(item.name);
     const position = text(item.position);
     const summary = text(item.summary);
-    const roleStatement = summary ?? [position, organization].filter(Boolean).join(" at ") || "Imported work experience";
+    const fallback = [position, organization].filter(Boolean).join(" at ") || "Imported work experience";
+    const roleStatement = summary ?? fallback;
     proposals.push(proposal("role", {
       organization,
       titleOrName: position,
@@ -326,11 +327,6 @@ function exportJsonResume(
       certificates,
       projects,
       publications,
-      meta: {
-        canonical: "https://jsonresume.org/schema/",
-        version: "v1.0.0",
-        lastModified: new Date().toISOString(),
-      },
     },
     exportedEvidenceCount: consumed.size,
     omittedEvidenceCount,
