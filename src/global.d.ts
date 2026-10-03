@@ -2,6 +2,7 @@
 
 import type { DesktopApi } from "./shared/contracts";
 import type { ApplicationLifecycleDesktopApi } from "./shared/application-lifecycle";
+import type { CareerStoriesDesktopApi } from "./shared/career-stories";
 import type { EvidenceExtensionDesktopApi } from "./shared/evidence-extensions";
 import type { InterviewPrepDesktopApi } from "./shared/interview-prep";
 import type { ResumeDesktopApi } from "./shared/resume-api";
@@ -14,7 +15,8 @@ declare global {
       EvidenceExtensionDesktopApi &
       SourceDiscoveryDesktopApi &
       ApplicationLifecycleDesktopApi &
-      InterviewPrepDesktopApi;
+      InterviewPrepDesktopApi &
+      CareerStoriesDesktopApi;
   }
 }
 
