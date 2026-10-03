@@ -1,5 +1,6 @@
 import { Link, useLocation } from "react-router-dom";
 import {
+  BarChart3,
   Bell,
   BookOpenText,
   Briefcase,
@@ -16,6 +17,7 @@ const navigation = [
   { name: "Home", href: "/", icon: LayoutDashboard },
   { name: "Find Jobs", href: "/jobs", icon: Briefcase },
   { name: "Applications", href: "/applications", icon: FileText },
+  { name: "Search Insights", href: "/search-insights", icon: BarChart3 },
   { name: "Career Profile", href: "/career-profile", icon: UserRound },
   { name: "Career Evidence", href: "/career-evidence/new", icon: Library },
   { name: "Career Stories", href: "/career-stories", icon: BookOpenText },
