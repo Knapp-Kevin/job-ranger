@@ -12,6 +12,7 @@ import type {
   EmploymentArrangement,
   PreferenceStrength,
   WorkMode,
+  WorkSchedule,
 } from "../shared/contracts";
 
 const workModes: Array<{ value: WorkMode; label: string }> = [
@@ -29,6 +30,14 @@ const arrangements: Array<{ value: EmploymentArrangement; label: string }> = [
   { value: "freelance", label: "Freelance" },
   { value: "seasonal", label: "Seasonal" },
   { value: "other", label: "Other" },
+];
+
+const schedules: Array<{ value: WorkSchedule; label: string }> = [
+  { value: "day", label: "Day shift" },
+  { value: "evening", label: "Evening / swing" },
+  { value: "night", label: "Night / overnight" },
+  { value: "weekend", label: "Weekend" },
+  { value: "rotating", label: "Rotating shifts" },
 ];
 
 function splitList(value: string): string[] {
@@ -292,6 +301,24 @@ export function TargetTracks() {
             <div className="mt-5 grid grid-cols-1 gap-5 md:grid-cols-2">
               <label><span className="metric-label">Seniority</span><input className="input-shell mt-2" value={draft.seniority ?? ""} onChange={(event) => markChanged({ ...draft, seniority: event.target.value || null })} /></label>
               <label><span className="metric-label">Career direction</span><input className="input-shell mt-2" value={draft.direction ?? ""} onChange={(event) => markChanged({ ...draft, direction: event.target.value || null })} /></label>
+            </div>
+            <div className="mt-5 flex flex-wrap items-center justify-between gap-3">
+              <div>
+                <span className="metric-label">Schedule availability</span>
+                <p className="mt-1 text-sm text-[var(--color-text-muted)]">Select schedules you are willing to work. If a listing names several possible shifts and only some fit, Job Ranger leaves the result uncertain.</p>
+              </div>
+              <StrengthSelect
+                label="Schedule importance"
+                value={draft.constraints.schedules?.strength ?? "preferred"}
+                onChange={(strength) => updateConstraints("schedules", { values: draft.constraints.schedules?.values ?? [], strength })}
+              />
+            </div>
+            <div className="mt-3">
+              <ToggleList
+                options={schedules}
+                values={draft.constraints.schedules?.values ?? []}
+                onChange={(values) => updateConstraints("schedules", { values, strength: draft.constraints.schedules?.strength ?? "preferred" })}
+              />
             </div>
             <div className="mt-5 flex flex-wrap items-center justify-between gap-3"><span className="metric-label">Industries or settings</span><StrengthSelect label="Industry importance" value={draft.constraints.industries.strength} onChange={(strength) => updateConstraints("industries", { ...draft.constraints.industries, strength })} /></div>
             <textarea className="input-shell mt-2 min-h-24 resize-y py-3" aria-label="Track industries" value={draft.constraints.industries.values.join("\n")} onChange={(event) => updateConstraints("industries", { ...draft.constraints.industries, values: splitList(event.target.value) })} />
