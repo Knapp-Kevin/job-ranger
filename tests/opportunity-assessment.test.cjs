@@ -12,6 +12,7 @@ function track(overrides = {}) {
       geography: overrides.geography ?? { locations: [], radiusMiles: null, strength: 'preferred' },
       workModes: overrides.workModes ?? { values: [], strength: 'preferred' },
       employmentArrangements: overrides.employmentArrangements ?? { values: [], strength: 'preferred' },
+      schedules: overrides.schedules ?? { values: [], strength: 'preferred' },
       compensation: overrides.compensation ?? { floor: null, target: null, basis: 'annual', floorStrength: 'preferred' },
       onCall: overrides.onCall ?? { value: 'either', strength: 'preferred' },
       industries: overrides.industries ?? { values: [], strength: 'preferred' },
@@ -155,6 +156,42 @@ function coverage(items) {
     assert.equal(result.eligibility.status, 'unclear');
     assert.equal(result.preferenceAlignment.status, 'mixed');
     assert.ok(result.preferenceAlignment.unknowns.some((item) => item.includes('does not explicitly identify a work mode')));
+  }
+
+  {
+    const result = buildOpportunityAssessment(
+      job({ title: 'Registered Nurse', descriptionSnippet: 'Full-time night shift. Active RN license required.' }),
+      track({ roleTitles: ['Registered Nurse'], schedules: { values: ['night'], strength: 'required' } }),
+      coverage([requirement('r-schedule-match', 'credential', 'Active RN license required.', 'direct', { id: 'e-schedule-match' })]),
+      now,
+    );
+    assert.equal(result.preferenceAlignment.status, 'aligned');
+    assert.equal(result.eligibility.status, 'likely');
+    assert.ok(result.preferenceAlignment.matches.some((item) => item.includes('night')));
+  }
+
+  {
+    const result = buildOpportunityAssessment(
+      job({ title: 'Warehouse Supervisor', descriptionSnippet: 'This position works the night shift.' }),
+      track({ roleTitles: ['Warehouse Supervisor'], schedules: { values: ['day'], strength: 'required' } }),
+      coverage([requirement('r-schedule-miss', 'responsibility', 'Lead warehouse operations.', 'direct', { id: 'e-schedule-miss' })]),
+      now,
+    );
+    assert.equal(result.preferenceAlignment.status, 'misaligned');
+    assert.equal(result.eligibility.status, 'unlikely');
+    assert.ok(result.eligibility.blockers.some((item) => item.includes('night')));
+  }
+
+  {
+    const result = buildOpportunityAssessment(
+      job({ title: 'Clinic Coordinator', descriptionSnippet: 'Day or evening shift openings are available.' }),
+      track({ roleTitles: ['Clinic Coordinator'], schedules: { values: ['day'], strength: 'required' } }),
+      coverage([requirement('r-schedule-partial', 'responsibility', 'Coordinate clinic operations.', 'direct', { id: 'e-schedule-partial' })]),
+      now,
+    );
+    assert.equal(result.preferenceAlignment.status, 'mixed');
+    assert.equal(result.eligibility.status, 'unclear');
+    assert.ok(result.preferenceAlignment.unknowns.some((item) => item.includes('only some overlap')));
   }
 
   {
