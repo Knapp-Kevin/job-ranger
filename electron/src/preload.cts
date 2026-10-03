@@ -2,10 +2,11 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
 import type { ApplicationLifecycleDesktopApi } from "../../src/shared/application-lifecycle.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
+import type { InterviewPrepDesktopApi } from "../../src/shared/interview-prep.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -94,6 +95,9 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
       ipcRenderer.invoke("application-lifecycle:update-event", eventId, update),
     deleteEvent: (eventId) =>
       ipcRenderer.invoke("application-lifecycle:delete-event", eventId),
+  },
+  interviewPrep: {
+    get: (applicationId) => ipcRenderer.invoke("interview-prep:get", applicationId),
   },
   resume: {
     list: () => ipcRenderer.invoke("resume:list"),
