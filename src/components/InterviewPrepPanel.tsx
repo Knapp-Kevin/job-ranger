@@ -155,8 +155,18 @@ export function InterviewPrepPanel({ applicationId }: InterviewPrepPanelProps) {
                           </span>
                           <span className="soft-badge">{item.kind}</span>
                           {item.evidenceId && (
-                            <span className={`soft-badge ${item.evidenceWasSubmitted ? "soft-badge-success" : "soft-badge-warning"}`}>
-                              {item.evidenceWasSubmitted ? "Evidence was submitted" : "Evidence not on submitted resume"}
+                            <span
+                              className={`soft-badge ${
+                                item.submissionRelation === "exact"
+                                  ? "soft-badge-success"
+                                  : "soft-badge-warning"
+                              }`}
+                            >
+                              {item.submissionRelation === "exact"
+                                ? "Evidence was submitted"
+                                : item.submissionRelation === "superseded"
+                                  ? "Submitted claim has since changed"
+                                  : "Evidence not on submitted resume"}
                             </span>
                           )}
                         </div>
@@ -172,7 +182,11 @@ export function InterviewPrepPanel({ applicationId }: InterviewPrepPanelProps) {
 
                         {item.submittedStatementTexts.length > 0 && (
                           <div className="mt-3 rounded-xl bg-[var(--color-surface)] px-3 py-3 text-sm">
-                            <span className="metric-label">What the submitted resume said</span>
+                            <span className="metric-label">
+                              {item.submissionRelation === "superseded"
+                                ? "What the submitted resume said before this evidence changed"
+                                : "What the submitted resume said"}
+                            </span>
                             {item.submittedStatementTexts.map((statement) => (
                               <p key={statement} className="mt-1 text-[var(--color-text-secondary)]">{statement}</p>
                             ))}
