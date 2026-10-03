@@ -2,8 +2,9 @@ import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
+import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -18,6 +19,9 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi = 
     update: (id, update) => ipcRenderer.invoke("companies:update", id, update),
     delete: (id) => ipcRenderer.invoke("companies:delete", id),
     runScrape: (id) => ipcRenderer.invoke("companies:run-scrape", id),
+  },
+  discovery: {
+    discover: (request) => ipcRenderer.invoke("discovery:discover", request),
   },
   jobs: {
     list: () => ipcRenderer.invoke("jobs:list"),
