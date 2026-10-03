@@ -86,6 +86,7 @@ function successfulFetch(url) {
 
   const acme = result.candidates.find((candidate) => candidate.employerName === "Acme");
   assert.ok(acme, "matching Remote OK opportunity should be returned");
+  assert.equal(acme.providerName, "Remote OK");
   assert.equal(acme.sourceType, "greenhouse");
   assert.equal(acme.sourceUrl, "https://boards.greenhouse.io/acme");
   assert.equal(acme.canMonitor, true);
@@ -100,6 +101,7 @@ function successfulFetch(url) {
 
   const arbeitnow = result.candidates.find((candidate) => candidate.employerName === "Beta GmbH");
   assert.ok(arbeitnow);
+  assert.equal(arbeitnow.providerName, "Arbeitnow");
   assert.equal(arbeitnow.sourceUrl, null);
   assert.equal(arbeitnow.canMonitor, false);
   assert.equal(arbeitnow.employmentType, "Full-time");
