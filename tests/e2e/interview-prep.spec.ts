@@ -45,7 +45,7 @@ test.beforeAll(async () => {
     ) VALUES (
       7201, 7200, 'interview-prep-e2e', 'generic-html', 'AI Product Engineer',
       'Remote', 'Full-time', 'https://example.com/jobs/ai-product-engineer',
-      'Must have TypeScript experience. Must have AI workflow orchestration experience. Python preferred.',
+      'Must have built production TypeScript services and APIs. Must have designed AI workflow orchestration for customer-facing products. Python preferred.',
       NULL, NULL, NULL, NULL, NULL, '${now}', '${now}', 1, 1, 0
     );
     COMMIT;
