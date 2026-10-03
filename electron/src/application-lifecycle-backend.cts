@@ -137,6 +137,12 @@ function cleanOptional(value: string | null | undefined): string | null {
   return normalized || null;
 }
 
+function assertReminderTiming(eventAt: string, reminderAt: string | null): void {
+  if (reminderAt && new Date(reminderAt).getTime() > new Date(eventAt).getTime()) {
+    throw new Error("Reminder time cannot be after the event time");
+  }
+}
+
 export class ApplicationLifecycleBackend {
   private readonly sqlite: SqliteClient;
 
@@ -263,6 +269,7 @@ export class ApplicationLifecycleBackend {
     input: ApplicationEventInput,
   ): Promise<ApplicationEvent> {
     await this.assertApplication(applicationId);
+    assertReminderTiming(input.eventAt, input.reminderAt ?? null);
     const now = new Date().toISOString();
     const row = await this.sqlite.queryOne<EventRow>(sql`
       INSERT INTO application_events (
@@ -288,13 +295,17 @@ export class ApplicationLifecycleBackend {
     `);
     if (!current) throw new Error(`Application event ${eventId} not found`);
 
+    const nextEventAt = update.eventAt ?? current.event_at;
+    const nextReminderAt = update.reminderAt === undefined ? current.reminder_at : update.reminderAt;
+    assertReminderTiming(nextEventAt, nextReminderAt);
+
     const row = await this.sqlite.queryOne<EventRow>(sql`
       UPDATE application_events
       SET
         kind = ${update.kind ?? current.kind},
         title = ${update.title?.trim() ?? current.title},
-        event_at = ${update.eventAt ?? current.event_at},
-        reminder_at = ${update.reminderAt === undefined ? current.reminder_at : update.reminderAt},
+        event_at = ${nextEventAt},
+        reminder_at = ${nextReminderAt},
         completed_at = ${update.completedAt === undefined ? current.completed_at : update.completedAt},
         notes = ${update.notes === undefined ? current.notes : update.notes.trim()},
         updated_at = ${new Date().toISOString()}
