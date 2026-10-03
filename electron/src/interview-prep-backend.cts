@@ -146,7 +146,11 @@ export class InterviewPrepBackend {
       JOIN resume_artifact_snapshots AS snapshots ON snapshots.artifact_id = artifacts.id
       WHERE links.application_id = ${applicationId}
         AND links.purpose = 'submitted'
-      ORDER BY links.recorded_at DESC, artifacts.version DESC
+      ORDER BY
+        links.recorded_at DESC,
+        artifacts.version DESC,
+        artifacts.created_at DESC,
+        artifacts.id DESC
       LIMIT 1;
     `);
 
