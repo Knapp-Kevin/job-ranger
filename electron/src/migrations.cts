@@ -357,4 +357,35 @@ export const migrations: Migration[] = [
       ALTER TABLE candidate_evidence ADD COLUMN credential_json TEXT;
     `,
   },
+  {
+    version: 8,
+    name: "evidence_references_and_lineage",
+    sql: `
+      CREATE TABLE IF NOT EXISTS evidence_references (
+        id TEXT PRIMARY KEY,
+        evidence_id TEXT NOT NULL REFERENCES candidate_evidence(id) ON DELETE CASCADE,
+        kind TEXT NOT NULL CHECK (kind IN ('url', 'local')),
+        label TEXT,
+        value TEXT NOT NULL,
+        created_at TEXT NOT NULL
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_evidence_references_evidence
+        ON evidence_references(evidence_id, created_at ASC);
+
+      CREATE TABLE IF NOT EXISTS evidence_lineage (
+        id TEXT PRIMARY KEY,
+        predecessor_evidence_id TEXT NOT NULL REFERENCES candidate_evidence(id) ON DELETE CASCADE,
+        successor_evidence_id TEXT NOT NULL REFERENCES candidate_evidence(id) ON DELETE CASCADE,
+        relation TEXT NOT NULL CHECK (relation = 'supersedes'),
+        created_at TEXT NOT NULL,
+        UNIQUE (predecessor_evidence_id, successor_evidence_id, relation)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_evidence_lineage_predecessor
+        ON evidence_lineage(predecessor_evidence_id, created_at ASC);
+      CREATE INDEX IF NOT EXISTS idx_evidence_lineage_successor
+        ON evidence_lineage(successor_evidence_id, created_at ASC);
+    `,
+  },
 ];

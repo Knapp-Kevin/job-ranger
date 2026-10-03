@@ -8,6 +8,10 @@ import type {
   SourceArtifact,
   UserAuthoredEvidenceInput,
 } from "../shared/contracts";
+import type {
+  EvidenceMetadata,
+  EvidenceSupersedeInput,
+} from "../shared/evidence-extensions";
 import { getDesktopApi } from "../services/api";
 
 const evidenceEvent = "job-ranger:career-evidence-changed";
@@ -15,6 +19,7 @@ const evidenceEvent = "job-ranger:career-evidence-changed";
 export function useCareerEvidence() {
   const [artifacts, setArtifacts] = useState<SourceArtifact[]>([]);
   const [items, setItems] = useState<CandidateEvidenceReviewItem[]>([]);
+  const [metadata, setMetadata] = useState<EvidenceMetadata[]>([]);
   const [loading, setLoading] = useState(true);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -24,13 +29,15 @@ export function useCareerEvidence() {
   const refresh = useCallback(async () => {
     const requestId = ++refreshSequence.current;
     try {
-      const [nextArtifacts, nextItems] = await Promise.all([
+      const [nextArtifacts, nextItems, nextMetadata] = await Promise.all([
         getDesktopApi().career.listSourceArtifacts(),
         getDesktopApi().career.listEvidence(),
+        getDesktopApi().careerEvidence.listMetadata(),
       ]);
       if (requestId !== refreshSequence.current) return;
       setArtifacts(nextArtifacts);
       setItems(nextItems);
+      setMetadata(nextMetadata);
       setError(null);
     } catch (refreshError) {
       if (requestId !== refreshSequence.current) return;
@@ -95,7 +102,11 @@ export function useCareerEvidence() {
       setBusy(true);
       setError(null);
       try {
-        const created = await getDesktopApi().career.createUserEvidence(input);
+        const { references = [], ...careerInput } = input;
+        const created = await getDesktopApi().career.createUserEvidence(careerInput);
+        if (references.length > 0) {
+          await getDesktopApi().careerEvidence.setReferences(created.id, references);
+        }
         await refresh();
         window.dispatchEvent(new CustomEvent(evidenceEvent));
         return created;
@@ -168,6 +179,37 @@ export function useCareerEvidence() {
     [refresh],
   );
 
+  const supersede = useCallback(
+    async (evidenceId: string, input: EvidenceSupersedeInput) => {
+      setBusy(true);
+      setError(null);
+      try {
+        const replacement = await getDesktopApi().careerEvidence.supersedeEvidence(
+          evidenceId,
+          input,
+        );
+        await refresh();
+        window.dispatchEvent(new CustomEvent(evidenceEvent));
+        return replacement;
+      } catch (supersedeError) {
+        setError(
+          supersedeError instanceof Error
+            ? supersedeError.message
+            : "Unable to replace career evidence",
+        );
+        throw supersedeError;
+      } finally {
+        setBusy(false);
+      }
+    },
+    [refresh],
+  );
+
+  const metadataByEvidence = useMemo(
+    () => new Map(metadata.map((entry) => [entry.evidenceId, entry])),
+    [metadata],
+  );
+
   const pending = useMemo(
     () => items.filter(({ evidence }) => evidence.verificationState === "imported"),
     [items],
@@ -183,16 +225,36 @@ export function useCareerEvidence() {
     [items],
   );
 
+  const superseded = useMemo(
+    () =>
+      items.filter(({ evidence }) => {
+        if (evidence.verificationState !== "rejected") return false;
+        return (metadataByEvidence.get(evidence.id)?.lineage ?? []).some(
+          (lineage) => lineage.predecessorEvidenceId === evidence.id,
+        );
+      }),
+    [items, metadataByEvidence],
+  );
+
   const rejected = useMemo(
-    () => items.filter(({ evidence }) => evidence.verificationState === "rejected"),
-    [items],
+    () =>
+      items.filter(({ evidence }) => {
+        if (evidence.verificationState !== "rejected") return false;
+        return !(metadataByEvidence.get(evidence.id)?.lineage ?? []).some(
+          (lineage) => lineage.predecessorEvidenceId === evidence.id,
+        );
+      }),
+    [items, metadataByEvidence],
   );
 
   return {
     artifacts,
     items,
+    metadata,
+    metadataByEvidence,
     pending,
     confirmed,
+    superseded,
     rejected,
     loading,
     busy,
@@ -204,6 +266,7 @@ export function useCareerEvidence() {
     create,
     review,
     merge,
+    supersede,
   };
 }
 

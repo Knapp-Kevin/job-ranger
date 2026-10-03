@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "context": "Military-to-civilian logistics transition",
+  "targetRole": "Logistics Coordinator",
+  "evidence": [
+    {
+      "subjectType": "role",
+      "organization": "U.S. Army",
+      "titleOrName": "Logistics Operations NCO",
+      "statement": "Coordinated transportation schedules, inventory accountability, and team operations across multiple sites.",
+      "skills": ["transportation scheduling", "inventory accountability", "team coordination"]
+    }
+  ],
+  "job": {
+    "id": "fixture-job-mt",
+    "title": "Logistics Coordinator",
+    "descriptionSnippet": "Coordinate transportation schedules and maintain inventory records. Support team operations across multiple locations.",
+    "location": "Baltimore, MD",
+    "employmentType": "Full-time"
+  },
+  "expected": {
+    "minSupportedRequirements": 1
+  },
+  "validationIntent": "Military service should participate through the same generic role/evidence mapping boundary as civilian employment. No military-specific Career Evidence schema is required for this fixture."
+}

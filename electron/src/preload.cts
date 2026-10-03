@@ -1,8 +1,9 @@
 import { contextBridge, ipcRenderer } from "electron";
 import type { DesktopApi } from "../../src/shared/contracts.js";
+import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
@@ -60,6 +61,13 @@ const desktopApi: DesktopApi & ResumeDesktopApi = {
       ipcRenderer.invoke("career:review-evidence", id, update),
     mergeEvidence: (sourceId, targetId) =>
       ipcRenderer.invoke("career:merge-evidence", sourceId, targetId),
+  },
+  careerEvidence: {
+    listMetadata: () => ipcRenderer.invoke("career-evidence:list-metadata"),
+    setReferences: (evidenceId, references) =>
+      ipcRenderer.invoke("career-evidence:set-references", evidenceId, references),
+    supersedeEvidence: (evidenceId, input) =>
+      ipcRenderer.invoke("career-evidence:supersede", evidenceId, input),
   },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),

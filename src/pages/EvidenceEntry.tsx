@@ -1,5 +1,13 @@
-import { useState } from "react";
-import { ArrowRight, Check, Plus, ShieldCheck } from "lucide-react";
+import { useMemo, useState } from "react";
+import {
+  ArrowRight,
+  Check,
+  ExternalLink,
+  History,
+  PencilLine,
+  Plus,
+  ShieldCheck,
+} from "lucide-react";
 import { useNavigate } from "react-router-dom";
 import { Layout } from "../components/Layout";
 import { useCareerEvidence } from "../career/evidence";
@@ -44,8 +52,18 @@ export function EvidenceEntry() {
   const [credentialStatus, setCredentialStatus] = useState<CredentialStatus | "">("");
   const [credentialExpiration, setCredentialExpiration] = useState("");
   const [credentialId, setCredentialId] = useState("");
+  const [workSampleUrl, setWorkSampleUrl] = useState("");
+  const [localReference, setLocalReference] = useState("");
+  const [supersedingId, setSupersedingId] = useState<string | null>(null);
+  const [replacementText, setReplacementText] = useState("");
+  const [replacementType, setReplacementType] = useState<EvidenceSubjectType>("other");
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
+  const evidenceById = useMemo(
+    () => new Map(evidence.items.map((item) => [item.evidence.id, item.evidence])),
+    [evidence.items],
+  );
 
   const clearForNext = () => {
     setStatement("");
@@ -59,6 +77,8 @@ export function EvidenceEntry() {
     setCredentialStatus("");
     setCredentialExpiration("");
     setCredentialId("");
+    setWorkSampleUrl("");
+    setLocalReference("");
   };
 
   const handleSave = async () => {
@@ -87,11 +107,45 @@ export function EvidenceEntry() {
                 credentialId: credentialId || null,
               }
             : null,
+        references: [
+          ...(workSampleUrl.trim()
+            ? [{ kind: "url" as const, label: "Work sample", value: workSampleUrl.trim() }]
+            : []),
+          ...(localReference.trim()
+            ? [{ kind: "local" as const, label: "Local reference", value: localReference.trim() }]
+            : []),
+        ],
       });
       setSaved(true);
       clearForNext();
     } catch (saveError) {
       setError(saveError instanceof Error ? saveError.message : "Unable to save career evidence");
+    }
+  };
+
+  const beginSupersede = (id: string, text: string, type: EvidenceSubjectType) => {
+    setSupersedingId(id);
+    setReplacementText(text);
+    setReplacementType(type);
+    setError(null);
+  };
+
+  const handleSupersede = async () => {
+    if (!supersedingId || !replacementText.trim()) return;
+    try {
+      await evidence.supersede(supersedingId, {
+        statement: replacementText.trim(),
+        subjectType: replacementType,
+      });
+      setSupersedingId(null);
+      setReplacementText("");
+      setSaved(true);
+    } catch (supersedeError) {
+      setError(
+        supersedeError instanceof Error
+          ? supersedeError.message
+          : "Unable to replace career evidence",
+      );
     }
   };
 
@@ -105,11 +159,11 @@ export function EvidenceEntry() {
       <section className="panel panel-strong px-6 py-7 sm:px-8">
         <span className="alpha-pill">
           <Plus className="h-3.5 w-3.5" />
-          Build my evidence
+          Career Evidence
         </span>
         <h1 className="page-title mt-4">Build your career evidence one fact at a time.</h1>
         <p className="page-copy">
-          Add work you can stand behind in an interview. A fact can come from a job, project, license, volunteer role, freelance engagement, education, portfolio, or something else that genuinely demonstrates what you have done.
+          Add work you can stand behind in an interview. A fact can come from a job, project, license, volunteer role, freelance engagement, education, portfolio, military service, or something else that genuinely demonstrates what you have done.
         </p>
       </section>
 
@@ -161,7 +215,7 @@ export function EvidenceEntry() {
                 placeholder="Example: Coordinated weekly scheduling for six field technicians across three service areas."
               />
               <span className="mt-2 block text-xs text-[var(--color-text-muted)]">
-                Write one factual statement. You can add another one next. Job Ranger will not inflate it into something you did not say.
+                Write one factual statement. Job Ranger will not inflate it into something you did not say.
               </span>
             </label>
 
@@ -217,32 +271,15 @@ export function EvidenceEntry() {
               <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
                 <label>
                   <span className="metric-label">Issuer</span>
-                  <input
-                    className="input-shell mt-2"
-                    aria-label="Credential issuer"
-                    value={credentialIssuer}
-                    onChange={(event) => setCredentialIssuer(event.target.value)}
-                    placeholder="Optional"
-                  />
+                  <input className="input-shell mt-2" aria-label="Credential issuer" value={credentialIssuer} onChange={(event) => setCredentialIssuer(event.target.value)} placeholder="Optional" />
                 </label>
                 <label>
                   <span className="metric-label">Jurisdiction</span>
-                  <input
-                    className="input-shell mt-2"
-                    aria-label="Credential jurisdiction"
-                    value={credentialJurisdiction}
-                    onChange={(event) => setCredentialJurisdiction(event.target.value)}
-                    placeholder="Optional, e.g. Maryland"
-                  />
+                  <input className="input-shell mt-2" aria-label="Credential jurisdiction" value={credentialJurisdiction} onChange={(event) => setCredentialJurisdiction(event.target.value)} placeholder="Optional, e.g. Maryland" />
                 </label>
                 <label>
                   <span className="metric-label">Status</span>
-                  <select
-                    className="select-shell mt-2"
-                    aria-label="Credential status"
-                    value={credentialStatus}
-                    onChange={(event) => setCredentialStatus(event.target.value as CredentialStatus | "")}
-                  >
+                  <select className="select-shell mt-2" aria-label="Credential status" value={credentialStatus} onChange={(event) => setCredentialStatus(event.target.value as CredentialStatus | "")}>
                     <option value="">Not specified</option>
                     <option value="active">Active</option>
                     <option value="pending">Pending</option>
@@ -252,28 +289,44 @@ export function EvidenceEntry() {
                 </label>
                 <label>
                   <span className="metric-label">Expiration date</span>
-                  <input
-                    className="input-shell mt-2"
-                    aria-label="Credential expiration date"
-                    type="date"
-                    value={credentialExpiration}
-                    onChange={(event) => setCredentialExpiration(event.target.value)}
-                  />
+                  <input className="input-shell mt-2" aria-label="Credential expiration date" type="date" value={credentialExpiration} onChange={(event) => setCredentialExpiration(event.target.value)} />
                 </label>
                 <label className="sm:col-span-2">
                   <span className="metric-label">Credential or license number</span>
-                  <input
-                    className="input-shell mt-2"
-                    aria-label="Credential identifier"
-                    value={credentialId}
-                    onChange={(event) => setCredentialId(event.target.value)}
-                    placeholder="Optional"
-                    autoComplete="off"
-                  />
+                  <input className="input-shell mt-2" aria-label="Credential identifier" value={credentialId} onChange={(event) => setCredentialId(event.target.value)} placeholder="Optional" autoComplete="off" />
                 </label>
               </div>
             </section>
           )}
+
+          <section className="border-divider mt-7 border-t pt-6">
+            <h2 className="text-lg font-semibold">Work samples and references</h2>
+            <p className="mt-1 text-sm leading-6 text-[var(--color-text-muted)]">
+              Optional. Web links must use http or https. Local references are stored as inert text; Job Ranger will not open or execute them automatically.
+            </p>
+            <div className="mt-4 grid grid-cols-1 gap-5 sm:grid-cols-2">
+              <label>
+                <span className="metric-label">Work sample link</span>
+                <input
+                  className="input-shell mt-2"
+                  aria-label="Work sample link"
+                  value={workSampleUrl}
+                  onChange={(event) => setWorkSampleUrl(event.target.value)}
+                  placeholder="https://..."
+                />
+              </label>
+              <label>
+                <span className="metric-label">Local reference</span>
+                <input
+                  className="input-shell mt-2"
+                  aria-label="Local evidence reference"
+                  value={localReference}
+                  onChange={(event) => setLocalReference(event.target.value)}
+                  placeholder="Optional file/path note"
+                />
+              </label>
+            </div>
+          </section>
 
           <div className="border-divider mt-7 flex flex-wrap items-center justify-between gap-3 border-t pt-5">
             <div className="text-sm text-[var(--color-text-secondary)]">
@@ -285,12 +338,7 @@ export function EvidenceEntry() {
                 "Nothing becomes a claim until you save it."
               )}
             </div>
-            <button
-              type="button"
-              className="primary-button"
-              onClick={() => void handleSave()}
-              disabled={evidence.busy}
-            >
+            <button type="button" className="primary-button" onClick={() => void handleSave()} disabled={evidence.busy}>
               <Plus className="h-4 w-4" />
               {evidence.busy ? "Saving..." : "Add career evidence"}
             </button>
@@ -304,7 +352,15 @@ export function EvidenceEntry() {
               <h2 className="text-xl font-semibold">You are the source</h2>
             </div>
             <p className="mt-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              Facts entered here are stored as user-authored Career Evidence. They do not pretend to come from an imported document, and editing them keeps that authority state intact.
+              Facts entered here are stored as user-authored Career Evidence. References support your record, but a URL or file path never becomes a factual claim by itself.
+            </p>
+          </div>
+
+          <div className="story-card">
+            <p className="story-kicker">Corrections preserve history</p>
+            <h2 className="story-title">Replace a fact instead of erasing it.</h2>
+            <p className="story-copy">
+              When a confirmed fact needs correction, Job Ranger keeps the old record, retires it from matching, and links it to the replacement.
             </p>
           </div>
 
@@ -320,6 +376,124 @@ export function EvidenceEntry() {
             </button>
           </div>
         </aside>
+      </section>
+
+      <section className="panel panel-strong mt-6 p-6 sm:p-8" aria-labelledby="current-evidence-heading">
+        <div className="max-w-3xl">
+          <span className="metric-label">Current facts</span>
+          <h2 id="current-evidence-heading" className="mt-2 text-2xl font-semibold">Review and correct confirmed evidence.</h2>
+          <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
+            Replacing a fact creates a new authoritative record and preserves explicit lineage to the retired version. It does not rewrite history in place.
+          </p>
+        </div>
+
+        {evidence.confirmed.length === 0 ? (
+          <div className="support-note mt-5 px-4 py-3 text-sm text-[var(--color-text-secondary)]">
+            No confirmed Career Evidence yet.
+          </div>
+        ) : (
+          <div className="mt-5 grid gap-3 lg:grid-cols-2">
+            {evidence.confirmed.map(({ evidence: item }) => {
+              const itemMetadata = evidence.metadataByEvidence.get(item.id);
+              const replacing = supersedingId === item.id;
+              const replacesEarlier = (itemMetadata?.lineage ?? []).some(
+                (lineage) => lineage.successorEvidenceId === item.id,
+              );
+              return (
+                <article key={item.id} className="panel panel-muted rounded-2xl p-4">
+                  <div className="flex items-start justify-between gap-3">
+                    <div>
+                      <div className="metric-label">{item.subjectType}</div>
+                      <p className="mt-2 text-sm leading-6">{item.statement}</p>
+                      {replacesEarlier && (
+                        <p className="mt-2 text-xs font-semibold text-[var(--color-primary)]">Replaces an earlier version of this fact</p>
+                      )}
+                    </div>
+                    {!replacing && (
+                      <button
+                        type="button"
+                        className="secondary-button"
+                        aria-label={`Replace evidence: ${item.statement}`}
+                        onClick={() => beginSupersede(item.id, item.statement, item.subjectType)}
+                        disabled={evidence.busy}
+                      >
+                        <PencilLine className="h-4 w-4" /> Replace
+                      </button>
+                    )}
+                  </div>
+
+                  {(itemMetadata?.references.length ?? 0) > 0 && (
+                    <div className="mt-3 space-y-2 border-t border-[var(--color-border)] pt-3">
+                      {itemMetadata?.references.map((reference) => (
+                        <div key={reference.id} className="text-xs text-[var(--color-text-secondary)]">
+                          <span className="font-semibold">{reference.label ?? (reference.kind === "url" ? "Web reference" : "Local reference")}:</span>{" "}
+                          {reference.kind === "url" ? (
+                            <button
+                              type="button"
+                              className="surface-link-button inline-flex items-center gap-1"
+                              onClick={() => void window.electronAPI.openExternal(reference.value)}
+                            >
+                              {reference.value}<ExternalLink className="h-3 w-3" />
+                            </button>
+                          ) : (
+                            <span>{reference.value}</span>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {replacing && (
+                    <div className="mt-4 space-y-3 border-t border-[var(--color-border)] pt-4">
+                      <select
+                        className="select-shell"
+                        aria-label="Replacement evidence type"
+                        value={replacementType}
+                        onChange={(event) => setReplacementType(event.target.value as EvidenceSubjectType)}
+                      >
+                        {evidenceTypes.map((option) => (
+                          <option key={option.value} value={option.value}>{option.label}</option>
+                        ))}
+                      </select>
+                      <textarea
+                        className="input-shell min-h-24 resize-y py-3"
+                        aria-label="Replacement evidence statement"
+                        value={replacementText}
+                        onChange={(event) => setReplacementText(event.target.value)}
+                      />
+                      <div className="flex justify-end gap-2">
+                        <button type="button" className="surface-link-button text-sm font-semibold" onClick={() => setSupersedingId(null)} disabled={evidence.busy}>Cancel</button>
+                        <button type="button" className="primary-button" onClick={() => void handleSupersede()} disabled={evidence.busy || !replacementText.trim()}>
+                          <History className="h-4 w-4" /> Save replacement
+                        </button>
+                      </div>
+                    </div>
+                  )}
+                </article>
+              );
+            })}
+          </div>
+        )}
+
+        {evidence.superseded.length > 0 && (
+          <details className="mt-6">
+            <summary className="cursor-pointer text-sm font-semibold">Superseded history ({evidence.superseded.length})</summary>
+            <div className="mt-3 space-y-2">
+              {evidence.superseded.map(({ evidence: item }) => {
+                const lineage = (evidence.metadataByEvidence.get(item.id)?.lineage ?? []).find(
+                  (entry) => entry.predecessorEvidenceId === item.id,
+                );
+                const replacement = lineage ? evidenceById.get(lineage.successorEvidenceId) : null;
+                return (
+                  <div key={item.id} className="panel panel-muted rounded-2xl px-4 py-3 text-sm">
+                    <p className="line-through opacity-70">{item.statement}</p>
+                    {replacement && <p className="mt-2 text-xs text-[var(--color-text-muted)]">Replaced by: {replacement.statement}</p>}
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        )}
       </section>
     </Layout>
   );
