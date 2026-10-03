@@ -243,14 +243,12 @@ export class CareerStoryBackend {
       WHERE story_id IN (${storyIds.map(toSqlLiteral).join(", ")})
       ORDER BY story_id, display_order ASC;
     `);
-    const linkedIds = Array.from(new Set(links.map((link) => link.evidence_id)));
-    const evidenceRows = linkedIds.length > 0
-      ? await this.sqlite.queryAll<EvidenceRow>(`
-          SELECT id, subject_type, statement, verification_state
-          FROM candidate_evidence
-          WHERE id IN (${linkedIds.map(toSqlLiteral).join(", ")});
-        `)
-      : [];
+    // Load the evidence universe, not only linked rows. Explicit lineage may point
+    // from a stale linked predecessor to a current successor that is not linked yet.
+    const evidenceRows = await this.sqlite.queryAll<EvidenceRow>(`
+      SELECT id, subject_type, statement, verification_state
+      FROM candidate_evidence;
+    `);
     const lineageRows = await this.sqlite.queryAll<LineageRow>(`
       SELECT predecessor_evidence_id, successor_evidence_id
       FROM evidence_lineage
