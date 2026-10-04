@@ -4,13 +4,13 @@
 
 Job Ranger is a local-first personal desktop application.
 
-The latest published release and the current `main` branch are both considered for security maintenance, but they are not the same product state. The latest published installers remain **v1.1.2** while `main` contains substantially newer persistence, Career Evidence, resume, lifecycle, discovery, and portability code.
+The latest published release and the current development/release-candidate branches are both considered for security maintenance, but they are not the same product state. The latest published installers remain **v1.1.2** while the v1.2.0 candidate contains substantially newer persistence, Career Evidence, resume, lifecycle, discovery, portability, and hardening code.
 
 Job Ranger should not be represented as a hardened enterprise endpoint, centrally managed security product, or sandbox for arbitrary web content.
 
 ## Security model
 
-Current `main` uses the following desktop boundaries:
+The v1.2.0 candidate uses the following desktop boundaries:
 
 - Electron renderer `nodeIntegration: false`;
 - `contextIsolation: true`;
@@ -19,15 +19,15 @@ Current `main` uses the following desktop boundaries:
 - typed preload/IPC rather than direct Node access from React;
 - renderer Content Security Policy;
 - validated external navigation before `shell.openExternal`;
-- constrained hidden browser surfaces for browser-required acquisition;
+- constrained hidden browser surfaces for recognized browser-required acquisition;
 - isolated Chromium resume rendering;
 - local persistence rather than a hosted account backend.
 
-These controls reduce risk but do not make arbitrary career pages trustworthy. Third-party career pages, resumes, and imported documents remain untrusted input.
+These controls reduce risk but do not make third-party content trustworthy. Career pages, resumes, and imported documents remain untrusted input.
 
 ## Data handling
 
-Current `main` stores structured product state locally behind the Electron/SQLite boundary, including:
+The current product stores structured state locally behind the Electron/SQLite boundary, including:
 
 - companies and job sources;
 - jobs and scrape history;
@@ -68,17 +68,25 @@ Job Ranger does not silently upload resumes to hosted OCR or inference services.
 
 Automated acquisition has more authority than a normal user click and therefore uses a stricter network boundary.
 
-Current `main` rejects automated fetch/browser requests targeting unsafe destinations such as:
+Current controls reject automated fetch/browser requests targeting unsafe destinations such as:
 
 - localhost/loopback;
 - private-network IP literals;
 - link-local addresses;
-- hostnames resolving to unsafe private/local addresses;
-- redirects into unsafe destinations.
+- hostnames that resolve to unsafe private/local addresses during policy validation;
+- redirects into unsafe destinations detected by the policy.
 
-This policy is intended to prevent a public careers page or discovery feed from turning Job Ranger into an SSRF path into the user's local network.
+The direct acquisition path validates redirect targets before following them. Recognized browser-backed sources apply the same public-network preflight to HTTP/HTTPS requests before Chromium is allowed to continue.
 
-Do not replace this boundary with a simple `http/https` URL check.
+### DNS-rebinding residual risk
+
+The current policy validates hostname resolution before a request is allowed, but the underlying Node or Chromium transport can perform its own DNS resolution when establishing the actual connection. The approved address is therefore **not connection-pinned**. A hostile hostname capable of changing DNS answers between policy validation and connection establishment creates a time-of-check/time-of-use risk tracked in issue #123.
+
+The v1.2.0 release candidate reduces that exposure by disabling automated acquisition for arbitrary generic career-site hostnames. Unknown/generic career pages remain manual-review sources. Automated source classification is limited to recognized provider/vendor domains and known browser portals until connection-level anti-rebinding protection is implemented and validated.
+
+This mitigation narrows the practical attack surface; it does not make the transport rebinding-proof and must not be documented as such.
+
+Do not replace the acquisition boundary with a simple `http/https` URL check, and do not re-enable arbitrary-host automated acquisition without resolving or explicitly governing the connection-pinning requirement.
 
 ## External navigation
 
@@ -195,6 +203,7 @@ A lack of hosted Actions run is not itself a security defect. A lack of validati
 Before publication, the candidate must satisfy [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
 
 - current dependency review;
+- explicit disposition of material residual security risks, including #123;
 - migration/upgrade validation;
 - backup/restore proof;
 - Windows bundled-SQLite validation;
