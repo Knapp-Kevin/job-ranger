@@ -13,7 +13,7 @@ v1.2.0 is the selected next release version.
 
 The release is a minor-version increment because it adds substantial backward-compatible product capability without intentionally resetting the user-data model or introducing a governed breaking product contract.
 
-The candidate scope is frozen around the completed post-v1.1.2 product plus accepted repository hardening already merged to `main`.
+The candidate scope is frozen around the completed post-v1.1.2 product plus accepted repository hardening already merged to `main` and the release-specific #123 mitigation described below.
 
 Included product areas:
 
@@ -40,36 +40,59 @@ The following remain follow-on work unless a release-blocking defect is discover
 
 Those are valuable product-quality or design tracks, but they are not required to represent the already-completed v1.2.0 product honestly.
 
-## Security disposition still required
+## Security disposition
 
 ### #123 DNS-rebinding connection pinning
 
 Current automated acquisition validates URL syntax, rejects private/loopback/link-local/reserved destinations, resolves hostname targets before requests, and validates redirects. Browser-backed requests are also preflighted through the acquisition network policy.
 
-The remaining issue is a time-of-check/time-of-use gap: the transport can perform a later DNS resolution when the actual Node or Chromium connection is established. A hostile hostname capable of DNS rebinding could theoretically return a public address during policy validation and a private address during connection establishment.
+The remaining architectural issue is a time-of-check/time-of-use gap: the transport can perform a later DNS resolution when the actual Node or Chromium connection is established. The address approved during policy validation is therefore not connection-pinned.
 
-This release candidate must not describe the current implementation as connection-pinned or rebinding-proof.
+The release candidate must not describe the current implementation as connection-pinned or rebinding-proof.
 
-Before publication, #123 requires one of these governed outcomes:
+### v1.2.0 release mitigation
 
-1. implement and validate connection-level pinning/equivalent protection; or
-2. explicitly accept the residual risk for v1.2.0 with documented rationale and user/security documentation that does not overclaim the boundary.
+The candidate now disables automated acquisition for **arbitrary generic career-site hostnames**:
 
-This item is a release-gate decision for #119.
+- unknown/generic career pages resolve to `unsupported` / manual-review rather than `generic-html` automation;
+- the `generic-html` source profile is non-runnable in the candidate;
+- recognized provider/vendor domains and known browser portals retain their governed acquisition paths;
+- QOR regression coverage asserts that arbitrary `careers.example.com` and generic `/careers/` URLs remain unsupported;
+- `README.md`, `HELP.md`, `SECURITY.md`, and `docs/SYSTEM_STATE.md` explicitly describe the restriction and the remaining connection-pinning gap.
 
-## Validation evidence already available
+This removes the broad attacker-controlled-hostname entry path that existed when arbitrary career-looking URLs were automatically classified for generic acquisition. It materially narrows the practical v1.2.0 attack surface.
 
-Fresh evidence immediately before the hardening tranche includes:
+It does **not** resolve #123 in the general case. Recognized provider domains still rely on preflight DNS validation rather than transport-level address pinning. #123 remains open for the durable architecture.
+
+The release decision is therefore:
+
+- **candidate mitigation implemented;**
+- **full connection-level protection deferred to #123;**
+- **publication requires fresh validation of this mitigation and explicit acknowledgement of the residual risk.**
+
+## Validation evidence
+
+### Prior feature-program evidence
 
 - PR #114: repository health and full Electron E2E green on its final head;
 - PR #115: repository-health validation green for the universal-user-story closeout;
 - version-controlled validation artifacts under `docs/validation/` for Career Evidence, cross-career fixtures, discovery, portability, and documentation reconciliation.
 
-The QOR hardening tranche changed privileged/runtime code after that evidence. Therefore the release candidate requires a fresh complete validation run rather than reusing pre-hardening green status as though nothing changed.
+### Initial v1.2.0 candidate evidence
 
-## Required candidate validation
+On candidate head `4f3cd0175b9287b5d9f067d89ed0a35f899bf749`, GitHub Actions CI run `37181998780` completed successfully. The `repository-health` job passed:
 
-Pending on the frozen candidate:
+- checkout;
+- Node.js 22.12.0 setup;
+- `npm ci`;
+- the high-severity dependency audit gate;
+- `npm run repo:health`, which covers typecheck, build, and the repository test suite.
+
+That evidence is useful but is **not final release evidence**, because the branch subsequently changed to add the #123 mitigation and documentation reconciliation.
+
+## Required final-candidate validation
+
+The final frozen head still requires fresh evidence for:
 
 ```text
 npm ci
@@ -80,9 +103,11 @@ npm run test:unit
 npm run test:e2e
 ```
 
+`npm run repo:health` may establish the typecheck/build/test subset where the workflow records it explicitly. `npm run test:unit` and Electron E2E remain distinct release-contract requirements.
+
 Also pending:
 
-- current dependency/security audit review;
+- current dependency/security audit review on the final head;
 - representative v1.1.2 -> v1.2.0 upgrade/migration exercise;
 - backup creation/validation before destructive upgrade testing;
 - restore into a different data root with managed-path rebasing;
@@ -105,7 +130,7 @@ Until publication completes:
 
 - v1.1.2 remains the latest shipped release;
 - README download links remain on v1.1.2;
-- `docs/SYSTEM_STATE.md` must continue to describe post-v1.1.2 capabilities as implemented on `main`, not shipped;
+- v1.2.0 remains a release candidate rather than shipped product;
 - no v1.2.0 artifact should be presented as a completed release merely because a branch, version, or tag exists.
 
 Final publication requires the expected Windows/macOS assets to be present on the GitHub Release and spot-checked from the actual release page.
