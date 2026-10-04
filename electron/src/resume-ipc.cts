@@ -1,8 +1,11 @@
-import { ipcMain } from "electron";
+import { ipcMain, shell } from "electron";
+import path from "node:path";
 import type { ResumeExportRequest } from "../../src/shared/resume-contracts.js";
+import { ResumeRepository } from "./resume-repository.cjs";
 import { ResumeService } from "./resume-service.cjs";
 import { ResumeTailoringService } from "./resume-tailoring-service.cjs";
 import { renderResumePdf } from "./resume-renderer.cjs";
+import { SqliteClient } from "./sqlite.cjs";
 import {
   validateResumeCreateInput,
   validateResumeExportRequest,
@@ -18,11 +21,28 @@ interface ResumeIpcOptions {
   sqliteBinaryPath: string;
 }
 
+function assertInsideDirectory(root: string, target: string): string {
+  const resolvedRoot = path.resolve(root);
+  const resolvedTarget = path.resolve(target);
+  const relative = path.relative(resolvedRoot, resolvedTarget);
+  if (!relative || relative.startsWith("..") || path.isAbsolute(relative)) {
+    if (relative === "") {
+      throw new Error("Resume artifact path points to the artifact directory itself");
+    }
+    throw new Error("Resume artifact path is outside the managed resume directory");
+  }
+  return resolvedTarget;
+}
+
 export async function initializeResumeIpc(
   options: ResumeIpcOptions,
 ): Promise<ResumeService> {
   const service = new ResumeService(options);
   const tailoringService = new ResumeTailoringService(options);
+  const repository = new ResumeRepository(
+    new SqliteClient(options.databasePath, options.sqliteBinaryPath),
+  );
+  const resumeDirectory = path.join(options.dataDirectory, "artifacts", "resumes");
   await service.initialize();
 
   ipcMain.handle("resume:list", () => service.listProjections());
@@ -56,6 +76,15 @@ export async function initializeResumeIpc(
       prepared.temporaryPath,
     );
     return service.finalizeRenderedPdf(prepared, request);
+  });
+  ipcMain.handle("resume:reveal-artifact", async (_event, rawArtifactId: string) => {
+    const artifactId = validateCareerEntityId(rawArtifactId, "Resume artifact id");
+    const artifact = await repository.getArtifact(artifactId);
+    if (!artifact) {
+      throw new Error(`Resume artifact ${artifactId} not found`);
+    }
+    const managedPath = assertInsideDirectory(resumeDirectory, artifact.managedPath);
+    shell.showItemInFolder(managedPath);
   });
   ipcMain.handle(
     "resume:compare-versions",
