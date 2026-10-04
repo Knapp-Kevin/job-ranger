@@ -52,6 +52,13 @@ function builtPagePath(fileName: string): string {
   return path.join(app.getAppPath(), "dist", fileName);
 }
 
+function rendererContentSecurityPolicy(): string {
+  if (process.env.NODE_ENV === "development") {
+    return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'self' http://localhost:5173 ws://localhost:5173;";
+  }
+  return "default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; font-src 'self' data:; connect-src 'none';";
+}
+
 function createWindow(): void {
   mainWindow = new BrowserWindow({
     width: 1280,
@@ -95,8 +102,7 @@ function createWindow(): void {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          "Content-Security-Policy":
-            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:;",
+          "Content-Security-Policy": rendererContentSecurityPolicy(),
           "X-Frame-Options": "DENY",
         },
       });
@@ -107,12 +113,21 @@ function createWindow(): void {
     mainWindow = null;
   });
 
-  mainWindow.on("close", async (event) => {
-    const settings = await backend?.getSettings();
-    if (shouldMinimizeToTray(settings ?? null, isQuitting)) {
-      event.preventDefault();
-      mainWindow?.hide();
-    }
+  mainWindow.on("close", (event) => {
+    if (isQuitting) return;
+    event.preventDefault();
+    void (async () => {
+      try {
+        const settings = await backend?.getSettings();
+        if (shouldMinimizeToTray(settings ?? null, false)) {
+          mainWindow?.hide();
+          return;
+        }
+      } catch {
+        // Closing the app must remain possible even if settings cannot be read.
+      }
+      mainWindow?.destroy();
+    })();
   });
 }
 
@@ -231,9 +246,6 @@ function registerIpcHandlers(): void {
   ipcMain.handle("app:get-platform", () => process.platform);
   ipcMain.handle("app:open-external", async (_event, url: string) => {
     await shell.openExternal(validateExternalUrl(url));
-  });
-  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: string) => {
-    shell.showItemInFolder(targetPath);
   });
 
   ipcMain.handle("system:get-status", () =>
