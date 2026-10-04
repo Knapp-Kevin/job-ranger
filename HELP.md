@@ -2,7 +2,7 @@
 
 Job Ranger is a local-first desktop application for discovering, evaluating, preparing for, and tracking job opportunities.
 
-This guide distinguishes between the **published release** and the newer functionality already implemented on `main`.
+This guide distinguishes between the **published release** and the newer functionality in the v1.2.0 release candidate.
 
 ## Which version am I using?
 
@@ -14,7 +14,7 @@ The latest published installers are currently **v1.1.2** for:
 
 There is no supported packaged Linux release at this time.
 
-`main` contains a much newer workflow than v1.1.2. If you are running a development build from `main`, the additional sections below apply to you. If you downloaded v1.1.2 from Releases, use the published-release notes where behavior differs.
+The v1.2.0 release candidate contains a much newer workflow than v1.1.2. Until an immutable candidate is validated and published with the expected platform assets, those capabilities remain unreleased.
 
 ## Published v1.1.2 quick start
 
@@ -29,9 +29,9 @@ There is no supported packaged Linux release at this time.
 
 The v1.1.2 Windows installer includes Job Ranger's SQLite runtime. Normal users do not need to install SQLite separately.
 
-## Current `main` workflow
+## v1.2.0 candidate workflow
 
-Current `main` expands Job Ranger into an end-to-end job-search workspace while keeping Career Evidence and application history local.
+The candidate expands Job Ranger into an end-to-end Career Ops workspace while keeping Career Evidence and application history local.
 
 ### 1. First-run onboarding
 
@@ -81,7 +81,7 @@ Evidence can be corrected, rejected, merged, or superseded without erasing the h
 
 ### 4. Resume import
 
-Current `main` supports:
+The v1.2.0 candidate supports:
 
 - DOCX;
 - text-bearing PDF;
@@ -103,11 +103,11 @@ Open **Companies** to:
 
 Discovery and monitoring are intentionally separate. Finding a job at an employer does not silently convert that employer into a trusted monitored source.
 
-Current discovery provider coverage is partial. Manual source entry remains important.
+Current discovery provider coverage is partial. Manual source entry remains important, but an arbitrary manually entered career page is not necessarily eligible for automated acquisition.
 
 ### 6. Find Jobs and opportunity assessment
 
-Current `main` no longer treats one percentage as universal truth about fit.
+The v1.2.0 candidate no longer treats one percentage as universal truth about fit.
 
 For a selected Target Track, Job Ranger can separate:
 
@@ -122,7 +122,7 @@ Requirement analysis only reasons over job text Job Ranger actually collected. A
 
 ### 7. Resume workspace
 
-Current `main` can create a deterministic resume from confirmed Career Evidence.
+The v1.2.0 candidate can create a deterministic resume from confirmed Career Evidence.
 
 The resume workflow includes:
 
@@ -141,7 +141,7 @@ A tailored resume may emphasize or translate supported evidence. It may not inve
 
 ### 8. Applications
 
-Applications now own a richer lifecycle than status + notes.
+Applications own a richer lifecycle than status + notes.
 
 For each application, Job Ranger can preserve:
 
@@ -184,7 +184,7 @@ Stories remain linked to Career Evidence so later factual corrections can be det
 
 ### 11. Application materials
 
-Current `main` can prepare evidence-grounded application-material projections such as a deterministic cover-letter draft.
+The v1.2.0 candidate can prepare evidence-grounded application-material projections such as a deterministic cover-letter draft.
 
 Historical drafts remain versioned. If supporting Career Evidence later changes, the old material is marked stale instead of being quietly presented as current truth.
 
@@ -202,7 +202,7 @@ These are observations, not causal claims. Job Ranger should not tell you that a
 
 ### 13. Backup and restore
 
-Settings on current `main` include a versioned Job Ranger backup workflow.
+Settings in the v1.2.0 candidate include a versioned Job Ranger backup workflow.
 
 Backups include structured SQLite state and managed artifacts with integrity metadata. Restore is staged and verified before replacing live data. Managed artifact paths are rebased when restoring into a different Job Ranger data root.
 
@@ -231,23 +231,27 @@ Current structured families:
 
 ### Detected
 
-Job Ranger recognizes the portal and can attempt generic or browser-backed extraction. Reliability varies by site implementation.
+Job Ranger recognizes a known provider/vendor portal and can attempt its governed extraction path. Reliability varies by site implementation.
 
-Examples include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and generic career pages.
+Examples include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and Microsoft Careers.
 
 ### Browser required
 
-A rendered browser path is required instead of a simple structured/API retrieval.
+A recognized portal requires a rendered browser path instead of a simple structured/API retrieval.
 
 ### Manual review
 
-Job Ranger does not claim a reliable automated path. This is preferable to reporting success while finding nothing.
+Job Ranger does not claim a reliable or sufficiently bounded automated path.
+
+For the v1.2.0 candidate, arbitrary generic career-site hostnames remain **manual review** rather than being automatically promoted into the generic/browser acquisition path. This is a deliberate security restriction while issue #123 tracks connection-level DNS-rebinding protection. Known provider domains retain their governed extraction paths.
+
+Manual review is preferable to reporting automated support that either cannot be trusted or cannot be demonstrated safely.
 
 ## Privacy and data storage
 
 Job Ranger is local first.
 
-Current `main` keeps structured product state behind the Electron/SQLite boundary, including:
+The v1.2.0 candidate keeps structured product state behind the Electron/SQLite boundary, including:
 
 - companies and sources;
 - jobs and scrape history;
@@ -277,9 +281,9 @@ Check:
 3. the latest scrape did not fail;
 4. the source support state is not `manual-review`;
 5. filters are not excluding the results;
-6. a dynamic portal has not changed underneath the browser/extraction path.
+6. a recognized dynamic portal has not changed underneath its extraction path.
 
-A detected source is not the same thing as a guaranteed structured adapter.
+A detected source is not the same thing as a guaranteed structured adapter. An arbitrary career page may intentionally remain manual-review rather than being fetched automatically.
 
 ### Job Ranger found no requirements for a job
 
@@ -311,7 +315,9 @@ One or more supporting Career Evidence records changed after the material/story 
 
 ### A source is unsupported or blocked
 
-That is an intentional reliability/security state. Automated acquisition rejects unsafe/private-network destinations and does not blindly follow redirects into local address space.
+That is an intentional reliability/security state. Automated acquisition rejects known unsafe/private-network destinations and validates hostname/redirect targets before requests. The v1.2.0 candidate also keeps arbitrary generic career-site hostnames out of automated acquisition while connection-level anti-rebinding work remains open in #123.
+
+The current transport is not documented as DNS-rebinding-proof. See `SECURITY.md` for the precise boundary.
 
 ### Notifications are not appearing
 
@@ -364,6 +370,10 @@ Not currently. PDF is the governed resume output. DOCX remains deferred until ac
 ### Is every Workday/iCIMS/etc. source guaranteed to work?
 
 No. Dynamic third-party portals vary and change. Job Ranger exposes support/reliability states specifically to avoid promising otherwise.
+
+### Why is a generic employer career page marked manual review?
+
+For the v1.2.0 candidate, Job Ranger only automates recognized source/provider domains. Arbitrary generic hostnames stay manual-review while connection-level DNS-rebinding protection is being designed under #123. This is intentionally narrower than claiming broad generic scraping while the transport boundary is still incomplete.
 
 ### Is Linux supported?
 
