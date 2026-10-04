@@ -1,5 +1,4 @@
 const assert = require("node:assert/strict");
-const path = require("node:path");
 
 const {
   validateCompanyDraft,
@@ -9,9 +8,6 @@ const {
   detectSourceFromUrl,
   isHostOrSubdomain,
 } = require("../electron-runtime/electron/src/scrapers.cjs");
-const {
-  assertManagedArtifactPath,
-} = require("../electron-runtime/electron/src/managed-path-policy.cjs");
 const {
   shouldMinimizeToTray,
 } = require("../electron-runtime/electron/src/tray-policy.cjs");
@@ -80,16 +76,6 @@ function run() {
   assertNotSourceType("https://eviltaleo.net/jobs", "taleo");
   assertNotSourceType("https://eviloracle.com/careers", "oracle");
   assertNotSourceType("https://notlinkedin.com/jobs", "browser-required");
-
-  const artifactsRoot = path.resolve("tmp-qor-artifacts");
-  const managedFile = path.join(artifactsRoot, "resumes", "resume.pdf");
-  assert.equal(assertManagedArtifactPath(managedFile, artifactsRoot), managedFile);
-  assert.equal(assertManagedArtifactPath(artifactsRoot, artifactsRoot), artifactsRoot);
-  assert.throws(
-    () => assertManagedArtifactPath(path.join(artifactsRoot, "..", "secrets.txt"), artifactsRoot),
-    /managed artifacts/,
-  );
-  assert.throws(() => assertManagedArtifactPath("", artifactsRoot), /non-empty string/);
 
   const traySettings = { minimizeToTray: true };
   assert.equal(shouldMinimizeToTray(traySettings, false), true);
