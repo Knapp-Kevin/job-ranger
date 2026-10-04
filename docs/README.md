@@ -27,7 +27,7 @@ A stale plan does not outrank merged code merely because it contains more checkb
 | [`../README.md`](../README.md) | Public overview, published-release boundary, current `main` capability map, development/release entry points. |
 | [`../HELP.md`](../HELP.md) | User workflows, troubleshooting, and published-vs-main behavior. |
 | [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history plus the current `Unreleased` delta. |
-| [`CONCEPT.md`](./CONCEPT.md) | Product purpose, principles, boundaries, and success standard. |
+| [`CONCEPT.md`](./CONCEPT.md) | Product purpose, Career Ops quality-over-quantity principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Factual current repository/product snapshot. |
 | [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture, authority model, trust boundaries, and accepted evolution. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Actual prioritized next work. |
@@ -77,6 +77,7 @@ Research documents are inputs to product and architecture decisions, not a featu
 
 Key current research:
 
+- [`research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md`](./research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md) — delegated/automated submission market evidence and the rationale for Job Ranger's quality-over-quantity Career Ops direction;
 - [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md)
 - [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md)
 - [`research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](./research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md)
@@ -119,7 +120,9 @@ As of the October 2026 reconciliation, current docs must reflect that `main` inc
 - JSON Resume interoperability;
 - cross-career validation fixtures.
 
-A current source-of-truth document that describes those completed capabilities as "planned" is stale and should be corrected.
+Current product documentation must also preserve the accepted strategic distinction that Job Ranger is a **quality-over-quantity Career Ops product**. It may automate discovery, analysis, preparation, and organization aggressively while keeping consequential external actions intentional. Candidate relationship-path features tracked in #121 must remain clearly labeled as candidates until implemented.
+
+A current source-of-truth document that describes completed capabilities as "planned" is stale and should be corrected. A current source-of-truth document that describes candidate Career Ops capabilities as already implemented is equally stale.
 
 ## Historical planning records
 
