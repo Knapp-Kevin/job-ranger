@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain } from "electron";
+import { promises as fs } from "node:fs";
 import { BackupService } from "./backup-service.cjs";
 
 export function initializeBackupIpc(options: {
@@ -9,6 +10,7 @@ export function initializeBackupIpc(options: {
   appVersion: string;
 }): void {
   const service = new BackupService(options);
+  let approvedRestorePath: string | null = null;
 
   ipcMain.handle("backups:create", async () => {
     const selection = await dialog.showOpenDialog({
@@ -20,19 +22,34 @@ export function initializeBackupIpc(options: {
   });
 
   ipcMain.handle("backups:select-restore", async () => {
+    approvedRestorePath = null;
     const selection = await dialog.showOpenDialog({
       title: "Select a Job Ranger backup to restore",
       properties: ["openDirectory"],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return service.validateBackup(selection.filePaths[0]);
+
+    const selectedPath = await fs.realpath(selection.filePaths[0]);
+    const result = await service.validateBackup(selectedPath);
+    approvedRestorePath = selectedPath;
+    return result;
   });
 
-  ipcMain.handle("backups:stage-restore", async (_event, bundlePath: string) => {
+  ipcMain.handle("backups:stage-restore", async (_event, bundlePath: unknown) => {
     if (typeof bundlePath !== "string" || !bundlePath.trim()) {
       throw new Error("Backup path is required");
     }
-    await service.stageRestore(bundlePath.trim());
+    if (!approvedRestorePath) {
+      throw new Error("Select and validate a Job Ranger backup before restoring it.");
+    }
+
+    const requestedPath = await fs.realpath(bundlePath.trim());
+    if (requestedPath !== approvedRestorePath) {
+      throw new Error("The selected backup changed. Select the backup again before restoring it.");
+    }
+
+    approvedRestorePath = null;
+    await service.stageRestore(requestedPath);
     setTimeout(() => {
       app.relaunch();
       app.exit(0);
