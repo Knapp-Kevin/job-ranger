@@ -1,10 +1,12 @@
 import type { SettingsUpdate } from "../../../src/shared/contracts.js";
 import {
   isRecord,
-  validateFiniteNumber,
+  validateIntegerInRange,
   validateOptionalBoolean,
   validateOptionalString,
 } from "./common.cjs";
+
+const MAX_TIMER_MS = 2_147_483_647;
 
 export function validateSettingsUpdate(rawValue: unknown): SettingsUpdate {
   if (!isRecord(rawValue)) {
@@ -20,19 +22,23 @@ export function validateSettingsUpdate(rawValue: unknown): SettingsUpdate {
     update.userAgent = userAgent;
   }
   if (rawValue.maxConcurrentScrapes !== undefined) {
-    update.maxConcurrentScrapes = validateFiniteNumber(
+    update.maxConcurrentScrapes = validateIntegerInRange(
       rawValue.maxConcurrentScrapes,
       "Max concurrent scrapes",
+      1,
+      10,
     );
   }
   if (rawValue.scrapeTimeoutMs !== undefined) {
-    update.scrapeTimeoutMs = validateFiniteNumber(
+    update.scrapeTimeoutMs = validateIntegerInRange(
       rawValue.scrapeTimeoutMs,
       "Scrape timeout",
+      1_000,
+      MAX_TIMER_MS,
     );
   }
   if (rawValue.retryCount !== undefined) {
-    update.retryCount = validateFiniteNumber(rawValue.retryCount, "Retry count");
+    update.retryCount = validateIntegerInRange(rawValue.retryCount, "Retry count", 0, 5);
   }
   if (rawValue.notificationsEnabled !== undefined) {
     update.notificationsEnabled = validateOptionalBoolean(
