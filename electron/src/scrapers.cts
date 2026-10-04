@@ -1,10 +1,10 @@
-import type { CompanySourceType } from "../../src/shared/contracts.js";
+import type { CompanySourceType, SourceContentCompleteness } from "../../src/shared/contracts.js";
 import { greenhouseAdapter } from "./adapters/greenhouse.cjs";
 import { leverAdapter } from "./adapters/lever.cjs";
 import { smartrecruitersAdapter } from "./adapters/smartrecruiters.cjs";
 import { ashbyAdapter } from "./adapters/ashby.cjs";
 import { createGenericHtmlAdapter, browserRequiredAdapter } from "./adapters/generic-html.cjs";
-import { toSnippet, extractJobsFromHtml } from "./extractors.cjs";
+import { toSnippet, toSourceText, extractJobsFromHtml } from "./extractors.cjs";
 import { PLATFORM_SELECTORS, getSelectorsForSource } from "./platform-selectors.cjs";
 import { parseSalary } from "./salary-parser.cjs";
 import {
@@ -13,7 +13,7 @@ import {
   type AcquisitionHostResolver,
 } from "./acquisition-network-policy.cjs";
 
-export { toSnippet, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
+export { toSnippet, toSourceText, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
 
 export const genericHtmlSourceTypes = [
   "workday",
@@ -33,6 +33,9 @@ export interface ScrapedJob {
   employmentType: string | null;
   url: string;
   descriptionSnippet: string;
+  descriptionText: string;
+  sourceCompleteness: SourceContentCompleteness;
+  extractionVersion: string;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;

@@ -26,6 +26,7 @@ import {
   type ScrapedJob,
 } from "./scrapers.cjs";
 import { resolveSqliteBinary, sql, SqliteClient } from "./sqlite.cjs";
+import { classifySourceFailure } from "./source-diagnostics.cjs";
 import {
   checkScrapeGuard,
   shouldOpenCircuit,
@@ -446,25 +447,26 @@ export class JobScoutBackend {
       const message = guard.reason === "cooldown"
         ? `Scrape skipped: cooldown until ${guard.waitUntil}`
         : `Scrape skipped: circuit open until ${guard.waitUntil}`;
-      return this.repository.finalizeScrapeRun(run.id, "skipped", 0, 0, message);
+      const diagnosticCode = guard.reason === "cooldown" ? "cooldown" : "circuit-open";
+      return this.repository.finalizeScrapeRun(run.id, "skipped", 0, 0, diagnosticCode, message, message);
     }
 
     if (!company.sourceIdentifier) {
       const message = "No source identifier could be derived from this URL.";
       await this.repository.setCompanyRunState(companyId, "unsupported", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, message);
+      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "unsupported-source", message, message);
     }
 
     if (!canRunSourceType(company.sourceType)) {
       const message = `${profile.label} was detected, but no reliable extraction path is available yet.`;
       await this.repository.setCompanyRunState(companyId, "unsupported", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, message);
+      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "unsupported-source", message, message);
     }
 
     if (profile.extractionMode === "browser" && !this.browserPageLoader) {
       const message = "Browser-backed extraction is not available in this environment.";
       await this.repository.setCompanyRunState(companyId, "unsupported", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, message);
+      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "browser-unavailable", message, message);
     }
 
     try {
@@ -511,6 +513,9 @@ export class JobScoutBackend {
           employmentType: scrapedJob.employmentType,
           url: scrapedJob.url,
           descriptionSnippet: scrapedJob.descriptionSnippet,
+          descriptionText: scrapedJob.descriptionText,
+          sourceCompleteness: scrapedJob.sourceCompleteness,
+          extractionVersion: scrapedJob.extractionVersion,
           salaryMin: scrapedJob.salaryMin,
           salaryMax: scrapedJob.salaryMax,
           salaryCurrency: scrapedJob.salaryCurrency,
@@ -528,24 +533,33 @@ export class JobScoutBackend {
 
       await this.repository.resetFailures(company.id);
       await this.repository.setCompanyRunState(company.id, "success", startedAt, null);
+      const diagnosticCode = scrapedJobs.length > 0 ? "success-with-results" : "success-empty";
+      const diagnosticMessage = scrapedJobs.length > 0
+        ? `Source retrieved successfully; ${scrapedJobs.length} job${scrapedJobs.length === 1 ? "" : "s"} collected.`
+        : "Source retrieved successfully and returned zero jobs. This is different from an extraction or retrieval failure.";
       return this.repository.finalizeScrapeRun(
         run.id,
         "success",
         scrapedJobs.length,
         matchedCount,
+        diagnosticCode,
+        diagnosticMessage,
         null,
       );
     } catch (error) {
       const message =
         error instanceof Error ? error.message : "Unknown scrape failure";
+      const diagnostic = classifySourceFailure(error);
       await this.repository.incrementFailures(company.id);
       const updated = await this.repository.getCompanyById(company.id);
       if (updated && shouldOpenCircuit(updated.consecutiveFailures, settings.circuitBreakerThreshold)) {
         const openUntil = calculateCircuitOpenUntil(settings.circuitBreakerCooldownMinutes);
         await this.repository.openCircuit(company.id, openUntil);
       }
-      await this.repository.setCompanyRunState(company.id, "failure", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "failure", 0, 0, message);
+      await this.repository.setCompanyRunState(company.id, "failure", startedAt, diagnostic.message);
+      return this.repository.finalizeScrapeRun(
+        run.id, "failure", 0, 0, diagnostic.code, diagnostic.message, message,
+      );
     }
   }
 }

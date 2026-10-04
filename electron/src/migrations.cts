@@ -388,4 +388,35 @@ export const migrations: Migration[] = [
         ON evidence_lineage(successor_evidence_id, created_at ASC);
     `,
   },
+  {
+    version: 9,
+    name: "source_truth_and_diagnostics",
+    sql: `
+      CREATE TABLE IF NOT EXISTS job_source_snapshots (
+        id TEXT PRIMARY KEY,
+        job_id INTEGER NOT NULL REFERENCES jobs(id) ON DELETE CASCADE,
+        source_type TEXT NOT NULL,
+        source_url TEXT NOT NULL,
+        retrieved_at TEXT NOT NULL,
+        extraction_version TEXT NOT NULL,
+        completeness TEXT NOT NULL CHECK (completeness IN ('full', 'partial', 'listing-only')),
+        content_text TEXT NOT NULL,
+        content_hash TEXT NOT NULL,
+        UNIQUE (job_id, content_hash)
+      );
+
+      CREATE INDEX IF NOT EXISTS idx_job_source_snapshots_job
+        ON job_source_snapshots(job_id, retrieved_at DESC);
+
+      ALTER TABLE jobs ADD COLUMN current_source_snapshot_id TEXT;
+      ALTER TABLE jobs ADD COLUMN source_completeness TEXT NOT NULL DEFAULT 'listing-only';
+      ALTER TABLE scrape_runs ADD COLUMN diagnostic_code TEXT;
+      ALTER TABLE scrape_runs ADD COLUMN diagnostic_message TEXT;
+      ALTER TABLE job_requirements ADD COLUMN source_snapshot_id TEXT;
+
+      CREATE INDEX IF NOT EXISTS idx_job_requirements_snapshot
+        ON job_requirements(source_snapshot_id);
+    `,
+  },
+
 ];

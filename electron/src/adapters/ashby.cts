@@ -1,5 +1,5 @@
 import type { ScraperAdapter, ScraperContext, ScrapedJob } from "../scrapers.cjs";
-import { fetchJson, toSnippet } from "../scrapers.cjs";
+import { fetchJson, toSnippet, toSourceText } from "../scrapers.cjs";
 
 interface AshbyJob {
   id: string;
@@ -29,7 +29,9 @@ export const ashbyAdapter: ScraperAdapter = {
       context,
     );
 
-    return response.jobs.map((job) => ({
+    return response.jobs.map((job) => {
+      const descriptionText = toSourceText(job.descriptionPlain);
+      return ({
       sourceJobId: job.id,
       sourceType: "ashby",
       title: job.title.trim(),
@@ -37,12 +39,16 @@ export const ashbyAdapter: ScraperAdapter = {
       employmentType: job.employmentType ?? null,
       url: job.jobUrl,
       descriptionSnippet: toSnippet(job.descriptionPlain),
+      descriptionText,
+      sourceCompleteness: descriptionText ? "full" : "listing-only",
+      extractionVersion: "ashby-api-v1",
       salaryMin: null,
       salaryMax: null,
       salaryCurrency: null,
       salaryText: job.compensation?.compensationTierSummary ?? null,
       postDate: job.publishedAt ?? null,
-    }));
+    });
+    });
   },
 };
 

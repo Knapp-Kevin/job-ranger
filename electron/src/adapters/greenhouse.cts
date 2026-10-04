@@ -1,5 +1,5 @@
 import type { ScraperAdapter, ScraperContext, ScrapedJob } from "../scrapers.cjs";
-import { fetchJson, toSnippet, parseSalary } from "../scrapers.cjs";
+import { fetchJson, toSnippet, parseSalary, toSourceText } from "../scrapers.cjs";
 
 interface GreenhouseResponse {
   jobs: Array<{
@@ -21,6 +21,7 @@ export const greenhouseAdapter: ScraperAdapter = {
     );
 
     return response.jobs.map((job) => {
+      const descriptionText = toSourceText(job.content);
       const salary = parseSalary(job.content);
       return {
         sourceJobId: String(job.id),
@@ -30,6 +31,9 @@ export const greenhouseAdapter: ScraperAdapter = {
         employmentType: null,
         url: job.absolute_url,
         descriptionSnippet: toSnippet(job.content),
+        descriptionText,
+        sourceCompleteness: descriptionText ? "full" : "listing-only",
+        extractionVersion: "greenhouse-api-v1",
         salaryMin: salary?.min ?? null,
         salaryMax: salary?.max ?? null,
         salaryCurrency: salary?.currency ?? null,

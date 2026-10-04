@@ -2,7 +2,7 @@ import type { CompanySourceType } from "../../src/shared/contracts.js";
 import type { ScrapedJob } from "./scrapers.cjs";
 import { parseSalary } from "./salary-parser.cjs";
 
-function stripHtml(html: string | null | undefined): string {
+export function toSourceText(html: string | null | undefined): string {
   if (!html) return "";
   return html
     .replace(/<script[\s\S]*?<\/script>/gi, " ")
@@ -17,7 +17,7 @@ function stripHtml(html: string | null | undefined): string {
 }
 
 export function toSnippet(value: string | null | undefined): string {
-  const stripped = stripHtml(value);
+  const stripped = toSourceText(value);
   return stripped.length <= 220 ? stripped : `${stripped.slice(0, 217).trimEnd()}...`;
 }
 
@@ -26,7 +26,7 @@ function absoluteUrl(baseUrl: string, href: string): string | null {
 }
 
 function normalizeJobTitle(value: string): string {
-  return stripHtml(value).replace(/\s+/g, " ").trim();
+  return toSourceText(value).replace(/\s+/g, " ").trim();
 }
 
 function slugFromUrl(url: string): string {
@@ -75,6 +75,7 @@ function extractJsonLdJobs(baseUrl: string, html: string, sourceType: CompanySou
         }
 
         const description = typeof posting.description === "string" ? posting.description : "";
+        const descriptionText = toSourceText(description);
         const salary = parseSalary(description);
 
         jobs.push({
@@ -85,6 +86,9 @@ function extractJsonLdJobs(baseUrl: string, html: string, sourceType: CompanySou
           employmentType: typeof posting.employmentType === "string" ? posting.employmentType : null,
           url: jobUrl,
           descriptionSnippet: toSnippet(description),
+          descriptionText,
+          sourceCompleteness: descriptionText ? "full" : "listing-only",
+          extractionVersion: "jsonld-v1",
           salaryMin: salary?.min ?? null,
           salaryMax: salary?.max ?? null,
           salaryCurrency: salary?.currency ?? null,
@@ -124,6 +128,9 @@ function extractAnchorJobs(baseUrl: string, html: string, sourceType: CompanySou
       employmentType: null,
       url: jobUrl,
       descriptionSnippet: `Extracted from ${new URL(baseUrl).hostname}`,
+      descriptionText: title,
+      sourceCompleteness: "listing-only",
+      extractionVersion: "anchor-v1",
       salaryMin: null, salaryMax: null, salaryCurrency: null, salaryText: null,
       postDate: null,
     });
