@@ -1,16 +1,11 @@
-import {
-  assertPublicAcquisitionUrl,
-  validateAcquisitionUrlSyntax,
-} from "./acquisition-network-policy.cjs";
+import { validateAcquisitionUrlSyntax } from "./acquisition-network-policy.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const MAX_REDIRECTS = 5;
 
-async function validateDiscoveryUrl(url: string, fetchImpl: typeof fetch): Promise<string> {
-  if (fetchImpl === globalThis.fetch) {
-    return assertPublicAcquisitionUrl(url);
-  }
-  return validateAcquisitionUrlSyntax(url).toString();
+function discoveryFetch(fetchImpl: typeof fetch): typeof fetch {
+  return fetchImpl === globalThis.fetch ? createPinnedFetch() : fetchImpl;
 }
 
 export async function fetchDiscoveryJson<T>(
@@ -19,10 +14,11 @@ export async function fetchDiscoveryJson<T>(
 ): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
+  const transport = discoveryFetch(fetchImpl);
   try {
-    let currentUrl = await validateDiscoveryUrl(url, fetchImpl);
+    let currentUrl = validateAcquisitionUrlSyntax(url).toString();
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
-      const response = await fetchImpl(currentUrl, {
+      const response = await transport(currentUrl, {
         headers: {
           Accept: "application/json",
           "User-Agent": "Job Ranger Desktop/1.0 source discovery",
@@ -41,10 +37,9 @@ export async function fetchDiscoveryJson<T>(
       if (redirectCount === MAX_REDIRECTS) {
         throw new Error("Too many redirects while loading a discovery feed");
       }
-      currentUrl = await validateDiscoveryUrl(
+      currentUrl = validateAcquisitionUrlSyntax(
         new URL(location, currentUrl).toString(),
-        fetchImpl,
-      );
+      ).toString();
     }
   } finally {
     clearTimeout(timeout);
