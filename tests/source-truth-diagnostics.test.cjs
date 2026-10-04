@@ -7,6 +7,16 @@ const { JobScoutBackend } = require("../electron-runtime/electron/src/backend.cj
 const { RequirementBackend } = require("../electron-runtime/electron/src/requirement-backend.cjs");
 const { SqliteClient } = require("../electron-runtime/electron/src/sqlite.cjs");
 
+async function clearScrapeGuard(sqlite, companyId) {
+  const numericId = Number(companyId);
+  assert.equal(Number.isInteger(numericId), true, "test company ID must be numeric");
+  await sqlite.exec(`
+    UPDATE companies
+    SET last_run_at = NULL, last_run_status = 'idle', circuit_open_until = NULL
+    WHERE id = ${numericId};
+  `);
+}
+
 async function run() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-source-trust-"));
   let greenhouseContent = `<p>${"Coordinate vendor schedules, customer requests, inventory records, service calendars, dispatch notes, purchase orders, supplier escalations, site access, shift handoffs, maintenance windows, and customer communications. ".repeat(2)}</p><p>Must maintain OSHA 30 certification and support weekend rotations.</p>`;
@@ -38,10 +48,15 @@ async function run() {
     assert.equal(jobs.length, 1);
     assert.equal(jobs[0].sourceCompleteness, "full");
     assert.ok(jobs[0].currentSourceSnapshotId);
+    assert.equal(
+      jobs[0].descriptionSnippet.includes("OSHA 30 certification"),
+      false,
+      "fixture must place the requirement beyond the legacy 220-character snippet",
+    );
 
     const status = await backend.getSystemStatus(process.platform);
     const sqlite = new SqliteClient(status.databasePath, status.sqliteBinaryPath);
-    let snapshots = await sqlite.queryAll("SELECT * FROM job_source_snapshots ORDER BY retrieved_at ASC;");
+    let snapshots = await sqlite.queryAll("SELECT * FROM job_source_snapshots;");
     assert.equal(snapshots.length, 1);
     assert.match(snapshots[0].content_text, /OSHA 30 certification/);
     assert.equal(snapshots[0].content_hash.length, 64);
@@ -52,16 +67,24 @@ async function run() {
     assert.ok(linked.some((row) => /OSHA 30 certification/.test(row.text)));
     assert.ok(linked.every((row) => row.source_snapshot_id === jobs[0].currentSourceSnapshotId));
 
-    await backend.runCompanyScrape(company.id);
+    // The production cooldown is unrelated to snapshot semantics. Reset only the
+    // test company's guard state so this fixture can exercise repeated retrievals.
+    await clearScrapeGuard(sqlite, company.id);
+    const unchangedRun = await backend.runCompanyScrape(company.id);
+    assert.equal(unchangedRun.status, "success");
     snapshots = await sqlite.queryAll("SELECT * FROM job_source_snapshots;");
     assert.equal(snapshots.length, 1, "unchanged source text should not create duplicate snapshots");
 
     greenhouseContent = `<p>Coordinate vendor schedules.</p><p>Must maintain OSHA 30 certification.</p><p>Must hold a valid driver's license.</p>`;
-    await backend.runCompanyScrape(company.id);
+    await clearScrapeGuard(sqlite, company.id);
+    const changedRun = await backend.runCompanyScrape(company.id);
+    assert.equal(changedRun.status, "success");
     jobs = await backend.listJobs();
-    snapshots = await sqlite.queryAll("SELECT * FROM job_source_snapshots ORDER BY retrieved_at ASC;");
+    snapshots = await sqlite.queryAll("SELECT * FROM job_source_snapshots;");
     assert.equal(snapshots.length, 2, "changed source text must create a new immutable snapshot");
-    assert.equal(jobs[0].currentSourceSnapshotId, snapshots[1].id);
+    const currentSnapshot = snapshots.find((snapshot) => snapshot.id === jobs[0].currentSourceSnapshotId);
+    assert.ok(currentSnapshot, "job must point at one of its preserved source snapshots");
+    assert.match(currentSnapshot.content_text, /valid driver's license/);
 
     const empty = await backend.createCompany({ name: "Empty", url: "https://boards.greenhouse.io/empty", frequencyMinutes: 1440, isActive: true });
     const emptyRun = await backend.runCompanyScrape(empty.id);
