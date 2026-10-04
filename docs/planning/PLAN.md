@@ -1,347 +1,212 @@
 # Job Ranger Roadmap
 
-**Current as of:** 2026-10-01
+**Current as of:** 2026-10-03
 
-This is the active roadmap. Historical phase/remediation plans under `docs/` remain implementation provenance only.
+This is the active roadmap. Historical phase/remediation plans remain implementation provenance only.
 
 ## North Star
 
-Job Ranger is a job search companion.
+Job Ranger should help a job seeker:
 
-The product should help a user:
-
-1. find opportunities;
-2. understand which ones deserve attention;
-3. prepare factual application materials;
+1. find useful opportunities;
+2. understand which deserve attention;
+3. prepare truthful application materials;
 4. track applications and what happened;
 5. prepare for the next step;
 6. learn from the search without turning the search itself into another job.
 
-Core functionality remains useful without inference. Optional inference may improve guidance and language, but it does not own factual authority or determine whether the application is usable.
+Core functionality must remain useful without remote inference.
 
-The universal product contract is now expressed through user stories rather than occupation-specific assumptions:
+The universal product contract remains:
 
 > **US-0:** As a job seeker, I want Job Ranger to adapt to the way my career works without requiring me to understand how Job Ranger works.
 
-See [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md) and program issue #81.
+See [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md).
 
-## Current Release Boundary
+## Current release boundary
 
-The published installers remain **v1.1.2**.
+The latest published installers remain **v1.1.2**.
 
-Development on `main` is materially ahead of that release. R0-R3 of the Career Evidence program are implemented on `main`, but are not yet represented by a published installer.
+`main` is materially ahead and contains the completed Career Evidence/Resume Intelligence program, the completed Universal User Stories program, and the broader application lifecycle/portability work described in `CHANGELOG.md` under **Unreleased**.
 
-## Completed Foundation
+The highest-priority product-delivery task is now to prepare and publish a fully validated release rather than adding another large subsystem first.
 
-### Desktop, runtime, and persistence
+## Completed programs
 
-- [x] Electron desktop application
-- [x] React renderer
-- [x] typed preload/IPC boundary
-- [x] local SQLite authority for product state
-- [x] generated Electron runtime from authoritative `electron/src`
-- [x] Node.js 22.12+ / Electron 44.4.5 / Vite 8 / TypeScript 7 baseline
-- [x] Windows self-contained SQLite packaging
-- [x] macOS x64/arm64 packaging
-- [x] zero-known-vulnerability npm audit baseline
-- [x] PR CI and Electron Playwright coverage
+### Career Evidence and Resume Intelligence / #59
 
-### Job discovery and monitoring foundation
+**Status: complete on `main`.**
 
-- [x] company/career-source management
-- [x] Greenhouse, Lever, SmartRecruiters, and Ashby structured adapters
-- [x] generic HTML/browser-backed fallback paths
-- [x] explicit source-support classification
-- [x] scrape history
-- [x] cooldown/circuit-breaker behavior
-- [x] filters for title, keywords, location, and compensation
-- [x] desktop notifications and tray behavior
+- [x] R0 durable Career Profile/Application persistence and Career Evidence foundation;
+- [x] R1 local resume import, source preservation, extraction snapshots, evidence review, and provenance;
+- [x] R2 explicit job requirements and requirement ↔ Career Evidence mapping;
+- [x] R3 deterministic resume creation, Truth Gate, Parseability Gate, artifact/version lifecycle;
+- [x] R4 deterministic target-specific tailoring with preserved evidence lineage;
+- [x] R5 application lifecycle, Career Stories, interview prep, application materials, offers, Search Insights, backup/restore, and JSON Resume interoperability.
 
-### Career workflow foundation
+Optional remote inference was not required to complete R4/R5 and remains deferred.
 
-- [x] occupation-agnostic Career Profile
-- [x] hourly or annual pay preferences
-- [x] deterministic profile-to-listing fit guidance
-- [x] Applications workspace, statuses, and notes
-- [x] consumer-oriented navigation
-- [x] Career-Ops attribution and independence boundary
+### Universal User Stories / #81
 
-## Universal User Stories Program / #81
+**Status: complete on `main`.**
 
-**Status: active.**
-
-This program makes user stories the normative product contract and uses diverse career contexts as validation fixtures. It does not replace the Career Evidence program; it coordinates consumer-facing behavior across it.
+- [x] progressive onboarding;
+- [x] multiple Target Tracks;
+- [x] required/preferred/target semantics;
+- [x] broad Career Evidence representation;
+- [x] structured credentials and schedule constraints;
+- [x] consumer source discovery with explicit source approval;
+- [x] explainable opportunity assessment;
+- [x] downstream resume/application/interview/lifecycle stories;
+- [x] cross-career fixture/validation matrix;
+- [x] US-0 through US-30 reconciliation.
 
-### U1 / #82: progressive first-run onboarding
+Narrower fields/capabilities that did not earn core placement remain deferred rather than being forced into the universal model.
 
-- [ ] resume-first onboarding
-- [ ] no-resume guided evidence entry
-- [ ] goal-first onboarding
-- [ ] partial profiles remain valid and resumable
-- [ ] no technical/provider configuration required
+## Active priority 0: documentation and release readiness
 
-### U2 / #83: target tracks, preferences, and constraints
-
-- [ ] multiple target tracks
-- [ ] explicit required vs preferred vs target semantics
-- [ ] work arrangement, schedule, travel, relocation, geography, and work-mode preferences where relevant
-- [ ] hourly/annual compensation floors and targets preserve meaning
-- [ ] migration preserves existing Career Profile intent
-
-### U3 / #84: extensible Career Evidence
-
-- [ ] represent conventional and nontraditional career evidence without separate truth stores
-- [ ] model credentials/licenses with relevant structured facts
-- [ ] preserve provenance and authority state through edit/merge/reject/supersede
-- [ ] allow matching to consume relevant non-employment evidence
+### Platinum documentation remediation / #116
 
-### U4 / #85: consumer-friendly opportunity/source discovery
-
-- [ ] define native `SourceDiscoveryProvider`
-- [ ] discover employers/sources from target track + geography
-- [ ] normalize discovery across appropriate source classes without exposing ATS internals
-- [ ] require approval before discovered sources become monitored/trusted
-- [ ] preserve support/trust/provenance metadata
-
-### U5 / #86: explainable opportunity assessment
-
-- [ ] separate eligibility/blockers from evidence coverage
-- [ ] assess career-track alignment separately from profile-title similarity
-- [ ] distinguish hard constraints from preference misses
-- [ ] show unknown/missing/uncertain information explicitly
-- [ ] do not present one opaque percentage as hiring probability or universal fit truth
+- [ ] reconcile README, HELP, CHANGELOG, SYSTEM_STATE, architecture, roadmap, governance, and security with current `main`;
+- [ ] make shipped vs implemented-on-main status unmistakable;
+- [ ] add durable release-readiness contract;
+- [ ] record product-gap dispositions;
+- [ ] run manual validation without consuming GitHub Actions budget;
+- [ ] convert genuine gaps into follow-on issues.
 
-### U6 / #88: downstream story reconciliation
-
-- [ ] #64 satisfies US-19/US-20 for truthful target-specific resume work
-- [ ] #65 satisfies application-material, submitted-artifact, contact, reminder, interview, and recurring-gap stories
-- [ ] add observed outcome analytics for US-28 without causal overclaiming
-- [ ] add evidence-based strategy signals for US-29 without activity quotas
-
-### U7 / #87: cross-career validation
-
-- [ ] maintain a version-controlled US-0 through US-30 validation matrix
-- [ ] maintain synthetic fixtures for materially different career contexts
-- [ ] validate UX relevance, not only type/schema acceptance
-- [ ] use automated domain/Electron coverage where practical
-
-The program completion rule is defined in #81 and [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md).
-
-## Career Evidence and Resume Intelligence Program
-
-Accepted architecture:
-
-```text
-Source Artifact
-      ↓
-Candidate Evidence
-      ↓
-Job Requirements ↔ Evidence Mapping
-      ↓
-Resume / Application-Material Projection
-      ↓
-Truth / Parseability / Relevance Review
-      ↓
-Versioned Artifact
-      ↓
-Application Lifecycle
-```
-
-Research and design:
-
-- [`../research/RESUME_INTELLIGENCE_QOR.md`](../research/RESUME_INTELLIGENCE_QOR.md)
-- [`../research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](../research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md)
-- [`../research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](../research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md)
-- [`../design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](../design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md)
-- [`../design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`](../design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md)
-
-### R0 / #60: durable Career Intelligence and contract freeze
-
-**Status: complete.**
-
-- [x] Career Profile moved to SQLite/backend authority
-- [x] Applications moved to SQLite/backend authority
-- [x] one-time renderer-local migration
-- [x] Career Evidence/provenance contracts frozen
-- [x] requirement/evidence contracts frozen
-- [x] resume projection/artifact contracts frozen
-- [x] managed artifact-directory and hashing rules
-- [x] privacy/inference authority boundary
-- [x] occupation-diverse benchmark corpus
-- [x] restart/migration/truth regression coverage
-
-### R1 / #61: resume import and Career Evidence review
-
-**Status: complete.**
-
-- [x] bounded parser bake-off
-- [x] `@firecrawl/anydoc@0.2.4` selected and license-reviewed
-- [x] DOCX and text-bearing PDF import
-- [x] native plain/pasted text import
-- [x] original artifact preservation before interpretation
-- [x] SHA-256 hashing and duplicate detection
-- [x] parser/version extraction snapshots
-- [x] deterministic proposed Career Evidence
-- [x] confirm/edit/reject/merge authority workflow
-- [x] explicit OCR-required/encrypted/malformed/unsupported/resource-limit states
-- [x] hosted OCR/inference excluded from the default import path
-- [x] packaged native parser proof
-
-Scanned/image-only OCR remains a later explicit capability rather than a silent network fallback.
-
-### R2 / #62: job requirement ↔ Career Evidence mapping
-
-**Status: complete.**
-
-- [x] explicit requirement normalization
-- [x] must-have / preferred / responsibility / credential / logistics classification
-- [x] direct / transferable / ambiguous / gap evidence mapping
-- [x] confirmed evidence required for direct/transferable factual support
-- [x] imported/unconfirmed evidence remains ambiguous
-- [x] visible gaps rather than fabricated claims
-- [x] durable mapping persistence
-- [x] Find Jobs Evidence coverage UI
-- [x] Prepare resume handoff
-- [x] occupation-diverse deterministic test coverage
-
-Known limitation: requirement coverage can only reason over job text actually collected by Job Ranger. Canonical full-description preservation remains a future source-ingestion improvement.
-
-### R3 / #63: deterministic resume creation and artifact lifecycle
-
-**Status: complete on `main` through PR #75.**
-
-- [x] structured `ResumeProjection` / `ResumeStatement` lifecycle
-- [x] Job Ranger-owned ATS-safe standard template
-- [x] Job Ranger-owned ATS-safe compact template
-- [x] confirmed-evidence-only deterministic composition
-- [x] job-targeted evidence preselection from R2 coverage
-- [x] blocking Truth Gate
-- [x] isolated Electron/Chromium PDF renderer
-- [x] generated-PDF reparse through Anydoc
-- [x] critical/advisory Parseability Gate
-- [x] versioned PDF artifacts with hashes/page counts/gate reports
-- [x] immutable projection snapshot per artifact
-- [x] version comparison/diff
-- [x] exact Application artifact linkage
-- [x] Resume workspace and top-level navigation
-- [x] artifact reveal/version UX
-- [x] deterministic lifecycle smoke coverage
-- [x] Electron product validation on the merge candidate
-- [x] PR #75 merged
-
-R3 remains deterministic and does not require AI. Truth, parseability, versioning, and lifecycle linkage are part of the product contract.
-
-### R4 / #64: target-specific tailoring and optional inference
-
-**Status: next planned implementation phase.**
-
-Deterministic first:
-
-- [ ] select evidence by requirement relevance
-- [ ] reorder experience/evidence for target relevance
-- [ ] support legitimate vocabulary translation only when evidence supports it
-- [ ] preserve unsupported requirements as visible gaps
-- [ ] preserve source-to-statement links and version diffs
-
-Optional inference:
-
-- [ ] introduce a narrow provider-neutral `InferenceProvider`
-- [ ] structured semantic requirement/evidence proposals
-- [ ] evidence-bound phrasing proposals
-- [ ] transferable-skill suggestions
-- [ ] optional relevance/hiring-manager review
-- [ ] schema-validate provider output
-- [ ] explicit disclosure before remote transmission of career data
-- [ ] deterministic fallback when no provider is configured
-
-Do not introduce a generic agent framework, vector database, or provider-specific architecture for this phase unless a measured requirement demonstrates the need.
-
-### R5 / #65: broader application lifecycle integration
-
-**Status: planned.**
-
-- [ ] evidence-backed cover letters/application materials
-- [ ] exact submitted material history
-- [ ] reminders/follow-up dates
-- [ ] application contacts
-- [ ] interview milestones
-- [ ] interview preparation grounded in job + evidence + exact submitted resume
-- [ ] reusable evidence-linked Career Stories
-- [ ] offer/negotiation notes
-- [ ] repeated skill/credential gap analysis
-- [ ] versioned export/backup bundle with tested restore
-- [ ] JSON Resume interoperability without canonical-schema drift
-- [ ] OCR only through a separate evidence-backed decision
-- [ ] DOCX export only if actual user demand justifies another output path
-
-## Parallel Consumer Experience Track
-
-The previous first-run and source-discovery bullets are now governed by the Universal User Stories program rather than existing as a disconnected parallel list.
-
-- onboarding: #82
-- target tracks/constraints: #83
-- Career Evidence breadth: #84
-- source discovery: #85
-- opportunity assessment: #86
-- cross-career validation: #87
-- downstream story reconciliation: #88
-
-## Source Reliability Track
-
-- [ ] improve Workday reliability
-- [ ] improve iCIMS reliability
-- [ ] improve BambooHR reliability
-- [ ] improve Oracle/Taleo reliability
-- [ ] improve pagination/infinite-load handling where justified
-- [ ] improve user-facing source failure diagnostics
-- [ ] preserve fuller canonical job-description text where source capabilities allow it
-
-Structured ATS adapters plus the constrained hidden Electron browser remain the preferred acquisition architecture.
-
-## Optional Integration Seams
-
-These are architecture seams, not dependency commitments:
-
-- [ ] `InferenceProvider`
-- [ ] `SourceDiscoveryProvider`
-- [ ] `ResearchProvider`
-- [ ] `OcrProvider`
-- [ ] `CalendarProvider`
-- [ ] additional `NotificationProvider` channels
-
-Job Ranger should remain useful without any of them configured.
-
-## Packaging and Release Track
-
-- [x] current Windows and macOS v1.1.2 artifacts published
-- [x] self-contained Windows SQLite runtime
-- [x] deterministic macOS SQLite release smoke boundary
-- [x] native Anydoc package behavior validated for Windows/macOS targets
-- [ ] publish a release containing the accumulated R0-R3 product work
-- [ ] repeat Windows packaging validation on that release candidate
-- [ ] repeat macOS x64/arm64 packaging validation on the immutable release tag
-- [ ] validate production Apple notarization whenever credentials are available
-- [ ] decide whether Linux becomes a supported release target
-
-## Explicit Non-Goals / Rejected Expansion
-
-Do not add these without a specific evidence-backed product/governance decision:
-
-- cloud account requirement
-- multi-user/team job-search workspace
-- recruiter-facing ATS functionality
-- autonomous mass auto-apply
-- opaque AI ranking that cannot explain its evidence
-- generic agent framework/runtime
-- generic workflow engine
-- agent-memory platform
-- managed browser platform as default scraping infrastructure
-- vector database without measured need
-- proprietary ATS scoring as product truth
-- noncommercial/share-alike resume template code/assets inside the MIT product
-
-These are not metaphysically banned forever. They simply do not get to arrive by architectural osmosis.
-
-## Historical Plans
-
-Earlier phase plans remain under `docs/` for provenance. See [`../README.md`](../README.md) for the documentation hierarchy and status rules.
+### Next release
+
+Before publication:
+
+- [ ] select the next version deliberately;
+- [ ] validate upgrade/migrations from v1.1.2;
+- [ ] validate backup/restore before destructive migration/package testing;
+- [ ] run repository health and Electron workflow validation manually or through the chosen release environment;
+- [ ] repeat Windows package validation on the immutable release tag;
+- [ ] repeat macOS x64/arm64 packaging validation on the immutable release tag;
+- [ ] record notarization evidence when credentials are available;
+- [ ] publish Windows/macOS assets;
+- [ ] finalize release notes, README download links, and shipped-state docs only after assets exist.
+
+See [`../RELEASE_READINESS.md`](../RELEASE_READINESS.md).
+
+## Active priority 1: source truth and reliability
+
+These are the strongest product gaps discovered during the October 2026 capability review.
+
+### Canonical job-description/source snapshots
+
+**Need:** preserve fuller source/job-description evidence so requirement mapping, interview prep, and historical application context do not depend solely on partial text collected during one scrape.
+
+Acceptance direction:
+
+- preserve complete/bounded source text where the source permits it;
+- record retrieval time/source identity/extraction version;
+- retain historical posting context after a listing disappears;
+- distinguish “not found in collected text” from “not required by employer”;
+- do not store arbitrary executable page state merely to call it a snapshot.
+
+### Dynamic-source diagnostics and reliability
+
+**Need:** improve Workday/iCIMS/BambooHR/Oracle/Taleo/generic browser-backed reliability and make failure states understandable.
+
+Acceptance direction:
+
+- distinguish no-results, unsupported shape, access block, timeout, parse failure, and network-policy rejection;
+- improve pagination/infinite-load handling only where measured value justifies it;
+- collect local diagnostic evidence by source family without creating telemetry;
+- preserve the acquisition network/security boundary.
+
+## Priority 2 candidates: evaluate before implementation
+
+See [`../PRODUCT_GAP_REVIEW.md`](../PRODUCT_GAP_REVIEW.md) for full disposition rationale.
+
+### Broader opportunity discovery
+
+Candidate source classes:
+
+- federal/USAJOBS;
+- state/local government;
+- school districts;
+- hospitals/health systems;
+- academic/professional associations;
+- apprenticeship/union sources;
+- staffing/contract marketplaces;
+- broader general feeds.
+
+Do not require ordinary users to configure developer/API credentials merely to use the product.
+
+### Faster arbitrary-job capture
+
+First evaluate a native paste/open-URL capture flow. Build a browser extension only if it provides material additional value worth the maintenance/security surface.
+
+### Reusable application-question answers
+
+Candidate model:
+
+- preserve exact question text;
+- reuse user-authored approved answers;
+- link factual assertions to Career Evidence where applicable;
+- require review before reuse;
+- never auto-submit.
+
+### User-controlled application form assistance
+
+Potentially valuable, but high-governance. Autofill is not the same as auto-apply. Any implementation must keep the user in control of every submission and use confirmed evidence for factual fields.
+
+### Networking workspace
+
+Current application-scoped contacts may prove sufficient. Promote broader networking CRM only if real use demonstrates cross-application/company relationship management is missing.
+
+### Calendar mirroring
+
+Job Ranger remains authoritative. A future calendar adapter may mirror selected interviews/deadlines/follow-ups but must not silently mutate lifecycle history.
+
+### Mock interview practice
+
+Deterministic grounded prep already exists. Conversational practice/feedback is a candidate enhancement, with remote inference/audio privacy reviewed separately.
+
+## Deferred
+
+Do not schedule these without new evidence:
+
+- remote inference provider;
+- OCR for scanned/image-only resumes;
+- DOCX resume export;
+- federal-resume/academic-CV specialized projections;
+- universal travel/relocation/sponsorship fields;
+- cloud sync / hosted account;
+- Linux packaged distribution.
+
+## Explicit non-goals under current governance
+
+- autonomous mass auto-apply;
+- recruiter-facing ATS/team workspace;
+- opaque hiring-probability or proprietary ATS score presented as truth;
+- generic agent framework/runtime;
+- generic workflow engine;
+- vector database without measured need;
+- agent-memory platform;
+- managed browser platform as the default architecture;
+- noncommercial/share-alike template assets inside the MIT product.
+
+These can change only through an explicit evidence-backed governance decision, not through architectural drift.
+
+## Architecture invariants for future work
+
+1. Career Evidence remains factual authority.
+2. Goal/intent does not become factual evidence.
+3. Preference does not silently become constraint.
+4. Inference may propose but may not establish truth.
+5. Consequential source/application changes require user authority.
+6. No autonomous mass application.
+7. Unknown information stays unknown.
+8. Core workflows remain useful without remote inference.
+9. Application materials trace to confirmed evidence.
+10. Search learning proposes strategy changes; it does not silently mutate profile/evidence.
+11. Occupation knowledge is bounded data/rules before plugin/runtime complexity.
+12. External services remain adapters, not domain authorities.
+
+## Historical plans
+
+Earlier `plan-*.md` files remain for provenance only. They should not be used to infer current status. The current documentation authority hierarchy is in [`../README.md`](../README.md).
