@@ -5,285 +5,241 @@
 # Job Ranger
 
 <p align="center">
-  <strong>A local-first desktop job-search companion for finding opportunities, understanding fit, and tracking the search without turning your career into somebody else's cloud product.</strong>
+  <strong>A local-first desktop job-search companion for finding opportunities, understanding what deserves attention, preparing truthful application materials, and managing the search without turning your career into somebody else's cloud product.</strong>
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/release-v1.1.2-0f172a.svg" alt="Release v1.1.2" /></a>
-  <a href="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml"><img src="https://github.com/Knapp-Kevin/job-ranger/actions/workflows/ci.yml/badge.svg" alt="CI" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/published%20release-v1.1.2-0f172a.svg" alt="Published release v1.1.2" /></a>
+  <img src="https://img.shields.io/badge/main-materially%20ahead-2563eb.svg" alt="Main materially ahead of published release" />
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
 
-## Install Job Ranger
+## Release status
 
-**Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account.** Download the desktop build for your computer and run it.
+**The latest published installers are still v1.1.2.** They were published on September 24, 2026 and contain the first consumer-oriented Career Profile, deterministic fit guidance, Applications tracking, source monitoring, filters, notifications, and the Windows/macOS packaging fixes from the v1.1 line.
+
+**`main` is now a substantially newer product than v1.1.2.** The default branch contains the completed Career Evidence / Resume Intelligence program, Universal User Stories program, and broader application-lifecycle work. Those capabilities are implemented and validated in the repository, but they are **not shipped to normal users until a new GitHub Release is published**.
+
+That distinction is deliberate. Job Ranger uses these status terms consistently:
+
+| Status | Meaning |
+| --- | --- |
+| **Shipped** | Present in a published GitHub Release that users can download. |
+| **Implemented on main** | Merged into the default branch, but not necessarily present in the latest installer. |
+| **Candidate / next** | Evidence-backed possible next work, not a product commitment. |
+| **Deferred** | Intentionally not active, with a recorded reason. |
+| **Historical** | Retained for provenance only. |
+
+For exact current repository state, see [`docs/SYSTEM_STATE.md`](./docs/SYSTEM_STATE.md). For release-readiness requirements, see [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md).
+
+## Install the current published release
+
+Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account.
 
 ### Windows
 
 **[Download Job Ranger v1.1.2 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-windows-x64.exe)**
 
-1. Download the `.exe` file.
-2. Open it.
-3. Follow the Windows prompts and launch **Job Ranger**.
-
-The Windows installer is self-contained for Job Ranger's SQLite runtime. You do not need to install `sqlite3` separately.
+The Windows installer includes the SQLite runtime Job Ranger needs.
 
 ### macOS
-
-Choose the build that matches your Mac:
 
 - **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-arm64.dmg)**
 - **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-x64.dmg)**
 
-Open the downloaded `.dmg`, move Job Ranger into **Applications** if prompted, then launch it normally. If you are unsure which Mac you have, open **Apple menu → About This Mac** and look for either an Apple M-series chip or an Intel processor.
+See the [latest GitHub Release](https://github.com/Knapp-Kevin/job-ranger/releases/latest) before downloading. Linux does not currently have a supported packaged release.
 
-Prefer to inspect the release first? See the [latest Job Ranger release](https://github.com/Knapp-Kevin/job-ranger/releases/latest).
+## What Job Ranger is
 
-## What's New
+Job searching contains an absurd amount of clerical work. People repeatedly check the same sources, lose track of opportunities, rewrite the same career facts, forget which resume they submitted, and maintain increasingly haunted collections of tabs, notes, spreadsheets, and half-finished documents.
 
-### v1.1.2 — current
+Job Ranger is designed to make that workflow coherent while preserving user authority:
 
-This patch turns the first Career Intelligence slice into a more genuinely career-agnostic consumer experience and fixes issues found during hands-on desktop review.
+1. describe what kind of work you want;
+2. build a factual Career Evidence record from a resume or direct entry;
+3. discover and monitor job sources;
+4. assess opportunities using explicit requirements, evidence, constraints, and unknowns;
+5. prepare evidence-backed resumes and application materials;
+6. track the exact materials, people, events, reminders, interviews, offers, and outcomes around each application;
+7. learn from recurring gaps and observed results without pretending correlation is destiny;
+8. keep the core workflow local and useful without an AI provider.
 
-- Restored readable inactive navigation in the Midnight theme by separating sidebar foreground treatment from inverse button text semantics.
-- Replaced dashboard text that looked like links with real contextual navigation actions for jobs, sources, and filters.
-- Simplified the sidebar header to the Job Ranger identity only; theme marketing copy and the redundant `Local desktop` pill no longer consume navigation space.
-- Removed the HVAC-specific starter and trade-specific placeholders from primary Career Profile onboarding.
-- Reframed target roles around current, adjacent, and reasonable stretch opportunities without turning target roles into claims about experience.
-- Generalized minimum compensation so users can set either an hourly or annual floor.
-- Added backward-compatible migration for existing v1 Career Profiles so saved hourly minimums are preserved.
-- Added Electron E2E coverage for actionable dashboard prompts and occupation-agnostic Career Profile behavior.
+Job Ranger does **not** autonomously apply to jobs, invent qualifications, silently transmit career data to an inference provider, or treat a single opaque score as hiring truth.
 
-### v1.1.1
+## Capability map
 
-This patch completes the v1.1 cross-platform release by fixing the Windows packaging defect exposed during the v1.1.0 release run.
+The table below intentionally separates what normal users can download today from what is already implemented on `main`.
 
-- Windows is now **self-contained** for Job Ranger's SQLite runtime. No separate SQLite installation is required.
-- The Windows release workflow pins the official SQLite 3.53.4 x64 tools archive and verifies its published SHA3-256 before packaging.
-- Release validation proves the packaged `sqlite3.exe` exists, executes, and is the runtime-selected binary with `SQLITE3_PATH` removed.
-- The Windows download is standardized on the normal NSIS installer.
-- SQLite runtime provenance and Windows package-validation evidence are now part of the repository documentation.
-
-### v1.1.0
-
-The v1.1 feature release transformed Job Ranger from a career-page monitor into a broader local-first job-search companion.
-
-- Added **Career Profile** onboarding for target roles, location, pay, skills, credentials, and work preferences. The first iteration included one occupation-specific starter; v1.1.2 generalized the primary experience across careers.
-- Added deterministic **job-fit scoring and plain-language fit guidance** based only on saved profile data and collected listing evidence.
-- Added the **Applications** workspace with status tracking and notes.
-- Reorganized navigation around Home → Find Jobs → Applications → Career Profile.
-- Upgraded the supported desktop runtime to **Electron 44.4.5**, **Node.js 22.12+**, **Vite 8**, and **TypeScript 7**.
-- Completed the accumulated dependency-security cleanup and modernized Electron packaging/notarization tooling.
-- Added repository branding, governance, CI, release documentation, and Career-Ops MIT attribution.
-
-The macOS v1.1.0 artifacts were published successfully. Its Windows builder exposed the missing bundled-SQLite boundary before a Windows asset was uploaded, which is why v1.1.1 supersedes it for normal installation.
-
-See [CHANGELOG.md](./CHANGELOG.md) for the full release history.
-
-## Start Using It
-
-Job Ranger v1.1.2 includes the consumer-oriented Career Intelligence workflow introduced in the v1.1 line:
-
-1. Open **Career Profile** and enter the roles, location, pay floor, skills, and credentials that are true for you.
-2. Open **Companies** and add employer career pages you want Job Ranger to monitor.
-3. Run a scrape or let Job Ranger check configured sources on schedule.
-4. Open **Find Jobs** to review listings and see deterministic fit guidance based on your saved profile and the job data Job Ranger actually collected.
-5. Choose **Track this job** for anything worth following.
-6. Use **Applications** to track Interested, Applied, Interview, Offer, Rejected, or Withdrawn status and keep notes.
-7. Use **Filters** to tune title, keyword, salary, and location signal.
-8. Use **Settings** for notifications, scrape behavior, themes, and tray behavior.
-
-For user-facing troubleshooting, see [HELP.md](./HELP.md).
-
-## Status
-
-**Job Ranger v1.1.2 is the current release.** It combines the established local career-page monitor with occupation-agnostic Career Profile onboarding, deterministic fit guidance, application tracking, and the cross-platform packaging fixes completed in v1.1.1.
-
-The application remains local first and useful without inference. Career Profile, deterministic fit guidance, application tracking, scraping, filters, and notifications do not require an AI provider. Optional inference may enrich future guidance, but it is not the key that opens the product.
-
-## Why Job Ranger Exists
-
-Job searching contains an absurd amount of clerical work. People repeatedly check the same career pages, lose track of what changed, forget which jobs they already reviewed, and maintain increasingly haunted browser-tab collections.
-
-Job Ranger automates and organizes the repetitive parts while leaving career decisions with the user:
-
-- monitor selected employers and career pages;
-- store job-search state locally;
-- explain which listings appear relevant and why;
-- track applications and notes;
-- distinguish reliable source support from best-effort extraction;
-- filter noise by title, keyword, salary, and location;
-- receive desktop notifications for new results;
-- remain useful without cloud accounts or inference.
-
-## Current Capabilities
-
-| Capability | Status | Notes |
+| Capability | Published v1.1.2 | Current `main` |
 | --- | --- | --- |
-| Desktop application | **Shipped** | Electron + React desktop app. |
-| Local job-source persistence | **Shipped** | SQLite-backed companies, jobs, filters, settings, and scrape history. |
-| Career Profile | **Shipped** | Local profile for target roles, location, pay, skills, credentials, and preferences. |
-| Deterministic fit guidance | **Shipped** | Evidence-based local scoring and explanations. It is guidance, not a hiring prediction. |
-| Application tracking | **Shipped** | Local statuses and notes for jobs the user chooses to track. |
-| Career-page monitoring | **Shipped** | User-selected employer sources with scheduled/background scraping. |
-| Structured ATS adapters | **Shipped** | Greenhouse, Lever, SmartRecruiters, and Ashby. |
-| Browser/generic extraction | **Shipped, best effort** | Workday, iCIMS, BambooHR, Taleo, Oracle, Microsoft, and generic career pages are classified honestly by support level. |
-| Filters | **Shipped** | Title, keyword, salary, and location criteria. |
-| Desktop notifications | **Shipped** | Configurable new-job and matched-job notifications. |
-| System tray behavior | **Shipped** | Optional minimize-to-tray operation. |
-| Windows release | **Shipped** | v1.1.2 Windows x64 installer with bundled SQLite runtime. |
-| macOS releases | **Shipped** | v1.1.2 x64 and arm64 DMG/ZIP artifacts. |
-| Linux distribution | **Not shipped** | No supported packaged Linux release is currently published. |
-| Resume/import intelligence | **Planned** | Must preserve factual evidence and remain useful without inference. |
-| Auto-apply | **Not a current product goal** | Job Ranger assists decisions rather than impersonating the user. |
+| Electron desktop app, local SQLite job/source state | **Shipped** | **Implemented** |
+| Structured ATS adapters: Greenhouse, Lever, SmartRecruiters, Ashby | **Shipped** | **Implemented** |
+| Browser/generic acquisition for other career sites | **Shipped, best effort** | **Implemented, hardened** |
+| Career Profile | **Shipped** | **Implemented, durable SQLite authority** |
+| Applications statuses and notes | **Shipped** | **Implemented, durable SQLite authority** |
+| Progressive onboarding | Not shipped | **Implemented on main** |
+| Multiple target tracks and hard/preferred/target semantics | Not shipped | **Implemented on main** |
+| Career Evidence import and direct authoring | Not shipped | **Implemented on main** |
+| Resume import from DOCX, text-bearing PDF, plain text, pasted text | Not shipped | **Implemented on main** |
+| Evidence provenance, correction, references, and supersede lineage | Not shipped | **Implemented on main** |
+| Structured credentials and schedule constraints | Not shipped | **Implemented on main** |
+| Consumer source discovery with explicit approval | Not shipped | **Implemented on main, partial provider coverage** |
+| Explainable opportunity assessment | Basic fit score shipped | **Eligibility, evidence, track, preferences, blockers, unknowns** |
+| Deterministic resume creation and PDF validation | Not shipped | **Implemented on main** |
+| Target-specific deterministic resume tailoring | Not shipped | **Implemented on main** |
+| Exact submitted resume history | Not shipped | **Implemented on main** |
+| Contacts, milestones, reminders, follow-ups | Not shipped | **Implemented on main** |
+| Career Stories | Not shipped | **Implemented on main** |
+| Evidence-grounded interview preparation | Not shipped | **Implemented on main** |
+| Evidence-grounded application materials / cover-letter projection | Not shipped | **Implemented on main** |
+| Offer / negotiation state | Not shipped | **Implemented on main** |
+| Search Insights and recurring-gap analysis | Not shipped | **Implemented on main** |
+| Verified backup / staged restore | Not shipped | **Implemented on main** |
+| JSON Resume import/export | Not shipped | **Implemented on main** |
+| Remote inference provider | Not shipped | **Deferred; core product does not require it** |
+| OCR for scanned/image-only resumes | Not shipped | **Deferred pending evidence-backed demand** |
+| DOCX resume export | Not shipped | **Deferred pending evidence-backed demand** |
+| Autonomous mass auto-apply | Not shipped | **Explicit non-goal** |
+| Linux installer | Not shipped | **Undecided / unsupported** |
 
-### Persistence note
+## Core product principles
 
-Companies, jobs, filters, settings, and scrape history use the SQLite-backed desktop repository. Career Profile and Applications are currently stored locally in renderer storage and are planned to move behind the same SQLite/backend boundary. They are local today, but not yet on the final durable persistence architecture.
+### Career Evidence is factual authority
 
-## Source Support Model
+Career Profile and Target Tracks describe intent. Career Evidence describes what is factually true about the user. Imported information begins as a proposal. Only user-confirmed or user-authored evidence can support factual application claims.
 
-Job Ranger deliberately avoids pretending every careers site is equally automatable.
+### Preferences are not constraints
+
+Remote preference, compensation target, commute, schedule, employment arrangement, and similar choices retain explicit semantics. A preference does not silently become a blocker.
+
+### Explain uncertainty instead of scoring around it
+
+Current `main` separates eligibility, evidence coverage, career-track alignment, preference alignment, blockers, and unknowns. Missing job data stays missing instead of being converted into fake precision.
+
+### Local first, useful before AI
+
+The core workflow works without an AI account or hosted Job Ranger account. Optional external capabilities must be narrow adapters with explicit disclosure and may not become authorities over career truth.
+
+### User authority
+
+Job Ranger can discover, organize, explain, prepare, remind, and preserve. Consequential external actions remain with the user.
+
+## Source support model
+
+Job Ranger does not pretend every careers site is equally automatable.
 
 | Support level | Meaning |
 | --- | --- |
 | `supported` | A structured adapter exists and is the preferred path. |
-| `detected` | Job Ranger recognizes the portal and can attempt generic/browser extraction. Results can vary with site structure. |
-| `browser-required` | A browser-backed extraction path is required. |
-| `manual-review` | No reliable automated path is currently claimed. |
+| `detected` | Job Ranger recognizes the portal and can attempt generic/browser extraction. |
+| `browser-required` | A constrained rendered-browser path is required. |
+| `manual-review` | No reliable automated acquisition path is claimed. |
 
-Current structured adapters are Greenhouse, Lever, SmartRecruiters, and Ashby. Other recognized sources include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, Microsoft Careers, and generic HTML career pages.
+Current structured adapters are Greenhouse, Lever, SmartRecruiters, and Ashby. Workday, iCIMS, BambooHR, Taleo, Oracle Careers, Microsoft Careers, and generic career pages use detected or browser-backed paths where applicable.
 
-## Product Principles
+Source discovery is deliberately separate from source acquisition. A discovered opportunity or employer is not silently converted into a monitored trusted source. The user approves monitoring explicitly.
 
-### Local first
-
-Search state is stored locally. Job Ranger does not require a hosted account or cloud backend for its core workflow.
-
-### Useful before AI
-
-Discovery, persistence, filtering, monitoring, career-profile matching, and application tracking work deterministically. Optional inference can improve future explanations, resume tailoring, interview preparation, and career guidance, but it must not become a prerequisite for using the application.
-
-### Consumer first
-
-A job seeker should not need software-development skills to use Job Ranger. Technical implementation details belong behind the interface.
-
-### Evidence over confidence
-
-When Job Ranger cannot reliably extract or interpret something, it should expose the limitation rather than fabricate certainty. Career Profile deliberately does not infer credentials the user did not provide.
-
-### User authority
-
-Job Ranger assists the user's search. It does not make irreversible career decisions or apply to jobs on the user's behalf.
-
-## Architecture
+## Current architecture
 
 ```text
 React renderer
-  |-- Home / Find Jobs / Applications / Career Profile
-  |-- Companies / Filters / Settings
-  |
-  v
-Electron preload / typed IPC boundary
-  |
-  v
-Desktop backend
-  |        |        |
-  v        v        v
-SQLite   Scrapers  Runtime / OS services
-           |
-           +--> Structured ATS adapters
-           +--> Generic HTML extraction
-           +--> Browser-backed extraction
+  Home / onboarding / jobs / applications
+  Career Profile / Career Evidence / Career Stories
+  Target Tracks / Resume / Search Insights
+  Companies / Filters / Settings
+          │
+          ▼ typed preload / IPC
+Electron main process
+  Job acquisition and source monitoring
+  Career Profile / Career Evidence / provenance
+  Target Tracks / requirements / assessment
+  Resume projection, Truth Gate, PDF + Parseability Gate
+  Application lifecycle / interview prep / materials
+  Career Stories / Search Insights / offers
+  Backup + staged restore / JSON Resume adapter
+          │
+          ▼
+        SQLite + managed local artifacts
 ```
 
-Security-relevant renderer boundaries include `contextIsolation: true`, `nodeIntegration: false`, `webSecurity: true`, URL validation before opening external links, and a renderer Content Security Policy.
+`electron/src/**` is the only checked-in privileged implementation authority. `electron-runtime/**` is generated for development, tests, packaging, and execution. See [`docs/BUILD_RUNTIME.md`](./docs/BUILD_RUNTIME.md) and [`docs/ARCHITECTURE_PLAN.md`](./docs/ARCHITECTURE_PLAN.md).
 
-See [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md) for architecture and planned evolution.
+## Privacy and security posture
 
-## Repository Layout
+Current `main` keeps structured career/search state locally and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. The main window and specialized browser/render surfaces are sandboxed as appropriate; Node integration is disabled; context isolation and web security remain enabled; external URLs are validated; automated acquisition applies public-network restrictions rather than blindly following redirects into local/private address space.
 
-| Path | Purpose |
-| --- | --- |
-| `src/` | React renderer, Career Intelligence UI/domain code, components, state, and shared contracts. |
-| `electron/src/` | TypeScript source for the privileged desktop runtime and backend. |
-| `electron/` | Compiled desktop runtime files used by packaged execution. |
-| `tests/` | Unit, backend smoke, and Electron Playwright coverage. |
-| `public/` | Runtime static assets, including the canonical application icon. |
-| `docs/assets/branding/` | README/banner/logo/social-preview assets. |
-| `docs/` | Product, architecture, system-state, validation evidence, and planning documentation. |
-| `.github/` | CI, release automation, and dependency automation. |
+Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure. See [`SECURITY.md`](./SECURITY.md).
+
+## Product gaps and evaluated candidates
+
+The current product is broad, but “zero open issues” is not treated as evidence that no ideas remain. A current capability-gap review lives in [`docs/PRODUCT_GAP_REVIEW.md`](./docs/PRODUCT_GAP_REVIEW.md).
+
+Examples under active consideration or explicit disposition include:
+
+- broader source-discovery coverage, including government and niche sources;
+- easier capture of jobs encountered in the browser;
+- reusable application-question answers and limited user-controlled form assistance;
+- richer networking workflows beyond application-scoped contacts;
+- mock interview practice and answer-feedback workflows;
+- calendar integration;
+- canonical full job-description preservation where source capabilities permit it;
+- source reliability improvements for dynamic portals;
+- Linux packaging.
+
+These are candidates, not promises. Features are evaluated against Job Ranger's privacy, evidence, maintainability, and user-authority principles before they become roadmap work.
 
 ## Development
 
-The following is for people building or modifying Job Ranger from source. Normal users should use the installers at the top of this README.
+Normal users should use published installers. The following is for repository development.
 
 ### Prerequisites
 
 - Node.js `>=22.12.0`
 - npm
-- a working `sqlite3` executable available on `PATH`, or `SQLITE3_PATH` set explicitly
+- `sqlite3` on `PATH`, or `SQLITE3_PATH` set explicitly
 
-The `sqlite3` prerequisite applies to source/development runs. Published Windows installers bundle their own verified SQLite CLI.
-
-### Setup
+### Core commands
 
 ```bash
 npm ci
 npm run repo:health
-npm run electron:dev
-```
-
-### Quality Commands
-
-```bash
-npm run typecheck
-npm run build
-npm run test
 npm run test:unit
 npm run test:e2e
-npm run repo:health
-```
-
-Pull requests are gated by CI running a clean install, dependency audit reporting, and the repository-health baseline. Electron E2E is also used for runtime/release validation.
-
-## Packaging
-
-```bash
-npm run electron:build
+npm run electron:dev
 npm run electron:build:win
 npm run electron:build:mac
-npm run electron:pack
 ```
 
-Electron Builder is configured for Windows and macOS targets. Published release artifacts are the source of truth for what users can actually download. The Windows release workflow stages and verifies the pinned SQLite CLI before packaging. macOS notarization runs when the required Apple credentials are available to the release environment.
+This repository deliberately preserves GitHub Actions budget for work that actually needs hosted execution. Documentation/remediation validation may be performed manually by the maintainer and recorded in the relevant PR or release evidence. Do not equate “no Actions run” with “no validation.”
 
-The canonical runtime icon is [`public/ICON.png`](./public/ICON.png). Brand presentation assets live under [`docs/assets/branding/`](./docs/assets/branding/).
+## Release engineering
 
-## Roadmap
+Published GitHub Releases are the source of truth for user-installable builds. The next release must pass the release-readiness contract in [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
 
-With the Career Intelligence foundation and coordinated toolchain modernization landed, near-term work shifts toward product maturity:
+- documentation reconciliation;
+- migration/backup compatibility checks;
+- dependency/security review;
+- repository-health and Electron workflow validation;
+- Windows package validation with bundled SQLite;
+- macOS x64/arm64 packaging validation and notarization evidence when credentials are available;
+- release notes that describe the actual immutable tag.
 
-1. Move Career Profile and Applications from renderer storage into the SQLite/backend domain.
-2. Add first-run onboarding and consumer-friendly source discovery so users do not need to know ATS/career-page URLs in advance.
-3. Add resume import and an evidence model that prevents fabricated claims.
-4. Add optional provider-agnostic inference for richer explanations and preparation while preserving deterministic operation.
-5. Continue improving best-effort source reliability and decide explicitly whether Linux becomes a supported packaged target.
+The current `package.json` version remains `1.1.2` until release preparation deliberately selects and stages the next version.
 
-See [docs/planning/PLAN.md](./docs/planning/PLAN.md) for the active roadmap and [docs/README.md](./docs/README.md) for documentation status.
+## Documentation hierarchy
 
-## Governance, Security, and Attribution
+Start with [`docs/README.md`](./docs/README.md). Current sources of truth are intentionally separated from historical implementation plans and research evidence.
 
-- [CONTRIBUTING.md](./CONTRIBUTING.md) explains contribution expectations.
-- [GOVERNANCE.md](./GOVERNANCE.md) describes decision authority and merge standards.
-- [SECURITY.md](./SECURITY.md) describes the supported security posture and reporting path.
-- [CODE_OF_CONDUCT.md](./CODE_OF_CONDUCT.md) defines community expectations.
-- [docs/BRANDING.md](./docs/BRANDING.md) defines canonical brand assets and usage.
-- [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) records attribution and runtime provenance for third-party/open-source ancestry, including Career-Ops and bundled SQLite.
+## Governance, security, and attribution
+
+- [`GOVERNANCE.md`](./GOVERNANCE.md) — decision authority and truth/status language.
+- [`SECURITY.md`](./SECURITY.md) — security posture and reporting guidance.
+- [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution workflow.
+- [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) — community expectations.
+- [`docs/BRANDING.md`](./docs/BRANDING.md) — canonical visual assets and usage.
+- [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) — required third-party attribution and provenance.
 
 ## License
 
-Job Ranger is open source under the [MIT License](./LICENSE).
-
-Third-party dependencies and adapted open-source components retain their own copyright and license obligations or public-domain status. Required attribution and provenance are preserved in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+Job Ranger is open source under the [MIT License](./LICENSE). Third-party dependencies and adapted components retain their own obligations as recorded in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
