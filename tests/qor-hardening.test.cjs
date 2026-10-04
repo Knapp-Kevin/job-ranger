@@ -49,6 +49,7 @@ function assertNotSourceType(url, sourceType) {
 }
 
 function run() {
+  assert.throws(() => validateSettingsUpdate([]), /must be an object/);
   assert.equal(validateSettingsUpdate(validSettings()).maxConcurrentScrapes, 2);
   assert.throws(() => validateSettingsUpdate(validSettings({ maxConcurrentScrapes: 0 })), /1 through 10/);
   assert.throws(() => validateSettingsUpdate(validSettings({ maxConcurrentScrapes: 11 })), /1 through 10/);
