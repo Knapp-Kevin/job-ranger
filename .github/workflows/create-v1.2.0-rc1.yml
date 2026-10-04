@@ -1,5 +1,7 @@
 name: Create v1.2.0 RC1
 
+# One-shot trigger: this workflow was introduced by the prior commit; modifying it
+# now ensures GitHub evaluates the already-existing workflow on this branch.
 on:
   push:
     branches:
