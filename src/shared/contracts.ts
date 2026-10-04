@@ -306,7 +306,6 @@ export interface DesktopApi {
   getAppVersion: () => Promise<string>;
   getPlatform: () => Promise<string>;
   openExternal: (url: string) => Promise<void>;
-  showItemInFolder: (path: string) => Promise<void>;
   system: {
     getStatus: () => Promise<SystemStatus>;
   };
