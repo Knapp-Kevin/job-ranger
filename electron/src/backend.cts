@@ -25,7 +25,8 @@ import {
   scraperAdapters,
   type ScrapedJob,
 } from "./scrapers.cjs";
-import { resolveSqliteBinary, sql, SqliteClient } from "./sqlite.cjs";
+import { resolveSqliteBinary, SqliteClient } from "./sqlite.cjs";
+import { applyNamedSchemaMigration } from "./schema-migration.cjs";
 import {
   checkScrapeGuard,
   shouldOpenCircuit,
@@ -294,27 +295,8 @@ export class JobScoutBackend {
   }
 
   private async runMigrations(): Promise<void> {
-    await this.sqlite.exec(
-      "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL);",
-    );
-
-    const appliedRows = await this.sqlite.queryAll<{ version: number }>(
-      "SELECT version FROM schema_migrations ORDER BY version ASC;",
-    );
-    const applied = new Set(appliedRows.map((row) => row.version));
-
     for (const migration of migrations) {
-      if (applied.has(migration.version)) {
-        continue;
-      }
-
-      await this.sqlite.exec(migration.sql);
-      await this.sqlite.exec(
-        sql`
-          INSERT INTO schema_migrations (version, name, applied_at)
-          VALUES (${migration.version}, ${migration.name}, ${new Date().toISOString()});
-        `,
-      );
+      await applyNamedSchemaMigration(this.sqlite, migration);
     }
   }
 
@@ -549,5 +531,3 @@ export class JobScoutBackend {
     }
   }
 }
-
-
