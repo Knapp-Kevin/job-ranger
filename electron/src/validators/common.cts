@@ -61,6 +61,19 @@ export function validateFiniteNumber(rawValue: unknown, label: string): number {
   return rawValue;
 }
 
+export function validateIntegerInRange(
+  rawValue: unknown,
+  label: string,
+  minimum: number,
+  maximum: number,
+): number {
+  const value = validateFiniteNumber(rawValue, label);
+  if (!Number.isInteger(value) || value < minimum || value > maximum) {
+    throw new Error(`${label} must be an integer from ${minimum} through ${maximum}.`);
+  }
+  return value;
+}
+
 export function validateStringArray(rawValue: unknown, label: string): string[] {
   if (!Array.isArray(rawValue)) {
     throw new Error(`${label} must be an array of strings.`);
