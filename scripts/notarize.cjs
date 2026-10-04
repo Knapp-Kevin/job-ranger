@@ -1,7 +1,9 @@
 /**
  * Notarization hook for macOS release builds.
- * Keep the Electron Builder hook itself in CommonJS, then load the ESM-only
- * @electron/notarize package dynamically when Apple credentials are present.
+ *
+ * RC/beta/tester builds may be produced without Apple credentials when
+ * JOB_RANGER_REQUIRE_NOTARIZATION is not set. Stable public releases set that
+ * flag and must fail closed if signing/notarization credentials are absent.
  */
 
 exports.default = async function notarizing(context) {
@@ -11,12 +13,23 @@ exports.default = async function notarizing(context) {
     return;
   }
 
-  if (
-    !process.env.APPLE_ID ||
-    !process.env.APPLE_ID_PASSWORD ||
-    !process.env.APPLE_TEAM_ID
-  ) {
-    console.log("Skipping macOS notarization because Apple credentials are not configured.");
+  const requireNotarization = process.env.JOB_RANGER_REQUIRE_NOTARIZATION === "1";
+  const credentials = {
+    appleId: process.env.APPLE_ID,
+    appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    teamId: process.env.APPLE_TEAM_ID,
+  };
+  const credentialsPresent = Object.values(credentials).every(Boolean);
+
+  if (!credentialsPresent) {
+    if (requireNotarization) {
+      throw new Error(
+        "macOS notarization is required for this public release, but APPLE_ID, APPLE_ID_PASSWORD, and APPLE_TEAM_ID are not all configured.",
+      );
+    }
+    console.log(
+      "Tester build: macOS notarization skipped because Apple credentials are not configured. This artifact must not be presented as a normal signed/notarized public release.",
+    );
     return;
   }
 
@@ -24,9 +37,10 @@ exports.default = async function notarizing(context) {
   const appName = context.packager.appInfo.productFilename;
 
   await notarize({
+    tool: "notarytool",
     appPath: `${appOutDir}/${appName}.app`,
-    appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD,
-    teamId: process.env.APPLE_TEAM_ID,
+    appleId: credentials.appleId,
+    appleIdPassword: credentials.appleIdPassword,
+    teamId: credentials.teamId,
   });
 };
