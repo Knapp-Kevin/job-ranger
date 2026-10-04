@@ -15,8 +15,6 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
-  showItemInFolder: (targetPath: string) =>
-    ipcRenderer.invoke("app:show-item-in-folder", targetPath),
   system: {
     getStatus: () => ipcRenderer.invoke("system:get-status"),
   },
@@ -129,7 +127,7 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
   backups: {
     create: () => ipcRenderer.invoke("backups:create"),
     selectRestore: () => ipcRenderer.invoke("backups:select-restore"),
-    stageRestore: (bundlePath) => ipcRenderer.invoke("backups:stage-restore", bundlePath),
+    stageRestore: () => ipcRenderer.invoke("backups:stage-restore"),
   },
   jsonResume: {
     importFile: () => ipcRenderer.invoke("json-resume:import"),
@@ -149,6 +147,8 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     applyTailoring: (request) =>
       ipcRenderer.invoke("resume:apply-tailoring", request),
     exportPdf: (request) => ipcRenderer.invoke("resume:export-pdf", request),
+    revealArtifact: (artifactId) =>
+      ipcRenderer.invoke("resume:reveal-artifact", artifactId),
     compareVersions: (fromArtifactId, toArtifactId) =>
       ipcRenderer.invoke("resume:compare-versions", fromArtifactId, toArtifactId),
   },
