@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Job Ranger helps ordinary job seekers discover, monitor, evaluate, and manage job opportunities from a private desktop workspace without requiring software-development expertise, a cloud account, or an AI provider just to get started.
+Job Ranger helps ordinary job seekers discover, monitor, evaluate, prepare for, and manage job opportunities from a private desktop workspace without requiring software-development expertise, a cloud account, or an AI provider just to get started.
 
 The product is not built around one occupation, one employment model, or one conventional career path. Its user-facing contract is defined through universal user stories and validated against materially different career contexts.
 
@@ -10,96 +10,151 @@ The product is not built around one occupation, one employment model, or one con
 
 > **US-0:** As a job seeker, I want Job Ranger to adapt to the way my career works without requiring me to understand how Job Ranger works.
 
-The full catalog lives in [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md) and is tracked by program issue #81.
+The full catalog lives in [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md).
 
-## Current Product Shape
+## Product shape
 
-The published v1.1.2 release combines a local-first career-page monitor with the first native Career Intelligence workflow. Development on `main` is materially ahead of that release and includes durable Career Evidence, requirement/evidence mapping, and deterministic resume creation.
+The latest published release is still **v1.1.2**, but current `main` is a much broader product.
 
-Users can already:
+The implemented workflow now spans:
 
-- maintain an occupation-agnostic Career Profile;
-- add employer career sources for Job Ranger to monitor;
-- collect and review jobs locally;
-- see deterministic fit/evidence guidance based on saved profile data and collected listing evidence;
-- track promising jobs through application states and notes;
-- import career evidence and review its authority/provenance in the current development line;
-- create deterministic evidence-backed resume artifacts in the current development line;
-- filter results and receive desktop notifications.
+- progressive onboarding;
+- multiple Target Tracks;
+- local Career Evidence import and direct authoring;
+- source monitoring plus partial consumer source discovery;
+- explainable opportunity assessment;
+- evidence-backed resume creation and tailoring;
+- exact submitted-artifact history;
+- application contacts, milestones, reminders, interviews, and offers;
+- evidence-grounded interview preparation;
+- reusable Career Stories;
+- evidence-grounded application materials;
+- Search Insights and recurring-gap analysis;
+- verified local backup/restore;
+- JSON Resume interoperability.
 
-Current gaps are now expressed as user-story work rather than disconnected feature lists. Major gaps include progressive first-run onboarding, multiple target tracks and hard-vs-soft constraints, broader Career Evidence coverage, consumer-friendly source discovery, explainable multi-dimensional opportunity assessment, and the broader application lifecycle.
+This breadth does not change the product's authority model. Career Evidence remains factual truth; Target Tracks remain intent; Applications own lifecycle state; external services remain adapters.
 
-## Design Principles
+## Design principles
 
 ### Consumer first
 
-A person looking for work should not need to understand GitHub, Node.js, YAML, scraping architecture, model providers, agent terminology, or ATS vendor taxonomy to use the application.
+A person looking for work should not need to understand GitHub, Node.js, YAML, scraping architecture, model providers, agent terminology, or ATS vendor taxonomy to use Job Ranger.
 
-The sophistication of the implementation should reduce the user's cognitive load rather than export it into the interface.
+Implementation sophistication should reduce user cognitive load rather than export it into the interface.
 
 ### Universal core, bounded extensions
 
 Job Ranger models the person, the opportunity, and the evidence without assuming what a “normal” career looks like.
 
-The core workflow remains shared across career contexts. Occupation-specific concepts such as licenses, clearances, shift requirements, grade systems, portfolios, or other domain facts may be represented through bounded vocabularies/rules where necessary, but they should not fork Job Ranger into occupation-specific products.
+The core remains shared across career contexts. Occupation-specific concepts such as licenses, clearances, shift requirements, grade systems, portfolios, or specialized document formats may be represented through bounded vocabularies/rules where evidence demonstrates the need.
 
-Universality also does not justify an unbounded entity/attribute/value model that erases meaning merely because it can technically store anything.
+Universality does not justify an unbounded entity/attribute/value model that erases meaning merely because it can technically store anything.
 
 ### Local first
 
-Core search state belongs on the user's machine by default. A future remote service must earn its place through a concrete user benefit, clear disclosure, and appropriate privacy/security review.
+Core search state belongs on the user's machine by default.
+
+A remote service must earn its place through a concrete benefit, explicit disclosure, and security/privacy review. Backup/restore exists before cloud sync because portability is useful without requiring an account.
 
 ### Deterministic before inferential
 
-Discovery, storage, filters, monitoring, status tracking, explicit requirement matching, and core Career Evidence workflows should continue to work without inference.
+Discovery, persistence, monitoring, evidence review, requirement mapping, opportunity assessment, resume creation/tailoring, application materials, interview prep, Career Stories, lifecycle tracking, and Search Insights all have deterministic paths.
 
-Optional inference can improve semantic mapping, resume tailoring, interview preparation, career pivots, and explanatory guidance. It should make Job Ranger more capable, not decide whether the application opens its front door.
+Optional inference may improve semantic interpretation or language later, but it should make Job Ranger more capable rather than deciding whether the product is usable.
 
 ### Evidence before confidence
 
-Job Ranger must not invent user experience, certifications, licenses, compensation, job requirements, or application history. Ambiguous information should be presented as something to verify, not transformed into certainty by prose quality.
+Job Ranger must not invent user experience, credentials, compensation, employer requirements, application history, or outcomes.
 
-Career Evidence, not a resume or model response, is the canonical factual career domain. Imported and inferred information remains proposed until the user grants factual authority through the accepted evidence workflow.
+Career Evidence, not a resume or model response, is the canonical factual career domain.
+
+Imported information remains proposed until the user grants factual authority. Historical materials preserve what was true/used at the time and can become visibly stale when current evidence changes.
 
 ### Preferences are not constraints
 
-A preference such as remote work, compensation target, commute, schedule, travel, or employment arrangement must not silently become a disqualifier. The product must distinguish required constraints, meaningful preferences, and aspirational targets.
+Remote work, compensation, commute, schedule, employment arrangement, and similar search choices must preserve their intended strength. A preference is not silently promoted to a blocker.
 
 ### Explain fit, do not simulate certainty
 
-Job Ranger should explain eligibility/blockers, evidence coverage, career alignment, preference alignment, and unknowns separately. A single opaque percentage must not be presented as a hiring prediction or universal truth about fit.
+Job Ranger separates:
+
+- eligibility;
+- evidence coverage;
+- career alignment;
+- preference alignment;
+- blockers;
+- unknowns.
+
+Unknown information remains unknown. A single opaque percentage must not be presented as a hiring prediction or universal truth.
 
 ### Honest source support
 
-Career sites vary wildly. Job Ranger distinguishes supported structured adapters, detected best-effort paths, browser-required sources, and manual-review cases instead of pretending every page can be scraped reliably.
+Career sites vary wildly.
 
-Source discovery remains separate from source acquisition. A discovered source is a candidate until the user approves it and Job Ranger can represent its support/trust state honestly.
+Job Ranger distinguishes structured supported adapters, detected best-effort paths, browser-required sources, and manual-review cases. Discovery remains separate from acquisition, and a discovered source does not become trusted/monitored without explicit user approval.
 
 ### User authority
 
-Job Ranger is a decision-support tool. It can find, organize, explain, and prepare. Autonomous application submission or other consequential external actions are not implied by the product and would require explicit future governance.
+Job Ranger is a decision-support tool.
 
-## What Job Ranger Is Not
+It can find, organize, explain, prepare, remind, preserve, and analyze. The user remains responsible for consequential external actions, including submitting an application.
+
+### Historical truth matters
+
+The product must preserve what actually happened:
+
+- what source text Job Ranger saw;
+- what Career Evidence existed at the time;
+- what resume was submitted;
+- what application material was prepared;
+- how evidence was corrected later;
+- what outcomes were observed.
+
+A later correction should improve current truth without rewriting history.
+
+## What Job Ranger is not
 
 Job Ranger is not currently:
 
 - a recruiter-facing applicant tracking system;
 - a hosted job-search social network;
-- a cloud-account requirement wrapped around a desktop app;
+- a mandatory cloud-account product;
 - an AI-only career assistant;
 - an autonomous mass-application bot;
-- a guarantee that every career page or market source can be extracted successfully;
+- a guarantee that every third-party career page can be extracted successfully;
 - a prediction engine that can know whether an employer will hire the user;
-- a collection of occupation-specific profile forks.
+- a collection of occupation-specific profile forks;
+- a generic agent/runtime platform looking for a reason to exist.
 
-## Success Standard
+## Current product frontier
 
-The practical acceptance test remains simple:
+The completion of the Universal User Stories and Career Evidence programs does not mean there are no remaining ideas.
 
-> Can a nontechnical job seeker install Job Ranger, understand what to do next, find useful opportunities, and manage their search without needing the person who built it sitting beside them?
+The strongest current **needed** gaps are:
 
-The universal-user extension adds a second test:
+1. fuller/canonical job-description preservation where source capabilities permit it;
+2. better dynamic-source failure diagnostics and reliability measurement;
+3. publishing a new release containing the product already implemented on `main`.
 
-> Does that workflow remain coherent when the user is hourly, salaried, licensed, portfolio-heavy, early-career, executive, changing careers, seeking government work, contracting, or returning after a nonlinear career history?
+Current **candidate** ideas include broader discovery providers, faster arbitrary-job capture, reusable application-question answers, bounded user-controlled form assistance, broader networking workflows, calendar mirroring, and mock-interview practice.
 
-If not, the product still has work to do, regardless of how elegant the underlying architecture happens to be.
+Current **deferred** capabilities include remote inference, OCR, DOCX resume export, specialized federal/academic document projections, cloud sync, and Linux packaging until evidence justifies the complexity.
+
+See [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md).
+
+## Success standard
+
+The practical acceptance test remains:
+
+> Can a nontechnical job seeker install Job Ranger, understand what to do next, find useful opportunities, prepare truthful materials, and manage their search without needing the person who built it sitting beside them?
+
+The universality test remains:
+
+> Does that workflow stay coherent when the user is hourly, salaried, licensed, portfolio-heavy, early-career, executive, changing careers, seeking government work, contracting, or returning after a nonlinear career history?
+
+The release test adds a third question:
+
+> Can the repository prove that the downloadable installer actually contains the capabilities the documentation claims it contains?
+
+If any answer is no, the product still has work to do regardless of how elegant the architecture looks on a diagram.
