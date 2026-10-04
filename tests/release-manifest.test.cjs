@@ -43,12 +43,32 @@ async function run() {
 
   try {
     await fs.mkdir(releaseDirectory, { recursive: true });
+    await fs.mkdir(outputDirectory, { recursive: true });
     const installerName = "Job.Ranger-v1.2.0-rc.2-windows-x64.exe";
     const installerBytes = Buffer.from("job-ranger-test-installer");
     await fs.writeFile(path.join(releaseDirectory, installerName), installerBytes);
     await fs.writeFile(
       path.join(releaseDirectory, `${installerName}.blockmap`),
       Buffer.from("ignored-blockmap"),
+    );
+
+    await assert.rejects(
+      () =>
+        generateReleaseManifest({
+          platform: "windows",
+          tag: "v1.2.0-rc.2",
+          publicRelease: false,
+          releaseDirectory,
+          outputDirectory,
+          trustEvidenceFile: "windows-signing.json",
+          generatedAt: "2026-10-04T22:00:00.000Z",
+        }),
+      /Required trust evidence was not found/,
+    );
+
+    await fs.writeFile(
+      path.join(outputDirectory, "windows-signing.json"),
+      `${JSON.stringify({ requireSigned: false, artifacts: [] })}\n`,
     );
 
     const { manifest, checksumPath, manifestPath } = await generateReleaseManifest({
