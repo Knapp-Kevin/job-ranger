@@ -3,9 +3,15 @@ import {
   isRecord,
   validateBoolean,
   validateExternalUrl,
-  validateFiniteNumber,
+  validateIntegerInRange,
   validateOptionalString,
 } from "./common.cjs";
+
+const MAX_TIMER_MINUTES = Math.floor(2_147_483_647 / 60_000);
+
+function validateFrequency(rawValue: unknown): number {
+  return validateIntegerInRange(rawValue, "Frequency", 15, MAX_TIMER_MINUTES);
+}
 
 export function validateCompanyDraft(rawValue: unknown): CompanyDraft {
   if (!isRecord(rawValue)) {
@@ -24,7 +30,7 @@ export function validateCompanyDraft(rawValue: unknown): CompanyDraft {
   return {
     name,
     url: validateExternalUrl(url),
-    frequencyMinutes: validateFiniteNumber(rawValue.frequencyMinutes, "Frequency"),
+    frequencyMinutes: validateFrequency(rawValue.frequencyMinutes),
     isActive: validateBoolean(rawValue.isActive, "Company active flag"),
   };
 }
@@ -47,10 +53,7 @@ export function validateCompanyUpdate(rawValue: unknown): CompanyUpdate {
     update.url = validateExternalUrl(url);
   }
   if (rawValue.frequencyMinutes !== undefined) {
-    update.frequencyMinutes = validateFiniteNumber(
-      rawValue.frequencyMinutes,
-      "Frequency",
-    );
+    update.frequencyMinutes = validateFrequency(rawValue.frequencyMinutes);
   }
   if (rawValue.isActive !== undefined) {
     update.isActive = validateBoolean(rawValue.isActive, "Company active flag");
