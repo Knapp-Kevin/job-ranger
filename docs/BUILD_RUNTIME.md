@@ -11,21 +11,30 @@ Do not hand-edit or commit compiled Electron runtime files. New backend, preload
 `npm run desktop:compile`:
 
 1. removes the previous generated runtime;
-2. removes any legacy generated root Electron artifacts;
-3. creates temporary compatibility shims for older Node test entry paths;
+2. removes legacy generated root Electron artifacts;
+3. creates temporary compatibility shims for older Node/test/release-verification entry paths;
 4. compiles Electron TypeScript and shared runtime modules into `electron-runtime/`.
 
 `electron-runtime/` is generated and ignored by Git. It is the runtime consumed by the application and packaging.
 
-The project uses TypeScript `NodeNext` module and resolution semantics. `.cts` Electron sources compile to CommonJS `.cjs`; shared `.ts` modules retain ESM semantics. The supported Node baseline is `>=22.12.0`, whose CJS/ESM interoperability is exercised by repository smoke tests.
+The project uses TypeScript `NodeNext` module and resolution semantics. `.cts` Electron sources compile to CommonJS `.cjs`; shared `.ts` modules retain ESM semantics. The supported Node baseline is `>=22.12.0`.
 
 ## Execution paths
 
 - `package.json.main` points to `electron-runtime/electron/src/main.cjs`.
 - `npm run electron:dev` waits for that generated main process and launches the package root.
-- backend and career smoke tests run after `desktop:compile` and may use generated compatibility shims under `electron/*.cjs`; those shims only forward into `electron-runtime/` and contain no implementation logic.
-- Electron Playwright launches the package root, so `package.json.main` selects the generated runtime exactly as a normal application launch does.
+- backend/career smoke tests run after `desktop:compile` and may use generated compatibility shims under `electron/*.cjs`.
+- those shims forward into `electron-runtime/` and contain no independent implementation logic.
+- Electron Playwright launches the package root, so `package.json.main` selects the same generated runtime used by normal application launch.
 - Electron Builder packages `electron-runtime/**/*` and sets packaged `main` to `electron-runtime/electron/src/main.cjs`.
+
+## Release-workflow compatibility shim
+
+The Windows release workflow performs a packaged-SQLite resolver check after the build and currently loads `electron/sqlite.cjs`.
+
+That path is intentional: `desktop:compile` creates `electron/sqlite.cjs` as a temporary compatibility shim that forwards to the generated runtime implementation. It is **not** a second checked-in SQLite resolver and does not weaken `electron/src/**` as the implementation authority.
+
+If the compatibility shim is ever removed, release verification must be updated in the same change so packaged SQLite resolution remains explicitly proven.
 
 ## Asset resolution
 
@@ -50,6 +59,11 @@ Changes to the Electron build boundary must prove, at minimum:
 - `npm run test:unit`;
 - Electron Playwright E2E;
 - Electron Builder directory/package validation;
-- the packaged application contains the generated runtime entry point.
+- the packaged application contains the generated runtime entry point;
+- packaged SQLite/runtime resolution still uses the generated implementation path.
+
+These checks may run through hosted CI when justified or manually in an isolated maintainer environment when preserving GitHub Actions budget. Validation evidence must state the environment, exact commands, results, and anything not exercised.
+
+Release candidates additionally follow [`RELEASE_READINESS.md`](./RELEASE_READINESS.md).
 
 Issue #67 and PR #69 established this boundary after R0 exposed the previous checked-in-runtime drift.
