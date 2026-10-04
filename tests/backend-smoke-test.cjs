@@ -81,32 +81,6 @@ function createMockFetch() {
         );
       }
 
-      if (String(url) === "https://example.com/careers") {
-        return new Response(
-          `
-            <html>
-              <head>
-                <script type="application/ld+json">
-                  {
-                    "@context": "https://schema.org",
-                    "@type": "JobPosting",
-                    "title": "Generalist Engineer",
-                    "url": "https://example.com/careers/jobs/abc",
-                    "description": "Help ship pragmatic product systems.",
-                    "datePosted": "2026-03-10T00:00:00.000Z"
-                  }
-                </script>
-              </head>
-              <body></body>
-            </html>
-          `,
-          {
-            status: 200,
-            headers: { "Content-Type": "text/html" },
-          },
-        );
-      }
-
       throw new Error(`Unexpected fetch URL in test: ${url}`);
     },
   };
@@ -187,16 +161,20 @@ async function run() {
     assert.equal(persistedSettings.maxConcurrentScrapes, 3);
     assert.equal(persistedSettings.retryCount, 2);
 
+    // Arbitrary generic career-site hostnames remain manual review in the
+    // v1.2.0 candidate while connection-level anti-rebinding is tracked in #123.
     const genericSource = await reloaded.createCompany({
       name: "Example careers",
       url: "https://example.com/careers",
       frequencyMinutes: 1440,
       isActive: true,
     });
-    assert.equal(genericSource.sourceType, "generic-html");
+    assert.equal(genericSource.sourceType, "unsupported");
+    assert.equal(genericSource.sourceIdentifier, null);
     const genericRun = await reloaded.runCompanyScrape(genericSource.id);
-    assert.equal(genericRun.status, "success");
-    assert.equal(genericRun.jobsFoundCount, 1);
+    assert.equal(genericRun.status, "unsupported");
+    assert.equal(genericRun.jobsFoundCount, 0);
+    assert.match(genericRun.errorMessage ?? "", /no source identifier/i);
 
     const oracleSource = await reloaded.createCompany({
       name: "Oracle",
