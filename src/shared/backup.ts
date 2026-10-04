@@ -42,17 +42,21 @@ export interface BackupCreateResult {
   summary: BackupSummary;
 }
 
-export interface BackupRestoreSelection {
-  bundlePath: string;
+export interface BackupRestorePreview {
   manifest: JobRangerBackupManifest;
-  summary: BackupSummary;
+  summary: Omit<BackupSummary, "bundlePath">;
   warnings: string[];
+}
+
+export interface BackupRestoreSelection extends BackupRestorePreview {
+  bundlePath: string;
+  summary: BackupSummary;
 }
 
 export interface BackupDesktopApi {
   backups: {
     create: () => Promise<BackupCreateResult | null>;
-    selectRestore: () => Promise<BackupRestoreSelection | null>;
-    stageRestore: (bundlePath: string) => Promise<{ restarting: true }>;
+    selectRestore: () => Promise<BackupRestorePreview | null>;
+    stageRestore: () => Promise<{ restarting: true }>;
   };
 }
