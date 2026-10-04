@@ -26,8 +26,9 @@ jobs:
           TAG: v1.2.0-rc.1
         run: |
           set -euo pipefail
-          existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null || true)"
-          if [[ -n "$existing" ]]; then
+          tag_json="${RUNNER_TEMP}/tag-ref.json"
+          if gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" >"$tag_json" 2>/dev/null; then
+            existing="$(jq -r '.object.sha' "$tag_json")"
             if [[ "$existing" != "$TARGET_SHA" ]]; then
               echo "Refusing to move existing immutable tag $TAG from $existing to $TARGET_SHA" >&2
               exit 1
