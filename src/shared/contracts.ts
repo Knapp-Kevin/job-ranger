@@ -136,10 +136,10 @@ export const sourceProfiles: Record<CompanySourceType, SourceProfile> = {
   "generic-html": {
     type: "generic-html",
     label: "Generic careers page",
-    extractionMode: "html",
-    supportLevel: "detected",
-    canRun: true,
-    summary: "Detected a likely careers page using generic extraction with browser fallback.",
+    extractionMode: "unknown",
+    supportLevel: "manual-review",
+    canRun: false,
+    summary: "Generic career-site automation is disabled pending connection-level anti-rebinding protection.",
   },
   "browser-required": {
     type: "browser-required",
@@ -147,7 +147,7 @@ export const sourceProfiles: Record<CompanySourceType, SourceProfile> = {
     extractionMode: "browser",
     supportLevel: "browser-required",
     canRun: true,
-    summary: "Detected a portal that runs through the hidden browser extractor.",
+    summary: "Detected a known portal that runs through the hidden browser extractor.",
   },
   unsupported: {
     type: "unsupported",
