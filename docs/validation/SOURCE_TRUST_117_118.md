@@ -1,7 +1,8 @@
 # Source Truth and Reliability Validation (#117 / #118)
 
-**Status:** implementation in progress  
-**Release line:** v1.2.0 source-trust tranche
+**Status:** implementation present; validation pending  
+**Release line:** v1.2.0 source-trust tranche  
+**Initial implementation commit:** `7b6ed7a9fa113634c5cd611524044d98e819dcbb`
 
 ## Purpose
 
@@ -12,7 +13,7 @@ This tranche closes two related trust gaps at the acquisition boundary:
 
 ## #117 source-truth contract
 
-The implementation must provide:
+The implementation provides:
 
 - durable immutable-per-content job source snapshots;
 - source identity, URL, retrieval timestamp, extraction-version identifier, completeness state, safe text, and SHA-256 content hash;
@@ -26,9 +27,9 @@ The implementation must provide:
 
 ## #118 diagnostic contract
 
-Each scrape run must preserve a bounded diagnostic category separate from raw technical detail.
+Each scrape run preserves a bounded diagnostic category separate from raw technical detail.
 
-Required categories include:
+Implemented categories include:
 
 - successful retrieval with jobs;
 - successful retrieval with zero jobs;
@@ -44,7 +45,7 @@ Required categories include:
 - parser failure;
 - unclassified failure.
 
-User-facing company state should receive a plain-language diagnostic message while local run history may preserve the technical error separately.
+User-facing company state receives a plain-language diagnostic message while local run history may preserve the technical error separately.
 
 ## Required regression evidence
 
@@ -58,6 +59,8 @@ The focused regression must prove:
 - a structured source returning an empty array is `success-empty`, not a failure;
 - a page that loads but yields no reliable job extraction is `extraction-failed`, not `success-empty`;
 - the friendly source-state message does not expose raw implementation noise as the primary user explanation.
+
+Validation evidence will be recorded only after the final cleaned implementation head passes repository health and Electron E2E.
 
 ## Release rule
 
