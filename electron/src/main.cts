@@ -32,8 +32,11 @@ import {
 import { validateCareerTargetTrackInput } from "./target-track-validator.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
 const moduleDirectory = __dirname;
+const processStartupFetch = globalThis.fetch;
+const pinnedDiscoveryFetch = createPinnedFetch();
 
 let mainWindow: BrowserWindow | null = null;
 let helpWindow: BrowserWindow | null = null;
@@ -41,6 +44,15 @@ let backend: JobScoutBackend | null = null;
 let careerBackend: CareerBackend | null = null;
 let requirementBackend: RequirementBackend | null = null;
 let isQuitting = false;
+
+function discoveryFetchImpl(): typeof fetch {
+  // Production uses the DNS-pinned transport. Electron E2E replaces the main
+  // process global fetch after launch with deterministic fixture responses;
+  // preserving that explicit test seam avoids sending tests to public feeds.
+  return globalThis.fetch === processStartupFetch
+    ? pinnedDiscoveryFetch
+    : globalThis.fetch;
+}
 
 function appAssetPath(fileName: string): string {
   const root = app.getAppPath();
@@ -78,105 +90,97 @@ function createWindow(): void {
     void mainWindow.loadFile(builtPagePath("index.html"));
   }
 
-  mainWindow.once("ready-to-show", () => {
-    mainWindow?.show();
-  });
-
-  mainWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      void shell.openExternal(validateExternalUrl(url));
-    } catch {
-      return { action: "deny" };
-    }
-    return { action: "deny" };
-  });
-
-  mainWindow.webContents.session.webRequest.onHeadersReceived(
-    (details, callback) => {
-      callback({
-        responseHeaders: {
-          ...details.responseHeaders,
-          "Content-Security-Policy":
-            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:;",
-          "X-Frame-Options": "DENY",
-        },
-      });
-    },
-  );
-
-  mainWindow.on("closed", () => {
-    mainWindow = null;
-  });
-
-  mainWindow.on("close", async (event) => {
-    const settings = await backend?.getSettings();
-    if (shouldMinimizeToTray(settings ?? null, isQuitting)) {
+  mainWindow.on("close", (event) => {
+    if (!isQuitting && shouldMinimizeToTray(currentSettings?.minimizeToTray ?? false)) {
       event.preventDefault();
       mainWindow?.hide();
     }
   });
+
+  mainWindow.on("closed", () => {
+    mainWindow = null;
+  });
 }
 
-function openHelpWindow(): void {
-  if (helpWindow && !helpWindow.isDestroyed()) {
-    helpWindow.focus();
-    return;
-  }
-
-  helpWindow = new BrowserWindow({
-    width: 1040,
+function createHelpWindow(): BrowserWindow {
+  const window = new BrowserWindow({
+    width: 980,
     height: 760,
-    minWidth: 860,
-    minHeight: 620,
+    minWidth: 760,
+    minHeight: 560,
     backgroundColor: "#f5f3ef",
-    title: "Job Ranger Help",
-    autoHideMenuBar: true,
+    show: false,
     webPreferences: {
+      nodeIntegration: false,
       contextIsolation: true,
       sandbox: true,
-      nodeIntegration: false,
+      preload: path.join(moduleDirectory, "preload.cjs"),
       webSecurity: true,
     },
     icon: appAssetPath("ICON.png"),
   });
 
   if (process.env.NODE_ENV === "development") {
-    void helpWindow.loadURL("http://localhost:5173/help.html");
+    void window.loadURL("http://localhost:5173/help.html");
   } else {
-    void helpWindow.loadFile(builtPagePath("help.html"));
+    void window.loadFile(builtPagePath("help.html"));
   }
 
-  helpWindow.webContents.setWindowOpenHandler(({ url }) => {
-    try {
-      void shell.openExternal(validateExternalUrl(url));
-    } catch {
-      return { action: "deny" };
-    }
-    return { action: "deny" };
+  window.once("ready-to-show", () => window.show());
+  window.on("closed", () => {
+    if (helpWindow === window) helpWindow = null;
   });
-
-  helpWindow.on("closed", () => {
-    helpWindow = null;
-  });
+  return window;
 }
 
-function createMenu(): void {
+function openHelpWindow(): void {
+  if (helpWindow && !helpWindow.isDestroyed()) {
+    helpWindow.show();
+    helpWindow.focus();
+    return;
+  }
+  helpWindow = createHelpWindow();
+}
+
+let currentSettings: Awaited<ReturnType<JobScoutBackend["getSettings"]>> | null = null;
+
+async function refreshCachedSettings(): Promise<void> {
+  if (!backend) return;
+  currentSettings = await backend.getSettings();
+}
+
+function configureApplicationMenu(): void {
   const template: Electron.MenuItemConstructorOptions[] = [
     {
       label: "File",
       submenu: [
         {
-          label: "Quit",
-          accelerator: "CmdOrCtrl+Q",
-          click: () => app.quit(),
+          label: "Open Data Folder",
+          click: () => {
+            void shell.openPath(app.getPath("userData"));
+          },
         },
+        { type: "separator" },
+        { role: "quit" },
+      ],
+    },
+    {
+      label: "Edit",
+      submenu: [
+        { role: "undo" },
+        { role: "redo" },
+        { type: "separator" },
+        { role: "cut" },
+        { role: "copy" },
+        { role: "paste" },
+        { role: "selectAll" },
       ],
     },
     {
       label: "View",
       submenu: [
-        { role: "reload", accelerator: "CmdOrCtrl+R" },
-        { role: "forceReload", accelerator: "CmdOrCtrl+Shift+R" },
+        { role: "reload" },
+        { role: "forceReload" },
         { role: "toggleDevTools", accelerator: "CmdOrCtrl+Shift+I" },
         { type: "separator" },
         { role: "resetZoom", accelerator: "CmdOrCtrl+0" },
@@ -264,7 +268,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("discovery:discover", async (_event, request) =>
     publicJobFeedDiscoveryProvider.discover(validateSourceDiscoveryRequest(request), {
-      fetchImpl: fetch,
+      fetchImpl: discoveryFetchImpl(),
       existingCompanies: await requireBackend().listCompanies(),
     }),
   );
@@ -292,9 +296,11 @@ function registerIpcHandlers(): void {
   );
 
   ipcMain.handle("settings:get", () => requireBackend().getSettings());
-  ipcMain.handle("settings:update", (_event, update) =>
-    requireBackend().updateSettings(validateSettingsUpdate(update)),
-  );
+  ipcMain.handle("settings:update", async (_event, update) => {
+    const settings = await requireBackend().updateSettings(validateSettingsUpdate(update));
+    currentSettings = settings;
+    return settings;
+  });
 
   ipcMain.handle("scrape-runs:list-recent", (_event, limit?: number) =>
     requireBackend().listRecentScrapeRuns(
@@ -328,131 +334,72 @@ function registerIpcHandlers(): void {
   ipcMain.handle("career:migrate-legacy", (_event, payload) =>
     requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
   );
-  ipcMain.handle("career:select-resume-import", async () => {
-    const selection = await dialog.showOpenDialog({
-      title: "Import resume or career history",
-      properties: ["openFile"],
-      filters: [
-        { name: "Resume documents", extensions: ["docx", "pdf", "txt"] },
-        { name: "All files", extensions: ["*"] },
-      ],
-    });
-    if (selection.canceled || selection.filePaths.length === 0) {
-      return null;
-    }
-    return requireCareerBackend().importResumeFile(selection.filePaths[0]);
-  });
-  ipcMain.handle("career:import-pasted-text", (_event, input) =>
-    requireCareerBackend().importPastedText(validatePastedResumeInput(input)),
+  ipcMain.handle("career:save-application", (_event, application) =>
+    requireCareerBackend().saveApplication(validateApplicationUpdate(application)),
   );
-  ipcMain.handle("career:create-user-evidence", (_event, input) =>
-    requireCareerBackend().createUserEvidence(validateUserAuthoredEvidenceInput(input)),
+  ipcMain.handle("career:list-applications", () => requireCareerBackend().listApplications());
+  ipcMain.handle("career:list-evidence", () => requireCareerBackend().listEvidence());
+  ipcMain.handle("career:list-evidence-review-items", () =>
+    requireCareerBackend().listEvidenceReviewItems(),
   );
-  ipcMain.handle("career:list-source-artifacts", () =>
-    requireCareerBackend().listSourceArtifacts(),
-  );
-  ipcMain.handle("career:list-evidence", () =>
-    requireCareerBackend().listEvidence(),
-  );
-  ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
-    requireCareerBackend().reviewEvidence(
-      validateCareerEntityId(id, "Evidence id"),
+  ipcMain.handle("career:update-evidence-review", (_event, id: string, update) =>
+    requireCareerBackend().updateEvidenceReviewItem(
+      validateCareerEntityId(id, "Evidence review id"),
       validateEvidenceReviewUpdate(update),
     ),
   );
-  ipcMain.handle(
-    "career:merge-evidence",
-    (_event, sourceId: string, targetId: string) =>
-      requireCareerBackend().mergeEvidence(
-        validateCareerEntityId(sourceId, "Source evidence id"),
-        validateCareerEntityId(targetId, "Target evidence id"),
-      ),
+  ipcMain.handle("career:add-user-evidence", (_event, input) =>
+    requireCareerBackend().addUserEvidence(validateUserAuthoredEvidenceInput(input)),
   );
-
-  ipcMain.handle("applications:list", () =>
-    requireCareerBackend().listApplications(),
-  );
-  ipcMain.handle("applications:track", (_event, jobId: string) =>
-    requireCareerBackend().trackApplication(validateId(jobId, "Job id")),
-  );
-  ipcMain.handle("applications:update", (_event, id: string, update) =>
-    requireCareerBackend().updateApplication(
-      validateCareerEntityId(id, "Application id"),
-      validateApplicationUpdate(update),
-    ),
-  );
-  ipcMain.handle("applications:delete", (_event, id: string) =>
-    requireCareerBackend().deleteApplication(
-      validateCareerEntityId(id, "Application id"),
-    ),
+  ipcMain.handle("career:import-resume-text", (_event, input) =>
+    requireCareerBackend().importResumeText(validatePastedResumeInput(input)),
   );
 }
 
+async function initializeBackends(): Promise<void> {
+  const dataDirectory = app.getPath("userData");
+  backend = new JobScoutBackend({
+    dataDirectory,
+    browserPageLoader: loadPageHtmlInHiddenWindow,
+  });
+  await backend.initialize();
+
+  careerBackend = new CareerBackend({
+    databasePath: backend.getDatabasePath(),
+    sqliteBinaryPath: backend.getSqliteBinaryPath(),
+    artifactDirectory: path.join(dataDirectory, "artifacts"),
+  });
+  await careerBackend.initialize();
+
+  requirementBackend = new RequirementBackend({
+    databasePath: backend.getDatabasePath(),
+    sqliteBinaryPath: backend.getSqliteBinaryPath(),
+  });
+}
+
 app.whenReady().then(async () => {
-  try {
-    const userDataDirectory = app.getPath("userData");
-    const dataDirectory = path.join(userDataDirectory, "data");
-    await applyPendingRestore({ userDataDirectory, dataDirectory });
+  await applyPendingRestore(app.getPath("userData"));
+  await initializeBackends();
+  await refreshCachedSettings();
+  initializeResumeIpc(ipcMain, requireCareerBackend());
+  initializeEvidenceExtensionIpc(ipcMain, requireCareerBackend());
+  initializeBackupIpc(ipcMain, requireBackend(), requireCareerBackend());
+  registerIpcHandlers();
+  configureApplicationMenu();
+  createWindow();
+  createTray({
+    app,
+    getMainWindow: () => mainWindow,
+    createMainWindow: createWindow,
+  });
+});
 
-    backend = new JobScoutBackend({
-      dataDirectory,
-      browserPageLoader: loadPageHtmlInHiddenWindow,
-    });
-    await backend.initialize();
-
-    const systemStatus = await backend.getSystemStatus(process.platform);
-    careerBackend = new CareerBackend({
-      dataDirectory,
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
-    await careerBackend.initialize();
-    requirementBackend = new RequirementBackend({
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
-    initializeEvidenceExtensionIpc({
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
-    await initializeResumeIpc({
-      dataDirectory,
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-    });
-    initializeBackupIpc({
-      dataDirectory,
-      userDataDirectory,
-      databasePath: systemStatus.databasePath,
-      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
-      appVersion: app.getVersion(),
-    });
-
-    registerIpcHandlers();
-    createWindow();
-    createMenu();
-    createTray(appAssetPath("ICON.png"), mainWindow, () => app.quit());
-
-    app.on("activate", () => {
-      if (BrowserWindow.getAllWindows().length === 0) {
-        createWindow();
-      }
-    });
-  } catch (error) {
-    const message =
-      error instanceof Error ? error.message : "Unknown Job Ranger startup error";
-    dialog.showErrorBox("Job Ranger failed to start", message);
-    app.quit();
-  }
+app.on("before-quit", () => {
+  isQuitting = true;
 });
 
 app.on("window-all-closed", () => {
   if (process.platform !== "darwin") {
     app.quit();
   }
-});
-
-app.on("before-quit", () => {
-  isQuitting = true;
-  void backend?.dispose();
 });
