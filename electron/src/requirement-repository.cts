@@ -140,6 +140,17 @@ export class RequirementRepository {
     return row ? mapJob(row) : null;
   }
 
+  async getCurrentSourceSnapshot(jobId: string): Promise<{ id: string; contentText: string; completeness: string } | null> {
+    const row = await this.sqlite.queryOne<{ id: string; content_text: string; completeness: string }>(sql`
+      SELECT snapshot.id, snapshot.content_text, snapshot.completeness
+      FROM jobs job
+      JOIN job_source_snapshots snapshot ON snapshot.id = job.current_source_snapshot_id
+      WHERE job.id = ${jobId}
+      LIMIT 1;
+    `);
+    return row ? { id: row.id, contentText: row.content_text, completeness: row.completeness } : null;
+  }
+
   async listCareerEvidence(): Promise<CandidateEvidence[]> {
     const rows = await this.sqlite.queryAll<EvidenceRow>(`
       SELECT *
@@ -150,7 +161,7 @@ export class RequirementRepository {
     return rows.map(mapEvidence);
   }
 
-  async replaceCoverage(coverage: JobEvidenceCoverage): Promise<void> {
+  async replaceCoverage(coverage: JobEvidenceCoverage, sourceSnapshotId: string | null = null): Promise<void> {
     await this.sqlite.exec(sql`
       BEGIN IMMEDIATE;
       DELETE FROM requirement_evidence_maps
@@ -162,19 +173,19 @@ export class RequirementRepository {
     `);
 
     for (const item of coverage.items) {
-      await this.insertRequirement(item.requirement);
+      await this.insertRequirement(item.requirement, sourceSnapshotId);
       await this.insertMapping(item.mapping);
     }
   }
 
-  private async insertRequirement(requirement: JobRequirement): Promise<void> {
+  private async insertRequirement(requirement: JobRequirement, sourceSnapshotId: string | null): Promise<void> {
     await this.sqlite.exec(sql`
       INSERT INTO job_requirements (
-        id, job_id, kind, text, normalized_term, importance, source_text, created_at
+        id, job_id, kind, text, normalized_term, importance, source_text, source_snapshot_id, created_at
       ) VALUES (
         ${requirement.id}, ${requirement.jobId}, ${requirement.kind}, ${requirement.text},
         ${requirement.normalizedTerm}, ${requirement.importance}, ${requirement.sourceText},
-        ${requirement.createdAt}
+        ${sourceSnapshotId}, ${requirement.createdAt}
       );
     `);
   }

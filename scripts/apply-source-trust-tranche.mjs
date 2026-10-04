@@ -209,7 +209,7 @@ replaceOnce(
 replaceOnce(
   "electron/src/repository.cts",
   `function serializeArray(value: string[]): string {`,
-  `function mapJobSourceSnapshot(row: JobSourceSnapshotRow): JobSourceSnapshot {\n  return {\n    id: row.id,\n    jobId: String(row.job_id),\n    sourceType: row.source_type,\n    sourceUrl: row.source_url,\n    retrievedAt: row.retrieved_at,\n    extractionVersion: row.extraction_version,\n    completeness: row.completeness,\n    contentText: row.content_text,\n    contentHash: row.content_hash,\n  };\n}\n\nfunction stableSnapshotId(jobId: string, contentHash: string): string {\n  return \`snapshot-\${createHash("sha256").update(\`${jobId}\\n\${contentHash}\`).digest("hex").slice(0, 24)}\`;\n}\n\nfunction serializeArray(value: string[]): string {`,
+  `function mapJobSourceSnapshot(row: JobSourceSnapshotRow): JobSourceSnapshot {\n  return {\n    id: row.id,\n    jobId: String(row.job_id),\n    sourceType: row.source_type,\n    sourceUrl: row.source_url,\n    retrievedAt: row.retrieved_at,\n    extractionVersion: row.extraction_version,\n    completeness: row.completeness,\n    contentText: row.content_text,\n    contentHash: row.content_hash,\n  };\n}\n\nfunction stableSnapshotId(jobId: string, contentHash: string): string {\n  return "snapshot-" + createHash("sha256").update(jobId + "\\n" + contentHash).digest("hex").slice(0, 24);\n}\n\nfunction serializeArray(value: string[]): string {`,
 );
 replaceOnce(
   "electron/src/repository.cts",

@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import type {
   Company,
   CompanyDraft,
@@ -7,8 +8,11 @@ import type {
   FilterDraft,
   FilterUpdate,
   Job,
+  JobSourceSnapshot,
   ScrapeRun,
   ScrapeRunStatus,
+  SourceContentCompleteness,
+  SourceDiagnosticCode,
   Settings,
   SettingsUpdate,
 } from "../../src/shared/contracts.js";
@@ -41,6 +45,8 @@ type JobRow = {
   employment_type: string | null;
   url: string;
   description_snippet: string;
+  current_source_snapshot_id: string | null;
+  source_completeness: SourceContentCompleteness;
   salary_min: number | null;
   salary_max: number | null;
   salary_currency: string | null;
@@ -77,7 +83,21 @@ type ScrapeRunRow = {
   status: ScrapeRunStatus;
   jobs_found_count: number;
   jobs_matched_count: number;
+  diagnostic_code: SourceDiagnosticCode | null;
+  diagnostic_message: string | null;
   error_message: string | null;
+};
+
+type JobSourceSnapshotRow = {
+  id: string;
+  job_id: number;
+  source_type: Job["sourceType"];
+  source_url: string;
+  retrieved_at: string;
+  extraction_version: string;
+  completeness: SourceContentCompleteness;
+  content_text: string;
+  content_hash: string;
 };
 
 type SettingRow = {
@@ -126,6 +146,8 @@ function mapJob(row: JobRow): Job {
     employmentType: row.employment_type,
     url: row.url,
     descriptionSnippet: row.description_snippet,
+    currentSourceSnapshotId: row.current_source_snapshot_id ?? null,
+    sourceCompleteness: row.source_completeness ?? "listing-only",
     salaryMin: row.salary_min,
     salaryMax: row.salary_max,
     salaryCurrency: row.salary_currency,
@@ -166,8 +188,28 @@ function mapScrapeRun(row: ScrapeRunRow): ScrapeRun {
     status: row.status,
     jobsFoundCount: row.jobs_found_count,
     jobsMatchedCount: row.jobs_matched_count,
+    diagnosticCode: row.diagnostic_code ?? null,
+    diagnosticMessage: row.diagnostic_message ?? null,
     errorMessage: row.error_message,
   };
+}
+
+function mapJobSourceSnapshot(row: JobSourceSnapshotRow): JobSourceSnapshot {
+  return {
+    id: row.id,
+    jobId: String(row.job_id),
+    sourceType: row.source_type,
+    sourceUrl: row.source_url,
+    retrievedAt: row.retrieved_at,
+    extractionVersion: row.extraction_version,
+    completeness: row.completeness,
+    contentText: row.content_text,
+    contentHash: row.content_hash,
+  };
+}
+
+function stableSnapshotId(jobId: string, contentHash: string): string {
+  return "snapshot-" + createHash("sha256").update(jobId + "\n" + contentHash).digest("hex").slice(0, 24);
 }
 
 function serializeArray(value: string[]): string {
@@ -343,6 +385,9 @@ export class JobScoutRepository {
     employmentType: string | null;
     url: string;
     descriptionSnippet: string;
+    descriptionText: string;
+    sourceCompleteness: SourceContentCompleteness;
+    extractionVersion: string;
     salaryMin: number | null;
     salaryMax: number | null;
     salaryCurrency: string | null;
@@ -362,6 +407,7 @@ export class JobScoutRepository {
           employment_type,
           url,
           description_snippet,
+          source_completeness,
           salary_min,
           salary_max,
           salary_currency,
@@ -381,6 +427,7 @@ export class JobScoutRepository {
           ${input.employmentType},
           ${input.url},
           ${input.descriptionSnippet},
+          ${input.sourceCompleteness},
           ${input.salaryMin},
           ${input.salaryMax},
           ${input.salaryCurrency},
@@ -399,6 +446,7 @@ export class JobScoutRepository {
           employment_type = excluded.employment_type,
           url = excluded.url,
           description_snippet = excluded.description_snippet,
+          source_completeness = excluded.source_completeness,
           salary_min = excluded.salary_min,
           salary_max = excluded.salary_max,
           salary_currency = excluded.salary_currency,
@@ -415,7 +463,39 @@ export class JobScoutRepository {
       throw new Error(`Failed to upsert job ${input.sourceJobId}`);
     }
 
-    return mapJob(row);
+    const contentText = (input.descriptionText.trim() || input.descriptionSnippet.trim() || input.title.trim());
+    const contentHash = createHash("sha256").update(contentText).digest("hex");
+    const snapshotId = stableSnapshotId(String(row.id), contentHash);
+    await this.sqlite.exec(sql`
+      INSERT INTO job_source_snapshots (
+        id, job_id, source_type, source_url, retrieved_at, extraction_version,
+        completeness, content_text, content_hash
+      ) VALUES (
+        ${snapshotId}, ${row.id}, ${input.sourceType}, ${input.url}, ${input.lastSeenAt},
+        ${input.extractionVersion}, ${input.sourceCompleteness}, ${contentText}, ${contentHash}
+      )
+      ON CONFLICT(job_id, content_hash) DO UPDATE SET
+        retrieved_at = excluded.retrieved_at,
+        source_url = excluded.source_url,
+        extraction_version = excluded.extraction_version,
+        completeness = excluded.completeness;
+    `);
+    await this.sqlite.exec(sql`
+      UPDATE jobs
+      SET current_source_snapshot_id = ${snapshotId}, source_completeness = ${input.sourceCompleteness}
+      WHERE id = ${row.id};
+    `);
+    const updatedRow = await this.sqlite.queryOne<JobRow>(sql`SELECT * FROM jobs WHERE id = ${row.id} LIMIT 1;`);
+    return mapJob(updatedRow ?? row);
+  }
+
+  async listJobSourceSnapshots(jobId: string): Promise<JobSourceSnapshot[]> {
+    const rows = await this.sqlite.queryAll<JobSourceSnapshotRow>(sql`
+      SELECT * FROM job_source_snapshots
+      WHERE job_id = ${jobId}
+      ORDER BY retrieved_at DESC;
+    `);
+    return rows.map(mapJobSourceSnapshot);
   }
 
   async deactivateMissingJobs(companyId: string, sourceJobIds: string[]): Promise<void> {
@@ -539,6 +619,8 @@ export class JobScoutRepository {
     status: ScrapeRunStatus,
     jobsFoundCount: number,
     jobsMatchedCount: number,
+    diagnosticCode: SourceDiagnosticCode | null,
+    diagnosticMessage: string | null,
     errorMessage: string | null,
   ): Promise<ScrapeRun> {
     const row = await this.sqlite.queryOne<ScrapeRunRow>(
@@ -549,6 +631,8 @@ export class JobScoutRepository {
           status = ${status},
           jobs_found_count = ${jobsFoundCount},
           jobs_matched_count = ${jobsMatchedCount},
+          diagnostic_code = ${diagnosticCode},
+          diagnostic_message = ${diagnosticMessage},
           error_message = ${errorMessage}
         WHERE id = ${id}
         RETURNING *;

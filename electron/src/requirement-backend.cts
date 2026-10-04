@@ -22,11 +22,15 @@ export class RequirementBackend {
       throw new Error(`Job ${jobId} not found`);
     }
 
+    const snapshot = await this.repository.getCurrentSourceSnapshot(jobId);
     const now = new Date().toISOString();
-    const requirements = extractJobRequirements(job, now);
+    const requirementSource = snapshot
+      ? { ...job, descriptionSnippet: snapshot.contentText }
+      : job;
+    const requirements = extractJobRequirements(requirementSource, now);
     const evidence = await this.repository.listCareerEvidence();
     const coverage = buildJobEvidenceCoverage(jobId, requirements, evidence, now);
-    await this.repository.replaceCoverage(coverage);
+    await this.repository.replaceCoverage(coverage, snapshot?.id ?? null);
     return coverage;
   }
 }

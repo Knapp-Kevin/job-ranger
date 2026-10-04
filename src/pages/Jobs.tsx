@@ -245,6 +245,18 @@ export function Jobs() {
                     {job.isNew && (
                       <span className="soft-badge soft-badge-warning">New</span>
                     )}
+                    <span
+                      className={`soft-badge ${job.sourceCompleteness === "full" ? "soft-badge-success" : "soft-badge-warning"}`}
+                      title={job.sourceCompleteness === "full"
+                        ? "Assessment can use the preserved source description captured for this listing."
+                        : "The source did not provide a complete preserved description. Missing requirements remain unknown."}
+                    >
+                      {job.sourceCompleteness === "full"
+                        ? "Full source text"
+                        : job.sourceCompleteness === "partial"
+                          ? "Partial source text"
+                          : "Listing-only source"}
+                    </span>
                   </div>
                   <button
                     type="button"
@@ -328,6 +340,7 @@ export function Jobs() {
                 {selectedTargetTrack && (
                   <span>
                     Assessment uses {selectedTargetTrack.name} + confirmed Career Evidence
+                    {job.currentSourceSnapshotId ? " + preserved source snapshot" : ""}
                   </span>
                 )}
               </div>

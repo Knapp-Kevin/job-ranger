@@ -43,6 +43,36 @@ export type SourceSupportLevel =
   | "browser-required"
   | "manual-review";
 
+export type SourceContentCompleteness = "full" | "partial" | "listing-only";
+
+export type SourceDiagnosticCode =
+  | "success-with-results"
+  | "success-empty"
+  | "cooldown"
+  | "circuit-open"
+  | "unsupported-source"
+  | "browser-unavailable"
+  | "network-policy-blocked"
+  | "access-blocked"
+  | "rate-limited"
+  | "timeout"
+  | "retrieval-failed"
+  | "extraction-failed"
+  | "parser-failed"
+  | "unknown-failure";
+
+export interface JobSourceSnapshot {
+  id: string;
+  jobId: string;
+  sourceType: CompanySourceType;
+  sourceUrl: string;
+  retrievedAt: string;
+  extractionVersion: string;
+  completeness: SourceContentCompleteness;
+  contentText: string;
+  contentHash: string;
+}
+
 export interface SourceProfile {
   type: CompanySourceType;
   label: string;
@@ -224,6 +254,8 @@ export interface Job {
   employmentType: string | null;
   url: string;
   descriptionSnippet: string;
+  currentSourceSnapshotId: string | null;
+  sourceCompleteness: SourceContentCompleteness;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
@@ -275,6 +307,8 @@ export interface ScrapeRun {
   status: ScrapeRunStatus;
   jobsFoundCount: number;
   jobsMatchedCount: number;
+  diagnosticCode: SourceDiagnosticCode | null;
+  diagnosticMessage: string | null;
   errorMessage: string | null;
 }
 

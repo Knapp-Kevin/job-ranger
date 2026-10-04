@@ -1,4 +1,4 @@
-import type { CompanySourceType } from "../../src/shared/contracts.js";
+import type { CompanySourceType, SourceContentCompleteness } from "../../src/shared/contracts.js";
 import { greenhouseAdapter } from "./adapters/greenhouse.cjs";
 import { leverAdapter } from "./adapters/lever.cjs";
 import { smartrecruitersAdapter } from "./adapters/smartrecruiters.cjs";
@@ -33,6 +33,9 @@ export interface ScrapedJob {
   employmentType: string | null;
   url: string;
   descriptionSnippet: string;
+  descriptionText: string;
+  sourceCompleteness: SourceContentCompleteness;
+  extractionVersion: string;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
