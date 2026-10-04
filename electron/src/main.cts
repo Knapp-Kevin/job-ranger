@@ -9,6 +9,7 @@ import { initializeBackupIpc } from "./backup-ipc.cjs";
 import { applyPendingRestore } from "./backup-service.cjs";
 import { publicJobFeedDiscoveryProvider } from "./source-discovery-provider.cjs";
 import { validateSourceDiscoveryRequest } from "./source-discovery-validator.cjs";
+import { resolveManagedArtifactRevealPath } from "./managed-path-policy.cjs";
 import {
   validateExternalUrl,
   validateId,
@@ -50,6 +51,13 @@ function appAssetPath(fileName: string): string {
 
 function builtPagePath(fileName: string): string {
   return path.join(app.getAppPath(), "dist", fileName);
+}
+
+function rendererContentSecurityPolicy(): string {
+  const connectSource = process.env.NODE_ENV === "development"
+    ? "connect-src 'self' ws:;"
+    : "connect-src 'self';";
+  return `default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data:; font-src 'self' data:; ${connectSource}`;
 }
 
 function createWindow(): void {
@@ -95,8 +103,7 @@ function createWindow(): void {
       callback({
         responseHeaders: {
           ...details.responseHeaders,
-          "Content-Security-Policy":
-            "default-src 'self'; script-src 'self'; style-src 'self'; img-src 'self' data: https:; font-src 'self' https://fonts.gstatic.com data:; connect-src 'self' https:;",
+          "Content-Security-Policy": rendererContentSecurityPolicy(),
           "X-Frame-Options": "DENY",
         },
       });
@@ -232,8 +239,9 @@ function registerIpcHandlers(): void {
   ipcMain.handle("app:open-external", async (_event, url: string) => {
     await shell.openExternal(validateExternalUrl(url));
   });
-  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: string) => {
-    shell.showItemInFolder(targetPath);
+  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: unknown) => {
+    const safePath = await resolveManagedArtifactRevealPath(app.getPath("userData"), targetPath);
+    shell.showItemInFolder(safePath);
   });
 
   ipcMain.handle("system:get-status", () =>
@@ -404,7 +412,7 @@ app.whenReady().then(async () => {
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
     });
-    initializeEvidenceExtensionIpc({
+    await initializeEvidenceExtensionIpc({
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
     });
