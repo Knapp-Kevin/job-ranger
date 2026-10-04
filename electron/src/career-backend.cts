@@ -1,4 +1,5 @@
 import { createHash, randomUUID } from "node:crypto";
+import { createReadStream } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type {
@@ -140,8 +141,13 @@ function failureCodeForArtifact(
   }
 }
 
-function hashBytes(bytes: Uint8Array): string {
-  return createHash("sha256").update(bytes).digest("hex");
+async function hashFile(filePath: string): Promise<string> {
+  const hash = createHash("sha256");
+  const stream = createReadStream(filePath);
+  for await (const chunk of stream) {
+    hash.update(chunk);
+  }
+  return hash.digest("hex");
 }
 
 function safeOriginalName(label: string): string {
@@ -354,8 +360,8 @@ export class CareerBackend {
     originalName: string;
     detectedFormat: string | null;
   }): Promise<ResumeImportResult> {
-    const bytes = await fs.readFile(input.managedPath);
-    const contentHash = hashBytes(bytes);
+    const sourceStats = await fs.stat(input.managedPath);
+    const contentHash = await hashFile(input.managedPath);
     const duplicate =
       await this.evidenceRepository.getSourceArtifactByHash(contentHash);
     if (duplicate) {
@@ -372,7 +378,7 @@ export class CareerBackend {
       detectedFormat: input.detectedFormat,
       contentHash,
       managedPath: input.managedPath,
-      byteSize: bytes.byteLength,
+      byteSize: sourceStats.size,
       importedAt,
       parserId: null,
       parserVersion: null,
@@ -380,7 +386,7 @@ export class CareerBackend {
       warnings: [],
     });
 
-    if (bytes.byteLength > MAX_IMPORT_BYTES) {
+    if (sourceStats.size > MAX_IMPORT_BYTES) {
       const message = "This file was preserved, but it exceeds the 25 MiB local resume parsing limit.";
       artifact = await this.evidenceRepository.updateSourceArtifactExtraction(
         artifact.id,
@@ -428,6 +434,7 @@ export class CareerBackend {
       };
     }
 
+    const bytes = await fs.readFile(input.managedPath);
     let rawText: string;
     let parserId: string;
     let parserVersion: string;
