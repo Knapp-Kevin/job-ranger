@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Archive, FolderOpen, RotateCcw, ShieldCheck } from "lucide-react";
-import type { BackupCreateResult, BackupRestoreSelection } from "../shared/backup";
+import type { BackupCreateResult, BackupRestorePreview } from "../shared/backup";
 import { getDesktopApi } from "../services/api";
 
 function formatBytes(bytes: number): string {
@@ -19,7 +19,7 @@ export function BackupRestorePanel() {
   const [creating, setCreating] = useState(false);
   const [restoring, setRestoring] = useState(false);
   const [created, setCreated] = useState<BackupCreateResult | null>(null);
-  const [selection, setSelection] = useState<BackupRestoreSelection | null>(null);
+  const [selection, setSelection] = useState<BackupRestorePreview | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const createBackup = async () => {
@@ -55,7 +55,7 @@ export function BackupRestorePanel() {
     setRestoring(true);
     setError(null);
     try {
-      await getDesktopApi().backups.stageRestore(selection.bundlePath);
+      await getDesktopApi().backups.stageRestore();
     } catch (cause) {
       setRestoring(false);
       setError(cause instanceof Error ? cause.message : "Restore could not be staged.");
