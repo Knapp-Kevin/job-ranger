@@ -1,8 +1,10 @@
 # Architecture and Evolution Plan
 
-This document describes Job Ranger's current architecture and intended direction. Older phase plans are historical implementation records, not current product status.
+This document describes Job Ranger's current architecture and the boundaries that future work must preserve.
 
-## Product Architecture Principle
+Older phase plans are historical implementation records. They do not override this document, current source, tests, or published-release evidence.
+
+## Product architecture principle
 
 Job Ranger is a focused job-search companion, not an agent platform.
 
@@ -11,112 +13,173 @@ Job Ranger is a focused job-search companion, not an agent platform.
 Consequences:
 
 - a parser may extract evidence but cannot establish truth;
-- an inference provider may propose language or mappings but cannot establish truth;
-- a search provider may discover sources but cannot silently add trusted sources;
-- a renderer formats an artifact but does not become canonical storage;
+- a discovery provider may find opportunities but cannot silently create trusted monitored sources;
+- an inference provider may someday propose language or mappings but cannot establish truth;
+- a renderer formats an artifact but does not own canonical state;
 - a browser retrieves pages but does not silently submit consequential actions;
-- a calendar/notification integration may mirror state but does not own the application lifecycle.
+- a calendar or notification integration may mirror lifecycle state but does not own it;
+- JSON Resume is an interoperability format, not Job Ranger's canonical career model.
 
-The maintained Technical Capability Catalog is an implementation/research source, not an adoption queue.
-
-## Current Runtime Architecture
+## Current runtime architecture
 
 ```text
-┌─────────────────────────────────────────────┐
-│ React renderer                              │
-│ Home / Find Jobs / Applications             │
-│ Career Profile / Resume / Companies         │
-│ Filters / Settings                          │
-└────────────────────┬────────────────────────┘
-                     │ typed preload / IPC
-                     ▼
-┌─────────────────────────────────────────────┐
-│ Electron main process                       │
-├─────────────────────────────────────────────┤
-│ JobScoutBackend                             │
-│   sources / jobs / filters / settings       │
-│   scrape history / scheduling / notices     │
-│                                             │
-│ CareerBackend                               │
-│   Career Profile / Applications             │
-│   source artifacts / extraction snapshots  │
-│   Career Evidence / provenance              │
-│                                             │
-│ RequirementBackend                          │
-│   explicit job requirements                 │
-│   requirement ↔ Career Evidence mappings   │
-│                                             │
-│ ResumeService                               │
-│   projections / statements                  │
-│   Truth Gate                                │
-│   PDF render + Parseability Gate            │
-│   versioned artifacts / application links   │
-└────────────────────┬────────────────────────┘
-                     ▼
-                   SQLite
-                     │
-                     └── managed filesystem artifacts
+┌──────────────────────────────────────────────────────────┐
+│ React renderer                                           │
+│                                                          │
+│ Home / onboarding / Find Jobs / Applications             │
+│ Search Insights                                           │
+│ Career Profile / Career Evidence / Career Stories        │
+│ Target Tracks / Resume                                   │
+│ Companies / Filters / Settings                           │
+└──────────────────────────┬───────────────────────────────┘
+                           │ typed preload / IPC
+                           ▼
+┌──────────────────────────────────────────────────────────┐
+│ Electron main process                                    │
+├──────────────────────────────────────────────────────────┤
+│ JobScoutBackend                                          │
+│   companies / jobs / filters / settings                  │
+│   scrape history / scheduling / notifications            │
+│                                                          │
+│ CareerBackend                                            │
+│   Career Profile / Applications                          │
+│   source artifacts / extraction snapshots               │
+│   Career Evidence / provenance                           │
+│                                                          │
+│ Target Track services                                    │
+│   search directions / required-preferred-target semantics│
+│                                                          │
+│ RequirementBackend + mapper                              │
+│   job requirements                                       │
+│   requirement ↔ Career Evidence mappings                 │
+│   explainable opportunity assessment                     │
+│                                                          │
+│ SourceDiscoveryProvider                                  │
+│   discovered opportunities / candidate employer sources │
+│   explicit approval before monitoring                    │
+│                                                          │
+│ ResumeService + tailoring                                │
+│   projections / statements / Truth Gate                  │
+│   isolated PDF render / Parseability Gate                │
+│   versioned artifacts / application links                │
+│                                                          │
+│ ApplicationLifecycleBackend                              │
+│   contacts / events / reminders / submitted artifacts    │
+│                                                          │
+│ InterviewPrepBackend                                     │
+│ CareerStoryBackend                                       │
+│ ApplicationMaterialsBackend                              │
+│ ApplicationInsightsBackend                               │
+│ BackupService                                            │
+│ JsonResumeAdapter                                        │
+└──────────────────────────┬───────────────────────────────┘
+                           ▼
+                         SQLite
+                           │
+                           └── managed local artifacts
 ```
 
-The renderer owns presentation and user interaction. It does not receive direct Node.js, SQLite, parser, Chromium-renderer, or arbitrary filesystem authority.
+The renderer owns presentation and ordinary interaction. It does not receive direct Node.js, SQLite, parser, arbitrary filesystem, or general browser authority.
 
-## Build and Runtime Authority
+## Build and runtime authority
 
-`electron/src/**` is the only checked-in privileged implementation source.
+`electron/src/**` is the only checked-in privileged implementation authority.
 
 ```text
 electron/src
-    ↓ TypeScript
+    ↓ TypeScript compile
  electron-runtime/
     ↓
-dev / smoke tests / Electron E2E / Electron Builder / packaged app
+ development / smoke tests / Electron E2E / packaging / runtime
 ```
 
-`electron-runtime/` is generated and ignored. Compatibility shims exist only where older tests still require them; they contain no implementation logic.
+`electron-runtime/**` is generated and ignored by Git.
 
-New backend modules should be consumed from the generated runtime rather than adding another checked-in compiled representation.
+Compatibility shims under `electron/*.cjs` may be created during runtime preparation for older test or release verification entry points. They forward into the generated runtime and contain no independent implementation logic.
 
-## Career Domain Authority
+See [`BUILD_RUNTIME.md`](./BUILD_RUNTIME.md).
+
+## Domain authority model
 
 ### Career Profile
 
-Owns intent and preferences:
+Career Profile owns broad personal/search context and preferences. It is not factual career history.
 
-- target/current/adjacent roles;
-- geography/commute preferences;
-- compensation preferences;
-- work-setting preferences.
+Examples:
 
-Career Profile is not the canonical factual history store.
+- home area;
+- broad work preferences;
+- legacy intent migrated from earlier releases.
+
+### Target Tracks
+
+Target Tracks own per-search-direction intent.
+
+A user may pursue multiple directions without duplicating factual career history.
+
+A track can represent:
+
+- target role families;
+- work mode;
+- employment arrangement;
+- geography;
+- schedule availability;
+- compensation floor/target/basis;
+- required, preferred, or target strength where represented by the contract.
+
+The legacy Career Profile intent is bridged into a reserved migration-owned track until the user promotes it to user-owned track state.
 
 ### Career Evidence
 
-Owns factual career history and provenance:
+Career Evidence owns factual career history and provenance.
 
-- roles;
+Supported evidence shapes include:
+
+- employment;
 - skills;
-- credentials;
 - education;
 - projects;
 - achievements;
-- publications;
-- provenance back to imported/user-authored sources.
+- credentials/licenses;
+- publications and other nontraditional evidence;
+- user-authored evidence;
+- imported evidence proposals;
+- work-sample/portfolio references.
 
-Only `user-confirmed` or `user-authored` evidence may support factual resume/application claims. Imported and inferred-pending evidence remain proposals until the user accepts them.
+Authority states matter. Only user-confirmed or user-authored evidence may support factual application claims.
+
+Imported evidence remains proposed until reviewed.
+
+Evidence may be:
+
+- edited;
+- confirmed;
+- rejected;
+- merged;
+- superseded.
+
+Supersede lineage preserves historical truth instead of mutating the past into whatever is currently correct.
 
 ### Applications
 
-Own the job-search lifecycle:
+Applications own the user's job-search lifecycle.
+
+Current durable application state includes:
 
 - tracked opportunity;
 - status;
 - notes;
-- linked submitted artifacts;
-- future contacts, milestones, reminders, follow-ups, and outcomes.
+- selected Target Track;
+- exact submitted resume artifacts;
+- contacts;
+- interviews and milestones;
+- follow-up events and reminders;
+- offer/negotiation state;
+- application-material history.
 
-Applications should not be outsourced to a generic task/project system.
+Applications are not outsourced to a generic task/project system.
 
-## Career Evidence Pipeline
+## Career Evidence pipeline
 
 ```text
 Source Artifact
@@ -124,27 +187,29 @@ Source Artifact
 Extraction Snapshot
       ↓
 Candidate Evidence
-      ↓ user confirmation
-Confirmed Career Evidence
+      ↓ human authority
+Confirmed / User-authored Career Evidence
       ↓
 Job Requirements ↔ Evidence Mapping
       ↓
-Resume / Application-Material Projection
+Opportunity Assessment
       ↓
-Truth / Parseability / Relevance Review
+Resume / Application-Material / Story Projection
       ↓
-Versioned Artifact
+Truth / Parseability / Staleness Review
       ↓
-Application Lifecycle
+Versioned Artifact or Material
+      ↓
+Application Lifecycle / Interview Prep / Search Insights
 ```
 
-The canonical product asset is **Career Evidence**, not a PDF, DOCX, JSON Resume object, parser output, or generated paragraph.
+The canonical product asset is Career Evidence, not a resume file, JSON Resume record, parser output, generated paragraph, or model response.
 
-## Resume Import Architecture
+## Resume import architecture
 
-R1 uses exactly one default document parser: `@firecrawl/anydoc@0.2.4`.
+The default document parser is pinned to `@firecrawl/anydoc@0.2.4`.
 
-Supported initial paths:
+Supported import paths:
 
 - DOCX through Anydoc;
 - text-bearing PDF through Anydoc;
@@ -153,19 +218,33 @@ Supported initial paths:
 
 Import rules:
 
-1. preserve the original artifact first;
-2. compute SHA-256 before interpretation;
-3. detect/validate format from content where applicable;
+1. preserve the original source artifact before interpretation;
+2. compute SHA-256 before extraction;
+3. detect/validate format and enforce resource limits;
 4. extract locally;
-5. persist parser identity/version, raw extraction snapshot, warnings, and failure state;
-6. normalize only to proposed evidence;
-7. require human authority before factual use.
+5. persist parser identity/version, extraction snapshot, warnings, and failure state;
+6. normalize only into proposed Career Evidence;
+7. require user authority before factual use.
 
-Image-only/scanned documents surface `needs-ocr`. Job Ranger does not silently send resumes to hosted OCR or inference providers.
+Image-only/scanned documents surface an explicit OCR-required state. Job Ranger does not silently upload them to a hosted OCR or inference service.
 
-## Requirement Mapping Architecture
+## Credential architecture
 
-R2 normalizes explicit requirements from collected job text into durable `JobRequirement` records and classifies them as:
+Credentials are not generic skills.
+
+Credential evidence may carry bounded structured facts such as:
+
+- status;
+- issuer;
+- jurisdiction;
+- expiration date;
+- identifier where appropriate.
+
+Requirement mapping checks credential standing as well as textual similarity. Expired, inactive, or pending credentials do not qualify merely because their labels match a posting.
+
+## Requirement mapping architecture
+
+Explicit requirements extracted from collected job text are stored as durable `JobRequirement` records classified as:
 
 - must-have;
 - preferred;
@@ -180,226 +259,386 @@ Mappings are:
 - ambiguous;
 - gap.
 
-Only confirmed/user-authored evidence can become direct or transferable factual support. Imported/unconfirmed evidence remains ambiguous. Gaps remain gaps.
+Confirmed/user-authored evidence is required for direct or transferable factual support. Imported/unconfirmed evidence remains ambiguous.
 
-The current boundary is conservative because Job Ranger does not yet retain a canonical complete job description for every source. Requirement reasoning must never imply completeness over text the application never ingested.
+### Source-text limitation
 
-## Deterministic Resume Architecture
+Job Ranger still does not preserve a canonical complete job-description artifact for every source.
 
-R3 makes resume creation a projection of confirmed evidence rather than a free-form generation task.
+Requirement reasoning therefore applies only to text Job Ranger actually collected. The absence of a requirement from stored text is not proof that the employer did not state it elsewhere on the posting.
 
-### Projection
+Canonical source/job-description preservation is a current needed gap, not a reason to weaken the mapping model.
 
-A `ResumeProjection` captures:
+## Explainable opportunity assessment
 
-- optional target job;
-- context (`private-sector`, `hybrid`, `federal`, `academic`);
-- page format;
-- Job Ranger-owned template ID;
-- immutable contact snapshot;
-- selected evidence IDs;
-- section ordering;
-- lineage/status metadata.
+Opportunity assessment is a pure deterministic composition over current Target Track intent plus requirement/evidence coverage.
 
-A `ResumeStatement` remains linked to supporting evidence IDs.
+It separates:
 
-### Template strategy
+- eligibility;
+- evidence coverage;
+- career alignment;
+- preference alignment;
+- blockers;
+- unknowns.
 
-Initial templates are deliberately few and Job Ranger-owned:
+A single numeric score may be used only as a UI summary if its inputs remain transparent. It may not become product truth or a hiring-probability claim.
 
-- `ats-standard-v1`;
-- `ats-compact-v1`.
+Unknown remains a first-class state. No extracted requirements means eligibility is unclear, not automatically likely.
 
-Do not import a marketplace/template ecosystem merely because one exists. A conservative polished template may be added later only if it retains parseability.
+## Source discovery architecture
 
-### Truth Gate
+`SourceDiscoveryProvider` is a real runtime seam.
 
-The Truth Gate blocks export when a factual statement:
+Discovery can return:
 
-- lacks supporting evidence;
-- depends on unconfirmed evidence;
-- introduces unsupported factual terms through editing.
+- opportunities;
+- employer/source candidates;
+- provider identity;
+- provenance/support metadata;
+- warnings/coverage limitations.
 
-Deterministic composition begins from the confirmed Career Evidence statement itself. R4 may add evidence-bound rewriting, but cannot weaken this gate.
+Discovery cannot:
 
-### PDF rendering
+- silently create trusted monitored sources;
+- bypass source-support classification;
+- bypass acquisition-network policy;
+- convert an aggregator job URL into a trusted employer board without a reusable-source boundary.
 
-R3 reuses Electron/Chromium rather than adding another rendering runtime.
+The user explicitly approves monitoring.
 
-The hidden render window uses:
+Current provider coverage is partial. Additional providers must earn inclusion through coverage value, terms/licensing, stability, and maintenance cost.
 
-- sandboxing;
-- `nodeIntegration: false`;
-- `contextIsolation: true`;
-- `webSecurity: true`;
-- JavaScript disabled;
-- denied window opening and navigation;
-- an embedded CSP with `default-src 'none'`;
-- HTML-escaped user content.
+## Source acquisition architecture
 
-No remote resource is required to render a resume.
+Job Ranger intentionally avoids a universal scraper.
 
-### Parseability Gate
-
-After Chromium emits the PDF, Job Ranger reparses it through the same Anydoc boundary where viable.
-
-Critical/advisory checks include:
-
-- extractable text;
-- contact extraction;
-- required section/content presence;
-- materially correct reading order/content retention;
-- no hidden-content keyword-stuffing pattern;
-- parser success.
-
-Critical failures prevent artifact finalization.
-
-### Artifact lifecycle
-
-A finalized `ResumeArtifact` records:
-
-- projection ID;
-- version;
-- managed path;
-- SHA-256 hash;
-- page count;
-- Truth Gate result;
-- Parseability Gate result;
-- immutable projection/statement snapshot;
-- creation timestamp.
-
-Version comparison uses stored snapshots rather than filenames. Targeted exports can link the exact artifact to a tracked Application.
-
-Multi-record projection/artifact writes use a single-process SQLite transaction. `SqliteClient` does not hold a persistent connection, so transactions must never be assembled across independent `exec()` calls.
-
-## Source Acquisition Architecture
-
-Job Ranger intentionally avoids one universal scraper.
-
-Structured API adapters:
+Structured adapters:
 
 - Greenhouse;
 - Lever;
 - SmartRecruiters;
 - Ashby.
 
-Best-effort HTML/browser paths include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and generic career pages.
+Best-effort HTML/browser paths include:
 
-Browser-required extraction uses a constrained hidden Electron browser boundary. Unknown sources fail honestly rather than being represented as successful.
+- Workday;
+- iCIMS;
+- BambooHR;
+- Taleo;
+- Oracle Careers;
+- generic career pages;
+- browser-required families such as Microsoft Careers where applicable.
 
-Source discovery remains separate from source acquisition. A future `SourceDiscoveryProvider` may discover candidates, but users approve sources before monitoring begins.
+Unknown or unsupported sources fail honestly.
 
-## Optional Inference Architecture
+### Automated acquisition network policy
 
-R0-R3 require no inference provider.
+Automated acquisition is more privileged than a normal external-link click and therefore has a stricter network boundary.
 
-R4 may add a deliberately narrow provider-neutral seam, conceptually:
+Before direct fetch or browser requests, Job Ranger rejects unsafe destinations including:
 
-```text
-InferenceProvider
-  capability()
-  structuredGenerate(request, schema)
-```
+- localhost/loopback;
+- link-local addresses;
+- private network literals;
+- hostnames that resolve to unsafe addresses;
+- redirects into unsafe destinations.
 
-Potential uses:
+This policy prevents public career pages from becoming an SSRF path into the user's local network.
 
-- semantic requirement/evidence mapping proposals;
-- evidence-bound phrasing alternatives;
-- transferable-skill suggestions;
-- optional relevance/hiring-manager review;
-- interview preparation in later phases.
+## Deterministic resume architecture
 
-Hard requirements:
+Resume creation is a projection of confirmed Career Evidence.
+
+### ResumeProjection
+
+A projection captures:
+
+- optional target job;
+- context;
+- page format;
+- template ID;
+- immutable contact snapshot;
+- selected evidence IDs;
+- section ordering;
+- lineage/status metadata.
+
+`ResumeStatement` records remain linked to supporting evidence IDs.
+
+### Template strategy
+
+Current Job Ranger-owned templates:
+
+- `ats-standard-v1`;
+- `ats-compact-v1`.
+
+Template variety is intentionally bounded. Parseability and truthful structure take precedence over visual marketplace breadth.
+
+### Truth Gate
+
+Export is blocked when a factual statement:
+
+- lacks supporting evidence;
+- depends on unconfirmed evidence;
+- introduces unsupported factual terms through editing/tailoring.
+
+### Target-specific tailoring
+
+Deterministic tailoring may:
+
+- select more relevant confirmed evidence;
+- reorder evidence for target relevance;
+- translate vocabulary where the same factual meaning is supported;
+- preserve source-to-statement links;
+- preserve unsupported requirements as visible gaps.
+
+It may not fabricate missing qualifications.
+
+### PDF rendering and Parseability Gate
+
+The hidden Chromium render surface uses:
+
+- sandboxing;
+- `nodeIntegration: false`;
+- `contextIsolation: true`;
+- `webSecurity: true`;
+- JavaScript disabled;
+- window opening/navigation denied;
+- document CSP denying remote resources;
+- HTML-escaped user content.
+
+After PDF generation, Job Ranger reparses the artifact through Anydoc and runs critical/advisory checks for extractable text, content retention, contact/section presence, reading order, and parser success.
+
+Critical failures prevent artifact finalization.
+
+### Artifact lifecycle
+
+Finalized artifacts preserve:
+
+- projection ID/version;
+- managed path;
+- SHA-256;
+- page count;
+- gate reports;
+- immutable projection/statement snapshot;
+- creation timestamp.
+
+Application linkage records exactly which artifact was submitted.
+
+## Application lifecycle architecture
+
+`ApplicationLifecycleBackend` owns application-scoped operational state rather than inflating the base application record.
+
+Current lifecycle records include:
+
+- contacts;
+- events/interviews/deadlines;
+- reminders;
+- completion state;
+- exact submitted resume history.
+
+Reminders belong to lifecycle events rather than a generic task engine.
+
+## Interview preparation architecture
+
+Interview prep is recalculated from canonical state rather than stored as a new truth domain.
+
+Inputs:
+
+- tracked job;
+- requirement/evidence mapping;
+- current confirmed Career Evidence;
+- latest exact submitted resume snapshot;
+- evidence lineage.
+
+Output distinguishes submission relationships:
+
+- `exact` — current evidence was on the submitted resume;
+- `superseded` — an earlier evidence record in the lineage was submitted;
+- `none` — current evidence was not submitted.
+
+This lets prep preserve both the employer's historical view and the user's current corrected record.
+
+## Career Stories architecture
+
+Career Stories are durable narrative preparation artifacts linked to Career Evidence.
+
+They do not become a parallel factual store. If linked evidence becomes invalid or is superseded, the story can be identified as requiring review.
+
+## Application materials architecture
+
+Application materials are versioned projections, not Career Evidence.
+
+Current deterministic material creation:
+
+- uses the tracked application/job context;
+- uses confirmed Career Evidence only;
+- records supporting evidence IDs;
+- snapshots relevant evidence update timestamps;
+- preserves historical wording;
+- marks old material stale after edit/reject/merge/supersede of supporting evidence.
+
+The material itself never becomes factual authority.
+
+## Search Insights architecture
+
+Application Insights derives observations from canonical saved state rather than writing learned facts back into Career Profile/Evidence.
+
+Inputs may include:
+
+- application status;
+- Target Track;
+- source;
+- lifecycle events;
+- offer state;
+- requirement/evidence gaps.
+
+Outputs may include:
+
+- grouped counts;
+- recurring gaps;
+- observed interview/offer patterns;
+- strategy signals above minimum sample thresholds.
+
+Search learning may propose reconsideration. It may not silently mutate profile/evidence intent or imply causation from correlation.
+
+## Backup and restore architecture
+
+Backups are portable local bundles, not cloud sync.
+
+The backup contract includes:
+
+- a SQLite snapshot;
+- managed artifacts;
+- manifest/version metadata;
+- integrity hashes;
+- managed-path mappings.
+
+Restore is staged and validated before activation.
+
+Managed artifact paths stored as absolute paths are rebased inside the staged database to the new data root before activation.
+
+The old live data remains a rollback candidate until restored state successfully initializes.
+
+## JSON Resume adapter
+
+JSON Resume import/export is an interoperability boundary.
+
+Import:
+
+- preserves the source file;
+- maps compatible standard fields to imported/proposed Career Evidence;
+- does not grant factual authority automatically.
+
+Export:
+
+- projects current confirmed/user-authored evidence into compatible standard fields;
+- may be intentionally lossy where Job Ranger has richer provenance/semantics;
+- does not mutate canonical state.
+
+## Optional inference architecture
+
+Remote inference is currently deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, Career Stories, and Search Insights.
+
+A future provider-neutral seam remains possible if measured value justifies it.
+
+Hard requirements remain:
 
 - explicit disclosure before personal career data leaves the device;
 - structured output validation;
 - evidence linkage for factual claims;
-- deterministic fallback when inference is absent;
+- deterministic fallback;
 - no silent resume/profile transmission;
-- no provider may bypass Career Evidence authority or the Truth Gate.
+- no bypass of Career Evidence authority or Truth Gate.
 
-Job Ranger does not currently need a general-purpose agent framework, workflow engine, vector database, or agent-memory runtime.
+Job Ranger does not currently require a general agent framework, workflow engine, vector database, or agent-memory runtime.
 
-## Security Boundaries
+## Security boundaries
 
-The desktop shell uses:
+The desktop shell and privileged services retain:
 
 - `nodeIntegration: false`;
 - `contextIsolation: true`;
 - `webSecurity: true`;
+- main renderer sandboxing;
 - typed preload APIs;
-- URL validation before external navigation;
-- renderer Content Security Policy;
-- sandboxed specialized browser/render surfaces;
+- renderer CSP;
+- validated external navigation;
+- acquisition network policy;
+- constrained browser surfaces;
+- isolated resume renderer;
 - managed artifact storage;
-- content/size validation for imported career documents.
+- import content/size validation.
 
-Any weakening of these boundaries is a material governance change, not an implementation convenience.
+Any weakening of these boundaries is a material governance change.
 
-## Persistence Strategy
+## Persistence strategy
 
-SQLite owns structured durable metadata and relationships. Managed files live under the Job Ranger data/artifact directory rather than as database blobs.
+SQLite owns durable structured metadata and relationships. Managed files live under the Job Ranger data/artifact directory rather than being stored as database blobs.
 
-Current durable domains include:
+Durable domains include:
 
 - companies/jobs/filters/settings/scrape history;
 - Career Profile;
+- Target Tracks;
 - Applications;
 - source artifacts/extraction snapshots;
-- Career Evidence/provenance;
+- Career Evidence/provenance/extensions/lineage;
 - normalized job requirements/mappings;
-- resume projections/statements;
-- resume artifacts/snapshots;
-- application-artifact links.
+- resume projections/statements/artifacts/snapshots;
+- application-artifact links;
+- contacts/events/reminders/offers;
+- Career Stories;
+- application materials;
+- application insights support state;
+- backup metadata where applicable.
 
-A future export/restore feature should bundle structured state plus managed artifacts before cloud sync is considered.
+Cloud sync is not foundational. Verified backup/restore exists first.
 
-## Quality Architecture
+## Quality architecture
 
-Normal PR/main validation includes:
+Repository validation includes deterministic tests for the principal domain boundaries plus Electron Playwright for material desktop workflows.
 
-- `npm ci`;
-- dependency audit;
-- TypeScript checks;
-- Vite production build;
-- generated Electron runtime compilation;
-- backend smoke tests;
-- Career persistence tests;
-- resume import tests;
-- requirement mapping/persistence tests;
-- deterministic resume lifecycle tests.
+The project intentionally preserves GitHub Actions budget. Hosted Actions are not mandatory for every documentation/remediation or release-preparation iteration. Manual maintainer validation is acceptable when it records:
 
-Substantial desktop workflow changes additionally receive Electron Playwright validation. Release candidates receive platform packaging validation appropriate to the supported Windows/macOS targets.
+- environment;
+- exact commands;
+- results;
+- checks that could not be executed.
 
-## Evolution Plan
+Release candidates must additionally satisfy the platform/package contract in [`RELEASE_READINESS.md`](./RELEASE_READINESS.md).
 
-### R0: complete
+## Program status
 
-Durable Career Profile/Application persistence and Career Evidence contract foundation.
+### Career Evidence and Resume Intelligence
 
-### R1: complete
+R0 through R5 are complete on `main`.
 
-Local resume import, source preservation, evidence proposals, provenance, and human review.
+Optional remote inference was not required to close R4 because deterministic tailoring and downstream workflows already satisfy the accepted product contract.
 
-### R2: complete
+### Universal User Stories
 
-Deterministic job requirement ↔ Career Evidence mapping and Find Jobs coverage UX.
+US-0 through US-30 are reconciled as complete against the current model and validation evidence.
 
-### R3: implementation complete pending final PR validation
+The completion of those programs does not mean product evolution stops. It means future work starts from explicit current truth rather than stale phase plans.
 
-Deterministic resume workspace, Truth Gate, isolated Chromium rendering, Parseability Gate, versioned artifacts, diffs, and Application linkage.
+## Accepted next evolution
 
-### R4: next
+### Needed quality work
 
-Target-specific deterministic tailoring plus optional evidence-bound inference behind a provider-neutral seam.
+1. preserve fuller/canonical job-description/source snapshots where source capabilities permit it;
+2. improve failure diagnostics and measured reliability for dynamic/best-effort source families;
+3. publish the accumulated `main` product through a fully validated release.
 
-### R5: planned
+### Candidate product work
 
-Broader application materials, follow-up/reminders, contacts/milestones, interview preparation, Career Stories, offer/negotiation support, and portable export/restore.
+Candidates are tracked in [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md) and include broader discovery, faster arbitrary-job capture, reusable application-question answers, bounded application-form assistance, networking, calendar mirroring, and mock-interview practice.
 
-## External Capability Policy
+Candidates are not commitments until they pass governance/product validation.
 
-Open-source projects may be implementation ancestry, benchmarks, or code donors when the exact boundary is license-compatible.
+## External capability policy
+
+Open-source projects may be implementation ancestry, benchmarks, or bounded code donors only when the exact boundary is license-compatible.
 
 Preferred adoption classes:
 
@@ -409,13 +648,13 @@ Preferred adoption classes:
 
 Reference-only by default:
 
-- AGPL/GPL/copyleft components where obligations conflict with product goals;
+- AGPL/GPL/copyleft where obligations conflict with product goals;
 - SSPL;
 - source-available licenses;
-- noncommercial/share-alike templates/content;
+- noncommercial/share-alike assets/templates;
 - custom commercial-threshold licenses;
 - proprietary services;
-- no-license repositories.
+- repositories without a clear license.
 
 A permissive repository license does not automatically relicense bundled templates, fonts, models, datasets, plugins, or hosted services.
 
