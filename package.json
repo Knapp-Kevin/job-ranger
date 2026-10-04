@@ -24,7 +24,7 @@
     "repo:health": "npm run typecheck && npm run build && npm run test",
     "electron:dev": "concurrently \"npm run dev\" \"npm run desktop:watch\" \"wait-on http://localhost:5173 electron-runtime/electron/src/main.cjs && electron .\"",
     "electron:build": "npm run repo:health && electron-builder --publish never",
-    "electron:build:win": "npm run repo:health && electron-builder --win --publish never",
+    "electron:build:win": "npm run repo:health && electron-builder --win --publish never --config electron-builder.windows.cjs",
     "electron:build:mac": "npm run repo:health && electron-builder --mac --publish never",
     "electron:pack": "npm run repo:health && electron-builder --dir"
   },
