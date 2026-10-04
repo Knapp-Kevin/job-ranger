@@ -5,7 +5,7 @@
 # Job Ranger
 
 <p align="center">
-  <strong>A local-first desktop job-search companion for finding opportunities, understanding what deserves attention, preparing truthful application materials, and managing the search without turning your career into somebody else's cloud product.</strong>
+  <strong>A local-first Career Ops companion for understanding where you want to go, finding the right paths to employment, preparing truthful materials, and managing a focused search without turning your career into somebody else's cloud product.</strong>
 </p>
 
 <p align="center">
@@ -54,18 +54,28 @@ See the [latest GitHub Release](https://github.com/Knapp-Kevin/job-ranger/releas
 
 Job searching contains an absurd amount of clerical work. People repeatedly check the same sources, lose track of opportunities, rewrite the same career facts, forget which resume they submitted, and maintain increasingly haunted collections of tabs, notes, spreadsheets, and half-finished documents.
 
-Job Ranger is designed to make that workflow coherent while preserving user authority:
+But Job Ranger is not trying to make that machinery spin faster. It is designed around **quality over quantity**: understanding the person behind the resume, identifying career directions worth pursuing, finding companies and opportunities that fit those directions, and helping the user choose a useful path to employment rather than maximizing application throughput.
 
-1. describe what kind of work you want;
+The guiding progression is:
+
+> **Person → Career Direction → Companies → People → Opportunities → Applications**
+
+A user may enter anywhere in that chain. The resume is useful evidence about prior work, not a command to keep repeating it and not the sole definition of who the user is.
+
+Job Ranger is designed to make the workflow coherent while preserving user authority:
+
+1. describe what kind of work, environment, constraints, and direction you actually want;
 2. build a factual Career Evidence record from a resume or direct entry;
-3. discover and monitor job sources;
-4. assess opportunities using explicit requirements, evidence, constraints, and unknowns;
-5. prepare evidence-backed resumes and application materials;
+3. discover and monitor employers, sources, and opportunities that fit those directions;
+4. assess which opportunities genuinely deserve attention using explicit requirements, evidence, constraints, preferences, and unknowns;
+5. prepare evidence-backed resumes and application materials for opportunities the user intentionally chooses to pursue;
 6. track the exact materials, people, events, reminders, interviews, offers, and outcomes around each application;
-7. learn from recurring gaps and observed results without pretending correlation is destiny;
+7. learn from recurring gaps and observed results without pretending correlation is destiny or application count is progress;
 8. keep the core workflow local and useful without an AI provider.
 
-Job Ranger does **not** autonomously apply to jobs, invent qualifications, silently transmit career data to an inference provider, or treat a single opaque score as hiring truth.
+Broader Career Ops capabilities such as company targeting and relationship-path discovery are candidate directions, not current-product claims. They are governed separately so networking does not become yet another automated spam surface.
+
+Job Ranger does **not** autonomously apply to jobs, invent qualifications or relationships, silently transmit career data to an inference provider, optimize for raw application volume, or treat a single opaque score as hiring truth.
 
 ## Capability map
 
@@ -100,10 +110,19 @@ The table below intentionally separates what normal users can download today fro
 | Remote inference provider | Not shipped | **Deferred; core product does not require it** |
 | OCR for scanned/image-only resumes | Not shipped | **Deferred pending evidence-backed demand** |
 | DOCX resume export | Not shipped | **Deferred pending evidence-backed demand** |
+| Career Ops relationship-path discovery | Not shipped | **Candidate; tracked in #121** |
 | Autonomous mass auto-apply | Not shipped | **Explicit non-goal** |
 | Linux installer | Not shipped | **Undecided / unsupported** |
 
 ## Core product principles
+
+### Quality over quantity
+
+Job Ranger is not Job Gatling Gun.
+
+The product should optimize for **qualified, intentional progress**, not applications sent. A smaller number of well-understood opportunities that fit the user's direction, evidence, constraints, and preferences is preferable to a large queue of weak matches.
+
+Automation should reduce clerical burden and the cost of making good decisions. It should not remove the user's judgment from consequential external actions or convert employers and professional networks into targets for automated volume.
 
 ### Career Evidence is factual authority
 
@@ -123,7 +142,7 @@ The core workflow works without an AI account or hosted Job Ranger account. Opti
 
 ### User authority
 
-Job Ranger can discover, organize, explain, prepare, remind, and preserve. Consequential external actions remain with the user.
+Job Ranger can discover, organize, explain, prepare, remind, preserve, and analyze. Consequential external actions remain with the user.
 
 ## Source support model
 
@@ -180,14 +199,15 @@ Examples under active consideration or explicit disposition include:
 - broader source-discovery coverage, including government and niche sources;
 - easier capture of jobs encountered in the browser;
 - reusable application-question answers and limited user-controlled form assistance;
-- richer networking workflows beyond application-scoped contacts;
+- richer Career Ops networking and relationship-path workflows beyond application-scoped contacts;
+- company targeting and monitoring before a specific opening exists;
 - mock interview practice and answer-feedback workflows;
 - calendar integration;
 - canonical full job-description preservation where source capabilities permit it;
 - source reliability improvements for dynamic portals;
 - Linux packaging.
 
-These are candidates, not promises. Features are evaluated against Job Ranger's privacy, evidence, maintainability, and user-authority principles before they become roadmap work.
+Issue [#121](https://github.com/Knapp-Kevin/job-ranger/issues/121) tracks the Career Ops relationship-path and intentional-pursuit design work. These are candidates, not promises. Features are evaluated against Job Ranger's privacy, evidence, maintainability, quality-over-quantity, and user-authority principles before they become roadmap work.
 
 ## Development
 
