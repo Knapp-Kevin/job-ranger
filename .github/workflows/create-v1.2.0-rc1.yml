@@ -1,4 +1,4 @@
-name: Create v1.2.0 RC1
+name: Create v1.2.0 RC2
 
 # One-shot release-candidate bridge. This runs only for the in-repository release
 # PR and creates an immutable tag at the already validated candidate SHA.
@@ -22,8 +22,8 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TARGET_SHA: ea8f40f332ce1eaf1a993ffa19c10149c91796d4
-          TAG: v1.2.0-rc.1
+          TARGET_SHA: aff1e4a44a5bffa4614dc2d109367011dce27897
+          TAG: v1.2.0-rc.2
         run: |
           set -euo pipefail
           tag_json="${RUNNER_TEMP}/tag-ref.json"
@@ -43,7 +43,7 @@ jobs:
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
-          TAG: v1.2.0-rc.1
+          TAG: v1.2.0-rc.2
         run: |
           set -euo pipefail
           gh workflow run release-build.yml \
