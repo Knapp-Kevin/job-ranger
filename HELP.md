@@ -1,259 +1,402 @@
 # Job Ranger Help
 
-Job Ranger is a local-first desktop application for finding, monitoring, understanding, and tracking job opportunities. This guide is written for people using the app, not just people building it.
+Job Ranger is a local-first desktop application for discovering, evaluating, preparing for, and tracking job opportunities.
 
-## Quick Start
+This guide distinguishes between the **published release** and the newer functionality already implemented on `main`.
 
-### 1. Install Job Ranger
+## Which version am I using?
 
-Use the latest published build from the repository's **Releases** page.
+The latest published installers are currently **v1.1.2** for:
 
-Current v1.1.2 release options include:
-
-- Windows x64 installer
-- macOS Apple Silicon (arm64) DMG or ZIP
-- macOS Intel (x64) DMG or ZIP
+- Windows x64;
+- macOS Apple Silicon (arm64);
+- macOS Intel (x64).
 
 There is no supported packaged Linux release at this time.
 
-Windows users do **not** need to install SQLite separately. The v1.1.2 Windows package includes the SQLite runtime Job Ranger uses.
+`main` contains a much newer workflow than v1.1.2. If you are running a development build from `main`, the additional sections below apply to you. If you downloaded v1.1.2 from Releases, use the published-release notes where behavior differs.
 
-### 2. Set up your Career Profile
+## Published v1.1.2 quick start
 
-Open **Career Profile** and add the information that is true for you:
+1. Open **Career Profile** and enter target roles, location, compensation, and work preferences.
+2. Open **Companies** and add employer career pages to monitor.
+3. Run a scrape or allow scheduled checks.
+4. Open **Find Jobs** to review locally stored opportunities and deterministic fit guidance.
+5. Choose **Track this job** for an opportunity worth following.
+6. Use **Applications** for Interested, Applied, Interview, Offer, Rejected, or Withdrawn status and notes.
+7. Use **Filters** to reduce noise.
+8. Use **Settings** for notifications, scraping behavior, themes, and tray behavior.
 
-- target job titles;
-- home area and commute preference;
-- minimum pay and whether you think about it hourly or annually;
-- skills you already use;
-- certifications and licenses you actually hold;
-- work/sector preferences.
+The v1.1.2 Windows installer includes Job Ranger's SQLite runtime. Normal users do not need to install SQLite separately.
 
-Add the roles you already know, adjacent roles that use similar strengths, and reasonable stretch roles you would genuinely consider. Target roles guide discovery; they do not become claims about experience you have not entered.
+## Current `main` workflow
 
-Career Profile is stored locally on this device. Job Ranger uses it to produce deterministic fit guidance without requiring an AI provider.
+Current `main` expands Job Ranger into an end-to-end job-search workspace while keeping Career Evidence and application history local.
 
-### 3. Add employers or job sources
+### 1. First-run onboarding
 
-1. Open **Companies**.
-2. Select **Add source**.
-3. Enter the employer name.
-4. Paste the employer's careers-page URL.
-5. Choose the polling frequency.
-6. Save the source.
+New users can begin in several ways:
 
-Job Ranger still expects the user to supply career pages in v1.1.2. Consumer-friendly source discovery is planned work.
+- **Resume first** — import an existing resume and review extracted Career Evidence.
+- **No resume** — enter Career Evidence directly without first building a traditional resume.
+- **Goal first** — define what kind of work you want and begin using Job Ranger before your career record is complete.
 
-### 4. Find and review jobs
+Partial setup remains valid. Job Ranger should not require a person to complete a tax-form-sized profile before seeing value.
 
-Run a scrape from the company/source workflow or allow Job Ranger's configured schedule to check the source.
+### 2. Target Tracks
 
-Open **Find Jobs** to review locally stored results. When a Career Profile is configured, listings can show:
+Open **Target Tracks** to keep separate job-search directions.
 
-- a deterministic fit score;
-- plain-language reasons the listing may fit;
-- items worth checking before applying;
-- evidence such as title, location, pay, skills, or credentials that Job Ranger can actually see.
+A track can represent a different role family, employment arrangement, geography, work mode, schedule, or compensation expectation.
 
-The score is guidance, not a hiring prediction. If a posting omits important information, Job Ranger should expose that uncertainty instead of inventing an answer.
+Where supported, choices preserve their meaning as:
 
-### 5. Track applications
+- **Required** — a hard constraint;
+- **Preferred** — meaningful but not automatically disqualifying;
+- **Target** — an aspiration or desired value rather than a minimum.
 
-Choose **Track this job** on a listing you want to follow, then open **Applications**.
+This prevents unrelated search directions from being blended into one profile.
 
-Available statuses are:
+### 3. Career Evidence
 
-- Interested
-- Applied
-- Interview
-- Offer
-- Rejected
-- Withdrawn
+Career Evidence is Job Ranger's factual career record.
 
-You can also keep free-form notes for contacts, dates, follow-ups, and other context.
+Evidence can come from:
+
+- imported resume documents;
+- direct user entry;
+- employment history;
+- skills;
+- education;
+- projects;
+- achievements;
+- credentials/licenses;
+- publications;
+- volunteer or other nontraditional work;
+- portfolio/work-sample references.
+
+Imported evidence begins as a proposal. Only evidence you confirm or author directly may support factual application claims.
+
+Evidence can be corrected, rejected, merged, or superseded without erasing the history of what changed.
+
+### 4. Resume import
+
+Current `main` supports:
+
+- DOCX;
+- text-bearing PDF;
+- plain text;
+- pasted text.
+
+Original source artifacts are preserved before interpretation. Job Ranger hashes imported artifacts, records parser identity/version, and keeps extraction/provenance history.
+
+Image-only/scanned documents surface an explicit **OCR required** state. Job Ranger does not silently upload them to a hosted OCR service.
+
+### 5. Companies and source discovery
+
+Open **Companies** to:
+
+- add employer career sources manually;
+- discover opportunities from the currently configured discovery providers;
+- review discovery provenance/support information;
+- explicitly approve a discovered employer source before Job Ranger begins monitoring it.
+
+Discovery and monitoring are intentionally separate. Finding a job at an employer does not silently convert that employer into a trusted monitored source.
+
+Current discovery provider coverage is partial. Manual source entry remains important.
+
+### 6. Find Jobs and opportunity assessment
+
+Current `main` no longer treats one percentage as universal truth about fit.
+
+For a selected Target Track, Job Ranger can separate:
+
+- **Eligibility** — whether known hard requirements appear satisfied, blocked, or unclear;
+- **Evidence coverage** — direct, transferable, ambiguous, and unsupported requirements;
+- **Career alignment** — how the role relates to the selected search direction;
+- **Preference alignment** — location, work mode, compensation, schedule, and other known preferences;
+- **Blockers** — known hard conflicts;
+- **Unknowns** — important information the listing did not provide or Job Ranger could not reliably interpret.
+
+Requirement analysis only reasons over job text Job Ranger actually collected. An absent requirement may reflect incomplete source ingestion rather than proof that the employer does not require it.
+
+### 7. Resume workspace
+
+Current `main` can create a deterministic resume from confirmed Career Evidence.
+
+The resume workflow includes:
+
+- ATS-oriented standard and compact templates;
+- target-job evidence selection;
+- deterministic target-specific tailoring;
+- factual statement → Career Evidence linkage;
+- a **Truth Gate** that blocks unsupported factual claims;
+- isolated Chromium PDF rendering;
+- PDF reparse and **Parseability Gate**;
+- versioned immutable artifacts;
+- version comparison;
+- exact application-artifact linkage for submitted resumes.
+
+A tailored resume may emphasize or translate supported evidence. It may not invent experience merely because a job description uses desirable words.
+
+### 8. Applications
+
+Applications now own a richer lifecycle than status + notes.
+
+For each application, Job Ranger can preserve:
+
+- lifecycle status;
+- notes;
+- the exact submitted resume artifact;
+- contacts;
+- interviews and other milestones;
+- deadlines and follow-up events;
+- reminders;
+- target-track association;
+- offer and negotiation state;
+- prepared application materials.
 
 Job Ranger does not submit applications for you.
 
-### 6. Reduce noise
+### 9. Interview preparation
 
-Open **Filters** to configure criteria such as:
+Interview preparation is grounded in:
 
-- title terms;
-- keywords;
-- locations;
-- minimum salary.
+- the tracked job;
+- confirmed Career Evidence;
+- requirement/evidence mappings;
+- the exact resume Job Ranger recorded as submitted.
 
-### 7. Configure background behavior
+The UI can distinguish:
 
-Open **Settings** to control:
+- evidence the employer already saw;
+- confirmed evidence that was not on the submitted resume;
+- changed/superseded evidence where the employer saw an older claim;
+- real gaps that need an honest explanation.
 
-- scrape concurrency;
-- scrape timeout;
-- retries and cooldowns;
-- desktop notifications;
-- minimize-to-tray behavior;
-- functional themes.
+Job Ranger does not fabricate STAR stories or pretend a gap is direct experience.
 
-## What the Source Labels Mean
+### 10. Career Stories
 
-Job Ranger does not claim every careers site works equally well.
+**Career Stories** provides a reusable evidence-linked place to prepare examples for interviews and applications.
+
+Stories remain linked to Career Evidence so later factual corrections can be detected rather than silently leaving stale narratives behind.
+
+### 11. Application materials
+
+Current `main` can prepare evidence-grounded application-material projections such as a deterministic cover-letter draft.
+
+Historical drafts remain versioned. If supporting Career Evidence later changes, the old material is marked stale instead of being quietly presented as current truth.
+
+### 12. Search Insights
+
+**Search Insights** summarizes observed search state such as:
+
+- applications by target track;
+- source and status patterns;
+- interview/offer outcomes;
+- recurring unsupported requirements;
+- evidence-based strategy signals when there is enough saved data to justify them.
+
+These are observations, not causal claims. Job Ranger should not tell you that a source or resume "caused" an interview merely because the numbers happen to line up.
+
+### 13. Backup and restore
+
+Settings on current `main` include a versioned Job Ranger backup workflow.
+
+Backups include structured SQLite state and managed artifacts with integrity metadata. Restore is staged and verified before replacing live data. Managed artifact paths are rebased when restoring into a different Job Ranger data root.
+
+A backup is preferable to discovering the philosophical meaning of "local-first" after a disk failure.
+
+### 14. JSON Resume interoperability
+
+Settings also expose JSON Resume import/export as a portability adapter.
+
+- Import creates proposed/imported evidence that still requires user authority.
+- Export projects only supported current Career Evidence into compatible standard fields.
+- JSON Resume is not Job Ranger's canonical data model.
+
+## Source-support labels
 
 ### Supported
 
-A structured adapter exists and is the preferred retrieval path.
+A structured adapter exists and is the preferred acquisition path.
 
-Current supported adapter families:
+Current structured families:
 
-- Greenhouse
-- Lever
-- SmartRecruiters
-- Ashby
+- Greenhouse;
+- Lever;
+- SmartRecruiters;
+- Ashby.
 
 ### Detected
 
-Job Ranger recognizes the portal and can attempt a generic or browser-backed extraction path. Results may depend on the specific site's structure.
+Job Ranger recognizes the portal and can attempt generic or browser-backed extraction. Reliability varies by site implementation.
 
-Examples include:
-
-- Workday
-- iCIMS
-- BambooHR
-- Taleo
-- Oracle Careers
-- generic career pages
+Examples include Workday, iCIMS, BambooHR, Taleo, Oracle Careers, and generic career pages.
 
 ### Browser required
 
-The source requires a rendered browser path rather than a simple structured/API retrieval.
+A rendered browser path is required instead of a simple structured/API retrieval.
 
 ### Manual review
 
-Job Ranger does not currently claim a reliable automated extraction path. This is preferable to quietly reporting a successful scrape that found nothing.
+Job Ranger does not claim a reliable automated path. This is preferable to reporting success while finding nothing.
 
-## Where Job Ranger Stores Data
+## Privacy and data storage
 
 Job Ranger is local first.
 
-SQLite-backed desktop storage currently owns:
+Current `main` keeps structured product state behind the Electron/SQLite boundary, including:
 
-- companies and career sources;
-- jobs;
-- filters;
-- settings;
-- scrape history.
+- companies and sources;
+- jobs and scrape history;
+- filters and settings;
+- Career Profile;
+- Target Tracks;
+- Applications;
+- Career Evidence and provenance;
+- requirements and mappings;
+- resume projections/artifacts;
+- lifecycle contacts/events/offers;
+- Career Stories;
+- application materials and insights metadata.
 
-Career Profile and Applications are also local, but in the v1.1.x line they are stored in renderer-local storage rather than the SQLite backend. Moving those domains behind the same durable backend boundary is planned work.
+Managed source/resume artifacts are stored in Job Ranger's local data/artifact directory rather than uploaded to a hosted Job Ranger account.
 
-Use **Help → Open Job Ranger Data Folder** for the desktop backend data folder. The Settings page also exposes backend facts including the database path and resolved SQLite binary.
+Network access is used for job/source retrieval and optional discovery providers. Job Ranger does not currently require a remote inference provider.
 
 ## Troubleshooting
 
-### The app opens but I do not see jobs
+### I do not see jobs
 
 Check:
 
-1. The URL points to a real careers or jobs page.
-2. The source is active.
-3. The latest scrape run did not fail.
-4. The source support label is not `manual-review`.
-5. Your filters are not excluding the results you expected to see.
+1. the source URL points to a real careers/jobs page;
+2. the source is active;
+3. the latest scrape did not fail;
+4. the source support state is not `manual-review`;
+5. filters are not excluding the results;
+6. a dynamic portal has not changed underneath the browser/extraction path.
 
-Some dynamic career portals can change underneath Job Ranger. A detected source is not the same thing as a guaranteed structured adapter.
+A detected source is not the same thing as a guaranteed structured adapter.
 
-### Fit guidance is missing
+### Job Ranger found no requirements for a job
 
-Open **Career Profile** and make sure you have saved at least some target-role, location, or experience information. Fit guidance only appears when Job Ranger has profile evidence to compare with a listing.
+That does not prove the employer has no requirements. It means Job Ranger did not extract any from the job text available to it.
 
-### A fit score seems too high or too low
+Review the original posting before making an application decision.
 
-The current scorer is deterministic and intentionally simple. It uses the information in your Career Profile plus the job fields Job Ranger has collected. It does not secretly infer missing experience or read the employer's mind, a feature humanity has thankfully not implemented yet.
+### Eligibility says Unclear
 
-Treat the score as triage guidance. Review the actual posting before making a career decision.
+This usually means Job Ranger is missing either:
 
-### Job Ranger says a source is unsupported
+- a required fact from the posting;
+- sufficient confirmed Career Evidence;
+- a clear interpretation of the available text.
 
-That means the app could not identify a reliable extraction path. It is an intentional reliability state, not a disguised success.
+Unknown is intentionally different from mismatch.
+
+### Imported resume evidence is not being used
+
+Imported evidence is not factual authority until you review and confirm it. Open the relevant Career Evidence review workflow and accept, edit, merge, or reject the proposal.
+
+### A credential is not supporting a job
+
+Check its structured state. An expired, inactive, or pending credential does not qualify merely because its name matches the posting.
+
+### An old application material or Career Story is marked stale
+
+One or more supporting Career Evidence records changed after the material/story was prepared. Review the current evidence and create/update the material rather than assuming the old wording is still factual.
+
+### A source is unsupported or blocked
+
+That is an intentional reliability/security state. Automated acquisition rejects unsafe/private-network destinations and does not blindly follow redirects into local address space.
 
 ### Notifications are not appearing
 
 Confirm:
 
-- desktop notifications are enabled in Job Ranger;
-- the notification subtype you want is enabled;
-- your operating system allows notifications from Job Ranger.
+- notifications are enabled in Job Ranger;
+- the specific notification type is enabled;
+- the operating system allows notifications from Job Ranger.
 
 ### Closing the window exits the app
 
 Enable **Minimize to system tray on close** in Settings if you want Job Ranger to remain available in the tray.
 
-### Windows reports that SQLite is missing
+### Windows says SQLite is missing
 
-Published v1.1.2 Windows installers include Job Ranger's SQLite runtime. If a packaged v1.1.2 installation still reports that `sqlite3.exe` is missing, treat that as a release defect and report the exact version and installation path.
+Published v1.1.2 Windows installers include a bundled SQLite runtime. If a packaged installation reports it missing, report the exact Job Ranger version and installation path.
 
-Developers running from source still need a host `sqlite3` executable on `PATH` or an explicit `SQLITE3_PATH`.
+Developers running from source still need `sqlite3` on `PATH` or `SQLITE3_PATH` set explicitly.
 
 ### macOS warns about the application
 
-Signing/notarization depends on the credentials available when a release is built. If macOS blocks an otherwise trusted release build, Finder's **Open** action can expose the operating system's manual override flow.
+Signing/notarization depends on credentials available to the release environment. Do not bypass platform security warnings for a file you did not obtain from a source you trust.
 
-Do not bypass platform security warnings for a file you did not obtain from a source you trust.
-
-## Privacy and AI
-
-Job Ranger v1.1.2 does not require an AI provider or hosted Job Ranger account. Search state and the current Career Intelligence workflow are local-first.
-
-Network access is used to retrieve the career pages and job sources you ask Job Ranger to check.
-
-Optional inference is a future enhancement path for richer explanation, resume, interview, and transferable-skill support. Remote inference must not silently receive personal career data, and the application should retain deterministic functionality without it.
-
-## Frequently Asked Questions
+## Frequently asked questions
 
 ### Does Job Ranger auto-apply for me?
 
-No. Job Ranger helps discover, review, and track opportunities. Autonomous mass application is not a current product goal.
+No. Autonomous mass application is an explicit non-goal under current product governance.
 
-### Does Job Ranger invent qualifications to improve my match score?
+### Does Job Ranger invent qualifications?
 
-No. Career Profile intentionally relies on information the user supplies. Target roles can include adjacent or stretch opportunities, but they do not become claims about experience, licenses, certifications, or skills you do not have.
+No. Only confirmed/user-authored Career Evidence may support factual application claims.
 
-### Does Job Ranger upload my search history to a hosted account?
+### Does Job Ranger upload my career/search history to a hosted account?
 
-No hosted account is required in the current product.
+No hosted Job Ranger account is required by the current product.
 
-### Is Job Ranger cross-platform?
+### Does Job Ranger use AI?
 
-Published v1.1.2 builds are provided for Windows x64 and macOS x64/arm64. Linux is not currently a supported packaged release.
+Core functionality does not require remote inference. A future optional inference adapter may be evaluated, but personal career data must never be transmitted silently.
 
-### Is every Workday/iCIMS/etc. careers page guaranteed to work?
+### Can Job Ranger read scanned/image-only resumes?
 
-No. Those sources can vary and change. Job Ranger exposes support levels specifically to avoid making that claim.
+Not currently. Those imports surface an OCR-required state. OCR is intentionally deferred rather than hidden behind an undisclosed upload.
 
-## Developer Appendix
+### Can Job Ranger export DOCX resumes?
+
+Not currently. PDF is the governed resume output. DOCX remains deferred until actual user demand justifies another rendering/compatibility path.
+
+### Is every Workday/iCIMS/etc. source guaranteed to work?
+
+No. Dynamic third-party portals vary and change. Job Ranger exposes support/reliability states specifically to avoid promising otherwise.
+
+### Is Linux supported?
+
+No packaged Linux release is currently supported.
+
+## Developer appendix
 
 ### Requirements
 
-- Node.js `>=22.12.0`
-- npm
-- `sqlite3` on `PATH`, or `SQLITE3_PATH` set explicitly
-
-The SQLite prerequisite above is for source/development runs. Published Windows installers bundle a pinned, verified SQLite CLI. The current desktop/toolchain baseline includes Electron 44.4.5, Vite 8, and TypeScript 7.
+- Node.js `>=22.12.0`;
+- npm;
+- `sqlite3` on `PATH`, or `SQLITE3_PATH` explicitly set.
 
 ### Common commands
 
 ```bash
 npm ci
 npm run repo:health
-npm run electron:dev
 npm run test:unit
 npm run test:e2e
+npm run electron:dev
 npm run electron:build:win
 npm run electron:build:mac
 ```
 
-For architecture and contribution guidance, see:
+Job Ranger deliberately preserves GitHub Actions budget. Some documentation/release-readiness work is validated manually by the maintainer rather than through hosted Actions. Validation evidence should state exactly what was run.
+
+For current architecture and release rules, see:
 
 - [README.md](./README.md)
 - [docs/README.md](./docs/README.md)
+- [docs/SYSTEM_STATE.md](./docs/SYSTEM_STATE.md)
 - [docs/ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md)
+- [docs/RELEASE_READINESS.md](./docs/RELEASE_READINESS.md)
 - [CONTRIBUTING.md](./CONTRIBUTING.md)
 - [SECURITY.md](./SECURITY.md)
