@@ -1,5 +1,7 @@
 name: Apply Source Trust Tranche
 
+# One-shot same-repository PR applicator for #117/#118. The first PR event
+# predates this workflow; this synchronization event triggers the existing file.
 on:
   pull_request:
     branches:
