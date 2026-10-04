@@ -147,9 +147,6 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
     if (isKnownBrowserPortal(host)) {
       return { sourceType: "browser-required", sourceIdentifier: normalizedUrl };
     }
-    if (host.startsWith("careers.") || looksLikeCareersPath(pathname)) {
-      return { sourceType: "generic-html", sourceIdentifier: normalizedUrl };
-    }
   } catch {
     return { sourceType: "unsupported", sourceIdentifier: null };
   }
