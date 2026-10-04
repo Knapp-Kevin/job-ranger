@@ -308,13 +308,13 @@ export class JobScoutBackend {
         continue;
       }
 
-      await this.sqlite.exec(migration.sql);
-      await this.sqlite.exec(
+      await this.sqlite.transaction([
+        migration.sql,
         sql`
           INSERT INTO schema_migrations (version, name, applied_at)
           VALUES (${migration.version}, ${migration.name}, ${new Date().toISOString()});
         `,
-      );
+      ]);
     }
   }
 
@@ -369,8 +369,7 @@ export class JobScoutBackend {
     }
 
     void this.processQueue().catch((error) => {
-      this.dropPendingScrape(companyId);
-      this.rejectScrapeListeners(companyId, error);
+      this.failPendingQueue(error);
     });
     return promise;
   }
@@ -398,10 +397,12 @@ export class JobScoutBackend {
         .catch((error) => {
           this.rejectScrapeListeners(next.companyId, error);
         })
-        .finally(async () => {
+        .finally(() => {
           this.inFlightCompanyIds.delete(next.companyId);
           this.runningScrapes -= 1;
-          await this.processQueue();
+          void this.processQueue().catch((error) => {
+            this.failPendingQueue(error);
+          });
         });
     }
   }
@@ -419,6 +420,14 @@ export class JobScoutBackend {
     this.scrapeListeners.delete(companyId);
     for (const listener of listeners) {
       listener.reject(error);
+    }
+  }
+
+  private failPendingQueue(error: unknown): void {
+    const pending = this.pendingQueue.splice(0);
+    for (const { companyId } of pending) {
+      this.queuedCompanyIds.delete(companyId);
+      this.rejectScrapeListeners(companyId, error);
     }
   }
 
@@ -549,5 +558,3 @@ export class JobScoutBackend {
     }
   }
 }
-
-
