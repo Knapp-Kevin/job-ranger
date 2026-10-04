@@ -9,13 +9,13 @@ import {
 } from "./evidence-extension-validators.cjs";
 import { validateCareerEntityId } from "./career-validators.cjs";
 
-export function initializeEvidenceExtensionIpc(options: {
+export async function initializeEvidenceExtensionIpc(options: {
   databasePath: string;
   sqliteBinaryPath: string;
-}): void {
+}): Promise<void> {
   const backend = new EvidenceExtensionBackend(options);
-  initializeApplicationLifecycleIpc(options);
-  initializeCareerStoryIpc(options);
+  await initializeApplicationLifecycleIpc(options);
+  await initializeCareerStoryIpc(options);
   initializeJsonResumeIpc(options);
 
   ipcMain.handle("career-evidence:list-metadata", () => backend.listMetadata());
