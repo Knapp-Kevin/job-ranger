@@ -150,6 +150,15 @@ jobs:
           $requireSigned = "${{ steps.release_tag.outputs.public }}" -eq "true"
           & ./scripts/verify-windows-distribution.ps1 -RequireSigned:$requireSigned
 
+      - name: Generate Windows checksums and release manifest
+        shell: bash
+        run: |
+          node scripts/generate-release-manifest.mjs \
+            --platform windows \
+            --tag "${{ steps.release_tag.outputs.tag }}" \
+            --public "${{ steps.release_tag.outputs.public }}" \
+            --trust-evidence windows-signing.json
+
       - name: Ensure GitHub release exists
         shell: bash
         env:
@@ -181,6 +190,8 @@ jobs:
             release/Job*windows*.exe.blockmap \
             release/latest.yml \
             build/trust/windows-signing.json \
+            build/trust/windows-SHA256SUMS.txt \
+            build/trust/windows-release-manifest.json \
             --clobber
 
   build-macos:
@@ -281,6 +292,15 @@ jobs:
         shell: bash
         run: bash scripts/verify-macos-distribution.sh "${{ steps.release_tag.outputs.public == 'true' && '1' || '0' }}"
 
+      - name: Generate macOS checksums and release manifest
+        shell: bash
+        run: |
+          node scripts/generate-release-manifest.mjs \
+            --platform macos \
+            --tag "${{ steps.release_tag.outputs.tag }}" \
+            --public "${{ steps.release_tag.outputs.public }}" \
+            --trust-evidence macos-signing.txt
+
       - name: Ensure GitHub release exists
         shell: bash
         env:
@@ -311,4 +331,6 @@ jobs:
             release/Job*macos*.dmg \
             release/Job*macos*.zip \
             build/trust/macos-signing.txt \
+            build/trust/macos-SHA256SUMS.txt \
+            build/trust/macos-release-manifest.json \
             --clobber
