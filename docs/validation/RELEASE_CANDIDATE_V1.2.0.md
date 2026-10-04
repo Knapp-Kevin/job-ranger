@@ -88,7 +88,7 @@ On candidate head `4f3cd0175b9287b5d9f067d89ed0a35f899bf749`, GitHub Actions CI 
 - the high-severity dependency audit gate;
 - `npm run repo:health`, which covers typecheck, build, and the repository test suite.
 
-That evidence is useful but is **not final release evidence**, because the branch subsequently changed to add the #123 mitigation and documentation reconciliation.
+That evidence is useful but is **not final release evidence**, because the branch subsequently changed to add the #123 mitigation, package-version reconciliation, and documentation updates.
 
 ## Required final-candidate validation
 
@@ -120,9 +120,11 @@ No pending item should be marked passed without execution evidence.
 
 ## Version metadata
 
-`package.json` is staged as `1.2.0` on the release-preparation branch.
+`package.json` and the root package records in `package-lock.json` are synchronized at `1.2.0` on the release-preparation branch.
 
-`package-lock.json` still contains the previous root-package version and must be reconciled before the release-preparation PR can merge. The candidate must not be tagged with mismatched package metadata.
+The lockfile synchronization was performed by a one-shot release-branch workflow and verified by reading the resulting lockfile. That temporary workflow was removed immediately afterward and is not part of the candidate architecture.
+
+Version synchronization removes the package-metadata blocker, but it does not make the release publishable without the remaining validation and platform evidence.
 
 ## Publication boundary
 
