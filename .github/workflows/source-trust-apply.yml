@@ -1,13 +1,13 @@
 name: Apply Source Trust Tranche
 
-# One-shot same-repository PR applicator for #117/#118. The matching workflow
-# now exists on the release base, so this synchronization event can execute it.
+# One-shot same-repository PR applicator for #117/#118.
 on:
   pull_request:
     branches:
       - release/v1.2.0-rc1
     paths:
       - scripts/apply-source-trust-tranche.mjs
+      - scripts/fix-source-trust-generator.mjs
       - .github/workflows/source-trust-apply.yml
 
 permissions:
@@ -22,6 +22,9 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: release/v1.2.0-source-trust
+
+      - name: Repair generator escaping
+        run: node scripts/fix-source-trust-generator.mjs
 
       - name: Apply deterministic tranche patch
         run: node scripts/apply-source-trust-tranche.mjs
