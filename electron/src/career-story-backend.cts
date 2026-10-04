@@ -9,6 +9,7 @@ import type {
   EvidenceVerificationState,
 } from "../../src/shared/contracts.js";
 import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
+import { applyNamedSchemaMigration } from "./schema-migration.cjs";
 
 const CAREER_STORY_MIGRATION_VERSION = 1002;
 const CAREER_STORY_MIGRATION_NAME = "career_story_projections";
@@ -123,25 +124,11 @@ export class CareerStoryBackend {
   }
 
   async initialize(): Promise<void> {
-    await this.sqlite.exec(
-      "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL);",
-    );
-    const existing = await this.sqlite.queryOne<{ version: number }>(sql`
-      SELECT version FROM schema_migrations
-      WHERE version = ${CAREER_STORY_MIGRATION_VERSION}
-      LIMIT 1;
-    `);
-    if (existing) return;
-
-    await this.sqlite.exec(CAREER_STORY_SCHEMA);
-    await this.sqlite.exec(sql`
-      INSERT INTO schema_migrations (version, name, applied_at)
-      VALUES (
-        ${CAREER_STORY_MIGRATION_VERSION},
-        ${CAREER_STORY_MIGRATION_NAME},
-        ${new Date().toISOString()}
-      );
-    `);
+    await applyNamedSchemaMigration(this.sqlite, {
+      version: CAREER_STORY_MIGRATION_VERSION,
+      name: CAREER_STORY_MIGRATION_NAME,
+      sql: CAREER_STORY_SCHEMA,
+    });
   }
 
   private async assertCurrentEvidence(evidenceIds: string[]): Promise<void> {
