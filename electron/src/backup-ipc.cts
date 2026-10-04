@@ -1,5 +1,6 @@
 import { app, dialog, ipcMain } from "electron";
 import { promises as fs } from "node:fs";
+import { assertRestoreBundleTreeSafe } from "./backup-bundle-policy.cjs";
 import { BackupService } from "./backup-service.cjs";
 
 export function initializeBackupIpc(options: {
@@ -30,6 +31,7 @@ export function initializeBackupIpc(options: {
     if (selection.canceled || selection.filePaths.length === 0) return null;
 
     const selectedPath = await fs.realpath(selection.filePaths[0]);
+    await assertRestoreBundleTreeSafe(selectedPath);
     const result = await service.validateBackup(selectedPath);
     approvedRestorePath = selectedPath;
     return result;
@@ -48,6 +50,7 @@ export function initializeBackupIpc(options: {
       throw new Error("The selected backup changed. Select the backup again before restoring it.");
     }
 
+    await assertRestoreBundleTreeSafe(requestedPath);
     approvedRestorePath = null;
     await service.stageRestore(requestedPath);
     setTimeout(() => {
