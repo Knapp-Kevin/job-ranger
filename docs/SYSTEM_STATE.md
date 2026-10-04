@@ -333,9 +333,9 @@ The v1.2.0 release branch records:
 - React `19.3.0`;
 - Electron Builder `26.x`;
 - `@firecrawl/anydoc` `0.2.4`;
-- `package.json` version `1.2.0`.
+- synchronized `package.json` and root `package-lock.json` version `1.2.0`.
 
-`package-lock.json` still records the previous root package version and must be reconciled before the candidate can merge/tag.
+Package-version metadata is reconciled. This does not change the published version until v1.2.0 assets are actually released.
 
 ## Validation state
 
@@ -357,7 +357,7 @@ The repository has automated unit/backend/Electron coverage across:
 - backup/restore;
 - JSON Resume interoperability.
 
-Fresh hosted CI passed on the initial v1.2.0 candidate head, including `npm ci`, the high-severity dependency gate, and repository health (typecheck, build, and test). The candidate changed afterward for the #123 mitigation and documentation reconciliation, so fresh validation on the final frozen head is still required. Electron E2E must also be green on that final head.
+Fresh hosted CI passed on the initial v1.2.0 candidate head, including `npm ci`, the high-severity dependency gate, and repository health (typecheck, build, and test). The candidate changed afterward for the #123 mitigation, package-version reconciliation, and documentation reconciliation, so fresh validation on the final frozen head is still required. Electron E2E must also be green on that final head.
 
 The project intentionally preserves GitHub Actions budget. Documentation/remediation and some release-preparation validation may be performed manually and must record exactly what was executed.
 
@@ -381,8 +381,7 @@ US-0 through US-30 have been reconciled as satisfied by the current product cont
 
 ### Release gates
 
-- reconcile the `package-lock.json` root package version with staged `package.json` v1.2.0 metadata;
-- obtain fresh final-head repository-health, dependency-audit, unit, and Electron E2E evidence;
+- obtain fresh final-head repository-health, dependency-audit, unit-equivalent, and Electron E2E evidence;
 - explicitly disposition the residual #123 DNS-rebinding risk for publication after validating the generic-host mitigation;
 - exercise representative v1.1.2 → v1.2.0 migration plus backup/restore behavior;
 - validate Windows NSIS x64 and macOS x64/arm64 packages from the immutable candidate;
