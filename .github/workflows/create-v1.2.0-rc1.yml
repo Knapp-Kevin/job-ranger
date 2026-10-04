@@ -1,0 +1,49 @@
+name: Create v1.2.0 RC1
+
+on:
+  push:
+    branches:
+      - release/v1.2.0-rc1
+    paths:
+      - .github/workflows/create-v1.2.0-rc1.yml
+
+permissions:
+  contents: write
+  actions: write
+
+jobs:
+  create-and-dispatch:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Create immutable RC tag
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TARGET_SHA: ea8f40f332ce1eaf1a993ffa19c10149c91796d4
+          TAG: v1.2.0-rc.1
+        run: |
+          set -euo pipefail
+          existing="$(gh api "repos/${GITHUB_REPOSITORY}/git/ref/tags/${TAG}" --jq '.object.sha' 2>/dev/null || true)"
+          if [[ -n "$existing" ]]; then
+            if [[ "$existing" != "$TARGET_SHA" ]]; then
+              echo "Refusing to move existing immutable tag $TAG from $existing to $TARGET_SHA" >&2
+              exit 1
+            fi
+          else
+            gh api --method POST "repos/${GITHUB_REPOSITORY}/git/refs" \
+              -f ref="refs/tags/${TAG}" \
+              -f sha="$TARGET_SHA" >/dev/null
+          fi
+
+      - name: Dispatch immutable platform builds
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG: v1.2.0-rc.1
+        run: |
+          set -euo pipefail
+          gh workflow run release-build.yml \
+            --repo "$GITHUB_REPOSITORY" \
+            --ref release/v1.2.0-rc1 \
+            -f tag="$TAG" \
+            -f platform=all
