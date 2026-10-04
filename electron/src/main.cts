@@ -9,10 +9,11 @@ import { initializeBackupIpc } from "./backup-ipc.cjs";
 import { applyPendingRestore } from "./backup-service.cjs";
 import { publicJobFeedDiscoveryProvider } from "./source-discovery-provider.cjs";
 import { validateSourceDiscoveryRequest } from "./source-discovery-validator.cjs";
+import { assertManagedArtifactPath } from "./managed-path-policy.cjs";
 import {
   validateExternalUrl,
   validateId,
-  validateFiniteNumber,
+  validateIntegerInRange,
   validateCompanyDraft,
   validateCompanyUpdate,
   validateFilterDraft,
@@ -232,8 +233,12 @@ function registerIpcHandlers(): void {
   ipcMain.handle("app:open-external", async (_event, url: string) => {
     await shell.openExternal(validateExternalUrl(url));
   });
-  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: string) => {
-    shell.showItemInFolder(targetPath);
+  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: unknown) => {
+    const safePath = assertManagedArtifactPath(
+      targetPath,
+      requireCareerBackend().getArtifactDirectory(),
+    );
+    shell.showItemInFolder(safePath);
   });
 
   ipcMain.handle("system:get-status", () =>
@@ -293,7 +298,9 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("scrape-runs:list-recent", (_event, limit?: number) =>
     requireBackend().listRecentScrapeRuns(
-      limit === undefined ? undefined : validateFiniteNumber(limit, "Scrape run limit"),
+      limit === undefined
+        ? undefined
+        : validateIntegerInRange(limit, "Scrape run limit", 1, 100),
     ),
   );
 
