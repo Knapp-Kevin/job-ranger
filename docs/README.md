@@ -1,58 +1,129 @@
 # Documentation Index
 
-Job Ranger documentation is divided into current guidance, active design/research, validation evidence, and historical implementation records. This distinction matters because several early phase plans describe work that has since been completed or superseded.
+Job Ranger documentation is intentionally divided into **current product truth**, **active design/roadmap**, **validation evidence**, **research**, **release evidence**, and **historical provenance**.
 
-## Current Sources of Truth
+This hierarchy exists because the repository has accumulated multiple generations of planning documents. A reader should never have to guess whether an old phase plan still describes the product.
+
+## Authority hierarchy
+
+When documents disagree, use this order:
+
+1. **Published GitHub Release** for what ordinary users can download and run.
+2. **Current source and tests on `main`** for what is actually implemented in the repository.
+3. **`SYSTEM_STATE.md`** for the reconciled factual snapshot of `main` versus the published release.
+4. **Root `README.md` and `HELP.md`** for public/user-facing product behavior.
+5. **`ARCHITECTURE_PLAN.md`** for current architecture and accepted trust boundaries.
+6. **`planning/PLAN.md`** for genuine next work.
+7. **Current design documents** for normative contracts.
+8. **Validation/research documents** for evidence and alternatives.
+9. **Historical plans / internal provenance** for how the project got here, not what it is now.
+
+A stale plan does not outrank merged code merely because it contains more checkboxes.
+
+## Current sources of truth
 
 | Document | Purpose |
 | --- | --- |
-| [`../README.md`](../README.md) | Public product overview, current release, capabilities, setup, and roadmap. |
-| [`../HELP.md`](../HELP.md) | User-facing setup and troubleshooting. |
-| [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history and notable changes. |
-| [`CONCEPT.md`](./CONCEPT.md) | Product intent, principles, boundaries, and success standard. |
-| [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Current factual repository/product snapshot. |
-| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture and accepted intended evolution. |
-| [`planning/PLAN.md`](./planning/PLAN.md) | Active roadmap and prioritized next work. |
-| [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md) | Normative user-story product contract for cross-career universality and validation ownership. |
-| [`BRANDING.md`](./BRANDING.md) | Canonical visual assets and brand usage. |
-| [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required third-party attribution and independence/trademark boundaries. |
-| [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, status language, merge and release rules. |
-| [`../CONTRIBUTING.md`](../CONTRIBUTING.md) | Contributor workflow and quality expectations. |
-| [`../SECURITY.md`](../SECURITY.md) | Security posture and reporting guidance. |
+| [`../README.md`](../README.md) | Public overview, published-release boundary, current `main` capability map, development/release entry points. |
+| [`../HELP.md`](../HELP.md) | User workflows, troubleshooting, and published-vs-main behavior. |
+| [`../CHANGELOG.md`](../CHANGELOG.md) | Published release history plus the current `Unreleased` delta. |
+| [`CONCEPT.md`](./CONCEPT.md) | Product purpose, principles, boundaries, and success standard. |
+| [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Factual current repository/product snapshot. |
+| [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture, authority model, trust boundaries, and accepted evolution. |
+| [`planning/PLAN.md`](./planning/PLAN.md) | Actual prioritized next work. |
+| [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release-blocking validation and publication contract. |
+| [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md) | Evaluated missing capabilities with needed/candidate/deferred/rejected dispositions. |
+| [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md) | Normative US-0 through US-30 product contract and cross-career acceptance model. |
+| [`BRANDING.md`](./BRANDING.md) | Canonical visual assets and usage. |
+| [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, truth/status language, merge/release expectations. |
+| [`../SECURITY.md`](../SECURITY.md) | Current security model, boundaries, reporting, and dependency expectations. |
+| [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required attribution and third-party provenance. |
 
-## Active Design and Research
+## Current product/design contracts
 
-- [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md) defines US-0 through US-30, issue ownership, progressive onboarding, target-track/constraint semantics, explainable opportunity assessment, and the cross-career validation model tracked by program issue #81.
-- [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md) is the accepted implementation architecture for Career Evidence, provenance, requirement/evidence mapping, deterministic resume generation, truth/parseability/relevance gates, managed artifacts, and application-scoped resume versions.
-- [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md) is the QOR research synthesis behind the Career Evidence and Resume Intelligence phase. It evaluates resume consumers, document formats, ATS/parser constraints, truthful tailoring, import provenance, Career-Ops lessons, and an evidence-first product model.
-- [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md) applies the maintained Technical Capability Catalog to resume/import intelligence. It identifies permissively licensed candidates, rejects incompatible licensing paths, and records the bounded parser evaluation behind the adopted import path.
-- [`research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](./research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md) reconciles the Technical Capability Catalog across Job Ranger's broader product surface: source discovery/acquisition, fit intelligence, applications, follow-up, interview preparation, notifications, inference, export, and security boundaries. Its central conclusion is to keep a native vertical product core and add only narrow replaceable adapters where a real external capability is needed.
+These describe implemented architecture or accepted long-lived contracts and should remain aligned with `SYSTEM_STATE.md`:
 
-Research documents provide supporting evidence and alternatives. `CONCEPT.md`, `ARCHITECTURE_PLAN.md`, `planning/PLAN.md`, and `design/UNIVERSAL_USER_STORIES.md` carry accepted direction; planned functionality is not claimed as shipped until implementation and release evidence exists.
+- [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSAL_USER_STORIES.md)
+- [`design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`](./design/CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md)
+- [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md`](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md)
+- [`design/APPLICATION_LIFECYCLE_FOUNDATION.md`](./design/APPLICATION_LIFECYCLE_FOUNDATION.md)
+- [`design/INTERVIEW_PREP.md`](./design/INTERVIEW_PREP.md)
+- [`design/CAREER_STORIES.md`](./design/CAREER_STORIES.md)
+- [`design/APPLICATION_MATERIALS.md`](./design/APPLICATION_MATERIALS.md)
+- [`design/SEARCH_LEARNING.md`](./design/SEARCH_LEARNING.md)
+- [`design/BACKUP_RESTORE.md`](./design/BACKUP_RESTORE.md)
+- [`design/R5_PORTABILITY_SCOPE_DECISIONS.md`](./design/R5_PORTABILITY_SCOPE_DECISIONS.md)
 
-## Validation Evidence
+A design document may preserve detailed implementation rationale even after its issue closes. Its status must not be used to infer whether a feature is shipped; use `SYSTEM_STATE.md` and the release record for that.
 
-- [`windows-package-validation.md`](./windows-package-validation.md) records the Windows self-contained SQLite packaging proof used to close the v1.1.x release blocker and issue #38.
+## Validation evidence
 
-Cross-career user-story validation is tracked by issue #87 and should become version-controlled evidence as the Universal User Stories program is implemented.
+Version-controlled validation evidence lives under [`validation/`](./validation/).
 
-## Current Documentation Baseline
+Current areas include:
 
-The current documentation baseline reflects:
+- universal career fixture schema/version/execution/findings;
+- US-0 through US-30 validation matrix;
+- structured credential evidence validation;
+- evidence references/lineage validation;
+- source discovery tranche validation;
+- Windows package/runtime evidence where retained.
 
-- Career Profile and deterministic fit guidance on `main`;
-- durable Career Profile and Applications persistence on `main`;
-- Career Evidence import/review and requirement mapping on `main`;
-- deterministic resume creation and artifact lifecycle on `main` through PR #75;
-- occupation-agnostic Career Profile behavior;
-- the Universal User Stories program tracked by #81 and design issues #82-#88;
-- Career-Ops attribution preserved without embedding its runtime;
-- Node.js 22.12+, Electron 44.4.5, Vite 8, and TypeScript 7;
-- Windows x64 and macOS x64/arm64 v1.1.2 published packaging.
+Validation documents answer **what was proven and under what assumptions**. They do not automatically upgrade a feature from implemented to shipped.
 
-## Historical Planning Records
+## Research evidence
 
-The following files are retained for implementation provenance but should not be used as current product status:
+Research documents are inputs to product and architecture decisions, not a feature adoption queue.
+
+Key current research:
+
+- [`research/RESUME_INTELLIGENCE_QOR.md`](./research/RESUME_INTELLIGENCE_QOR.md)
+- [`research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md`](./research/RESUME_INTELLIGENCE_CATALOG_HARVEST.md)
+- [`research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md`](./research/JOB_RANGER_CAPABILITY_CATALOG_RECONCILIATION.md)
+- [`research/RESUME_PARSER_ADOPTION_2026-09-25.md`](./research/RESUME_PARSER_ADOPTION_2026-09-25.md)
+- [`research/ANYDOC_PARSER_BENCHMARK_PROTOCOL.md`](./research/ANYDOC_PARSER_BENCHMARK_PROTOCOL.md)
+
+Research can recommend or reject a capability. It does not make that capability product truth until accepted and implemented.
+
+## Release documentation
+
+Release truth is deliberately strict:
+
+- GitHub Releases define what users can download;
+- [`CHANGELOG.md`](../CHANGELOG.md) records release history and the next unreleased delta;
+- [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) defines the pre-publication evidence required;
+- package/build configuration defines what can theoretically be built, not what was actually published;
+- platform validation records what was actually exercised.
+
+The latest published release remains **v1.1.2**. `main` is substantially ahead.
+
+## Current documentation baseline
+
+As of the October 2026 reconciliation, current docs must reflect that `main` includes:
+
+- progressive onboarding;
+- Target Tracks and explicit constraint semantics;
+- durable Career Profile and Applications;
+- Career Evidence import/direct authoring/provenance/lineage;
+- structured credentials and evidence references;
+- source discovery with explicit approval;
+- explainable opportunity assessment;
+- deterministic resume creation and tailoring;
+- exact submitted-artifact history;
+- lifecycle contacts/events/reminders/offers;
+- evidence-grounded interview preparation;
+- Career Stories;
+- evidence-grounded application materials;
+- Search Insights and recurring-gap analysis;
+- verified backup/restore;
+- JSON Resume interoperability;
+- cross-career validation fixtures.
+
+A current source-of-truth document that describes those completed capabilities as "planned" is stale and should be corrected.
+
+## Historical planning records
+
+The following files are retained for implementation provenance and must not be used as current product status:
 
 - `plan-remediation.md`
 - `plan-v1-remediation.md`
@@ -63,12 +134,25 @@ The following files are retained for implementation provenance but should not be
 - `planning/plan-phase5-notifications-tray.md`
 - `planning/plan-phase5-notifications-tray-v2.md`
 
-These documents are useful for understanding how the current implementation was reached. Where they conflict with the root README, `SYSTEM_STATE.md`, current source, tests, or a published release, the newer evidence wins.
+These documents are not rewritten merely to make history look tidy. Where they conflict with current source, tests, or current source-of-truth documents, the newer evidence wins.
 
-## Internal Provenance Artifacts
+## Internal provenance artifacts
 
-`META_LEDGER.md` and `SHADOW_GENOME.md` are retained as internal project/provenance artifacts. They are not intended as end-user product documentation and should not override current source or governance documents.
+`META_LEDGER.md` and `SHADOW_GENOME.md` are internal project/provenance artifacts.
 
-## Documentation Rule
+They are not end-user product documentation and must not override current product, governance, security, architecture, or release truth.
 
-When product behavior changes, update the smallest set of current source-of-truth documents needed to keep public claims accurate. Do not rewrite historical documents merely to make the past look tidy. History is allowed to be historical. Miracles occur.
+## Documentation maintenance rule
+
+Material product changes should update the smallest set of current source-of-truth documents needed to prevent contradiction.
+
+Before a release:
+
+- run the documentation/release-readiness reconciliation;
+- verify HELP/navigation language against the actual candidate UI;
+- move completed work out of roadmap "planned" sections;
+- ensure `Unreleased` changelog content covers the actual candidate;
+- verify shipped vs main labels;
+- record any validation that could not be performed.
+
+The repository intentionally preserves GitHub Actions budget. Documentation-only or release-readiness remediation may be validated manually by the maintainer instead of through hosted Actions, provided the evidence states exactly what was and was not run.
