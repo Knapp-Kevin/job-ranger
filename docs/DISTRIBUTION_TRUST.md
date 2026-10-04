@@ -14,6 +14,27 @@ Prerelease tags such as `-rc.*` or `-beta*` may be produced without signing/nota
 
 Do not disable SmartScreen, Smart App Control, Gatekeeper, Defender, or macOS system security globally to make Job Ranger installable.
 
+## Artifact identity and release evidence
+
+Every platform build publishes cryptographic identity evidence generated **after packaging from the exact files uploaded to the release**:
+
+- `windows-SHA256SUMS.txt` and `windows-release-manifest.json`;
+- `macos-SHA256SUMS.txt` and `macos-release-manifest.json`.
+
+Each release manifest records:
+
+- release tag;
+- platform;
+- public-release versus tester-only state;
+- artifact filename;
+- byte size;
+- SHA-256 digest;
+- the platform signing-verification evidence filename.
+
+Checksums let a user prove that a downloaded file matches the GitHub Release asset before making any tester-only security exception. A matching checksum does not make an unsigned artifact signed or trusted by the operating system.
+
+See [`TESTER_INSTALLATION.md`](./TESTER_INSTALLATION.md) for the bounded prerelease path.
+
 ## Windows public distribution
 
 ### Selected path: Microsoft Azure Artifact Signing
@@ -49,7 +70,7 @@ The Azure application/service principal should receive only the role required to
 
 `scripts/verify-windows-distribution.ps1` checks both the unpacked Job Ranger executable and generated Windows installer(s) with `Get-AuthenticodeSignature` and writes `build/trust/windows-signing.json`.
 
-For a stable public tag, every checked executable must report a valid Authenticode signature. The trust report is uploaded with the release assets.
+For a stable public tag, every checked executable must report a valid Authenticode signature. The trust report is uploaded with the release assets alongside the SHA-256 checksum and release-manifest files.
 
 A valid signature does not guarantee that Microsoft SmartScreen has accumulated enough publisher/file reputation to suppress every initial warning. SmartScreen reputation is an external platform decision and still requires clean-machine release validation.
 
@@ -57,14 +78,16 @@ A valid signature does not guarantee that Microsoft SmartScreen has accumulated 
 
 Unsigned prerelease artifacts are allowed only for informed testers. They are not equivalent to public distribution.
 
-Windows 11 may warn about or block unsigned/unrecognized applications, and Smart App Control can block unsigned applications when its cloud service cannot establish confidence. Testers should use only OS-native, per-file/per-app override flows that Windows actually offers on that machine. Job Ranger documentation must never instruct a user to disable SmartScreen, Smart App Control, Defender, or other Windows security globally.
+Windows 11 may warn about or block unsigned/unrecognized applications. Smart App Control specifically blocks unknown unsigned code when Microsoft cannot establish sufficient trust. An OS-native SmartScreen flow may offer a per-file option to run an unrecognized app on some systems, but that is not a universal unsigned installation mechanism.
 
-If Windows does not offer an override for a specific configuration, the unsigned build is not installable on that configuration. That is a limitation to record, not a security feature to defeat.
+If Smart App Control blocks Job Ranger or Windows does not offer a per-app/per-file override, the unsigned build is **not installable on that configuration**. Job Ranger documentation must not instruct a user to disable Smart App Control, SmartScreen, Defender, or other Windows security globally.
+
+Before using an unsigned tester artifact, verify its SHA-256 digest against `windows-SHA256SUMS.txt` from the same GitHub Release.
 
 References:
 
-- https://support.microsoft.com/en-us/windows/security/threat-malware-protection/smart-app-control-frequently-asked-questions
-- https://support.microsoft.com/en-us/windows/security/windows-security/protection-history-in-the-windows-security-app
+- https://learn.microsoft.com/windows/apps/develop/smart-app-control/overview
+- https://learn.microsoft.com/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control
 
 ## macOS public distribution
 
@@ -105,7 +128,7 @@ The build hook submits the signed `.app` with `notarytool`, waits for Apple appr
 - `spctl --assess --type exec`;
 - `xcrun stapler validate`.
 
-For a stable public tag, any failure blocks release. The trust report is uploaded as `build/trust/macos-signing.txt`.
+For a stable public tag, any failure blocks release. The trust report is uploaded as `build/trust/macos-signing.txt` alongside the SHA-256 checksum and release-manifest files.
 
 ## macOS tester path
 
@@ -113,9 +136,11 @@ Unsigned or unnotarized prerelease artifacts may be used by informed testers whe
 
 After attempting to open the app, a tester who has independently verified the artifact and trusts its source may use the OS-native **System Settings → Privacy & Security → Open Anyway** flow when macOS offers it. Do not instruct testers to disable Gatekeeper globally, remove quarantine recursively, or weaken system security.
 
+Before making that exception, verify the artifact SHA-256 digest against `macos-SHA256SUMS.txt` from the same GitHub Release.
+
 Reference:
 
-- https://support.apple.com/en-ph/102445
+- https://support.apple.com/102445
 
 ## Clean-machine validation still required
 
@@ -127,10 +152,11 @@ Repository checks cannot prove the full end-user trust experience. Before #125 i
 4. Developer ID-signed macOS x64 and arm64 artifacts;
 5. successful Apple notarization and stapling verification;
 6. launch on clean supported macOS systems with Gatekeeper behavior recorded;
-7. release notes that distinguish any remaining tester-only path from normal public distribution.
+7. checksum/release-manifest assets matching the tested packages;
+8. release notes that distinguish any remaining tester-only path from normal public distribution.
 
 Until those observations exist, #125 remains open even if the repository is fully prepared to consume the credentials.
 
 ## Linux
 
-Linux packaging should be evaluated on user value, support burden, update strategy, and target distributions. It must not be introduced merely as a way to avoid Windows or macOS trust requirements.
+Linux packaging is tracked separately in #129 and should be evaluated on user value, support burden, update strategy, and target distributions. It must not be introduced merely as a way to avoid Windows or macOS trust requirements.
