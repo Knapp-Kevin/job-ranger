@@ -6,6 +6,8 @@
  * flag and must fail closed if signing/notarization credentials are absent.
  */
 
+const { spawnSync } = require("node:child_process");
+
 exports.default = async function notarizing(context) {
   const { electronPlatformName, appOutDir } = context;
 
@@ -35,12 +37,24 @@ exports.default = async function notarizing(context) {
 
   const { notarize } = await import("@electron/notarize");
   const appName = context.packager.appInfo.productFilename;
+  const appPath = `${appOutDir}/${appName}.app`;
 
   await notarize({
     tool: "notarytool",
-    appPath: `${appOutDir}/${appName}.app`,
+    appPath,
     appleId: credentials.appleId,
     appleIdPassword: credentials.appleIdPassword,
     teamId: credentials.teamId,
   });
+
+  const staple = spawnSync("xcrun", ["stapler", "staple", appPath], {
+    encoding: "utf8",
+    stdio: "pipe",
+  });
+  if (staple.status !== 0) {
+    throw new Error(
+      `Apple notarization succeeded but stapling failed: ${staple.stderr || staple.stdout || "unknown stapler error"}`,
+    );
+  }
+  console.log(`Stapled Apple notarization ticket to ${appPath}.`);
 };
