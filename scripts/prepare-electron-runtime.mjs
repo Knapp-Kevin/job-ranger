@@ -35,6 +35,7 @@ await rm(runtimeDirectory, { recursive: true, force: true });
 await Promise.all([
   rm(path.join(electronDirectory, "adapters"), { recursive: true, force: true }),
   rm(path.join(electronDirectory, "shared"), { recursive: true, force: true }),
+  rm(path.join(electronDirectory, "validators"), { recursive: true, force: true }),
   ...legacyGeneratedFiles.map((fileName) =>
     rm(path.join(electronDirectory, fileName), { force: true }),
   ),
