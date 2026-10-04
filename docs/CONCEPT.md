@@ -2,7 +2,17 @@
 
 ## Purpose
 
-Job Ranger helps ordinary job seekers discover, monitor, evaluate, prepare for, and manage job opportunities from a private desktop workspace without requiring software-development expertise, a cloud account, or an AI provider just to get started.
+Job Ranger helps ordinary job seekers discover, monitor, evaluate, prepare for, and manage paths to employment from a private desktop workspace without requiring software-development expertise, a cloud account, or an AI provider just to get started.
+
+Job Ranger is a **Career Ops** product, not an application-volume optimizer. Its job is to help the user understand who they are, what kind of work and environment they want, which career directions deserve investment, which companies and people may provide useful paths, and which opportunities are worth pursuing intentionally.
+
+The resume is evidence about the person. It is not the person's identity, and it is not the sole input to discovery.
+
+The product's preferred progression is:
+
+> **Person → Career Direction → Companies → People → Opportunities → Applications**
+
+That sequence is directional rather than mandatory. A user may enter through an existing job, a company, a contact, a resume, or a career goal. Job Ranger should still orient the workflow around finding a good path to employment rather than maximizing the number of applications sent.
 
 The product is not built around one occupation, one employment model, or one conventional career path. Its user-facing contract is defined through universal user stories and validated against materially different career contexts.
 
@@ -37,6 +47,24 @@ This breadth does not change the product's authority model. Career Evidence rema
 
 ## Design principles
 
+### Quality over quantity
+
+Job Ranger should optimize for **qualified, intentional progress**, not activity volume.
+
+Application count is not a success metric by itself. A smaller set of well-understood opportunities that fit the user's direction, constraints, evidence, and preferences is preferable to a large queue of weak matches.
+
+The product should reduce the cost of good judgment rather than remove judgment from the process. Discovery, monitoring, analysis, preparation, reminders, and path-finding can be highly automated. Consequential external actions remain intentional and user-controlled.
+
+When future Career Ops capabilities expand beyond specific openings, they should help the user identify promising companies, relationships, introductions, communities, recruiters, hiring managers, or other legitimate paths to employment without turning networking into another spam channel.
+
+### Person before resume
+
+Job Ranger should learn from more than the document representing the user's previous work.
+
+Career Evidence establishes what the user can truthfully prove. Career Profile, Target Tracks, preferences, constraints, outcomes, and user-authored career direction describe what the user wants to become and how they want to work.
+
+Experience is evidence for future choices, not a command to repeat the past indefinitely.
+
 ### Consumer first
 
 A person looking for work should not need to understand GitHub, Node.js, YAML, scraping architecture, model providers, agent terminology, or ATS vendor taxonomy to use Job Ranger.
@@ -65,7 +93,7 @@ Optional inference may improve semantic interpretation or language later, but it
 
 ### Evidence before confidence
 
-Job Ranger must not invent user experience, credentials, compensation, employer requirements, application history, or outcomes.
+Job Ranger must not invent user experience, credentials, compensation, employer requirements, application history, relationships, referrals, or outcomes.
 
 Career Evidence, not a resume or model response, is the canonical factual career domain.
 
@@ -98,7 +126,7 @@ Job Ranger distinguishes structured supported adapters, detected best-effort pat
 
 Job Ranger is a decision-support tool.
 
-It can find, organize, explain, prepare, remind, preserve, and analyze. The user remains responsible for consequential external actions, including submitting an application.
+It can find, organize, explain, prepare, remind, preserve, analyze, and eventually surface useful relationship paths. The user remains responsible for consequential external actions, including submitting an application or contacting another person.
 
 ### Historical truth matters
 
@@ -122,6 +150,8 @@ Job Ranger is not currently:
 - a mandatory cloud-account product;
 - an AI-only career assistant;
 - an autonomous mass-application bot;
+- an application-throughput optimizer;
+- an automated networking/outreach spam engine;
 - a guarantee that every third-party career page can be extracted successfully;
 - a prediction engine that can know whether an employer will hire the user;
 - a collection of occupation-specific profile forks;
@@ -137,7 +167,9 @@ The strongest current **needed** gaps are:
 2. better dynamic-source failure diagnostics and reliability measurement;
 3. publishing a new release containing the product already implemented on `main`.
 
-Current **candidate** ideas include broader discovery providers, faster arbitrary-job capture, reusable application-question answers, bounded user-controlled form assistance, broader networking workflows, calendar mirroring, and mock-interview practice.
+Current **candidate** ideas include broader discovery providers, faster arbitrary-job capture, reusable application-question answers, bounded user-controlled form assistance, broader Career Ops relationship/networking paths, company targeting before a specific opening exists, calendar mirroring, and mock-interview practice.
+
+Issue [#121](https://github.com/Knapp-Kevin/job-ranger/issues/121) governs the next design pass for relationship-path discovery and intentional pursuit. It is a candidate direction, not a claim that those capabilities are already implemented.
 
 Current **deferred** capabilities include remote inference, OCR, DOCX resume export, specialized federal/academic document projections, cloud sync, and Linux packaging until evidence justifies the complexity.
 
@@ -147,13 +179,17 @@ See [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md).
 
 The practical acceptance test remains:
 
-> Can a nontechnical job seeker install Job Ranger, understand what to do next, find useful opportunities, prepare truthful materials, and manage their search without needing the person who built it sitting beside them?
+> Can a nontechnical job seeker install Job Ranger, understand what to do next, identify worthwhile paths and opportunities, prepare truthful materials, and manage their search without needing the person who built it sitting beside them?
+
+The quality test is:
+
+> Does Job Ranger help the user make better career decisions and produce qualified downstream progress without training them to treat application count as achievement?
 
 The universality test remains:
 
 > Does that workflow stay coherent when the user is hourly, salaried, licensed, portfolio-heavy, early-career, executive, changing careers, seeking government work, contracting, or returning after a nonlinear career history?
 
-The release test adds a third question:
+The release test adds a final question:
 
 > Can the repository prove that the downloadable installer actually contains the capabilities the documentation claims it contains?
 
