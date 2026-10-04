@@ -1,147 +1,203 @@
 # Job Ranger v1.2.0 Release Candidate Evidence
 
-**Status:** repository candidate validated; platform publication evidence pending  
+**Status:** packaged prerelease candidate validated; local consumer smoke and signed public evidence pending  
 **Target version:** v1.2.0  
 **Published predecessor:** v1.1.2  
-**Preparation branch:** `release/v1.2.0-rc1`  
-**Candidate base:** `main@20c8d776fe629d5310c486a6496f2b1af07d88c0`  
-**Validated product head:** `f4eb6d695377f8599827dd7cc453bcf634cd5713`  
+**Validated packaged candidate:** v1.2.0-rc.3  
+**Candidate commit:** `e25c61c0be21dd00bc80a0880d2a770660c283bd`  
 **Preparation date:** 2026-10-04
 
 ## Scope decision
 
 v1.2.0 is the selected next release version.
 
-The release is a minor-version increment because it adds substantial backward-compatible product capability without intentionally resetting the user-data model or introducing a governed breaking product contract.
+The release is a minor-version increment because it adds substantial backward-compatible product capability without an intentional breaking reset of the user-data or product contract.
 
-The candidate scope is frozen around the completed post-v1.1.2 product plus accepted repository hardening already merged to `main` and the release-specific #123 mitigation described below.
+Included product areas include:
 
-Included product areas:
-
-- progressive onboarding;
-- multiple Target Tracks and explicit constraint semantics;
+- progressive onboarding and multiple Target Tracks;
 - durable Career Profile and Applications;
 - canonical Career Evidence and resume import;
-- deterministic requirement/evidence mapping and explainable opportunity assessment;
+- canonical job-source snapshots and source diagnostics (#117/#118);
+- deterministic requirement/evidence mapping and explainable assessment;
 - source discovery with explicit approval;
 - deterministic resume creation/tailoring and exact submitted-artifact history;
-- application lifecycle, interview preparation, Career Stories, and application materials;
+- application lifecycle, Career Stories, interview preparation, and application materials;
 - offers, Search Insights, backup/restore, and JSON Resume interoperability;
 - cross-career validation fixtures;
-- QOR hardening tranche covering privileged numeric validation, source-domain classification, generated-runtime authority cleanup, managed artifact path confinement, record-shape validation, test coverage, and generated residue cleanup;
-- Career Ops / quality-over-quantity documentation clarification.
+- QOR repository hardening;
+- connection-pinned anti-rebinding acquisition transport (#123);
+- release signing/notarization fail-closed plumbing, tester trust evidence, and release checksums/manifests (#125/#128);
+- Career Ops / quality-over-quantity product documentation.
 
-## Explicitly outside candidate scope
+## Product work intentionally outside v1.2.0
 
-The following remain follow-on work unless a release-blocking defect is discovered:
-
-- #117 canonical job-description/source snapshots;
-- #118 dynamic-source diagnostics and reliability measurement;
-- #121 Career Ops relationship-path / intentional-pursuit implementation.
-
-Those are valuable product-quality or design tracks, but they are not required to represent the already-completed v1.2.0 product honestly.
+- broader Career Ops relationship-path implementation; #121 completed the bounded design contract but did not claim implementation;
+- Linux packaged support; #129 evaluated and deferred until demand;
+- Microsoft Store AppX/MSIX distribution; #133 evaluated as a valid post-release candidate, not current scope;
+- remote inference, OCR, DOCX resume export, cloud sync, and other explicitly deferred capabilities.
 
 ## Security disposition
 
-### #123 DNS-rebinding connection pinning
+### DNS rebinding / #123
 
-Current automated acquisition validates URL syntax, rejects private/loopback/link-local/reserved destinations, resolves hostname targets before requests, and validates redirects. Browser-backed requests are also preflighted through the acquisition network policy.
+#123 is complete.
 
-The remaining architectural issue is a time-of-check/time-of-use gap: the transport can perform a later DNS resolution when the actual Node or Chromium connection is established. The address approved during policy validation is therefore not connection-pinned.
+The candidate now provides connection-level pinning rather than preflight-only DNS validation:
 
-The release candidate must not describe the current implementation as connection-pinned or rebinding-proof.
+- policy resolution returns the exact approved public address set;
+- direct HTTP/HTTPS sockets connect only to approved addresses;
+- Host, TLS SNI, and certificate verification remain tied to the original hostname;
+- redirects are independently approved and pinned;
+- discovery uses the same transport;
+- isolated Electron scraper HTTP/HTTPS document/subresource requests are routed through the pinned boundary;
+- deterministic regression coverage proves that a later hostile/private DNS answer cannot redirect the direct connection after approval.
 
-### v1.2.0 release mitigation
+Arbitrary generic career-site hostnames remain manual-review/non-runnable in v1.2.0.
 
-The candidate disables automated acquisition for **arbitrary generic career-site hostnames**:
+### Distribution trust / #125
 
-- unknown/generic career pages resolve to `unsupported` / manual-review rather than `generic-html` automation;
-- the `generic-html` source profile is non-runnable in the candidate;
-- recognized provider/vendor domains and known browser portals retain their governed acquisition paths;
-- QOR and backend regression coverage assert that arbitrary generic career URLs remain unsupported and non-runnable;
-- `README.md`, `HELP.md`, `SECURITY.md`, and `docs/SYSTEM_STATE.md` explicitly describe the restriction and the remaining connection-pinning gap.
+Stable exact-semver releases fail closed without successful platform trust configuration and verification.
 
-This removes the broad attacker-controlled-hostname entry path that existed when arbitrary career-looking URLs were automatically classified for generic acquisition. It materially narrows the practical v1.2.0 attack surface.
+Selected public paths:
 
-It does **not** resolve #123 in the general case. Recognized provider domains still rely on preflight DNS validation rather than transport-level address pinning. #123 remains open for the durable architecture.
+- Windows: Microsoft Azure Artifact Signing + Authenticode verification;
+- macOS: Developer ID Application signing + hardened runtime + Apple notarization/stapling verification.
 
-Release disposition:
+Prerelease tags may remain unsigned but are explicitly tester-only. They publish platform trust reports plus SHA-256 sums and machine-readable release manifests.
 
-- **v1.2.0 mitigation implemented and regression-tested;**
-- **full connection-level protection remains governed by #123;**
-- **release documentation explicitly acknowledges the residual risk and does not claim rebinding-proof transport.**
+Actual signed clean-machine evidence remains external and is tracked by #130.
 
-## Validation evidence
+## Repository validation evidence
 
-### Validated product head
+The v1.2.0 lineage has passed the release repository gates after its major implementation/hardening tranches:
 
-Product/runtime candidate head `f4eb6d695377f8599827dd7cc453bcf634cd5713` passed both release workflows on October 4, 2026.
-
-**CI run `37183153646`: success**
-
-The `repository-health` job passed all release-candidate steps:
-
-- clean checkout;
-- Node.js 22.12.0 setup;
-- `npm ci`;
-- `node scripts/audit-dependencies.mjs`;
+- clean `npm ci`;
+- dependency/security gate;
 - explicit `npm run test:unit`;
-- `npm run repo:health`, which executes typecheck, production build, and the complete repository test/smoke chain.
+- typecheck;
+- production build;
+- complete repository smoke/test chain;
+- Electron E2E.
 
-The dependency gate reported the already-governed `GHSA-ch52-4w7c-c8xp` dev-tool exception through `http-cache-semantics`; it rejected no runtime or unrelated high/critical findings.
+Important dedicated evidence includes:
 
-The repository smoke chain explicitly passed the new representative upgrade test:
+- representative v1.1.2 -> v1.2.0 upgrade/restore fixture;
+- canonical source snapshot / source-diagnostic regression;
+- DNS-rebinding pinned-transport regression;
+- distribution trust configuration regression;
+- release checksum/manifest regression;
+- macOS optional-signing environment regression.
 
-> `v1.1.2 -> v1.2.0 upgrade and restore smoke passed!`
+PR #131's final release-line gate passed clean install, dependency review, explicit unit suite, repository health, and Electron E2E before the trust/checksum changes merged.
 
-That fixture proves, in an isolated test installation:
+PR #132 passed the same release-line gate before the macOS prerelease signing-environment fix merged.
 
-- representative v1.1.2 migrations 1-2 and existing company/job/filter/settings state survive current initialization;
-- renderer-local v1.1.2 Career Profile and Application state migrate into the durable v1.2.0 model;
-- the migration is idempotent;
-- the legacy Career Profile produces the expected migration-bridge Target Track without inventing constraint strength;
-- a pre-upgrade database snapshot is preserved byte-for-byte;
-- a post-upgrade Job Ranger backup validates;
-- the upgraded state restores successfully into a different user-data root;
+## Upgrade/restore evidence
+
+The representative upgrade fixture proves:
+
+- representative v1.1.2 migrations and existing company/job/filter/settings data survive current initialization;
+- renderer-local v1.1.2 Career Profile and Applications migrate into durable v1.2.0 state;
+- migration is idempotent;
+- the legacy Career Profile produces the expected bridge Target Track without inventing constraint strength;
+- a byte-identical pre-upgrade database snapshot is preserved;
+- post-upgrade backup validates;
+- upgraded state restores into a different data root with managed paths rebased;
 - the original pre-upgrade snapshot remains unchanged as rollback evidence.
 
-**Electron E2E run `37183153774`: success**
+## Packaged candidate history
 
-The Electron E2E job passed `xvfb-run -a npm run test:e2e` on the same product/runtime candidate head.
+### v1.2.0-rc.1
 
-### Documentation-only evidence commits after validation
+Initial immutable packaged candidate. Superseded by executable source-trust/security changes. Tag remains immutable.
 
-This evidence record and any subsequent issue/PR metadata reconciliation are documentation/governance updates only. They do not change the validated product/runtime implementation. If a later commit changes executable source, package metadata, tests, dependency state, build configuration, or release behavior, the product-head validation must be rerun and this section updated.
+### v1.2.0-rc.2
 
-## Version metadata
+Added completed source-trust/security/distribution work. Windows packaged successfully with SQLite/trust/checksum evidence. macOS exposed an unsigned-prerelease packaging defect: blank `CSC_LINK` / `CSC_KEY_PASSWORD` environment values were interpreted by electron-builder as a certificate source. Tag remains immutable and is not promotable.
 
-`package.json` and the root package records in `package-lock.json` are synchronized at `1.2.0` on the release-preparation branch.
+### v1.2.0-rc.3
 
-The lockfile synchronization was performed by a one-shot release-branch workflow and verified by reading the resulting lockfile. That temporary workflow was removed immediately afterward and is not part of the candidate architecture.
+Immutable tag:
+
+`v1.2.0-rc.3` → `e25c61c0be21dd00bc80a0880d2a770660c283bd`
+
+PR #132 fixed the rc.2 macOS packaging defect by sanitizing incomplete signing credentials for tester builds while preserving the stable-release signing fail-closed gate.
+
+Hosted Build Release Assets run **37239803933** completed successfully on both platforms.
+
+### Windows rc.3 evidence
+
+Passed:
+
+- NSIS x64 packaging;
+- bundled SQLite verification and runtime resolver verification;
+- prerelease Windows trust-state verification;
+- SHA-256 generation;
+- release-manifest generation;
+- GitHub prerelease upload.
+
+Published assets include:
+
+- `Job.Ranger-v1.2.0-windows-x64.exe`;
+- `Job.Ranger-v1.2.0-windows-x64.exe.blockmap`;
+- `latest.yml`;
+- `windows-signing.json`;
+- `windows-SHA256SUMS.txt`;
+- `windows-release-manifest.json`.
+
+The GitHub API records SHA-256 digest `63c53910757df3a394a387947dbe694a2bb4cd6d1491796336dca0329b83f006` for the rc.3 Windows installer.
+
+### macOS rc.3 evidence
+
+Passed:
+
+- x64 and arm64 packaging;
+- prerelease macOS trust-state verification;
+- SHA-256 generation;
+- release-manifest generation;
+- GitHub prerelease upload.
+
+Published assets include:
+
+- arm64 DMG and ZIP;
+- x64 DMG and ZIP;
+- `macos-signing.txt`;
+- `macos-SHA256SUMS.txt`;
+- `macos-release-manifest.json`.
+
+Recorded package digests include:
+
+- arm64 DMG: `54bb3236166f3281ebe21b1f55ed8ec03917c22b760366f810f0b77cf850e524`;
+- arm64 ZIP: `aa2b5e0ece28affd69c28c13f7ba6dfd875b19b05a307dbd778aee9078258d47`;
+- x64 DMG: `aace21d757a2c364beac7df78b26f2f5d3f3666a4c55cece6472c425ebb5524b`;
+- x64 ZIP: `b1d9f93262c9c72ea93f51408047c1a04efe3dd972d1b6a529697c698433e32e`.
+
+The GitHub Release is marked `prerelease: true` and remains distinct from stable v1.1.2.
 
 ## Remaining release gates
 
-Repository-level implementation, unit, upgrade/restore, dependency-gate, build, and Electron E2E validation are complete for the validated product head.
+Repository implementation and immutable prerelease packaging are complete.
 
-Still pending before publication:
+Still pending before stable publication:
 
-- clean-profile consumer smoke on the actual packaged candidate, including one materially non-software career context;
-- Windows NSIS x64 package build and runtime validation from the immutable candidate;
-- macOS x64 and arm64 package build and runtime validation from the immutable candidate;
-- Windows bundled-SQLite verification on the immutable package;
-- signing/notarization evidence where credentials are available, or an explicit release-note limitation where unavailable;
-- final GitHub Release asset inventory and spot-check;
-- README/download-link and shipped-status transition only after the assets exist.
+1. packaged consumer smoke against rc.3, including at least one materially non-software career context;
+2. actual Azure Artifact Signing account/profile and CI credentials;
+3. signed Windows artifact with valid Authenticode evidence;
+4. clean supported Windows 11 install/launch observation, including SmartScreen/Smart App Control behavior;
+5. Apple Developer Program / Developer ID Application signing identity;
+6. signed/notarized/stapled x64 and arm64 macOS artifacts with `codesign`, `spctl`, and stapler evidence;
+7. clean supported macOS Gatekeeper install/launch observation;
+8. immutable stable `v1.2.0` build and final asset/download spot-check;
+9. README/download-link and shipped-status transition only after stable assets exist.
 
-The connected desktop validation runner was offline during repository preparation, so no platform-local package or installer validation is claimed here.
+The connected Desktop Commander Windows runner is currently offline, so packaged local consumer smoke is not claimed.
 
 ## Publication boundary
 
-Until publication completes:
+Until the stable trust and smoke gates complete:
 
-- v1.1.2 remains the latest shipped release;
-- README download links remain on v1.1.2;
-- v1.2.0 remains a release candidate rather than shipped product;
-- no v1.2.0 artifact should be presented as a completed release merely because a branch, version, or tag exists.
-
-Final publication requires the expected Windows/macOS assets to be present on the GitHub Release and spot-checked from the actual release page.
+- v1.1.2 remains the latest stable shipped release;
+- v1.2.0-rc.3 is a validated tester prerelease, not the stable public release;
+- stable README download links remain on v1.1.2;
+- unsigned prerelease installation guidance does not substitute for public platform signing/notarization.
