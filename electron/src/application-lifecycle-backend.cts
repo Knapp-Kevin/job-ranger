@@ -9,6 +9,7 @@ import type {
   ApplicationLifecycle,
 } from "../../src/shared/application-lifecycle.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
+import { applyNamedSchemaMigration } from "./schema-migration.cjs";
 
 const APPLICATION_LIFECYCLE_MIGRATION_VERSION = 1001;
 const APPLICATION_LIFECYCLE_MIGRATION_NAME = "application_lifecycle_foundation";
@@ -151,25 +152,11 @@ export class ApplicationLifecycleBackend {
   }
 
   async initialize(): Promise<void> {
-    await this.sqlite.exec(
-      "CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL);",
-    );
-    const existing = await this.sqlite.queryOne<{ version: number }>(sql`
-      SELECT version FROM schema_migrations
-      WHERE version = ${APPLICATION_LIFECYCLE_MIGRATION_VERSION}
-      LIMIT 1;
-    `);
-    if (existing) return;
-
-    await this.sqlite.exec(APPLICATION_LIFECYCLE_SCHEMA);
-    await this.sqlite.exec(sql`
-      INSERT INTO schema_migrations (version, name, applied_at)
-      VALUES (
-        ${APPLICATION_LIFECYCLE_MIGRATION_VERSION},
-        ${APPLICATION_LIFECYCLE_MIGRATION_NAME},
-        ${new Date().toISOString()}
-      );
-    `);
+    await applyNamedSchemaMigration(this.sqlite, {
+      version: APPLICATION_LIFECYCLE_MIGRATION_VERSION,
+      name: APPLICATION_LIFECYCLE_MIGRATION_NAME,
+      sql: APPLICATION_LIFECYCLE_SCHEMA,
+    });
   }
 
   private async assertApplication(applicationId: string): Promise<void> {
