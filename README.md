@@ -118,8 +118,6 @@ The table below intentionally separates what normal users can download today fro
 
 ### Quality over quantity
 
-Job Ranger is not Job Gatling Gun.
-
 The product should optimize for **qualified, intentional progress**, not applications sent. A smaller number of well-understood opportunities that fit the user's direction, evidence, constraints, and preferences is preferable to a large queue of weak matches.
 
 Automation should reduce clerical burden and the cost of making good decisions. It should not remove the user's judgment from consequential external actions or convert employers and professional networks into targets for automated volume.
