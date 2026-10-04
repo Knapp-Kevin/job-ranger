@@ -2,6 +2,7 @@ export {
   validateExternalUrl,
   validateId,
   validateFiniteNumber,
+  validateIntegerInRange,
 } from "./validators/common.cjs";
 
 export {
