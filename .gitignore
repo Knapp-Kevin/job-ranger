@@ -25,18 +25,22 @@ dist-ssr
 *.sw?
 
 # Electron
-release
-out
 electron-runtime/
 electron/*.cjs
 electron/adapters/
 electron/shared/
+electron/validators/
 electron/main.js
 electron/main.js.map
 electron/preload.js
 electron/preload.js.map
+runtime/
+tmp-electron-linux/
+resources/default_app.asar
 
 # Build
+release
+out
 build/*.ico
 build/*.icns
 build/*.png
@@ -50,10 +54,13 @@ build/*.bmp
 # Testing
 coverage
 .nyc_output
+test-results/
+playwright-report/
 
 # Misc
 .cache
 .temp
+*.tmp
 release-*
 !.github/workflows/release-build.yml
 
