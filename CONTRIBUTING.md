@@ -2,30 +2,36 @@
 
 Thanks for helping improve Job Ranger. The project is intentionally consumer-facing: contributions should make the job-search experience more reliable, understandable, private, and usable by people who do not have software-development expertise.
 
-## Before You Start
+## Before you start
 
-Use an issue before beginning work that changes product behavior, architecture, persistence, security boundaries, packaging, or major dependencies. Small documentation corrections and narrowly scoped bug fixes can go directly to a pull request when the intent is obvious.
+Use an issue before beginning work that changes product behavior, architecture, persistence, security boundaries, packaging, or major dependencies.
+
+Small documentation corrections and narrowly scoped bug fixes may use a lighter maintainer path when the intent and risk are obvious.
 
 Security vulnerabilities should follow [SECURITY.md](./SECURITY.md), not a public issue containing exploit details.
 
-## Product Boundaries
+## Product boundaries
 
 Contributions should preserve these principles:
 
-- Core functionality remains useful without an inference provider.
+- Core functionality remains useful without a remote inference provider.
 - Local-first behavior is the default unless an explicit product decision changes it.
+- Career Evidence owns factual career truth; goals/preferences do not silently become evidence.
+- Preferences do not silently become hard constraints.
 - The UI should describe user intent, not implementation jargon.
-- Job-fit, resume, credential, and career claims must be evidence-aware and must not invent user experience.
-- Unsupported source types must fail honestly rather than report fabricated success.
-- Auto-apply or autonomous external actions require explicit governance and are not assumed merely because they are technically possible.
+- Opportunity assessment, resume, credential, application-material, and career claims must be evidence-aware and must not invent user experience.
+- Unsupported source types fail honestly rather than report fabricated success.
+- Unknown information remains unknown rather than becoming fake precision.
+- Consequential source/application actions require user authority.
+- Autonomous mass auto-apply is not a current product goal.
 
-## Development Setup
+## Development setup
 
 Prerequisites:
 
-- Node.js `>=20.19.0`
-- npm
-- `sqlite3` on `PATH`, or `SQLITE3_PATH` configured explicitly
+- Node.js `>=22.12.0`;
+- npm;
+- `sqlite3` on `PATH`, or `SQLITE3_PATH` configured explicitly.
 
 ```bash
 npm ci
@@ -33,43 +39,97 @@ npm run repo:health
 npm run electron:dev
 ```
 
-## Pull Request Expectations
+The authoritative privileged Electron source lives under `electron/src/**`. Generated runtime output lives under `electron-runtime/**` and should not be hand-edited or committed as an independent source of truth.
 
-A pull request should:
+## Change expectations
+
+A material change should:
 
 1. Explain the user or maintenance problem being solved.
-2. Keep the implementation no broader than necessary.
-3. Update documentation when behavior, architecture, packaging, or public claims change.
-4. Preserve existing security boundaries unless the PR explicitly strengthens them.
-5. Include or update tests for behavior that can reasonably be automated.
-6. Pass `npm run repo:health`.
-7. Avoid mixing unrelated dependency, formatting, product, and documentation work into one change.
+2. Keep implementation no broader than necessary.
+3. Update affected current documentation when behavior, architecture, packaging, security, or public claims change.
+4. Preserve security/authority boundaries unless the change explicitly and intentionally modifies them.
+5. Include or update tests where behavior can reasonably be automated.
+6. Record the validation actually performed.
+7. Avoid mixing unrelated dependency, formatting, product, and documentation work.
+8. Preserve licensing/attribution requirements at the exact code/asset boundary.
 
-For user-facing changes, include screenshots when visual review materially helps reviewers judge the result.
+For user-facing visual changes, include screenshots when they materially help review.
 
-## Dependency Changes
+## Validation and GitHub Actions budget
 
-Patch and minor updates can be grouped when they are compatible and CI validates the result. Major-version changes are migrations, not routine hygiene. They should be reviewed for runtime requirements, ESM/CJS changes, packaging impact, Electron compatibility, and release behavior.
+The project deliberately preserves GitHub Actions budget. Hosted CI/CD is not required for every routine documentation change or every iteration of release preparation.
 
-The coordinated toolchain modernization work is tracked in issue #38.
+When appropriate, the maintainer may run validation manually in an isolated environment.
 
-## Documentation Standards
+Manual validation should record:
 
-Public documentation must distinguish:
+- environment;
+- exact commands/checks;
+- results;
+- anything that could not be executed.
+
+For code changes, the normal local baseline is:
+
+```bash
+npm ci
+npm run typecheck
+npm run build
+npm run test
+npm run test:unit
+npm run test:e2e
+```
+
+`npm run repo:health` combines typecheck, production build, desktop compilation, and backend/smoke coverage.
+
+Do not claim a hosted gate passed when it was intentionally not run.
+
+## Pull requests
+
+Use pull requests when they improve review, collaboration, risk management, or release evidence.
+
+A documentation-only maintainer remediation may be merged directly when opening a pull request would consume unnecessary hosted Actions budget. The same truth/review standard still applies.
+
+## Dependency changes
+
+Patch/minor updates may be grouped when compatibility permits.
+
+Major-version changes are migrations, not routine hygiene. Review:
+
+- runtime requirements;
+- ESM/CJS boundaries;
+- packaging impact;
+- Electron compatibility;
+- native dependencies;
+- release behavior;
+- security findings.
+
+Do not use `npm audit fix --force` as a substitute for dependency analysis.
+
+A vulnerability exception must be narrow, documented, and removed when the supported upstream fix becomes available.
+
+## Documentation standards
+
+Use the status vocabulary from [GOVERNANCE.md](./GOVERNANCE.md):
 
 - **shipped**: present in a published release;
 - **implemented on main**: merged but not necessarily released;
-- **in development**: active branch or pull request;
-- **planned**: accepted direction without completed implementation;
-- **historical**: retained for provenance but not current guidance.
+- **candidate / next**: plausible evidence-backed follow-on work;
+- **deferred**: intentionally not active;
+- **rejected / non-goal**: outside current governance;
+- **historical**: provenance only.
 
 Do not turn planning language into product claims.
+
+Current documentation authority is indexed in [docs/README.md](./docs/README.md). Before a release, use [docs/RELEASE_READINESS.md](./docs/RELEASE_READINESS.md).
 
 ## Licensing
 
 By contributing, you agree that your contribution may be distributed under the repository's MIT License.
 
-Do not copy third-party code into Job Ranger unless its license permits the intended use and its attribution requirements are preserved. Substantial adapted code must be documented in an appropriate notice file.
+Do not copy third-party code/assets into Job Ranger unless the exact license permits the intended use and attribution obligations are preserved. A permissive repository license does not automatically cover every bundled template, font, model, dataset, or hosted service.
+
+Substantial adopted/adapted work should be reflected in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) where required.
 
 ## Community
 
