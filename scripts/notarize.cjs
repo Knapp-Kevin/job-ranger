@@ -18,7 +18,8 @@ exports.default = async function notarizing(context) {
   const requireNotarization = process.env.JOB_RANGER_REQUIRE_NOTARIZATION === "1";
   const credentials = {
     appleId: process.env.APPLE_ID,
-    appleIdPassword: process.env.APPLE_ID_PASSWORD,
+    appleIdPassword:
+      process.env.APPLE_APP_SPECIFIC_PASSWORD || process.env.APPLE_ID_PASSWORD,
     teamId: process.env.APPLE_TEAM_ID,
   };
   const credentialsPresent = Object.values(credentials).every(Boolean);
@@ -26,7 +27,7 @@ exports.default = async function notarizing(context) {
   if (!credentialsPresent) {
     if (requireNotarization) {
       throw new Error(
-        "macOS notarization is required for this public release, but APPLE_ID, APPLE_ID_PASSWORD, and APPLE_TEAM_ID are not all configured.",
+        "macOS notarization is required for this public release, but APPLE_ID, APPLE_APP_SPECIFIC_PASSWORD (or legacy APPLE_ID_PASSWORD), and APPLE_TEAM_ID are not all configured.",
       );
     }
     console.log(
