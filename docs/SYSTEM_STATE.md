@@ -1,14 +1,17 @@
 # System State
 
-**Snapshot date:** 2026-10-03  
+**Snapshot date:** 2026-10-04  
 **Published release:** v1.1.2  
-**Default branch:** `main`
+**Selected release candidate:** v1.2.0  
+**Default branch:** `main`  
+**Release-preparation branch:** `release/v1.2.0-rc1`
 
-This document is the factual repository/product snapshot. It intentionally separates what users can download today from what is already implemented on `main`.
+This document is the factual repository/product snapshot. It intentionally separates what users can download today from what is implemented and being validated for v1.2.0.
 
 ## Status language
 
 - **Shipped** — present in a published GitHub Release.
+- **Release candidate** — version-selected candidate being validated for publication; not shipped yet.
 - **Implemented on main** — merged into the default branch, but not necessarily present in the latest installer.
 - **Candidate / next** — plausible follow-on work with some evidence behind it.
 - **Deferred** — intentionally not active.
@@ -32,11 +35,13 @@ The current published release includes:
 
 No supported Linux installer is currently published.
 
-## Implemented on `main` after v1.1.2
+## v1.2.0 release candidate
+
+The release candidate contains the accumulated post-v1.1.2 product work plus the accepted QOR repository-hardening tranche. Until an immutable candidate is validated and a GitHub Release with the expected platform assets is published, these capabilities remain unshipped.
 
 ### Progressive onboarding and target tracks
 
-Current `main` supports:
+The candidate supports:
 
 - resume-first onboarding;
 - no-resume direct evidence entry;
@@ -49,7 +54,7 @@ Current `main` supports:
 
 ### Durable Career Profile, Applications, and Career Evidence
 
-Career Profile and Applications now live behind the Electron/SQLite boundary rather than renderer-local storage.
+Career Profile and Applications live behind the Electron/SQLite boundary rather than renderer-local storage.
 
 Career Evidence is the factual authority for career history. It supports:
 
@@ -72,7 +77,7 @@ Only user-confirmed or user-authored evidence may support factual application cl
 
 ### Resume import
 
-Current import paths:
+Candidate import paths:
 
 - DOCX via `@firecrawl/anydoc@0.2.4`;
 - text-bearing PDF via Anydoc;
@@ -91,7 +96,7 @@ Import behavior includes:
 
 ### Job requirements and evidence mapping
 
-Current `main` normalizes collected job text into durable requirements classified as:
+The candidate normalizes collected job text into durable requirements classified as:
 
 - must-have;
 - preferred;
@@ -110,9 +115,9 @@ Confirmed/user-authored evidence is required for direct or transferable factual 
 
 ### Explainable opportunity assessment
 
-The old universal fit percentage is no longer the primary product truth on `main`.
+The old universal fit percentage is no longer the primary product truth in the candidate.
 
-Assessment now separates:
+Assessment separates:
 
 - eligibility;
 - evidence coverage;
@@ -127,17 +132,20 @@ Unknown information remains unknown rather than being converted into fake precis
 
 Source discovery is implemented behind a provider-neutral boundary.
 
-Current behavior:
+Current candidate behavior:
 
 - accepts Target Track/search context;
 - can return discovered opportunities and candidate employer sources;
 - carries provider/provenance/support metadata;
 - requires explicit user approval before a discovered source becomes monitored;
 - deduplicates reusable structured employer boards;
-- preserves the existing acquisition trust/support model;
 - currently has partial provider coverage rather than universal market coverage.
 
-Automated acquisition applies a dedicated network policy that rejects unsafe loopback, link-local, and private-network destinations, including redirect/DNS cases.
+Recognized structured and vendor/browser source families retain governed acquisition paths. The acquisition network policy rejects known unsafe loopback, link-local, private-network, and redirect targets during policy validation.
+
+The QOR hardening review identified a remaining DNS-rebinding time-of-check/time-of-use gap: Node or Chromium may resolve a hostname again when the actual connection is established, so the address approved by policy is not yet connection-pinned. Issue #123 tracks the full transport-level fix.
+
+For the v1.2.0 candidate, automated acquisition for **arbitrary generic career-site hostnames is disabled**. Unknown/generic career pages remain manual-review sources rather than entering the automated generic/browser path. Known provider/vendor domains retain their governed extraction paths. This narrows the practical attack surface while #123 remains open; it does not make the transport rebinding-proof.
 
 ### Deterministic resume creation and tailoring
 
@@ -161,7 +169,7 @@ Remote inference is not required.
 
 ### Application lifecycle
 
-Applications now support durable:
+Applications support durable:
 
 - status and notes;
 - exact submitted resume history;
@@ -196,7 +204,7 @@ Career Stories are durable, evidence-linked reusable narratives for interviews/a
 
 ### Application materials
 
-Current `main` supports versioned evidence-grounded application-material projections, including deterministic cover-letter preparation.
+The candidate supports versioned evidence-grounded application-material projections, including deterministic cover-letter preparation.
 
 Historical materials preserve the wording/evidence snapshot used at creation time. Later evidence edits, rejection, merge, or supersession mark old drafts stale rather than silently rewriting history.
 
@@ -209,11 +217,11 @@ Search Insights derives deterministic observations from saved state, including:
 - recurring unsupported requirements;
 - evidence-based strategy signals above minimum sample thresholds.
 
-Observed correlation is not presented as causal hiring truth.
+Observed correlation is not presented as causal hiring truth, and raw application count is not treated as the product's success metric.
 
 ### Backup and restore
 
-Current `main` provides:
+The candidate provides:
 
 - versioned portable backup bundles;
 - SQLite snapshots;
@@ -233,6 +241,19 @@ JSON Resume import/export is implemented as an adapter.
 - unsupported Job Ranger-specific provenance stays canonical in Job Ranger rather than being forced into standard fields.
 
 JSON Resume is not the canonical data model.
+
+### QOR hardening tranche
+
+The accepted repository-hardening tranche includes:
+
+- bounded privileged numeric IPC/settings inputs;
+- exact-host-or-subdomain source-vendor classification rather than deceptive substring matches;
+- managed artifact path confinement for reveal-in-folder actions;
+- record-shape validation that rejects arrays where object payloads are required;
+- removal of duplicate checked-in compiled validator implementations;
+- removal/ignore rules for generated and temporary repository residue;
+- repository-health coverage for real salary-parser, scrape-guard, tray-policy, and QOR regression tests;
+- the generic-site acquisition restriction described above as the v1.2.0 mitigation for #123.
 
 ## Current runtime architecture
 
@@ -280,7 +301,7 @@ electron/src
 
 ## Security boundaries
 
-Current main-process/renderer protections include:
+Candidate main-process/renderer protections include:
 
 - `nodeIntegration: false`;
 - `contextIsolation: true`;
@@ -290,17 +311,20 @@ Current main-process/renderer protections include:
 - renderer Content Security Policy;
 - validated external navigation;
 - dedicated acquisition network policy;
+- arbitrary generic-host acquisition disabled pending #123;
 - restricted hidden browser surfaces;
 - isolated resume render window with JavaScript disabled and remote resources denied;
-- managed artifact storage;
+- managed artifact storage/path confinement;
 - file/type/size validation for imported career documents;
 - no silent hosted OCR/inference.
+
+The acquisition policy is not connection-pinned and must not be described as DNS-rebinding-proof. See `SECURITY.md` and #123.
 
 Any weakening of these boundaries is a material governance change.
 
 ## Runtime/toolchain baseline
 
-Current `package.json` records:
+The v1.2.0 release branch records:
 
 - Node.js `>=22.12.0`;
 - Electron `44.4.5`;
@@ -308,15 +332,17 @@ Current `package.json` records:
 - Vite `8.x`;
 - React `19.3.0`;
 - Electron Builder `26.x`;
-- `@firecrawl/anydoc` `0.2.4`.
+- `@firecrawl/anydoc` `0.2.4`;
+- `package.json` version `1.2.0`.
 
-The package version remains `1.1.2` until the next release is deliberately staged.
+`package-lock.json` still records the previous root package version and must be reconciled before the candidate can merge/tag.
 
 ## Validation state
 
 The repository has automated unit/backend/Electron coverage across:
 
 - acquisition network policy;
+- QOR hardening regressions;
 - target-track semantics;
 - credentials and evidence extensions;
 - career persistence and user-authored evidence;
@@ -330,6 +356,8 @@ The repository has automated unit/backend/Electron coverage across:
 - resume import, lifecycle, tailoring, and provenance;
 - backup/restore;
 - JSON Resume interoperability.
+
+Fresh hosted CI passed on the initial v1.2.0 candidate head, including `npm ci`, the high-severity dependency gate, and repository health (typecheck, build, and test). The candidate changed afterward for the #123 mitigation and documentation reconciliation, so fresh validation on the final frozen head is still required. Electron E2E must also be green on that final head.
 
 The project intentionally preserves GitHub Actions budget. Documentation/remediation and some release-preparation validation may be performed manually and must record exactly what was executed.
 
@@ -351,11 +379,20 @@ US-0 through US-30 have been reconciled as satisfied by the current product cont
 
 ## Known product/release gaps
 
-### Needed
+### Release gates
 
-- publish a new release containing the accumulated post-v1.1.2 work;
-- preserve fuller/canonical job-description/source snapshots where source capabilities permit it;
-- improve user-visible reliability diagnostics for dynamic/best-effort source families.
+- reconcile the `package-lock.json` root package version with staged `package.json` v1.2.0 metadata;
+- obtain fresh final-head repository-health, dependency-audit, unit, and Electron E2E evidence;
+- explicitly disposition the residual #123 DNS-rebinding risk for publication after validating the generic-host mitigation;
+- exercise representative v1.1.2 → v1.2.0 migration plus backup/restore behavior;
+- validate Windows NSIS x64 and macOS x64/arm64 packages from the immutable candidate;
+- record signing/notarization evidence where credentials are available, or state the limitation explicitly.
+
+### Needed follow-on quality work
+
+- preserve fuller/canonical job-description/source snapshots where source capabilities permit it (#117);
+- improve user-visible reliability diagnostics for dynamic/best-effort source families (#118);
+- complete connection-level anti-rebinding architecture rather than relying permanently on the v1.2.0 generic-host restriction (#123).
 
 ### Candidate
 
@@ -363,7 +400,7 @@ US-0 through US-30 have been reconciled as satisfied by the current product cont
 - faster job capture from arbitrary browsing;
 - reusable application-question answers;
 - user-controlled application form assistance without auto-submit;
-- networking workspace beyond application-scoped contacts;
+- Career Ops company targeting and relationship paths beyond application-scoped contacts (#121);
 - calendar mirroring;
 - mock-interview practice/feedback;
 - richer organization/tags where real use shows need.
@@ -389,31 +426,33 @@ See `docs/PRODUCT_GAP_REVIEW.md` for rationale.
 
 ## Release boundary
 
-The latest published installers are still v1.1.2 and do **not** include most of the capabilities listed above.
+The latest published installers are still v1.1.2 and do **not** include most v1.2.0 candidate capabilities.
 
-Before the next release:
+Before publication:
 
-- documentation must be reconciled;
+- documentation must match the frozen candidate;
 - migration/backup upgrade behavior from v1.1.2 must be exercised;
+- the residual security posture must be explicitly dispositioned;
 - Windows package validation must be repeated on the immutable tag;
 - macOS x64/arm64 packaging must be repeated on the immutable tag;
 - notarization evidence must be recorded when credentials are available;
 - release notes/download links must be updated only after assets exist.
 
-See `docs/RELEASE_READINESS.md`.
+See `docs/RELEASE_READINESS.md` and `docs/validation/RELEASE_CANDIDATE_V1.2.0.md`.
 
 ## Current sources of truth
 
-- `README.md` — public overview and shipped-vs-main boundary;
+- `README.md` — public overview and published-vs-candidate boundary;
 - `HELP.md` — user workflow and troubleshooting;
-- `CHANGELOG.md` — published history plus Unreleased delta;
+- `CHANGELOG.md` — published history plus release-candidate/unreleased delta;
 - `docs/CONCEPT.md` — product purpose and principles;
 - `docs/SYSTEM_STATE.md` — factual current snapshot;
 - `docs/ARCHITECTURE_PLAN.md` — current architecture and accepted evolution;
 - `docs/planning/PLAN.md` — actual next work;
-- `docs/RELEASE_READINESS.md` — release blocking contract;
+- `docs/RELEASE_READINESS.md` — release-blocking contract;
 - `docs/PRODUCT_GAP_REVIEW.md` — capability-gap dispositions;
 - `docs/design/UNIVERSAL_USER_STORIES.md` — normative user-story contract;
+- `docs/validation/RELEASE_CANDIDATE_V1.2.0.md` — candidate-specific evidence/gates;
 - `GOVERNANCE.md`, `SECURITY.md`, `THIRD_PARTY_NOTICES.md` — governance/security/attribution.
 
 See `docs/README.md` for the documentation hierarchy.
