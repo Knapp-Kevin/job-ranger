@@ -67,6 +67,17 @@ export async function generateReleaseManifest({
   }
 
   await mkdir(outputDirectory, { recursive: true });
+  const trustEvidencePath = path.join(outputDirectory, path.basename(trustEvidenceFile));
+  let trustEvidenceStat;
+  try {
+    trustEvidenceStat = await stat(trustEvidencePath);
+  } catch {
+    throw new Error(`Required trust evidence was not found: ${trustEvidencePath}`);
+  }
+  if (!trustEvidenceStat.isFile() || trustEvidenceStat.size === 0) {
+    throw new Error(`Required trust evidence is empty or not a file: ${trustEvidencePath}`);
+  }
+
   const checksumPath = path.join(outputDirectory, `${platform}-SHA256SUMS.txt`);
   const manifestPath = path.join(outputDirectory, `${platform}-release-manifest.json`);
   const publicFlag = parseBoolean(publicRelease);
