@@ -2,6 +2,61 @@
 
 All notable user-facing, architecture, governance, and maintenance changes should be recorded here.
 
+## Unreleased
+
+The default branch is materially ahead of v1.1.2. The following work is **implemented on `main` but is not shipped to normal users until a new GitHub Release is published**.
+
+### Added
+
+- Progressive first-run onboarding with resume-first, no-resume, and goal-first entry paths.
+- Multiple Target Tracks with required/preferred/target semantics for supported search constraints.
+- Durable SQLite-backed Career Profile and Applications state.
+- Canonical Career Evidence with provenance, authority state, correction, merge/reject/supersede lineage, structured credentials, references, and direct user authoring.
+- Resume import for DOCX, text-bearing PDF, plain text, and pasted text with source preservation, hashing, extraction snapshots, duplicate detection, and explicit OCR-required/failure states.
+- Deterministic job requirement normalization and requirement-to-evidence mapping with direct, transferable, ambiguous, and gap states.
+- Multi-dimensional opportunity assessment covering eligibility, evidence coverage, career alignment, preference alignment, blockers, and unknowns.
+- Consumer source discovery behind a provider-neutral seam with explicit user approval before monitoring discovered sources.
+- Deterministic resume creation with ATS-oriented templates, Truth Gate, isolated Chromium PDF rendering, Parseability Gate, versioned artifacts, diffs, and exact application linkage.
+- Deterministic target-specific resume tailoring with preserved evidence provenance.
+- Application lifecycle contacts, milestones, follow-up events, reminders, and exact submitted-resume history.
+- Evidence-linked Career Stories.
+- Evidence-grounded interview preparation that distinguishes exact submitted evidence, later-corrected/superseded evidence, additional confirmed evidence, and real gaps.
+- Versioned evidence-grounded application materials that become visibly stale when supporting Career Evidence changes.
+- Structured target-track attribution, offer/negotiation state, recurring-gap analysis, observed outcome summaries, and Search Insights.
+- Verified portable backup and staged restore with artifact integrity checks and cross-data-root path rebasing.
+- JSON Resume import/export as a bounded interoperability adapter without making JSON Resume canonical product state.
+- Universal cross-career validation fixtures, including hourly/local, healthcare, trades, executive, recent graduate, federal/government, contractor/freelance, career-change, return-to-work, and military-transition contexts.
+
+### Changed
+
+- Replaced the old universal fit-percentage surface with explainable assessment dimensions rather than presenting one opaque number as product truth.
+- Career Profile now owns intent/preferences while Career Evidence owns factual career history.
+- Application and resume workflows now preserve exact evidence/artifact history rather than relying on mutable filenames or free-form notes.
+- Electron privileged implementation authority moved to TypeScript under `electron/src/**`; `electron-runtime/**` is generated for execution and packaging instead of maintaining checked-in compiled copies.
+- Repository documentation now uses explicit shipped / implemented-on-main / candidate / deferred / historical status language.
+- Optional remote inference remains deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, stories, and insights without requiring it.
+- OCR for image-only resumes and DOCX resume export remain explicit deferrals rather than silent fallbacks.
+
+### Security and reliability
+
+- Sandboxed the primary renderer and retained context isolation, disabled Node integration, and web security boundaries.
+- Added acquisition-network policy that rejects unsafe loopback, link-local, and private-network destinations, including redirect/DNS cases relevant to automated acquisition.
+- Hardened SQLite-backed persistence, migration, and E2E locking behavior.
+- Made high-severity dependency audit findings fail closed except for narrowly documented upstream-blocked tooling exceptions.
+- Added backup integrity validation and staged restore safeguards.
+
+### Release engineering
+
+- Added generated Electron-runtime build authority and package configuration for `electron-runtime/electron/src/main.cjs`.
+- Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, and interoperability.
+- Added `docs/RELEASE_READINESS.md` as the release-blocking contract for documentation, migration, security, platform packaging, and product-smoke evidence.
+- Added `docs/PRODUCT_GAP_REVIEW.md` to record evaluated capabilities as needed, candidate, deferred, or rejected/non-goal.
+
+### Known release boundary
+
+- The latest published installers remain v1.1.2 until a new immutable release tag is validated and published.
+- A full Windows/macOS release-candidate packaging pass for the accumulated post-v1.1.2 change set still needs to be recorded before publication.
+
 ## v1.1.2 - 2026-09-24
 
 ### Fixed
