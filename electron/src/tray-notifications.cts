@@ -1,6 +1,7 @@
 import { Tray, Menu, Notification, nativeImage, BrowserWindow } from "electron";
 import { existsSync } from "node:fs";
 import type { Settings } from "../../src/shared/contracts.js";
+export { shouldMinimizeToTray } from "./tray-policy.cjs";
 
 export interface ScrapeNotification {
   companyName: string;
@@ -61,8 +62,4 @@ export function showJobNotification(payload: ScrapeNotification, settings: Setti
     silent: false,
   });
   notification.show();
-}
-
-export function shouldMinimizeToTray(settings: Settings | null, isQuitting: boolean): boolean {
-  return Boolean(settings?.minimizeToTray && !isQuitting);
 }
