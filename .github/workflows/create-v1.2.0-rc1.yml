@@ -1,11 +1,11 @@
 name: Create v1.2.0 RC1
 
-# One-shot trigger: this workflow was introduced by the prior commit; modifying it
-# now ensures GitHub evaluates the already-existing workflow on this branch.
+# One-shot release-candidate bridge. This runs only for the in-repository release
+# PR and creates an immutable tag at the already validated candidate SHA.
 on:
-  push:
+  pull_request:
     branches:
-      - release/v1.2.0-rc1
+      - main
     paths:
       - .github/workflows/create-v1.2.0-rc1.yml
 
@@ -15,6 +15,7 @@ permissions:
 
 jobs:
   create-and-dispatch:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.head_ref == 'release/v1.2.0-rc1'
     runs-on: ubuntu-latest
     steps:
       - name: Create immutable RC tag
