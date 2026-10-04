@@ -73,16 +73,22 @@ export function normalizeUrl(rawUrl: string): string | null {
   }
 }
 
+export function isHostOrSubdomain(host: string, domain: string): boolean {
+  const normalizedHost = host.toLowerCase().replace(/\.$/, "");
+  const normalizedDomain = domain.toLowerCase().replace(/\.$/, "");
+  return (
+    normalizedHost === normalizedDomain ||
+    normalizedHost.endsWith(`.${normalizedDomain}`)
+  );
+}
+
 function looksLikeCareersPath(pathname: string): boolean {
   return /\b(career|careers|jobs?|job-search|join-us|opportunit|opening|recruit)/i.test(pathname);
 }
 
 function isKnownBrowserPortal(host: string): boolean {
-  return (
-    host.includes("linkedin.com") ||
-    host.includes("indeed.com") ||
-    host.includes("glassdoor.com") ||
-    host.includes("monster.com")
+  return ["linkedin.com", "indeed.com", "glassdoor.com", "monster.com"].some(
+    (domain) => isHostOrSubdomain(host, domain),
   );
 }
 
@@ -101,29 +107,41 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
     if (firstSegment && (host === "jobs.lever.co" || host === "jobs.eu.lever.co")) {
       return { sourceType: "lever", sourceIdentifier: firstSegment };
     }
-    if (host === "careers.microsoft.com" ||
-        (host.endsWith(".microsoft.com") && (host.startsWith("careers.") || looksLikeCareersPath(pathname)))) {
+    if (
+      host === "careers.microsoft.com" ||
+      (isHostOrSubdomain(host, "microsoft.com") &&
+        (host.startsWith("careers.") || looksLikeCareersPath(pathname)))
+    ) {
       return { sourceType: "microsoft", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("myworkdayjobs.com") || host.includes("workday.com")) {
+    if (
+      isHostOrSubdomain(host, "myworkdayjobs.com") ||
+      isHostOrSubdomain(host, "workday.com")
+    ) {
       return { sourceType: "workday", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("icims.com")) {
+    if (isHostOrSubdomain(host, "icims.com")) {
       return { sourceType: "icims", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("smartrecruiters.com")) {
+    if (isHostOrSubdomain(host, "smartrecruiters.com")) {
       return { sourceType: "smartrecruiters", sourceIdentifier: normalizedUrl };
     }
-    if (host.endsWith("ashbyhq.com")) {
+    if (isHostOrSubdomain(host, "ashbyhq.com")) {
       return { sourceType: "ashby", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("bamboohr.com")) {
+    if (isHostOrSubdomain(host, "bamboohr.com")) {
       return { sourceType: "bamboohr", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("taleo.net") || host.includes("oraclecloud.com")) {
+    if (
+      isHostOrSubdomain(host, "taleo.net") ||
+      isHostOrSubdomain(host, "oraclecloud.com")
+    ) {
       return { sourceType: "taleo", sourceIdentifier: normalizedUrl };
     }
-    if (host.endsWith("oracle.com") && (looksLikeCareersPath(pathname) || pathname.startsWith("/careers"))) {
+    if (
+      isHostOrSubdomain(host, "oracle.com") &&
+      (looksLikeCareersPath(pathname) || pathname.startsWith("/careers"))
+    ) {
       return { sourceType: "oracle", sourceIdentifier: normalizedUrl };
     }
     if (isKnownBrowserPortal(host)) {
