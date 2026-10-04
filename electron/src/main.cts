@@ -32,8 +32,11 @@ import {
 import { validateCareerTargetTrackInput } from "./target-track-validator.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
 const moduleDirectory = __dirname;
+const processStartupFetch = globalThis.fetch;
+const pinnedDiscoveryFetch = createPinnedFetch();
 
 let mainWindow: BrowserWindow | null = null;
 let helpWindow: BrowserWindow | null = null;
@@ -41,6 +44,15 @@ let backend: JobScoutBackend | null = null;
 let careerBackend: CareerBackend | null = null;
 let requirementBackend: RequirementBackend | null = null;
 let isQuitting = false;
+
+function discoveryFetchImpl(): typeof fetch {
+  // Production uses the DNS-pinned transport. Electron E2E replaces the main
+  // process global fetch after launch with deterministic fixture responses;
+  // preserving that explicit test seam avoids sending tests to public feeds.
+  return globalThis.fetch === processStartupFetch
+    ? pinnedDiscoveryFetch
+    : globalThis.fetch;
+}
 
 function appAssetPath(fileName: string): string {
   const root = app.getAppPath();
@@ -264,7 +276,7 @@ function registerIpcHandlers(): void {
 
   ipcMain.handle("discovery:discover", async (_event, request) =>
     publicJobFeedDiscoveryProvider.discover(validateSourceDiscoveryRequest(request), {
-      fetchImpl: fetch,
+      fetchImpl: discoveryFetchImpl(),
       existingCompanies: await requireBackend().listCompanies(),
     }),
   );

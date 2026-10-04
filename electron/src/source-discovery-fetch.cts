@@ -1,17 +1,7 @@
-import {
-  assertPublicAcquisitionUrl,
-  validateAcquisitionUrlSyntax,
-} from "./acquisition-network-policy.cjs";
+import { validateAcquisitionUrlSyntax } from "./acquisition-network-policy.cjs";
 
 const REDIRECT_STATUSES = new Set([301, 302, 303, 307, 308]);
 const MAX_REDIRECTS = 5;
-
-async function validateDiscoveryUrl(url: string, fetchImpl: typeof fetch): Promise<string> {
-  if (fetchImpl === globalThis.fetch) {
-    return assertPublicAcquisitionUrl(url);
-  }
-  return validateAcquisitionUrlSyntax(url).toString();
-}
 
 export async function fetchDiscoveryJson<T>(
   url: string,
@@ -20,7 +10,7 @@ export async function fetchDiscoveryJson<T>(
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), 12000);
   try {
-    let currentUrl = await validateDiscoveryUrl(url, fetchImpl);
+    let currentUrl = validateAcquisitionUrlSyntax(url).toString();
     for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
       const response = await fetchImpl(currentUrl, {
         headers: {
@@ -41,10 +31,9 @@ export async function fetchDiscoveryJson<T>(
       if (redirectCount === MAX_REDIRECTS) {
         throw new Error("Too many redirects while loading a discovery feed");
       }
-      currentUrl = await validateDiscoveryUrl(
+      currentUrl = validateAcquisitionUrlSyntax(
         new URL(location, currentUrl).toString(),
-        fetchImpl,
-      );
+      ).toString();
     }
   } finally {
     clearTimeout(timeout);

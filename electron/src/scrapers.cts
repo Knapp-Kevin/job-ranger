@@ -12,6 +12,7 @@ import {
   validateAcquisitionUrlSyntax,
   type AcquisitionHostResolver,
 } from "./acquisition-network-policy.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
 export { toSnippet, toSourceText, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
 
@@ -160,13 +161,17 @@ const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const maxRedirects = 5;
 
 async function validateContextUrl(url: string, context: ScraperContext): Promise<string> {
-  if (context.resolveHost) {
+  if (context.fetchImpl !== globalThis.fetch && context.resolveHost) {
     return assertPublicAcquisitionUrl(url, context.resolveHost);
   }
-  if (context.fetchImpl === globalThis.fetch) {
-    return assertPublicAcquisitionUrl(url);
-  }
   return validateAcquisitionUrlSyntax(url).toString();
+}
+
+function contextFetch(context: ScraperContext): typeof fetch {
+  if (context.fetchImpl !== globalThis.fetch) return context.fetchImpl;
+  return createPinnedFetch(
+    context.resolveHost ? { resolveHost: context.resolveHost } : undefined,
+  );
 }
 
 async function fetchWithAcquisitionPolicy(
@@ -175,9 +180,10 @@ async function fetchWithAcquisitionPolicy(
   init: RequestInit,
 ): Promise<Response> {
   let currentUrl = await validateContextUrl(url, context);
+  const fetchImpl = contextFetch(context);
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
-    const response = await context.fetchImpl(currentUrl, {
+    const response = await fetchImpl(currentUrl, {
       ...init,
       redirect: "manual",
     });
