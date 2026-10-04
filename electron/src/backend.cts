@@ -460,13 +460,13 @@ export class JobScoutBackend {
     if (!canRunSourceType(company.sourceType)) {
       const message = `${profile.label} was detected, but no reliable extraction path is available yet.`;
       await this.repository.setCompanyRunState(companyId, "unsupported", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "browser-unavailable", message, message);
+      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "unsupported-source", message, message);
     }
 
     if (profile.extractionMode === "browser" && !this.browserPageLoader) {
       const message = "Browser-backed extraction is not available in this environment.";
       await this.repository.setCompanyRunState(companyId, "unsupported", startedAt, message);
-      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, message);
+      return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "browser-unavailable", message, message);
     }
 
     try {
