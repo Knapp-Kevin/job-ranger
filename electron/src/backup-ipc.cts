@@ -1,4 +1,5 @@
 import { app, dialog, ipcMain } from "electron";
+import type { BackupRestorePreview } from "../../src/shared/backup.js";
 import { BackupService } from "./backup-service.cjs";
 
 export function initializeBackupIpc(options: {
@@ -9,6 +10,7 @@ export function initializeBackupIpc(options: {
   appVersion: string;
 }): void {
   const service = new BackupService(options);
+  let selectedRestorePath: string | null = null;
 
   ipcMain.handle("backups:create", async () => {
     const selection = await dialog.showOpenDialog({
@@ -19,20 +21,28 @@ export function initializeBackupIpc(options: {
     return service.createBackup(selection.filePaths[0]);
   });
 
-  ipcMain.handle("backups:select-restore", async () => {
+  ipcMain.handle("backups:select-restore", async (): Promise<BackupRestorePreview | null> => {
+    selectedRestorePath = null;
     const selection = await dialog.showOpenDialog({
       title: "Select a Job Ranger backup to restore",
       properties: ["openDirectory"],
     });
     if (selection.canceled || selection.filePaths.length === 0) return null;
-    return service.validateBackup(selection.filePaths[0]);
+
+    const validated = await service.validateBackup(selection.filePaths[0]);
+    selectedRestorePath = validated.bundlePath;
+    const { bundlePath: _bundlePath, summary, ...preview } = validated;
+    const { bundlePath: _summaryPath, ...summaryPreview } = summary;
+    return { ...preview, summary: summaryPreview };
   });
 
-  ipcMain.handle("backups:stage-restore", async (_event, bundlePath: string) => {
-    if (typeof bundlePath !== "string" || !bundlePath.trim()) {
-      throw new Error("Backup path is required");
+  ipcMain.handle("backups:stage-restore", async () => {
+    if (!selectedRestorePath) {
+      throw new Error("Select and validate a backup before restoring it");
     }
-    await service.stageRestore(bundlePath.trim());
+    const bundlePath = selectedRestorePath;
+    selectedRestorePath = null;
+    await service.stageRestore(bundlePath);
     setTimeout(() => {
       app.relaunch();
       app.exit(0);
