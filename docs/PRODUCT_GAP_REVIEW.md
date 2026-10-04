@@ -7,6 +7,8 @@ This document asks a deliberately uncomfortable question: **what might Job Range
 
 The purpose is not to copy competitors. It is to make omissions visible and intentional.
 
+Job Ranger's accepted strategic direction is **quality over quantity**. The product should help a person find the right path to employment, not maximize application throughput. Candidate capabilities are therefore evaluated not only by whether they save time, but by whether they improve fit, intentionality, truthful preparation, useful relationships, and downstream progress without creating another source of hiring-market noise.
+
 ## Disposition vocabulary
 
 | Disposition | Meaning |
@@ -37,7 +39,9 @@ Current `main` already covers a broad job-seeker workflow:
 - verified backup/restore;
 - JSON Resume interoperability.
 
-The review also considered current product patterns in Huntr, Teal, Simplify, Careerflow, and Jobscan. These products commonly emphasize browser-assisted job capture, autofill, broad aggregated job feeds, networking CRM, resume optimization, and mock-interview tooling. Those patterns are evidence of user demand, not automatic Job Ranger requirements.
+The review also considered current product patterns in Huntr, Teal, Simplify, Careerflow, Jobscan, ApplyBlast, and broader auto-apply tooling. These products commonly emphasize browser-assisted job capture, autofill, broad aggregated job feeds, networking CRM, resume optimization, mock-interview tooling, and in some cases delegated or autonomous application submission. Those patterns are evidence of user demand or market pressure, not automatic Job Ranger requirements.
+
+The October 4, 2026 auto-apply research is retained in [`research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md`](./research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md).
 
 ## Needed gaps
 
@@ -165,22 +169,33 @@ A safe direction, if evidence justifies it, would be narrower than an auto-apply
 
 Do not confuse “autofill” with “auto-apply.” They have materially different authority implications.
 
-### 8. Networking workspace beyond application-scoped contacts
+### 8. Career Ops company targeting and relationship-path discovery
 
-**Disposition: Candidate**
+**Disposition: Candidate, strategically important**
 
-Current `main` can associate contacts with applications. Huntr and Careerflow provide broader networking CRM behavior across companies and opportunities.
+Current `main` can associate contacts with applications, but the path to employment often begins before a specific job exists. A quality-over-quantity Career Ops product should be able to reason about companies and legitimate relationship paths without assuming that every search ends in a cold ATS submission.
 
 Potential Job Ranger value:
 
-- one person can relate to multiple companies/applications;
-- conversation/follow-up history independent of one job;
-- referrals and introductions;
-- reminders;
-- user-defined relationship context;
-- no contact scraping or enrichment by default.
+- maintain a company as an intentional career target before a specific opening exists;
+- relate one person to multiple companies, applications, target tracks, or career directions;
+- preserve conversation/follow-up history independent of one job;
+- represent referrals, introductions, recruiters, hiring managers, former employees, communities, events, and other user-relevant paths;
+- help the user identify who they already know or where a plausible relationship path exists when the underlying data is user-supplied or explicitly connected;
+- surface user-controlled preparation for outreach and follow-up;
+- distinguish a real relationship, a possible connection path, and a suggested person to research;
+- allow the user to pursue an organization intentionally even when there is not yet an open role.
 
-Validate whether application-scoped contacts become limiting in real use before introducing another top-level workspace.
+Required boundaries:
+
+- no contact scraping or enrichment by default;
+- no invented familiarity, relationship, referral, or endorsement;
+- no automated connection-request or cold-outreach spam;
+- no silent external action;
+- no assumption that a relationship path is inherently superior to a direct application;
+- no conversion of networking activity into a vanity-volume metric.
+
+Issue [#121](https://github.com/Knapp-Kevin/job-ranger/issues/121) governs this design pass. The intent is to expand Job Ranger's ability to find **paths**, not to replace one form of application spam with networking spam.
 
 ### 9. Calendar integration
 
@@ -283,7 +298,9 @@ The codebase may run on Linux development environments, but a supported installe
 
 **Disposition: Rejected / non-goal**
 
-Job Ranger's value is decision support and truthful preparation, not maximizing application volume by impersonating the user. High-volume automated submission would undermine user authority, evidence review, and application quality.
+Job Ranger's value is Career Ops decision support and truthful preparation, not maximizing application volume by impersonating the user. High-volume automated submission would undermine user authority, evidence review, application quality, and the product's goal of improving signal rather than adding hiring-market noise.
+
+The relevant distinction is not whether AI or automation helped. Job Ranger may automate discovery, assessment, preparation, reminders, and bounded form assistance. It rejects making autonomous submission volume the product advantage.
 
 ### 21. Opaque ATS / hiring probability as product truth
 
@@ -296,6 +313,8 @@ Job Ranger may expose evidence coverage, keywords, parseability, or known requir
 **Disposition: Rejected unless product governance changes**
 
 The product is currently a personal job-seeker tool. Multi-user recruiter workflow would alter the data model, privacy boundary, and product identity.
+
+Being recruiter-friendly through higher-intent candidates does not require Job Ranger to become recruiter software.
 
 ### 23. Generic agent framework, vector database, or workflow engine as product architecture
 
@@ -314,6 +333,9 @@ The review used public product/help material as directional evidence, including:
 - Careerflow feature catalog: https://www.careerflow.ai/features
 - Careerflow Job Tracker: https://www.careerflow.ai/job-tracker
 - Jobscan tools: https://www.jobscan.co/tools
+- ApplyBlast product and terms: https://applyblast.com/get_hired and https://applyblast.com/terms
+- LinkedIn Easy Apply limits: https://www.linkedin.com/help/linkedin/answer/a8068422
+- Indeed Apply For Me test/update: https://www.indeed.com/news/releases/indeed-tests-apply-for-me-job-search
 
 This is not a feature-parity checklist. Job Ranger should be better at its own contract rather than becoming an offline imitation of every SaaS career product simultaneously.
 
@@ -324,8 +346,9 @@ After the next release is prepared and published, the highest-value investigatio
 1. canonical job-description/source snapshots;
 2. source reliability diagnostics and dynamic-source success measurement;
 3. broader source discovery, beginning with the most underserved validated career contexts;
-4. quick job capture from arbitrary browsing, first testing whether a native paste/import flow is sufficient before building an extension;
-5. reusable application-question answers;
-6. networking/calendar/mock-interview candidates only after real use shows the existing lifecycle is insufficient.
+4. Career Ops company targeting and relationship-path design under #121, with explicit privacy/user-authority boundaries;
+5. quick job capture from arbitrary browsing, first testing whether a native paste/import flow is sufficient before building an extension;
+6. reusable application-question answers and bounded form assistance;
+7. calendar/mock-interview candidates only after real use shows the existing lifecycle is insufficient.
 
-Release delivery comes before speculative expansion. Shipping the product that already exists is currently more valuable than adding another major subsystem.
+Release delivery comes before speculative expansion. Shipping the product that already exists is currently more valuable than adding another major subsystem, but the strategic direction after that release should favor **better paths and better decisions over more applications**.
