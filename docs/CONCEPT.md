@@ -55,7 +55,7 @@ Application count is not a success metric by itself. A smaller set of well-under
 
 The product should reduce the cost of good judgment rather than remove judgment from the process. Discovery, monitoring, analysis, preparation, reminders, and path-finding can be highly automated. Consequential external actions remain intentional and user-controlled.
 
-When future Career Ops capabilities expand beyond specific openings, they should help the user identify promising companies, relationships, introductions, communities, recruiters, hiring managers, or other legitimate paths to employment without turning networking into another spam channel.
+When future Career Ops capabilities expand beyond specific openings, they should help the user identify promising companies, relationships, introductions, communities, recruiters, hiring managers, or other legitimate paths to employment without encouraging indiscriminate or automated outreach.
 
 ### Person before resume
 
@@ -151,7 +151,7 @@ Job Ranger is not currently:
 - an AI-only career assistant;
 - an autonomous mass-application bot;
 - an application-throughput optimizer;
-- an automated networking/outreach spam engine;
+- a system for high-volume automated networking or outreach;
 - a guarantee that every third-party career page can be extracted successfully;
 - a prediction engine that can know whether an employer will hire the user;
 - a collection of occupation-specific profile forks;
