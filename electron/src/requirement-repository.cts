@@ -17,6 +17,8 @@ type JobRow = {
   employment_type: string | null;
   url: string;
   description_snippet: string;
+  current_source_snapshot_id: string | null;
+  source_completeness: Job["sourceCompleteness"];
   salary_min: number | null;
   salary_max: number | null;
   salary_currency: string | null;
@@ -72,6 +74,8 @@ function mapJob(row: JobRow): Job {
     employmentType: row.employment_type,
     url: row.url,
     descriptionSnippet: row.description_snippet,
+    currentSourceSnapshotId: row.current_source_snapshot_id ?? null,
+    sourceCompleteness: row.source_completeness ?? "listing-only",
     salaryMin: row.salary_min,
     salaryMax: row.salary_max,
     salaryCurrency: row.salary_currency,
@@ -123,6 +127,8 @@ export class RequirementRepository {
         employment_type,
         url,
         description_snippet,
+        current_source_snapshot_id,
+        source_completeness,
         salary_min,
         salary_max,
         salary_currency,

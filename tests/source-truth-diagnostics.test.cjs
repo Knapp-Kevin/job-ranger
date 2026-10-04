@@ -9,7 +9,7 @@ const { SqliteClient } = require("../electron-runtime/electron/src/sqlite.cjs");
 
 async function run() {
   const tempDir = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-source-trust-"));
-  let greenhouseContent = `<p>Coordinate vendor schedules and customer requests.</p><p>Must maintain OSHA 30 certification and support weekend rotations.</p>`;
+  let greenhouseContent = `<p>${"Coordinate vendor schedules, customer requests, inventory records, service calendars, dispatch notes, purchase orders, supplier escalations, site access, shift handoffs, maintenance windows, and customer communications. ".repeat(2)}</p><p>Must maintain OSHA 30 certification and support weekend rotations.</p>`;
 
   const fetchImpl = async (url) => {
     const value = String(url);
