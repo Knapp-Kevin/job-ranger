@@ -37,10 +37,11 @@ This candidate contains the large body of work implemented after v1.1.2. It is *
 - Career Profile now owns intent/preferences while Career Evidence owns factual career history.
 - Application and resume workflows now preserve exact evidence/artifact history rather than relying on mutable filenames or free-form notes.
 - Electron privileged implementation authority moved to TypeScript under `electron/src/**`; `electron-runtime/**` is generated for execution and packaging instead of maintaining checked-in compiled copies.
-- Repository documentation now uses explicit shipped / implemented-on-main / candidate / deferred / historical status language.
-- Job Ranger's product direction is now explicitly framed as Career Ops and quality over quantity: understand the person, career direction, companies, people, opportunities, and then applications rather than optimizing raw application throughput.
+- Repository documentation now uses explicit shipped / release-candidate / implemented-on-main / candidate / deferred / historical status language.
+- Job Ranger's product direction is explicitly framed as Career Ops and quality over quantity: understand the person, career direction, companies, people, opportunities, and then applications rather than optimizing raw application throughput.
 - Optional remote inference remains deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, stories, and insights without requiring it.
 - OCR for image-only resumes and DOCX resume export remain explicit deferrals rather than silent fallbacks.
+- Arbitrary generic career-site hostnames remain manual-review in the v1.2.0 candidate rather than being automatically promoted into generic/browser acquisition; recognized provider/vendor domains retain their governed acquisition paths.
 
 ### Security and reliability
 
@@ -52,7 +53,8 @@ This candidate contains the large body of work implemented after v1.1.2. It is *
 - Hardened SQLite-backed persistence, migration, and E2E locking behavior.
 - Made high-severity dependency audit findings fail closed except for narrowly documented upstream-blocked tooling exceptions.
 - Added backup integrity validation and staged restore safeguards.
-- Known residual risk: hostname validation is performed before the underlying Node/Chromium connection and is not yet connection-pinned against a DNS-rebinding time-of-check/time-of-use change. This is tracked in #123 and must receive an explicit release disposition before publication.
+- Narrowed the v1.2.0 automated network surface by disabling arbitrary generic-host acquisition and adding regression coverage for that restriction.
+- Known residual risk: hostname validation is performed before the underlying Node/Chromium connection and is not yet connection-pinned against a DNS-rebinding time-of-check/time-of-use change. This remains tracked in #123. The release mitigation narrows exposure but does not make the transport rebinding-proof.
 
 ### Release engineering
 
@@ -60,11 +62,12 @@ This candidate contains the large body of work implemented after v1.1.2. It is *
 - Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, interoperability, and hardening regressions.
 - Added `docs/RELEASE_READINESS.md` as the release-blocking contract for documentation, migration, security, platform packaging, and product-smoke evidence.
 - Added `docs/PRODUCT_GAP_REVIEW.md` to record evaluated capabilities as needed, candidate, deferred, or rejected/non-goal.
-- Staged package metadata for v1.2.0 on the release-candidate branch; lockfile/version reconciliation remains required before the candidate can merge.
+- Staged `package.json` and `package-lock.json` root metadata consistently at v1.2.0 on the release-candidate branch.
+- Added candidate-specific evidence under `docs/validation/RELEASE_CANDIDATE_V1.2.0.md`.
 
 ### Candidate validation boundary
 
-- Fresh repository validation is required on the frozen v1.2.0 candidate after the QOR hardening changes.
+- Fresh final-head repository validation is required after the QOR hardening, #123 release mitigation, and candidate-documentation reconciliation.
 - Upgrade/migration/backup/restore testing from representative v1.1.2 data remains required.
 - Windows NSIS x64 and macOS x64/arm64 packaging must be built from the immutable candidate tag and exercised before publication.
 - Production signing/notarization evidence must be recorded where credentials are available; any limitation must be stated explicitly.
