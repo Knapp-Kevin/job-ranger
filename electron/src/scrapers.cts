@@ -77,12 +77,13 @@ function looksLikeCareersPath(pathname: string): boolean {
   return /\b(career|careers|jobs?|job-search|join-us|opportunit|opening|recruit)/i.test(pathname);
 }
 
+function hostMatchesDomain(host: string, domain: string): boolean {
+  return host === domain || host.endsWith(`.${domain}`);
+}
+
 function isKnownBrowserPortal(host: string): boolean {
-  return (
-    host.includes("linkedin.com") ||
-    host.includes("indeed.com") ||
-    host.includes("glassdoor.com") ||
-    host.includes("monster.com")
+  return ["linkedin.com", "indeed.com", "glassdoor.com", "monster.com"].some((domain) =>
+    hostMatchesDomain(host, domain),
   );
 }
 
@@ -101,29 +102,33 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
     if (firstSegment && (host === "jobs.lever.co" || host === "jobs.eu.lever.co")) {
       return { sourceType: "lever", sourceIdentifier: firstSegment };
     }
-    if (host === "careers.microsoft.com" ||
-        (host.endsWith(".microsoft.com") && (host.startsWith("careers.") || looksLikeCareersPath(pathname)))) {
+    if (
+      host === "careers.microsoft.com" ||
+      (hostMatchesDomain(host, "microsoft.com") &&
+        host.startsWith("careers.") &&
+        looksLikeCareersPath(pathname))
+    ) {
       return { sourceType: "microsoft", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("myworkdayjobs.com") || host.includes("workday.com")) {
+    if (hostMatchesDomain(host, "myworkdayjobs.com") || hostMatchesDomain(host, "workday.com")) {
       return { sourceType: "workday", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("icims.com")) {
+    if (hostMatchesDomain(host, "icims.com")) {
       return { sourceType: "icims", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("smartrecruiters.com")) {
+    if (hostMatchesDomain(host, "smartrecruiters.com")) {
       return { sourceType: "smartrecruiters", sourceIdentifier: normalizedUrl };
     }
-    if (host.endsWith("ashbyhq.com")) {
+    if (hostMatchesDomain(host, "ashbyhq.com")) {
       return { sourceType: "ashby", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("bamboohr.com")) {
+    if (hostMatchesDomain(host, "bamboohr.com")) {
       return { sourceType: "bamboohr", sourceIdentifier: normalizedUrl };
     }
-    if (host.includes("taleo.net") || host.includes("oraclecloud.com")) {
+    if (hostMatchesDomain(host, "taleo.net") || hostMatchesDomain(host, "oraclecloud.com")) {
       return { sourceType: "taleo", sourceIdentifier: normalizedUrl };
     }
-    if (host.endsWith("oracle.com") && (looksLikeCareersPath(pathname) || pathname.startsWith("/careers"))) {
+    if (hostMatchesDomain(host, "oracle.com") && looksLikeCareersPath(pathname)) {
       return { sourceType: "oracle", sourceIdentifier: normalizedUrl };
     }
     if (isKnownBrowserPortal(host)) {
