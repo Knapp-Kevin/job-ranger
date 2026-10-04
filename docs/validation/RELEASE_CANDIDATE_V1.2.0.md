@@ -1,10 +1,11 @@
 # Job Ranger v1.2.0 Release Candidate Evidence
 
-**Status:** preparation in progress  
+**Status:** repository candidate validated; platform publication evidence pending  
 **Target version:** v1.2.0  
 **Published predecessor:** v1.1.2  
 **Preparation branch:** `release/v1.2.0-rc1`  
 **Candidate base:** `main@20c8d776fe629d5310c486a6496f2b1af07d88c0`  
+**Validated product head:** `f4eb6d695377f8599827dd7cc453bcf634cd5713`  
 **Preparation date:** 2026-10-04
 
 ## Scope decision
@@ -52,71 +53,65 @@ The release candidate must not describe the current implementation as connection
 
 ### v1.2.0 release mitigation
 
-The candidate now disables automated acquisition for **arbitrary generic career-site hostnames**:
+The candidate disables automated acquisition for **arbitrary generic career-site hostnames**:
 
 - unknown/generic career pages resolve to `unsupported` / manual-review rather than `generic-html` automation;
 - the `generic-html` source profile is non-runnable in the candidate;
 - recognized provider/vendor domains and known browser portals retain their governed acquisition paths;
-- QOR regression coverage asserts that arbitrary `careers.example.com` and generic `/careers/` URLs remain unsupported;
+- QOR and backend regression coverage assert that arbitrary generic career URLs remain unsupported and non-runnable;
 - `README.md`, `HELP.md`, `SECURITY.md`, and `docs/SYSTEM_STATE.md` explicitly describe the restriction and the remaining connection-pinning gap.
 
 This removes the broad attacker-controlled-hostname entry path that existed when arbitrary career-looking URLs were automatically classified for generic acquisition. It materially narrows the practical v1.2.0 attack surface.
 
 It does **not** resolve #123 in the general case. Recognized provider domains still rely on preflight DNS validation rather than transport-level address pinning. #123 remains open for the durable architecture.
 
-The release decision is therefore:
+Release disposition:
 
-- **candidate mitigation implemented;**
-- **full connection-level protection deferred to #123;**
-- **publication requires fresh validation of this mitigation and explicit acknowledgement of the residual risk.**
+- **v1.2.0 mitigation implemented and regression-tested;**
+- **full connection-level protection remains governed by #123;**
+- **release documentation explicitly acknowledges the residual risk and does not claim rebinding-proof transport.**
 
 ## Validation evidence
 
-### Prior feature-program evidence
+### Validated product head
 
-- PR #114: repository health and full Electron E2E green on its final head;
-- PR #115: repository-health validation green for the universal-user-story closeout;
-- version-controlled validation artifacts under `docs/validation/` for Career Evidence, cross-career fixtures, discovery, portability, and documentation reconciliation.
+Product/runtime candidate head `f4eb6d695377f8599827dd7cc453bcf634cd5713` passed both release workflows on October 4, 2026.
 
-### Initial v1.2.0 candidate evidence
+**CI run `37183153646`: success**
 
-On candidate head `4f3cd0175b9287b5d9f067d89ed0a35f899bf749`, GitHub Actions CI run `37181998780` completed successfully. The `repository-health` job passed:
+The `repository-health` job passed all release-candidate steps:
 
-- checkout;
+- clean checkout;
 - Node.js 22.12.0 setup;
 - `npm ci`;
-- the high-severity dependency audit gate;
-- `npm run repo:health`, which covers typecheck, build, and the repository test suite.
+- `node scripts/audit-dependencies.mjs`;
+- explicit `npm run test:unit`;
+- `npm run repo:health`, which executes typecheck, production build, and the complete repository test/smoke chain.
 
-That evidence is useful but is **not final release evidence**, because the branch subsequently changed to add the #123 mitigation, package-version reconciliation, and documentation updates.
+The dependency gate reported the already-governed `GHSA-ch52-4w7c-c8xp` dev-tool exception through `http-cache-semantics`; it rejected no runtime or unrelated high/critical findings.
 
-## Required final-candidate validation
+The repository smoke chain explicitly passed the new representative upgrade test:
 
-The final frozen head still requires fresh evidence for:
+> `v1.1.2 -> v1.2.0 upgrade and restore smoke passed!`
 
-```text
-npm ci
-npm run typecheck
-npm run build
-npm run test
-npm run test:unit
-npm run test:e2e
-```
+That fixture proves, in an isolated test installation:
 
-`npm run repo:health` may establish the typecheck/build/test subset where the workflow records it explicitly. `npm run test:unit` and Electron E2E remain distinct release-contract requirements.
+- representative v1.1.2 migrations 1-2 and existing company/job/filter/settings state survive current initialization;
+- renderer-local v1.1.2 Career Profile and Application state migrate into the durable v1.2.0 model;
+- the migration is idempotent;
+- the legacy Career Profile produces the expected migration-bridge Target Track without inventing constraint strength;
+- a pre-upgrade database snapshot is preserved byte-for-byte;
+- a post-upgrade Job Ranger backup validates;
+- the upgraded state restores successfully into a different user-data root;
+- the original pre-upgrade snapshot remains unchanged as rollback evidence.
 
-Also pending:
+**Electron E2E run `37183153774`: success**
 
-- current dependency/security audit review on the final head;
-- representative v1.1.2 -> v1.2.0 upgrade/migration exercise;
-- backup creation/validation before destructive upgrade testing;
-- restore into a different data root with managed-path rebasing;
-- clean-profile consumer smoke, including one materially non-software career context;
-- Windows NSIS x64 immutable-tag package validation;
-- macOS x64 and arm64 immutable-tag package validation;
-- signing/notarization evidence where credentials are available, or an explicit release-note limitation where unavailable.
+The Electron E2E job passed `xvfb-run -a npm run test:e2e` on the same product/runtime candidate head.
 
-No pending item should be marked passed without execution evidence.
+### Documentation-only evidence commits after validation
+
+This evidence record and any subsequent issue/PR metadata reconciliation are documentation/governance updates only. They do not change the validated product/runtime implementation. If a later commit changes executable source, package metadata, tests, dependency state, build configuration, or release behavior, the product-head validation must be rerun and this section updated.
 
 ## Version metadata
 
@@ -124,7 +119,21 @@ No pending item should be marked passed without execution evidence.
 
 The lockfile synchronization was performed by a one-shot release-branch workflow and verified by reading the resulting lockfile. That temporary workflow was removed immediately afterward and is not part of the candidate architecture.
 
-Version synchronization removes the package-metadata blocker, but it does not make the release publishable without the remaining validation and platform evidence.
+## Remaining release gates
+
+Repository-level implementation, unit, upgrade/restore, dependency-gate, build, and Electron E2E validation are complete for the validated product head.
+
+Still pending before publication:
+
+- clean-profile consumer smoke on the actual packaged candidate, including one materially non-software career context;
+- Windows NSIS x64 package build and runtime validation from the immutable candidate;
+- macOS x64 and arm64 package build and runtime validation from the immutable candidate;
+- Windows bundled-SQLite verification on the immutable package;
+- signing/notarization evidence where credentials are available, or an explicit release-note limitation where unavailable;
+- final GitHub Release asset inventory and spot-check;
+- README/download-link and shipped-status transition only after the assets exist.
+
+The connected desktop validation runner was offline during repository preparation, so no platform-local package or installer validation is claimed here.
 
 ## Publication boundary
 
