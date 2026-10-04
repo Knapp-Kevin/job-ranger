@@ -6,6 +6,31 @@ import {
   validateOptionalString,
 } from "./common.cjs";
 
+function boundedInteger(
+  value: unknown,
+  label: string,
+  minimum: number,
+  maximum?: number,
+): number {
+  const parsed = validateFiniteNumber(value, label);
+  if (!Number.isInteger(parsed)) {
+    throw new Error(`${label} must be an integer.`);
+  }
+  if (parsed < minimum || (maximum !== undefined && parsed > maximum)) {
+    const range = maximum === undefined ? `at least ${minimum}` : `between ${minimum} and ${maximum}`;
+    throw new Error(`${label} must be ${range}.`);
+  }
+  return parsed;
+}
+
+function boundedNumber(value: unknown, label: string, minimum: number): number {
+  const parsed = validateFiniteNumber(value, label);
+  if (parsed < minimum) {
+    throw new Error(`${label} must be at least ${minimum}.`);
+  }
+  return parsed;
+}
+
 export function validateSettingsUpdate(rawValue: unknown): SettingsUpdate {
   if (!isRecord(rawValue)) {
     throw new Error("Settings payload must be an object.");
@@ -20,19 +45,43 @@ export function validateSettingsUpdate(rawValue: unknown): SettingsUpdate {
     update.userAgent = userAgent;
   }
   if (rawValue.maxConcurrentScrapes !== undefined) {
-    update.maxConcurrentScrapes = validateFiniteNumber(
+    update.maxConcurrentScrapes = boundedInteger(
       rawValue.maxConcurrentScrapes,
       "Max concurrent scrapes",
+      1,
+      10,
     );
   }
   if (rawValue.scrapeTimeoutMs !== undefined) {
-    update.scrapeTimeoutMs = validateFiniteNumber(
+    update.scrapeTimeoutMs = boundedNumber(
       rawValue.scrapeTimeoutMs,
       "Scrape timeout",
+      1000,
     );
   }
   if (rawValue.retryCount !== undefined) {
-    update.retryCount = validateFiniteNumber(rawValue.retryCount, "Retry count");
+    update.retryCount = boundedInteger(rawValue.retryCount, "Retry count", 0, 5);
+  }
+  if (rawValue.scrapeCooldownMinutes !== undefined) {
+    update.scrapeCooldownMinutes = boundedInteger(
+      rawValue.scrapeCooldownMinutes,
+      "Scrape cooldown minutes",
+      0,
+    );
+  }
+  if (rawValue.circuitBreakerThreshold !== undefined) {
+    update.circuitBreakerThreshold = boundedInteger(
+      rawValue.circuitBreakerThreshold,
+      "Circuit breaker threshold",
+      1,
+    );
+  }
+  if (rawValue.circuitBreakerCooldownMinutes !== undefined) {
+    update.circuitBreakerCooldownMinutes = boundedInteger(
+      rawValue.circuitBreakerCooldownMinutes,
+      "Circuit breaker cooldown minutes",
+      0,
+    );
   }
   if (rawValue.notificationsEnabled !== undefined) {
     update.notificationsEnabled = validateOptionalBoolean(
