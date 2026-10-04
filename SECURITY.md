@@ -4,7 +4,7 @@
 
 Job Ranger is a local-first personal desktop application.
 
-The latest published release and the current development/release-candidate branches are both considered for security maintenance, but they are not the same product state. The latest published installers remain **v1.1.2** while the v1.2.0 candidate contains substantially newer persistence, Career Evidence, resume, lifecycle, discovery, portability, and hardening code.
+The latest stable published installers remain **v1.1.2**. The v1.2.0 release line contains substantially newer persistence, Career Evidence, source-truth, resume, lifecycle, discovery, portability, distribution-trust, and hardening work. The validated packaged prerelease is `v1.2.0-rc.3`.
 
 Job Ranger should not be represented as a hardened enterprise endpoint, centrally managed security product, or sandbox for arbitrary web content.
 
@@ -27,16 +27,15 @@ These controls reduce risk but do not make third-party content trustworthy. Care
 
 ## Data handling
 
-The current product stores structured state locally behind the Electron/SQLite boundary, including:
+Structured state is stored locally behind the Electron/SQLite boundary, including:
 
 - companies and job sources;
-- jobs and scrape history;
+- jobs, canonical source snapshots, and scrape history;
 - filters and settings;
-- Career Profile;
-- Target Tracks;
+- Career Profile and Target Tracks;
 - Applications;
 - Career Evidence and provenance;
-- job requirements and mappings;
+- job requirements and evidence mappings;
 - resume projections/artifacts;
 - lifecycle contacts/events/offers;
 - Career Stories;
@@ -68,31 +67,38 @@ Job Ranger does not silently upload resumes to hosted OCR or inference services.
 
 Automated acquisition has more authority than a normal user click and therefore uses a stricter network boundary.
 
-Current controls reject automated fetch/browser requests targeting unsafe destinations such as:
+Current controls reject automated acquisition targeting unsafe destinations such as:
 
 - localhost/loopback;
-- private-network IP literals;
+- private-network addresses;
 - link-local addresses;
-- hostnames that resolve to unsafe private/local addresses during policy validation;
-- redirects into unsafe destinations detected by the policy.
+- reserved/non-public targets disallowed by policy;
+- hostnames whose approved resolution includes a disallowed address;
+- redirects into disallowed destinations.
 
-The direct acquisition path validates redirect targets before following them. Recognized browser-backed sources apply the same public-network preflight to HTTP/HTTPS requests before Chromium is allowed to continue.
+### Connection-level DNS-rebinding protection
 
-### DNS-rebinding residual risk
+Issue #123 is complete in the v1.2.0 release line.
 
-The current policy validates hostname resolution before a request is allowed, but the underlying Node or Chromium transport can perform its own DNS resolution when establishing the actual connection. The approved address is therefore **not connection-pinned**. A hostile hostname capable of changing DNS answers between policy validation and connection establishment creates a time-of-check/time-of-use risk tracked in issue #123.
+The current acquisition boundary does not merely preflight a hostname and then hand it back to an unconstrained resolver. Instead:
 
-The v1.2.0 release candidate reduces that exposure by disabling automated acquisition for arbitrary generic career-site hostnames. Unknown/generic career pages remain manual-review sources. Automated source classification is limited to recognized provider/vendor domains and known browser portals until connection-level anti-rebinding protection is implemented and validated.
+- policy resolution produces the exact approved public address set;
+- direct HTTP/HTTPS sockets connect only to one of those approved addresses;
+- HTTP `Host`, TLS SNI, and certificate verification continue to use the original hostname;
+- redirects are manually handled and independently resolved, approved, and pinned per hop;
+- source discovery uses the same pinned transport;
+- isolated Electron scraper HTTP/HTTPS document and subresource requests are routed through the governed pinned transport;
+- deterministic tests simulate a public address during approval and a hostile private address on a hypothetical later lookup, proving the actual direct connection remains pinned to the approved destination.
 
-This mitigation narrows the practical attack surface; it does not make the transport rebinding-proof and must not be documented as such.
+Arbitrary generic career-site hostnames remain manual-review/non-runnable in v1.2.0. Known provider/vendor paths retain governed acquisition.
 
-Do not replace the acquisition boundary with a simple `http/https` URL check, and do not re-enable arbitrary-host automated acquisition without resolving or explicitly governing the connection-pinning requirement.
+Future changes must preserve connection-level pinning. Do not replace this boundary with a simple `http/https` URL check or with preflight-only DNS validation.
 
 ## External navigation
 
 User-directed external links are validated separately from automated acquisition.
 
-The fact that a URL is acceptable for `shell.openExternal` does not imply that Job Ranger should be allowed to retrieve it automatically from the privileged process.
+The fact that a URL is acceptable for `shell.openExternal` does not imply that Job Ranger should automatically retrieve it through privileged acquisition code.
 
 ## Resume rendering security
 
@@ -123,7 +129,43 @@ Current design requirements include:
 - path rebasing before activation when restoring to a different data root;
 - preservation of the old live data as a rollback candidate until restored state is validated.
 
-A restore feature that deletes the only known-good copy before proving the replacement works is considered a security/reliability defect.
+A restore feature that deletes the only known-good copy before proving the replacement works is a security/reliability defect.
+
+## Distribution trust
+
+Repository-side distribution trust is governed by [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
+
+### Stable releases
+
+An exact stable tag matching `vMAJOR.MINOR.PATCH` must fail closed unless required platform trust configuration exists and verification succeeds.
+
+Windows direct-distribution path:
+
+- Microsoft Azure Artifact Signing;
+- Authenticode verification of packaged application executable and installer;
+- release trust evidence recorded in `windows-signing.json`.
+
+macOS direct-distribution path:
+
+- Developer ID Application signing;
+- hardened runtime;
+- Apple notarization and stapling;
+- `codesign`, `spctl`, and stapler validation;
+- release trust evidence recorded in `macos-signing.txt`.
+
+Actual credential-backed/clean-machine evidence remains tracked by #130.
+
+### Prerelease/tester builds
+
+Prerelease tags may remain unsigned, but they are tester-only rather than public-trust releases.
+
+The release pipeline emits SHA-256 checksums and machine-readable release manifests from the exact packaged files uploaded to GitHub Releases.
+
+Windows Smart App Control can make unsigned software non-runnable without a supported per-app exception. Job Ranger does not instruct users to disable Smart App Control, SmartScreen, or Defender.
+
+macOS testers may use Apple's bounded Privacy & Security → Open Anyway flow when the operating system offers it after the artifact has been independently verified. Job Ranger does not recommend disabling Gatekeeper globally or recursively stripping quarantine metadata.
+
+See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md).
 
 ## Reporting a vulnerability
 
@@ -151,7 +193,7 @@ Changes touching any of the following require explicit review and risk-appropria
 - renderer sandboxing;
 - preload/IPC exposure;
 - external URL handling;
-- acquisition-network policy;
+- acquisition-network policy or pinned transport;
 - browser-backed extraction;
 - local filesystem paths;
 - backup/restore;
@@ -160,16 +202,16 @@ Changes touching any of the following require explicit review and risk-appropria
 - application lifecycle persistence;
 - resume rendering/import;
 - updater/install behavior;
-- credentials/provider secrets;
+- signing/notarization credentials or provider secrets;
 - remote inference;
 - telemetry or cloud services;
 - browser autofill/form interaction.
 
-Fail closed where malformed or deceptive content could cause unsafe navigation, execution, filesystem access, network access, or factual-authority escalation.
+Fail closed where malformed or deceptive content could cause unsafe navigation, execution, filesystem access, network access, factual-authority escalation, or release-trust downgrade.
 
 ## Dependency security
 
-Dependency state must be established from the current lockfile and current audit evidence, not from historical claims that an older release had zero known vulnerabilities.
+Dependency state must be established from the current lockfile and current audit evidence, not historical claims from an older release.
 
 `scripts/audit-dependencies.mjs` blocks high/critical findings except for one narrowly bounded upstream-blocked **dev-tool-only** advisory path:
 
@@ -177,38 +219,35 @@ Dependency state must be established from the current lockfile and current audit
 - exception is allowed only when the affected nodes are proven development-only and connected to that exact advisory;
 - runtime dependencies, unrelated advisories, or disconnected high/critical findings still fail closed.
 
-The exception exists because the supported upstream build-tool chain did not yet provide a patched version when reviewed. It is not a general audit waiver and should be removed once the supported dependency path is fixed.
-
-Major dependency upgrades are reviewed as coordinated runtime/module/packaging/security migrations rather than merged solely because an automated bot produced a green diff.
+The exception is not a general audit waiver and should be removed once the supported dependency path is fixed.
 
 Do not use `npm audit fix --force` as a substitute for dependency review.
 
 ## Validation policy
 
-The repository intentionally preserves GitHub Actions budget.
+Security-relevant validation may run through hosted workflows or through documented manual evidence when appropriate.
 
-Security-relevant validation may run through hosted workflows when needed, but documentation/remediation and some release-preparation checks may be executed manually by the maintainer in an isolated environment.
-
-Manual validation evidence must state:
+Validation evidence must state:
 
 - environment;
 - exact commands/checks;
 - results;
 - anything that could not be exercised.
 
-A lack of hosted Actions run is not itself a security defect. A lack of validation evidence is.
+A lack of a hosted Actions run is not itself a security defect. A lack of validation evidence is.
 
 ## Release security
 
-Before publication, the candidate must satisfy [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
+Before stable v1.2.0 publication, the candidate must satisfy [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
 
 - current dependency review;
-- explicit disposition of material residual security risks, including #123;
-- migration/upgrade validation;
-- backup/restore proof;
+- migration/upgrade and backup/restore validation;
+- connection-pinned acquisition regression evidence;
 - Windows bundled-SQLite validation;
-- macOS package/notarization evidence where credentials permit;
-- product-smoke validation;
+- immutable packaged candidate evidence;
+- actual Windows signing and clean-machine evidence;
+- actual macOS signing/notarization/stapling and clean-machine evidence;
+- packaged product-smoke validation;
 - documentation truthfulness.
 
-Published artifacts, not build configuration, define the supported release surface.
+Published stable artifacts, not build configuration alone, define the supported public release surface.
