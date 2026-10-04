@@ -104,10 +104,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view "${{ steps.release_tag.outputs.tag }}" >/dev/null 2>&1; then
-            gh release create "${{ steps.release_tag.outputs.tag }}" \
-              --title "Job Ranger ${{ steps.release_tag.outputs.tag }}" \
-              --generate-notes
+          tag="${{ steps.release_tag.outputs.tag }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            if [[ "$tag" == *-rc.* ]]; then
+              gh release create "$tag" \
+                --title "Job Ranger $tag" \
+                --generate-notes \
+                --prerelease
+            else
+              gh release create "$tag" \
+                --title "Job Ranger $tag" \
+                --generate-notes
+            fi
           fi
 
       - name: Upload release assets
@@ -185,10 +193,18 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view "${{ steps.release_tag.outputs.tag }}" >/dev/null 2>&1; then
-            gh release create "${{ steps.release_tag.outputs.tag }}" \
-              --title "Job Ranger ${{ steps.release_tag.outputs.tag }}" \
-              --generate-notes
+          tag="${{ steps.release_tag.outputs.tag }}"
+          if ! gh release view "$tag" >/dev/null 2>&1; then
+            if [[ "$tag" == *-rc.* ]]; then
+              gh release create "$tag" \
+                --title "Job Ranger $tag" \
+                --generate-notes \
+                --prerelease
+            else
+              gh release create "$tag" \
+                --title "Job Ranger $tag" \
+                --generate-notes
+            fi
           fi
 
       - name: Upload release assets
