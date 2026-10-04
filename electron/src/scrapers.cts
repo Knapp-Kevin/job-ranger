@@ -103,10 +103,8 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
       return { sourceType: "lever", sourceIdentifier: firstSegment };
     }
     if (
-      host === "careers.microsoft.com" ||
-      (hostMatchesDomain(host, "microsoft.com") &&
-        host.startsWith("careers.") &&
-        looksLikeCareersPath(pathname))
+      hostMatchesDomain(host, "microsoft.com") &&
+      (host.startsWith("careers.") || looksLikeCareersPath(pathname))
     ) {
       return { sourceType: "microsoft", sourceIdentifier: normalizedUrl };
     }
