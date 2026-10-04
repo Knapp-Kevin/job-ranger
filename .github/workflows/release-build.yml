@@ -106,18 +106,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           tag="${{ steps.release_tag.outputs.tag }}"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
-            if [[ "$tag" == *-rc.* ]]; then
-              gh release create "$tag" \
-                --title "Job Ranger $tag" \
-                --generate-notes \
-                --prerelease
-            else
-              gh release create "$tag" \
-                --title "Job Ranger $tag" \
-                --generate-notes
-            fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          if [[ "$tag" == *-rc.* ]]; then
+            create_args=(--title "Job Ranger $tag" --generate-notes --prerelease)
+          else
+            create_args=(--title "Job Ranger $tag" --generate-notes)
+          fi
+
+          if ! gh release create "$tag" "${create_args[@]}"; then
+            # Windows and macOS jobs may reach this step concurrently. A create
+            # conflict is acceptable only if the other job actually created it.
+            gh release view "$tag" >/dev/null
           fi
 
       - name: Upload release assets
@@ -197,18 +201,22 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
+          set -euo pipefail
           tag="${{ steps.release_tag.outputs.tag }}"
-          if ! gh release view "$tag" >/dev/null 2>&1; then
-            if [[ "$tag" == *-rc.* ]]; then
-              gh release create "$tag" \
-                --title "Job Ranger $tag" \
-                --generate-notes \
-                --prerelease
-            else
-              gh release create "$tag" \
-                --title "Job Ranger $tag" \
-                --generate-notes
-            fi
+          if gh release view "$tag" >/dev/null 2>&1; then
+            exit 0
+          fi
+
+          if [[ "$tag" == *-rc.* ]]; then
+            create_args=(--title "Job Ranger $tag" --generate-notes --prerelease)
+          else
+            create_args=(--title "Job Ranger $tag" --generate-notes)
+          fi
+
+          if ! gh release create "$tag" "${create_args[@]}"; then
+            # Windows and macOS jobs may reach this step concurrently. A create
+            # conflict is acceptable only if the other job actually created it.
+            gh release view "$tag" >/dev/null
           fi
 
       - name: Upload release assets
