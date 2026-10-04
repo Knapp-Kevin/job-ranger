@@ -10,77 +10,66 @@ import { initializeInterviewPrepIpc } from "./interview-prep-ipc.cjs";
 import { initializeApplicationMaterialsIpc } from "./application-materials-ipc.cjs";
 import { initializeApplicationInsightsIpc } from "./application-insights-ipc.cjs";
 
-export function initializeApplicationLifecycleIpc(options: {
+export async function initializeApplicationLifecycleIpc(options: {
   databasePath: string;
   sqliteBinaryPath: string;
-}): void {
+}): Promise<void> {
   const backend = new ApplicationLifecycleBackend(
     options.databasePath,
     options.sqliteBinaryPath,
   );
-  const ready = backend.initialize();
+  await backend.initialize();
   initializeInterviewPrepIpc(options);
-  initializeApplicationMaterialsIpc(options);
-  initializeApplicationInsightsIpc(options);
+  await initializeApplicationMaterialsIpc(options);
+  await initializeApplicationInsightsIpc(options);
 
-  ipcMain.handle("application-lifecycle:get", async (_event, applicationId: string) => {
-    await ready;
-    return backend.getLifecycle(
+  ipcMain.handle("application-lifecycle:get", (_event, applicationId: string) =>
+    backend.getLifecycle(
       validateCareerEntityId(applicationId, "Application id"),
-    );
-  });
+    ),
+  );
 
   ipcMain.handle(
     "application-lifecycle:create-contact",
-    async (_event, applicationId: string, input: unknown) => {
-      await ready;
-      return backend.createContact(
+    (_event, applicationId: string, input: unknown) =>
+      backend.createContact(
         validateCareerEntityId(applicationId, "Application id"),
         validateApplicationContactInput(input),
-      );
-    },
+      ),
   );
 
   ipcMain.handle(
     "application-lifecycle:update-contact",
-    async (_event, contactId: string, input: unknown) => {
-      await ready;
-      return backend.updateContact(
+    (_event, contactId: string, input: unknown) =>
+      backend.updateContact(
         validateCareerEntityId(contactId, "Contact id"),
         validateApplicationContactInput(input),
-      );
-    },
+      ),
   );
 
   ipcMain.handle("application-lifecycle:delete-contact", async (_event, contactId: string) => {
-    await ready;
     await backend.deleteContact(validateCareerEntityId(contactId, "Contact id"));
   });
 
   ipcMain.handle(
     "application-lifecycle:create-event",
-    async (_event, applicationId: string, input: unknown) => {
-      await ready;
-      return backend.createEvent(
+    (_event, applicationId: string, input: unknown) =>
+      backend.createEvent(
         validateCareerEntityId(applicationId, "Application id"),
         validateApplicationEventInput(input),
-      );
-    },
+      ),
   );
 
   ipcMain.handle(
     "application-lifecycle:update-event",
-    async (_event, eventId: string, update: unknown) => {
-      await ready;
-      return backend.updateEvent(
+    (_event, eventId: string, update: unknown) =>
+      backend.updateEvent(
         validateCareerEntityId(eventId, "Event id"),
         validateApplicationEventUpdate(update),
-      );
-    },
+      ),
   );
 
   ipcMain.handle("application-lifecycle:delete-event", async (_event, eventId: string) => {
-    await ready;
     await backend.deleteEvent(validateCareerEntityId(eventId, "Event id"));
   });
 }
