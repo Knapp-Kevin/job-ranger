@@ -17,25 +17,93 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: release/v1.2.0-source-trust
-
       - name: Repair generator escaping
         run: node scripts/fix-source-trust-generator.mjs
-
       - name: Apply #117/#118 tranche
         run: node scripts/apply-source-trust-tranche.mjs
-
       - name: Commit implementation
         shell: bash
         run: |
           set -euo pipefail
-          if git diff --quiet; then
-            echo "No generated changes remain."
-            exit 0
-          fi
+          if git diff --quiet; then exit 0; fi
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
           git commit -m "feat: preserve source truth and acquisition diagnostics"
+          git push origin HEAD:release/v1.2.0-source-trust
+
+  fix:
+    if: github.event.issue.pull_request && github.event.issue.number == 126 && github.event.comment.body == '/fix-source-trust'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source-trust branch
+        uses: actions/checkout@v4
+        with:
+          ref: release/v1.2.0-source-trust
+      - name: Repair validation findings
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          function patch(file, from, to) {
+            let s = fs.readFileSync(file, 'utf8');
+            if (s.includes(to)) return;
+            if (!s.includes(from)) throw new Error(`Missing repair anchor in ${file}: ${from.slice(0,100)}`);
+            s = s.replace(from, to);
+            fs.writeFileSync(file, s);
+          }
+
+          patch('electron/src/scrapers.cts',
+            'import { toSnippet, extractJobsFromHtml } from "./extractors.cjs";',
+            'import { toSnippet, toSourceText, extractJobsFromHtml } from "./extractors.cjs";');
+          patch('electron/src/scrapers.cts',
+            'export { toSnippet, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };',
+            'export { toSnippet, toSourceText, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };');
+
+          patch('electron/src/backend.cts',
+            'return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "browser-unavailable", message, message);',
+            'return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "unsupported-source", message, message);');
+          patch('electron/src/backend.cts',
+            'return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, message);',
+            'return this.repository.finalizeScrapeRun(run.id, "unsupported", 0, 0, "browser-unavailable", message, message);');
+
+          patch('electron/src/requirement-repository.cts',
+            '  description_snippet: string;\n  salary_min: number | null;',
+            '  description_snippet: string;\n  current_source_snapshot_id: string | null;\n  source_completeness: Job["sourceCompleteness"];\n  salary_min: number | null;');
+          patch('electron/src/requirement-repository.cts',
+            '    descriptionSnippet: row.description_snippet,\n    salaryMin: row.salary_min,',
+            '    descriptionSnippet: row.description_snippet,\n    currentSourceSnapshotId: row.current_source_snapshot_id ?? null,\n    sourceCompleteness: row.source_completeness ?? "listing-only",\n    salaryMin: row.salary_min,');
+          patch('electron/src/requirement-repository.cts',
+            '        description_snippet,\n        salary_min,',
+            '        description_snippet,\n        current_source_snapshot_id,\n        source_completeness,\n        salary_min,');
+
+          const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+          if (!pkg.scripts['test:unit'].includes('source-truth-diagnostics.test.cjs')) {
+            pkg.scripts['test:unit'] = pkg.scripts['test:unit'].replace(
+              'node tests/qor-hardening.test.cjs &&',
+              'node tests/qor-hardening.test.cjs && node tests/source-truth-diagnostics.test.cjs &&'
+            );
+            fs.writeFileSync('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+          }
+
+          const testFile = 'tests/source-truth-diagnostics.test.cjs';
+          let test = fs.readFileSync(testFile, 'utf8');
+          const oldText = 'let greenhouseContent = `<p>Coordinate vendor schedules and customer requests.</p><p>Must maintain OSHA 30 certification and support weekend rotations.</p>`;';
+          const newText = 'let greenhouseContent = `<p>${"Coordinate vendor schedules, customer requests, inventory records, service calendars, dispatch notes, purchase orders, supplier escalations, site access, shift handoffs, maintenance windows, and customer communications. ".repeat(2)}</p><p>Must maintain OSHA 30 certification and support weekend rotations.</p>`;';
+          if (!test.includes(newText)) {
+            if (!test.includes(oldText)) throw new Error('Missing source-truth regression fixture anchor');
+            test = test.replace(oldText, newText);
+            fs.writeFileSync(testFile, test);
+          }
+          NODE
+      - name: Commit repairs
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "fix: integrate source trust contracts across runtime seams"
           git push origin HEAD:release/v1.2.0-source-trust
 
   validate:
@@ -47,24 +115,18 @@ jobs:
         uses: actions/checkout@v4
         with:
           ref: release/v1.2.0-source-trust
-
       - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
           node-version: "22.12.0"
           cache: npm
-
       - name: Install dependencies
         run: npm ci
-
       - name: Dependency/security gate
         run: node scripts/audit-dependencies.mjs
-
       - name: Explicit unit suite
         run: npm run test:unit
-
       - name: Repository health
         run: npm run repo:health
-
       - name: Electron E2E
         run: xvfb-run -a npm run test:e2e
