@@ -7,7 +7,7 @@ const {
   isPublicIpv6,
   validateAcquisitionUrlSyntax,
 } = require("../electron-runtime/electron/src/acquisition-network-policy.cjs");
-const { fetchJson } = require("../electron-runtime/electron/src/scrapers.cjs");
+const { detectSourceFromUrl, fetchJson } = require("../electron-runtime/electron/src/scrapers.cjs");
 
 function assertPolicyRejects(operation) {
   return assert.rejects(operation, (error) => {
@@ -66,6 +66,36 @@ async function run() {
     validateAcquisitionUrlSyntax("https://careers.example.com/jobs").toString(),
     "https://careers.example.com/jobs",
   );
+
+  const vendorCases = [
+    ["https://acme.myworkdayjobs.com/jobs", "workday"],
+    ["https://jobs.icims.com/jobs", "icims"],
+    ["https://jobs.smartrecruiters.com/acme", "smartrecruiters"],
+    ["https://acme.bamboohr.com/careers", "bamboohr"],
+    ["https://acme.taleo.net/careersection/jobs", "taleo"],
+    ["https://jobs.ashbyhq.com/acme", "ashby"],
+  ];
+  for (const [url, expectedType] of vendorCases) {
+    assert.equal(detectSourceFromUrl(url).sourceType, expectedType, `${url} should detect ${expectedType}`);
+  }
+
+  for (const url of [
+    "https://notworkday.com/",
+    "https://fakeicims.com/",
+    "https://notsmartrecruiters.com/",
+    "https://fakebamboohr.com/",
+    "https://nottaleo.net/",
+    "https://fakeoraclecloud.com/",
+    "https://notashbyhq.com/",
+    "https://eviloracle.com/",
+    "https://notlinkedin.com/",
+  ]) {
+    assert.equal(
+      detectSourceFromUrl(url).sourceType,
+      "unsupported",
+      `${url} must not inherit a vendor adapter from a lookalike hostname`,
+    );
+  }
 
   const publicResolver = async () => ["93.184.216.34", "2606:2800:220:1:248:1893:25c8:1946"];
   assert.equal(
