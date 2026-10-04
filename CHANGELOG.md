@@ -4,7 +4,11 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-The default branch is materially ahead of v1.1.2. The following work is **implemented on `main` but is not shipped to normal users until a new GitHub Release is published**.
+Release-candidate preparation for v1.2.0 is active. Additional changes after the candidate freeze belong here until they are deliberately admitted to the release.
+
+## v1.2.0 - Release candidate
+
+This candidate contains the large body of work implemented after v1.1.2. It is **not shipped to normal users until an immutable tag is validated and a GitHub Release with the expected Windows/macOS assets is published**.
 
 ### Added
 
@@ -34,28 +38,37 @@ The default branch is materially ahead of v1.1.2. The following work is **implem
 - Application and resume workflows now preserve exact evidence/artifact history rather than relying on mutable filenames or free-form notes.
 - Electron privileged implementation authority moved to TypeScript under `electron/src/**`; `electron-runtime/**` is generated for execution and packaging instead of maintaining checked-in compiled copies.
 - Repository documentation now uses explicit shipped / implemented-on-main / candidate / deferred / historical status language.
+- Job Ranger's product direction is now explicitly framed as Career Ops and quality over quantity: understand the person, career direction, companies, people, opportunities, and then applications rather than optimizing raw application throughput.
 - Optional remote inference remains deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, stories, and insights without requiring it.
 - OCR for image-only resumes and DOCX resume export remain explicit deferrals rather than silent fallbacks.
 
 ### Security and reliability
 
 - Sandboxed the primary renderer and retained context isolation, disabled Node integration, and web security boundaries.
-- Added acquisition-network policy that rejects unsafe loopback, link-local, and private-network destinations, including redirect/DNS cases relevant to automated acquisition.
+- Added acquisition-network policy that rejects unsafe loopback, link-local, and private-network destinations and validates redirect/DNS targets before automated acquisition.
+- Hardened privileged IPC numeric ranges, source-vendor hostname classification, managed artifact reveal paths, and record-shape validation.
+- Removed duplicate/generated privileged validator implementations and tracked build/test residue so `electron/src/**` remains the checked-in privileged authority.
+- Expanded repository-health coverage to exercise real salary, scrape-guard, tray-policy, and QOR hardening regressions.
 - Hardened SQLite-backed persistence, migration, and E2E locking behavior.
 - Made high-severity dependency audit findings fail closed except for narrowly documented upstream-blocked tooling exceptions.
 - Added backup integrity validation and staged restore safeguards.
+- Known residual risk: hostname validation is performed before the underlying Node/Chromium connection and is not yet connection-pinned against a DNS-rebinding time-of-check/time-of-use change. This is tracked in #123 and must receive an explicit release disposition before publication.
 
 ### Release engineering
 
 - Added generated Electron-runtime build authority and package configuration for `electron-runtime/electron/src/main.cjs`.
-- Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, and interoperability.
+- Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, interoperability, and hardening regressions.
 - Added `docs/RELEASE_READINESS.md` as the release-blocking contract for documentation, migration, security, platform packaging, and product-smoke evidence.
 - Added `docs/PRODUCT_GAP_REVIEW.md` to record evaluated capabilities as needed, candidate, deferred, or rejected/non-goal.
+- Staged package metadata for v1.2.0 on the release-candidate branch; lockfile/version reconciliation remains required before the candidate can merge.
 
-### Known release boundary
+### Candidate validation boundary
 
-- The latest published installers remain v1.1.2 until a new immutable release tag is validated and published.
-- A full Windows/macOS release-candidate packaging pass for the accumulated post-v1.1.2 change set still needs to be recorded before publication.
+- Fresh repository validation is required on the frozen v1.2.0 candidate after the QOR hardening changes.
+- Upgrade/migration/backup/restore testing from representative v1.1.2 data remains required.
+- Windows NSIS x64 and macOS x64/arm64 packaging must be built from the immutable candidate tag and exercised before publication.
+- Production signing/notarization evidence must be recorded where credentials are available; any limitation must be stated explicitly.
+- README download links and `docs/SYSTEM_STATE.md` shipped labels must not move to v1.2.0 until release assets actually exist.
 
 ## v1.1.2 - 2026-09-24
 
