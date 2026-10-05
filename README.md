@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/stable%20release-v1.1.2-0f172a.svg" alt="Stable release v1.1.2" /></a>
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0-rc.4"><img src="https://img.shields.io/badge/packaged%20candidate-v1.2.0--rc.4-2563eb.svg" alt="Packaged candidate v1.2.0-rc.4" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0-rc.5"><img src="https://img.shields.io/badge/packaged%20candidate-v1.2.0--rc.5-2563eb.svg" alt="Packaged candidate v1.2.0-rc.5" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
@@ -19,9 +19,9 @@
 
 **v1.1.2 remains the latest stable public release.** Its Windows and macOS installers were published on September 24, 2026.
 
-**v1.2.0-rc.4 is the current validated packaged candidate.** It was built from immutable commit `177e89dc7325bee4787718f89b9c8e2920f28453`. Hosted Windows x64 and macOS x64/arm64 release jobs passed, including execution of the packaged application itself against a deterministic healthcare-operations Career Ops smoke scenario. Package-smoke reports, trust-state evidence, SHA-256 files, and schema-v2 release manifests are published with the prerelease.
+**v1.2.0-rc.5 is the current validated packaged candidate.** It was built from immutable commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`. Hosted Windows x64 and macOS x64/arm64 release jobs passed, including packaged healthcare-operations smoke, native platform trust-verifier execution, SHA-256 generation, schema-v2 release manifests, and release-asset upload.
 
-rc.4 is still a **tester prerelease**, not the stable public release. Stable v1.2.0 is now blocked on real Windows signing / macOS Developer ID + notarization credentials and clean-machine platform-trust validation, not on repository or packaged-runtime functionality.
+rc.5 is still a **tester prerelease**, not the stable public release. Stable v1.2.0 is blocked on real Windows signing / macOS Developer ID + notarization credentials and clean-machine platform-trust validation, not on repository, package, or release-verifier functionality.
 
 Job Ranger uses these status terms deliberately:
 
@@ -53,13 +53,13 @@ The Windows installer includes the SQLite runtime Job Ranger needs.
 
 Linux does not currently have a supported packaged release.
 
-### Testing v1.2.0-rc.4
+### Testing v1.2.0-rc.5
 
-The rc.4 artifacts are for informed testers. They may be unsigned/unnotarized and are not the normal public installation path.
+The rc.5 artifacts are for informed testers. They may be unsigned/unnotarized and are not the normal public installation path.
 
-Before upload, the Windows and macOS packaged runtimes each executed the release-blocking healthcare-operations package-smoke harness from their own packaged application, and the resulting `windows-package-smoke.json` / `macos-package-smoke.json` files are published with the prerelease.
+Before upload, the Windows and macOS packaged runtimes each executed the release-blocking healthcare-operations package-smoke harness from their own packaged application. The refactored platform trust verifiers also ran successfully in their native hosted release environments. The resulting package-smoke reports, trust reports, checksums, and release manifests are published with the prerelease.
 
-Verify the platform SHA-256 file and release manifest before using a prerelease artifact. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md) and [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
+Verify the platform SHA-256 file and release manifest before using a prerelease artifact. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md).
 
 Job Ranger does not recommend disabling Smart App Control, SmartScreen, Defender, Gatekeeper, or other platform security globally merely to run a tester build.
 
@@ -120,8 +120,9 @@ Job Ranger does **not** autonomously mass-apply, invent qualifications or relati
 | Verified backup / staged restore | Not shipped | **Implemented** |
 | JSON Resume interoperability | Not shipped | **Implemented** |
 | Connection-level DNS-rebinding protection | Not shipped | **Implemented** |
-| Packaged-binary release smoke | Not shipped | **Implemented and passed on rc.4** |
+| Packaged-binary release smoke | Not shipped | **Implemented and passed on rc.5** |
 | Stable Windows/macOS trust fail-closed pipeline | Not shipped | **Implemented; real credentials/evidence pending** |
+| Clean-machine trust evidence tooling | Not shipped | **Implemented and native-runner compatible** |
 | Remote inference provider | Not shipped | Deferred |
 | OCR for scanned/image-only resumes | Not shipped | Deferred |
 | DOCX resume export | Not shipped | Deferred |
@@ -209,7 +210,7 @@ Stable public distribution is fail-closed:
 - Windows direct distribution requires configured Azure Artifact Signing and valid Authenticode evidence;
 - macOS direct distribution requires Developer ID signing, notarization, stapling, and platform verification.
 
-The repository plumbing and packaged-runtime validation exist, but actual credential-backed clean-machine evidence is still pending under #125/#130.
+The repository plumbing, packaged-runtime validation, and clean-machine evidence tooling exist, but actual credential-backed clean-machine evidence is still pending under #125/#130.
 
 Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure.
 
@@ -255,7 +256,7 @@ npm run electron:build:mac
 
 Stable GitHub Releases are the authority for normal user-installable builds.
 
-`v1.2.0-rc.4` proves immutable prerelease packaging for Windows x64 and macOS x64/arm64, including bundled SQLite verification on Windows, actual packaged-runtime smoke on both platforms, platform trust-state evidence, SHA-256 files, and schema-v2 release manifests.
+`v1.2.0-rc.5` proves immutable prerelease packaging for Windows x64 and macOS x64/arm64, including bundled SQLite verification on Windows, actual packaged-runtime smoke on both platforms, native execution of the refactored trust-verification scripts, platform trust-state evidence, SHA-256 files, and schema-v2 release manifests.
 
 Before stable v1.2.0:
 
@@ -266,7 +267,7 @@ Before stable v1.2.0:
 - verify final stable package-smoke/trust/checksum/manifest evidence and downloads;
 - only then switch README download links and shipped-status documentation from v1.1.2 to v1.2.0.
 
-See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
+See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
 
 ## Documentation hierarchy
 
