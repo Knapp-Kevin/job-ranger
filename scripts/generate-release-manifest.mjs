@@ -30,6 +30,20 @@ export function selectPlatformArtifacts(entries, platform) {
   return entries.filter((entry) => pattern.test(entry)).sort((a, b) => a.localeCompare(b));
 }
 
+async function requireEvidenceFile(outputDirectory, fileName, label) {
+  const evidencePath = path.join(outputDirectory, path.basename(fileName));
+  let evidenceStat;
+  try {
+    evidenceStat = await stat(evidencePath);
+  } catch {
+    throw new Error(`Required ${label} evidence was not found: ${evidencePath}`);
+  }
+  if (!evidenceStat.isFile() || evidenceStat.size === 0) {
+    throw new Error(`Required ${label} evidence is empty or not a file: ${evidencePath}`);
+  }
+  return path.basename(fileName);
+}
+
 export async function generateReleaseManifest({
   platform,
   tag,
@@ -37,11 +51,15 @@ export async function generateReleaseManifest({
   releaseDirectory = "release",
   outputDirectory = "build/trust",
   trustEvidenceFile,
+  smokeEvidenceFile,
   generatedAt = new Date().toISOString(),
 }) {
   if (!tag || typeof tag !== "string") throw new Error("Release tag is required.");
   if (!trustEvidenceFile || typeof trustEvidenceFile !== "string") {
     throw new Error("Trust evidence filename is required.");
+  }
+  if (!smokeEvidenceFile || typeof smokeEvidenceFile !== "string") {
+    throw new Error("Package smoke evidence filename is required.");
   }
 
   const entries = await readdir(releaseDirectory);
@@ -67,16 +85,16 @@ export async function generateReleaseManifest({
   }
 
   await mkdir(outputDirectory, { recursive: true });
-  const trustEvidencePath = path.join(outputDirectory, path.basename(trustEvidenceFile));
-  let trustEvidenceStat;
-  try {
-    trustEvidenceStat = await stat(trustEvidencePath);
-  } catch {
-    throw new Error(`Required trust evidence was not found: ${trustEvidencePath}`);
-  }
-  if (!trustEvidenceStat.isFile() || trustEvidenceStat.size === 0) {
-    throw new Error(`Required trust evidence is empty or not a file: ${trustEvidencePath}`);
-  }
+  const trustEvidenceName = await requireEvidenceFile(
+    outputDirectory,
+    trustEvidenceFile,
+    "trust",
+  );
+  const smokeEvidenceName = await requireEvidenceFile(
+    outputDirectory,
+    smokeEvidenceFile,
+    "package smoke",
+  );
 
   const checksumPath = path.join(outputDirectory, `${platform}-SHA256SUMS.txt`);
   const manifestPath = path.join(outputDirectory, `${platform}-release-manifest.json`);
@@ -89,13 +107,14 @@ export async function generateReleaseManifest({
   );
 
   const manifest = {
-    schemaVersion: 1,
+    schemaVersion: 2,
     tag,
     platform,
     generatedAt,
     publicRelease: publicFlag,
     testerOnly: !publicFlag,
-    trustEvidenceFile: path.basename(trustEvidenceFile),
+    trustEvidenceFile: trustEvidenceName,
+    packageSmokeEvidenceFile: smokeEvidenceName,
     artifacts,
   };
   await writeFile(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`, "utf8");
@@ -127,6 +146,8 @@ if (isCli) {
   const trustEvidenceFile =
     args["trust-evidence"] ??
     (platform === "windows" ? "windows-signing.json" : "macos-signing.txt");
+  const smokeEvidenceFile =
+    args["smoke-evidence"] ?? `${platform}-package-smoke.json`;
 
   generateReleaseManifest({
     platform,
@@ -135,6 +156,7 @@ if (isCli) {
     releaseDirectory: args["release-dir"] ?? "release",
     outputDirectory: args["output-dir"] ?? "build/trust",
     trustEvidenceFile,
+    smokeEvidenceFile,
   })
     .then(({ manifestPath, checksumPath }) => {
       console.log(`Release trust manifest: ${manifestPath}`);
