@@ -402,6 +402,11 @@ export class JobScoutBackend {
   }
 
   private async processQueue(): Promise<void> {
+    // Nothing to start: do not touch the database. (A read here after the
+    // last scrape was delivered raced callers that dispose the backend.)
+    if (this.pendingQueue.length === 0) {
+      return;
+    }
     const settings = await this.getSettings();
 
     while (
@@ -424,10 +429,17 @@ export class JobScoutBackend {
         .catch((error) => {
           this.rejectScrapeListeners(next.companyId, error);
         })
-        .finally(async () => {
+        .finally(() => {
           this.inFlightCompanyIds.delete(next.companyId);
           this.runningScrapes -= 1;
-          await this.processQueue();
+          // Continue with queued scrapes; a failure to start them is reported
+          // to their callers instead of escaping as an unhandled rejection.
+          return this.processQueue().catch((error) => {
+            for (const entry of this.pendingQueue.splice(0)) {
+              this.queuedCompanyIds.delete(entry.companyId);
+              this.rejectScrapeListeners(entry.companyId, error);
+            }
+          });
         });
     }
   }
