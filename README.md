@@ -25,7 +25,7 @@ Job Ranger uses these status terms deliberately:
 | Status | Meaning |
 | --- | --- |
 | **Shipped / stable** | Present in a stable GitHub Release intended for normal users. |
-| **Shipped** | Built from an immutable prerelease tag and validated as release artifacts, but not promoted as stable. |
+| **Packaged candidate** | Built from an immutable prerelease tag and validated as release artifacts, but not promoted as stable. |
 | **Implemented** | Present in repository/release lineage but not necessarily in the latest stable installer. |
 | **Candidate / next** | Evidence-backed possible future work, not a commitment. |
 | **Deferred** | Intentionally inactive. |
