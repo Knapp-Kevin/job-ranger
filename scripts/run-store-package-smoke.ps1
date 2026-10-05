@@ -118,7 +118,7 @@ try {
   if ($smoke.status -ne "passed") { $failures += "Packaged smoke failed: $($smoke.error)" }
   if ($smoke.scenario -ne "healthcare-operations") { $failures += "Packaged smoke did not run the non-software scenario." }
   if ($smoke.appVersion -ne $AppVersion) { $failures += "Packaged smoke version $($smoke.appVersion) does not match $AppVersion." }
-  foreach ($check in @("storeDataIsolated", "sqliteBundled", "resumeTruthGatePassed", "resumeParseabilityPassed", "archiveRestoreApplied", "archiveRestoredProfile", "externalNavigationValidated", "backupValidated", "jsonResumeExported", "legacyImportApplicable", "legacyInstallFound")) {
+  foreach ($check in @("docxImportSucceeded", "storeDataIsolated", "sqliteBundled", "resumeTruthGatePassed", "resumeParseabilityPassed", "archiveRestoreApplied", "archiveRestoredProfile", "externalNavigationValidated", "backupValidated", "jsonResumeExported", "legacyImportApplicable", "legacyInstallFound")) {
     if ($smoke.checks.$check -ne $true) { $failures += "Packaged smoke check '$check' was not true." }
   }
   if ($smoke.checks.channel -ne "microsoft-store") { $failures += "Runtime did not detect the Microsoft Store channel." }

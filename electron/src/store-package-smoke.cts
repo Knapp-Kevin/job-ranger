@@ -12,6 +12,42 @@ import { renderResumePdf } from "./resume-renderer.cjs";
 import { validateExternalUrl } from "./validators.cjs";
 import { detectLegacyInstall } from "./legacy-install-ipc.cjs";
 import { packageFamilyNameFromExecPath, storeHostPath } from "./distribution.cjs";
+import { encodeStoreZip } from "./portable-archive.cjs";
+
+/** Minimal OOXML package for a non-software resume (used to exercise native DOCX import). */
+function healthcareResumeDocx(): Uint8Array {
+  const paragraph = (text: string, style?: string) =>
+    `<w:p>${style ? `<w:pPr><w:pStyle w:val="${style}"/></w:pPr>` : ""}<w:r><w:t xml:space="preserve">${text}</w:t></w:r></w:p>`;
+  const body = [
+    paragraph("Morgan Rivera", "Title"),
+    paragraph("Experience", "Heading1"),
+    paragraph("Patient Services Coordinator, Harbor Family Clinic, 2023 - Present"),
+    paragraph("Coordinated patient scheduling, referrals, and insurance verification for six providers."),
+    paragraph("Certifications", "Heading1"),
+    paragraph("CPR/BLS, American Heart Association"),
+  ].join("");
+  const encoder = new TextEncoder();
+  return encodeStoreZip([
+    {
+      name: "[Content_Types].xml",
+      bytes: encoder.encode(
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>',
+      ),
+    },
+    {
+      name: "_rels/.rels",
+      bytes: encoder.encode(
+        '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>',
+      ),
+    },
+    {
+      name: "word/document.xml",
+      bytes: encoder.encode(
+        `<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>${body}</w:body></w:document>`,
+      ),
+    },
+  ]);
+}
 
 /**
  * Packaged-runtime smoke executed by the *real Electron main process* of an
@@ -135,6 +171,16 @@ export async function runStorePackageSmoke(options: StorePackageSmokeOptions): P
     extra.legacyImportApplicable = legacy.applicable;
     extra.legacyInstallFound = legacy.found;
 
+    // 2b. Native DOCX resume import (Anydoc) inside the package.
+    const docxPath = path.join(smokeRoot, "morgan-rivera-resume.docx");
+    await fs.writeFile(docxPath, healthcareResumeDocx());
+    const docxImport = await install.careerBackend.importResumeFile(docxPath);
+    extra.docxImportParser = docxImport.artifact.parserId ?? "none";
+    extra.docxImportState = docxImport.artifact.extractionState;
+    extra.docxImportProposals = docxImport.proposedEvidence.length;
+    extra.docxImportSucceeded =
+      docxImport.failureCode === null && docxImport.proposedEvidence.length > 0;
+
     // 3. External navigation validation stays strict in the package.
     let rejectsFileUrl = false;
     try {
@@ -208,6 +254,7 @@ export async function runStorePackageSmoke(options: StorePackageSmokeOptions): P
     await restored.backend.dispose();
 
     const required = [
+      "docxImportSucceeded",
       "storeDataIsolated",
       "externalNavigationValidated",
       "resumeTruthGatePassed",

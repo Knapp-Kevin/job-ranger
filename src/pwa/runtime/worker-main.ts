@@ -121,7 +121,8 @@ async function writeInbox(files: { name: string; bytes: ArrayBuffer }[]): Promis
   for (const file of files) {
     const directory = join(IO_DIRECTORY, "inbox", crypto.randomUUID());
     await fs.mkdir(directory, { recursive: true });
-    const safeName = basename(file.name.replace(/\\/g, "/")).replace(/[\u0000-\u001f]/g, "").slice(0, 200) || "selected-file";
+    const candidate = basename(file.name.replace(/\\/g, "/")).replace(/[\u0000-\u001f]/g, "").slice(0, 200);
+    const safeName = candidate && candidate !== "." && candidate !== ".." ? candidate : "selected-file";
     const target = join(directory, safeName);
     await fs.writeFile(target, new Uint8Array(file.bytes));
     paths.push(target);
