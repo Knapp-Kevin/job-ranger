@@ -3,8 +3,8 @@
 **Status:** packaged prerelease candidate validated; signed public trust evidence pending  
 **Target version:** v1.2.0  
 **Published predecessor:** v1.1.2  
-**Validated packaged candidate:** v1.2.0-rc.4  
-**Candidate commit:** `177e89dc7325bee4787718f89b9c8e2920f28453`  
+**Validated packaged candidate:** v1.2.0-rc.5  
+**Candidate commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`  
 **Validation date:** 2026-10-05
 
 ## Scope decision
@@ -26,7 +26,8 @@ Included product areas include:
 - QOR repository hardening;
 - connection-pinned anti-rebinding acquisition transport (#123);
 - release signing/notarization fail-closed plumbing, tester trust evidence, checksums, and release manifests (#125/#128);
-- packaged-binary consumer smoke validation;
+- release-blocking packaged-binary consumer smoke;
+- reproducible clean-machine signing verification tooling (#130/PR #135);
 - Career Ops / quality-over-quantity product documentation.
 
 ## Product work intentionally outside v1.2.0
@@ -89,6 +90,7 @@ Important dedicated regressions include:
 - distribution trust configuration;
 - release checksum/manifest generation;
 - packaged-binary smoke;
+- clean-machine evidence-tool interfaces;
 - macOS optional-signing environment normalization.
 
 ## Upgrade/restore evidence
@@ -120,23 +122,28 @@ PR #132 fixed the rc.2 macOS packaging defect. Hosted Windows and macOS packagin
 
 ### v1.2.0-rc.4
 
+PR #134 added release-blocking packaged-binary consumer smoke and schema-v2 release manifests that require both trust-state evidence and package-smoke evidence. Hosted Windows/macOS packaging and the packaged healthcare-operations smoke both passed. rc.4 proved the package-smoke boundary.
+
+### v1.2.0-rc.5
+
 Immutable tag:
 
-`v1.2.0-rc.4` → `177e89dc7325bee4787718f89b9c8e2920f28453`
+`v1.2.0-rc.5` → `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
-PR #134 added release-blocking packaged-binary consumer smoke and schema-v2 release manifests that require both trust-state evidence and package-smoke evidence.
+PR #135 made clean-machine trust verification reproducible against downloaded/installed artifacts and preserved the release-workflow interfaces. rc.5 exists to prove those verifier refactors in the native Windows/macOS release environments.
 
-Hosted **Build Release Assets** run `37258455958` completed successfully on both platforms.
+Hosted **Build Release Assets** run `37259653622` completed successfully on both platforms.
 
-## Windows rc.4 evidence
+## Windows rc.5 evidence
 
 Passed:
 
 - NSIS x64 packaging;
 - pinned official SQLite archive verification;
 - packaged SQLite presence/execution and resolver selection;
-- packaged `Job Ranger.exe` execution using `ELECTRON_RUN_AS_NODE` and the runtime inside its own `app.asar`;
+- packaged `Job Ranger.exe` execution using the runtime inside its own `app.asar`;
 - deterministic healthcare-operations Career Ops smoke;
+- refactored Windows trust-verifier execution on `windows-latest`;
 - prerelease trust-state verification;
 - SHA-256 generation;
 - schema-v2 release-manifest generation;
@@ -152,13 +159,11 @@ Published assets/evidence include:
 - `windows-SHA256SUMS.txt`;
 - `windows-release-manifest.json`.
 
-GitHub records SHA-256 digest:
+Windows installer SHA-256:
 
-`6d7e4b95fe7fc5bbf60900c8f45130ed0f327e1809d989b7b5586902143765b4`
+`5ea12ff3626a4c4d5ae0e063f6a40f3315ea67e0c3a5252a96531890f32b6b76`
 
-for the rc.4 Windows installer.
-
-## macOS rc.4 evidence
+## macOS rc.5 evidence
 
 Passed:
 
@@ -166,6 +171,7 @@ Passed:
 - both packaged executable architecture checks;
 - native hosted-runner packaged `.app` execution from its own `app.asar`;
 - deterministic healthcare-operations Career Ops smoke;
+- refactored macOS trust-verifier execution on `macos-latest`;
 - prerelease trust-state verification;
 - SHA-256 generation;
 - schema-v2 release-manifest generation;
@@ -180,12 +186,12 @@ Published assets/evidence include:
 - `macos-SHA256SUMS.txt`;
 - `macos-release-manifest.json`.
 
-Recorded rc.4 package digests:
+Recorded rc.5 package digests:
 
-- arm64 DMG: `f35a4cc3adfc037ddecbc7cc8f8b3fdc630ed0ff742a0cbbefe2ae84d38df849`;
-- arm64 ZIP: `2a9e6bf16c8bbc50ad375fd1d578e472e01b8a8feab7353b449a9b657f07b446`;
-- x64 DMG: `44bb8d32063c203bf6e1bd1ff4d9755a89fd81ba938fc51d15fb73a3b07f1986`;
-- x64 ZIP: `b6981cb7986aaf3ac0c1652502922da21faa242023353aeefbeed802a3aa0f8c`.
+- arm64 DMG: `e723fa509004ec2779e00e71c196a0a41ca68e31ad86f21cc739675228e0c5f4`;
+- arm64 ZIP: `e2580a70ab55c014fbc842f79bfa2e4992a819c01e3aae2ec0aadc211ce0b923`;
+- x64 DMG: `82f4dfe6568bc68957f66039a467f182085a31685d699bd090f52368fd3bbec7`;
+- x64 ZIP: `daed79c4633fc92c3797b267d3e7bc2ff6a661f738712689bcd75913142b3b02`.
 
 The GitHub Release is marked `prerelease: true` and remains distinct from stable v1.1.2.
 
@@ -210,9 +216,31 @@ The healthcare-operations scenario validates:
 
 The reports are published as `windows-package-smoke.json` and `macos-package-smoke.json` and are required by the platform release manifests.
 
+## Clean-machine evidence tooling
+
+PR #135 added reproducible verification for the eventual signed clean-machine validation.
+
+Windows verifier accepts downloaded artifact paths and records:
+
+- SHA-256 / bytes;
+- Authenticode status;
+- signer subject/issuer;
+- Windows version/architecture;
+- PowerShell version.
+
+macOS verifier accepts an explicit installed/mounted `.app` and records/enforces:
+
+- `codesign --verify --deep --strict`;
+- signature details;
+- `spctl` Gatekeeper assessment;
+- stapler validation;
+- macOS version/build and architecture.
+
+`docs/CLEAN_MACHINE_TRUST_VALIDATION.md` defines the ordinary install/first-launch observation procedure. rc.5 proves both refactored verifiers remain compatible with the native release pipeline.
+
 ## Remaining release gates
 
-Repository implementation, migration validation, immutable prerelease packaging, and packaged-runtime smoke are complete.
+Repository implementation, migration validation, immutable prerelease packaging, packaged-runtime smoke, and native verifier compatibility are complete.
 
 Still pending before stable publication:
 
@@ -225,13 +253,13 @@ Still pending before stable publication:
 7. immutable stable `v1.2.0` build and final asset/download spot-check;
 8. README/download-link and shipped-status transition only after stable assets exist.
 
-The connected Desktop Commander Windows runner is currently offline, so clean-machine Windows trust observation cannot be executed from this session. That is now distinct from packaged-runtime smoke, which has passed.
+The connected Desktop Commander Windows runner is currently offline, so clean-machine Windows trust observation cannot be executed from this session. macOS clean-machine trust evidence likewise requires a real supported Mac. These external trust requirements are distinct from hosted packaged-runtime validation, which has passed.
 
 ## Publication boundary
 
 Until the stable trust gates complete:
 
 - v1.1.2 remains the latest stable shipped release;
-- v1.2.0-rc.4 is the validated tester prerelease, not the stable public release;
+- v1.2.0-rc.5 is the validated tester prerelease, not the stable public release;
 - stable README download links remain on v1.1.2;
 - unsigned prerelease installation guidance does not substitute for public platform signing/notarization.
