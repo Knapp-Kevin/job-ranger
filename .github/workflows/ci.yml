@@ -16,7 +16,7 @@ concurrency:
 jobs:
   repository-health:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
 
     steps:
       - name: Check out repository
@@ -34,5 +34,13 @@ jobs:
       - name: Block high-severity dependency vulnerabilities
         run: node scripts/audit-dependencies.mjs
 
+      - name: Run explicit release-candidate unit suite
+        if: startsWith(github.head_ref, 'release/')
+        run: npm run test:unit
+
       - name: Typecheck, build, and smoke test
         run: npm run repo:health
+
+      - name: Run Electron E2E for release-line pull requests
+        if: startsWith(github.head_ref, 'release/')
+        run: xvfb-run -a npm run test:e2e

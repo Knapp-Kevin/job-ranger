@@ -72,6 +72,11 @@ function run() {
   assert.equal(detectSourceFromUrl("https://jobs.ashbyhq.com/acme").sourceType, "ashby");
   assert.equal(detectSourceFromUrl("https://jobs.linkedin.com/jobs/123").sourceType, "browser-required");
 
+  // Arbitrary career-site hostnames stay manual-review until the transport can pin
+  // an approved DNS answer to the actual network connection (see #123).
+  assert.equal(detectSourceFromUrl("https://careers.example.com/jobs").sourceType, "unsupported");
+  assert.equal(detectSourceFromUrl("https://example.com/careers/openings").sourceType, "unsupported");
+
   assertNotSourceType("https://evilworkday.com/", "workday");
   assertNotSourceType("https://fakeicims.com/jobs", "icims");
   assertNotSourceType("https://smartrecruiters.com.evil.example/jobs", "smartrecruiters");

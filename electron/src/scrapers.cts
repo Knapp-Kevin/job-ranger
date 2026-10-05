@@ -1,10 +1,10 @@
-import type { CompanySourceType } from "../../src/shared/contracts.js";
+import type { CompanySourceType, SourceContentCompleteness } from "../../src/shared/contracts.js";
 import { greenhouseAdapter } from "./adapters/greenhouse.cjs";
 import { leverAdapter } from "./adapters/lever.cjs";
 import { smartrecruitersAdapter } from "./adapters/smartrecruiters.cjs";
 import { ashbyAdapter } from "./adapters/ashby.cjs";
 import { createGenericHtmlAdapter, browserRequiredAdapter } from "./adapters/generic-html.cjs";
-import { toSnippet, extractJobsFromHtml } from "./extractors.cjs";
+import { toSnippet, toSourceText, extractJobsFromHtml } from "./extractors.cjs";
 import { PLATFORM_SELECTORS, getSelectorsForSource } from "./platform-selectors.cjs";
 import { parseSalary } from "./salary-parser.cjs";
 import {
@@ -12,8 +12,9 @@ import {
   validateAcquisitionUrlSyntax,
   type AcquisitionHostResolver,
 } from "./acquisition-network-policy.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
-export { toSnippet, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
+export { toSnippet, toSourceText, extractJobsFromHtml, PLATFORM_SELECTORS, getSelectorsForSource, parseSalary };
 
 export const genericHtmlSourceTypes = [
   "workday",
@@ -33,6 +34,9 @@ export interface ScrapedJob {
   employmentType: string | null;
   url: string;
   descriptionSnippet: string;
+  descriptionText: string;
+  sourceCompleteness: SourceContentCompleteness;
+  extractionVersion: string;
   salaryMin: number | null;
   salaryMax: number | null;
   salaryCurrency: string | null;
@@ -147,9 +151,6 @@ export function detectSourceFromUrl(rawUrl: string): SourceDetectionResult {
     if (isKnownBrowserPortal(host)) {
       return { sourceType: "browser-required", sourceIdentifier: normalizedUrl };
     }
-    if (host.startsWith("careers.") || looksLikeCareersPath(pathname)) {
-      return { sourceType: "generic-html", sourceIdentifier: normalizedUrl };
-    }
   } catch {
     return { sourceType: "unsupported", sourceIdentifier: null };
   }
@@ -160,13 +161,17 @@ const redirectStatuses = new Set([301, 302, 303, 307, 308]);
 const maxRedirects = 5;
 
 async function validateContextUrl(url: string, context: ScraperContext): Promise<string> {
-  if (context.resolveHost) {
+  if (context.fetchImpl !== globalThis.fetch && context.resolveHost) {
     return assertPublicAcquisitionUrl(url, context.resolveHost);
   }
-  if (context.fetchImpl === globalThis.fetch) {
-    return assertPublicAcquisitionUrl(url);
-  }
   return validateAcquisitionUrlSyntax(url).toString();
+}
+
+function contextFetch(context: ScraperContext): typeof fetch {
+  if (context.fetchImpl !== globalThis.fetch) return context.fetchImpl;
+  return createPinnedFetch(
+    context.resolveHost ? { resolveHost: context.resolveHost } : undefined,
+  );
 }
 
 async function fetchWithAcquisitionPolicy(
@@ -175,9 +180,10 @@ async function fetchWithAcquisitionPolicy(
   init: RequestInit,
 ): Promise<Response> {
   let currentUrl = await validateContextUrl(url, context);
+  const fetchImpl = contextFetch(context);
 
   for (let redirectCount = 0; redirectCount <= maxRedirects; redirectCount += 1) {
-    const response = await context.fetchImpl(currentUrl, {
+    const response = await fetchImpl(currentUrl, {
       ...init,
       redirect: "manual",
     });

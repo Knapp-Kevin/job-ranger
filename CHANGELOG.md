@@ -4,7 +4,11 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-The default branch is materially ahead of v1.1.2. The following work is **implemented on `main` but is not shipped to normal users until a new GitHub Release is published**.
+v1.2.0 release-candidate work is frozen around the validated `v1.2.0-rc.3` packaged candidate. Stable publication remains blocked on packaged consumer smoke plus real Windows signing / macOS signing-notarization clean-machine evidence.
+
+## v1.2.0 - Release candidate
+
+The current immutable packaged candidate is `v1.2.0-rc.3` at `e25c61c0be21dd00bc80a0880d2a770660c283bd`. Windows x64 and macOS x64/arm64 packages, prerelease trust reports, SHA-256 sums, and release manifests have been built and published successfully. v1.2.0 is **not** the stable public release until the remaining trust/smoke gates complete.
 
 ### Added
 
@@ -13,7 +17,9 @@ The default branch is materially ahead of v1.1.2. The following work is **implem
 - Durable SQLite-backed Career Profile and Applications state.
 - Canonical Career Evidence with provenance, authority state, correction, merge/reject/supersede lineage, structured credentials, references, and direct user authoring.
 - Resume import for DOCX, text-bearing PDF, plain text, and pasted text with source preservation, hashing, extraction snapshots, duplicate detection, and explicit OCR-required/failure states.
-- Deterministic job requirement normalization and requirement-to-evidence mapping with direct, transferable, ambiguous, and gap states.
+- Canonical job-source snapshots with source URL, retrieval time, hashes, completeness state, extraction/version metadata, dedupe, and changed-content history.
+- Source reliability diagnostics that distinguish success-empty, cooldown/circuit, unsupported/browser-unavailable, network-policy, access-denied, rate-limit, timeout/retrieval, extraction, parser, and unclassified failures.
+- Deterministic job requirement normalization and requirement-to-evidence mapping with direct, transferable, ambiguous, and gap states tied to the preserved source text used for analysis.
 - Multi-dimensional opportunity assessment covering eligibility, evidence coverage, career alignment, preference alignment, blockers, and unknowns.
 - Consumer source discovery behind a provider-neutral seam with explicit user approval before monitoring discovered sources.
 - Deterministic resume creation with ATS-oriented templates, Truth Gate, isolated Chromium PDF rendering, Parseability Gate, versioned artifacts, diffs, and exact application linkage.
@@ -26,36 +32,67 @@ The default branch is materially ahead of v1.1.2. The following work is **implem
 - Verified portable backup and staged restore with artifact integrity checks and cross-data-root path rebasing.
 - JSON Resume import/export as a bounded interoperability adapter without making JSON Resume canonical product state.
 - Universal cross-career validation fixtures, including hourly/local, healthcare, trades, executive, recent graduate, federal/government, contractor/freelance, career-change, return-to-work, and military-transition contexts.
+- Connection-pinned HTTP/HTTPS acquisition transport with per-hop redirect approval and deterministic DNS-rebinding regression coverage.
+- Stable-release platform-trust gates for Windows Azure Artifact Signing and macOS Developer ID signing/notarization/stapling.
+- Per-platform release trust reports, SHA-256 checksum files, and machine-readable release manifests.
+- Bounded tester-installation guidance for unsigned prereleases that does not require disabling platform security globally.
 
 ### Changed
 
 - Replaced the old universal fit-percentage surface with explainable assessment dimensions rather than presenting one opaque number as product truth.
 - Career Profile now owns intent/preferences while Career Evidence owns factual career history.
 - Application and resume workflows now preserve exact evidence/artifact history rather than relying on mutable filenames or free-form notes.
+- Requirement analysis now uses preserved canonical source text instead of being constrained to the legacy short description snippet.
 - Electron privileged implementation authority moved to TypeScript under `electron/src/**`; `electron-runtime/**` is generated for execution and packaging instead of maintaining checked-in compiled copies.
-- Repository documentation now uses explicit shipped / implemented-on-main / candidate / deferred / historical status language.
-- Optional remote inference remains deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, stories, and insights without requiring it.
+- Repository documentation uses explicit stable / packaged-candidate / implemented / candidate / deferred / historical status language.
+- Job Ranger's product direction is explicitly framed as quality-over-quantity Career Ops: understand the person, career direction, companies, people, opportunities, and then applications rather than optimizing raw application throughput.
+- Optional remote inference remains deferred because the deterministic product covers core assessment, tailoring, application materials, interview preparation, stories, and insights without requiring it.
 - OCR for image-only resumes and DOCX resume export remain explicit deferrals rather than silent fallbacks.
+- Arbitrary generic career-site hostnames remain manual-review/non-runnable rather than being automatically promoted into privileged generic acquisition.
+- Linux packaging was evaluated and deferred until real demand justifies the support surface.
+- Microsoft Store AppX/MSIX distribution was evaluated as a valid post-v1.2.0 candidate but not admitted to the current release scope.
 
 ### Security and reliability
 
 - Sandboxed the primary renderer and retained context isolation, disabled Node integration, and web security boundaries.
-- Added acquisition-network policy that rejects unsafe loopback, link-local, and private-network destinations, including redirect/DNS cases relevant to automated acquisition.
+- Added acquisition-network policy that rejects unsafe loopback, link-local, private-network, and other disallowed destinations.
+- Replaced preflight-only DNS approval with connection-level address pinning: sockets connect only to policy-approved public addresses while Host/SNI/TLS verification remains bound to the original hostname.
+- Redirects are independently resolved, approved, and pinned per hop.
+- Source discovery uses the same pinned transport.
+- Isolated Electron scraper HTTP/HTTPS document and subresource traffic is routed through the governed pinned transport.
+- Added deterministic regression coverage proving a hostile later DNS answer cannot redirect the direct transport to a private/local destination.
+- Hardened privileged IPC numeric ranges, source-vendor hostname classification, managed artifact reveal paths, and record-shape validation.
+- Removed duplicate/generated privileged validator implementations and tracked build/test residue so `electron/src/**` remains the checked-in privileged authority.
+- Expanded repository-health coverage to exercise salary, scrape-guard, tray-policy, source-truth, DNS-rebinding, distribution-trust, and QOR regressions.
 - Hardened SQLite-backed persistence, migration, and E2E locking behavior.
 - Made high-severity dependency audit findings fail closed except for narrowly documented upstream-blocked tooling exceptions.
 - Added backup integrity validation and staged restore safeguards.
+- Stable exact-semver release builds fail closed when required Windows signing or macOS signing/notarization configuration/verification is absent.
 
 ### Release engineering
 
 - Added generated Electron-runtime build authority and package configuration for `electron-runtime/electron/src/main.cjs`.
-- Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, and interoperability.
-- Added `docs/RELEASE_READINESS.md` as the release-blocking contract for documentation, migration, security, platform packaging, and product-smoke evidence.
-- Added `docs/PRODUCT_GAP_REVIEW.md` to record evaluated capabilities as needed, candidate, deferred, or rejected/non-goal.
+- Expanded repository-health and Electron E2E coverage across Career Evidence, targeting, discovery, assessment, source truth, resume lifecycle/tailoring, credentials, application lifecycle, Career Stories, materials, interview prep, insights, backup/restore, interoperability, and hardening regressions.
+- Added `docs/RELEASE_READINESS.md` as the release-blocking contract.
+- Added `docs/PRODUCT_GAP_REVIEW.md` for candidate/deferred/rejected dispositions.
+- Synchronized `package.json` and root `package-lock.json` metadata at v1.2.0.
+- Added candidate-specific evidence under `docs/validation/RELEASE_CANDIDATE_V1.2.0.md`.
+- Added `docs/DISTRIBUTION_TRUST.md` and `docs/TESTER_INSTALLATION.md`.
+- Added Windows and macOS trust-verification scripts.
+- Added post-package SHA-256/release-manifest generation that requires the corresponding trust-evidence file to exist.
+- Fixed unsigned macOS prerelease packaging so blank/incomplete signing environment variables are removed before electron-builder rather than being misinterpreted as a certificate source.
+- `v1.2.0-rc.3` hosted release run `37239803933` completed successfully for Windows x64 and macOS x64/arm64 with expected package/trust/checksum/manifest assets uploaded.
 
-### Known release boundary
+### Remaining stable-release boundary
 
-- The latest published installers remain v1.1.2 until a new immutable release tag is validated and published.
-- A full Windows/macOS release-candidate packaging pass for the accumulated post-v1.1.2 change set still needs to be recorded before publication.
+Before stable v1.2.0 publication:
+
+- perform packaged consumer smoke against rc.3, including a materially non-software career scenario;
+- configure/verify real Azure Artifact Signing and record clean Windows 11 behavior;
+- configure/verify real Developer ID signing, Apple notarization/stapling, and clean macOS Gatekeeper behavior;
+- build the immutable stable tag;
+- verify final stable assets/downloads;
+- only then update README download links and shipped-status documentation from v1.1.2 to v1.2.0.
 
 ## v1.1.2 - 2026-09-24
 

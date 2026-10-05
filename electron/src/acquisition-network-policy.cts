@@ -12,6 +12,12 @@ export class AcquisitionNetworkPolicyError extends Error {
 
 export type AcquisitionHostResolver = (hostname: string) => Promise<string[]>;
 
+export interface ApprovedAcquisitionTarget {
+  url: string;
+  hostname: string;
+  addresses: string[];
+}
+
 const policyMessage =
   "This source is not allowed by Job Ranger's acquisition network policy.";
 
@@ -88,17 +94,14 @@ export function isPublicIpv6(address: string): boolean {
   if (allZero) return false;
   if (bytes.slice(0, 15).every((byte) => byte === 0) && bytes[15] === 1) return false;
 
-  // fc00::/7 unique-local, fe80::/10 link-local, ff00::/8 multicast.
   if ((bytes[0] & 0xfe) === 0xfc) return false;
   if (bytes[0] === 0xfe && (bytes[1] & 0xc0) === 0x80) return false;
   if (bytes[0] === 0xff) return false;
 
-  // 2001:db8::/32 documentation range.
   if (bytes[0] === 0x20 && bytes[1] === 0x01 && bytes[2] === 0x0d && bytes[3] === 0xb8) {
     return false;
   }
 
-  // ::ffff:0:0/96 IPv4-mapped addresses inherit IPv4 policy.
   const mappedPrefix = bytes.slice(0, 10).every((byte) => byte === 0) && bytes[10] === 0xff && bytes[11] === 0xff;
   if (mappedPrefix) {
     return isPublicIpv4(`${bytes[12]}.${bytes[13]}.${bytes[14]}.${bytes[15]}`);
@@ -108,9 +111,10 @@ export function isPublicIpv6(address: string): boolean {
 }
 
 export function isPublicIpAddress(address: string): boolean {
-  const version = isIP(address.replace(/^\[|\]$/g, ""));
-  if (version === 4) return isPublicIpv4(address);
-  if (version === 6) return isPublicIpv6(address);
+  const normalized = address.replace(/^\[|\]$/g, "");
+  const version = isIP(normalized);
+  if (version === 4) return isPublicIpv4(normalized);
+  if (version === 6) return isPublicIpv6(normalized);
   return false;
 }
 
@@ -139,24 +143,42 @@ export const resolveHostnamePublicAddresses: AcquisitionHostResolver = async (ho
   return Array.from(new Set(results.map((result) => result.address)));
 };
 
-export async function assertPublicAcquisitionUrl(
+export async function resolveApprovedAcquisitionTarget(
   rawUrl: string,
   resolver: AcquisitionHostResolver = resolveHostnamePublicAddresses,
-): Promise<string> {
+): Promise<ApprovedAcquisitionTarget> {
   const parsed = validateAcquisitionUrlSyntax(rawUrl);
   const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
 
-  if (isIP(hostname)) return parsed.toString();
+  if (isIP(hostname)) {
+    return {
+      url: parsed.toString(),
+      hostname,
+      addresses: [hostname],
+    };
+  }
 
   let addresses: string[];
   try {
-    addresses = await resolver(hostname);
+    addresses = Array.from(new Set(await resolver(hostname)));
   } catch {
     return deny();
   }
+
   if (addresses.length === 0 || addresses.some((address) => !isPublicIpAddress(address))) {
     return deny();
   }
 
-  return parsed.toString();
+  return {
+    url: parsed.toString(),
+    hostname,
+    addresses,
+  };
+}
+
+export async function assertPublicAcquisitionUrl(
+  rawUrl: string,
+  resolver: AcquisitionHostResolver = resolveHostnamePublicAddresses,
+): Promise<string> {
+  return (await resolveApprovedAcquisitionTarget(rawUrl, resolver)).url;
 }

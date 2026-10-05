@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing release tag to upload assets to, for example v1.1.1"
+        description: "Existing release tag to build and upload, for example v1.2.0-rc.2"
         required: true
         type: string
       platform:
@@ -31,6 +31,27 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Resolve target tag and trust mode
+        id: release_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "public=true" >> "$GITHUB_OUTPUT"
+            echo "JOB_RANGER_REQUIRE_WINDOWS_SIGNING=1" >> "$GITHUB_ENV"
+          else
+            echo "public=false" >> "$GITHUB_OUTPUT"
+            echo "JOB_RANGER_REQUIRE_WINDOWS_SIGNING=0" >> "$GITHUB_ENV"
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -40,6 +61,32 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify public Windows signing configuration
+        if: steps.release_tag.outputs.public == 'true'
+        shell: pwsh
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          JOB_RANGER_WINDOWS_SIGN_ENDPOINT: ${{ vars.JOB_RANGER_WINDOWS_SIGN_ENDPOINT }}
+          JOB_RANGER_WINDOWS_SIGN_ACCOUNT: ${{ vars.JOB_RANGER_WINDOWS_SIGN_ACCOUNT }}
+          JOB_RANGER_WINDOWS_SIGN_PROFILE: ${{ vars.JOB_RANGER_WINDOWS_SIGN_PROFILE }}
+          JOB_RANGER_WINDOWS_SIGN_PUBLISHER: ${{ vars.JOB_RANGER_WINDOWS_SIGN_PUBLISHER }}
+        run: |
+          $required = @(
+            "AZURE_TENANT_ID",
+            "AZURE_CLIENT_ID",
+            "AZURE_CLIENT_SECRET",
+            "JOB_RANGER_WINDOWS_SIGN_ENDPOINT",
+            "JOB_RANGER_WINDOWS_SIGN_ACCOUNT",
+            "JOB_RANGER_WINDOWS_SIGN_PROFILE",
+            "JOB_RANGER_WINDOWS_SIGN_PUBLISHER"
+          )
+          $missing = @($required | Where-Object { [string]::IsNullOrWhiteSpace([Environment]::GetEnvironmentVariable($_)) })
+          if ($missing.Count -gt 0) {
+            throw "Stable public Windows release requires Artifact Signing configuration. Missing: $($missing -join ', ')"
+          }
 
       - name: Provision pinned SQLite CLI
         shell: pwsh
@@ -70,6 +117,14 @@ jobs:
 
       - name: Build release artifacts
         run: npm run electron:build:win
+        env:
+          AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
+          AZURE_CLIENT_ID: ${{ secrets.AZURE_CLIENT_ID }}
+          AZURE_CLIENT_SECRET: ${{ secrets.AZURE_CLIENT_SECRET }}
+          JOB_RANGER_WINDOWS_SIGN_ENDPOINT: ${{ vars.JOB_RANGER_WINDOWS_SIGN_ENDPOINT }}
+          JOB_RANGER_WINDOWS_SIGN_ACCOUNT: ${{ vars.JOB_RANGER_WINDOWS_SIGN_ACCOUNT }}
+          JOB_RANGER_WINDOWS_SIGN_PROFILE: ${{ vars.JOB_RANGER_WINDOWS_SIGN_PROFILE }}
+          JOB_RANGER_WINDOWS_SIGN_PUBLISHER: ${{ vars.JOB_RANGER_WINDOWS_SIGN_PUBLISHER }}
 
       - name: Verify packaged SQLite runtime
         shell: pwsh
@@ -89,28 +144,43 @@ jobs:
             throw "Runtime resolver selected '$resolved' instead of packaged SQLite '$expected'."
           }
 
-      - name: Resolve target tag
-        id: release_tag
+      - name: Verify Windows distribution trust
+        shell: pwsh
+        run: |
+          $requireSigned = "${{ steps.release_tag.outputs.public }}" -eq "true"
+          & ./scripts/verify-windows-distribution.ps1 -RequireSigned:$requireSigned
+
+      - name: Generate Windows checksums and release manifest
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          fi
+          node scripts/generate-release-manifest.mjs \
+            --platform windows \
+            --tag "${{ steps.release_tag.outputs.tag }}" \
+            --public "${{ steps.release_tag.outputs.public }}" \
+            --trust-evidence windows-signing.json
 
       - name: Ensure GitHub release exists
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view "${{ steps.release_tag.outputs.tag }}" >/dev/null 2>&1; then
-            gh release create "${{ steps.release_tag.outputs.tag }}" \
-              --title "Job Ranger ${{ steps.release_tag.outputs.tag }}" \
-              --generate-notes
+          set -euo pipefail
+          tag="${{ steps.release_tag.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            exit 0
           fi
 
-      - name: Upload release assets
+          if [[ "$tag" == *-rc.* || "$tag" == *-beta* ]]; then
+            create_args=(--title "Job Ranger $tag" --generate-notes --prerelease)
+          else
+            create_args=(--title "Job Ranger $tag" --generate-notes)
+          fi
+
+          if ! gh release create "$tag" "${create_args[@]}"; then
+            gh release view "$tag" >/dev/null
+          fi
+
+      - name: Upload release assets and trust evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -119,6 +189,9 @@ jobs:
             release/Job*windows*.exe \
             release/Job*windows*.exe.blockmap \
             release/latest.yml \
+            build/trust/windows-signing.json \
+            build/trust/windows-SHA256SUMS.txt \
+            build/trust/windows-release-manifest.json \
             --clobber
 
   build-macos:
@@ -128,6 +201,27 @@ jobs:
     steps:
       - name: Check out repository
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref }}
+
+      - name: Resolve target tag and trust mode
+        id: release_tag
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
+            tag="${{ inputs.tag }}"
+          else
+            tag="${GITHUB_REF_NAME}"
+          fi
+          echo "tag=$tag" >> "$GITHUB_OUTPUT"
+          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+            echo "public=true" >> "$GITHUB_OUTPUT"
+            echo "JOB_RANGER_REQUIRE_NOTARIZATION=1" >> "$GITHUB_ENV"
+          else
+            echo "public=false" >> "$GITHUB_OUTPUT"
+            echo "JOB_RANGER_REQUIRE_NOTARIZATION=0" >> "$GITHUB_ENV"
+          fi
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -137,6 +231,28 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Verify public macOS signing configuration
+        if: steps.release_tag.outputs.public == 'true'
+        shell: bash
+        env:
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
+          APPLE_ID: ${{ secrets.APPLE_ID }}
+          APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
+          APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+        run: |
+          set -euo pipefail
+          missing=()
+          [[ -n "${CSC_LINK:-}" ]] || missing+=(MAC_CSC_LINK)
+          [[ -n "${CSC_KEY_PASSWORD:-}" ]] || missing+=(MAC_CSC_KEY_PASSWORD)
+          [[ -n "${APPLE_ID:-}" ]] || missing+=(APPLE_ID)
+          [[ -n "${APPLE_ID_PASSWORD:-}" ]] || missing+=(APPLE_ID_PASSWORD)
+          [[ -n "${APPLE_TEAM_ID:-}" ]] || missing+=(APPLE_TEAM_ID)
+          if (( ${#missing[@]} > 0 )); then
+            printf 'Stable public macOS release requires Developer ID signing and notarization credentials. Missing: %s\n' "${missing[*]}" >&2
+            exit 1
+          fi
 
       - name: Verify system SQLite for release smoke tests
         shell: bash
@@ -166,32 +282,47 @@ jobs:
         run: npm run electron:build:mac
         env:
           SQLITE3_PATH: /usr/bin/sqlite3
+          CSC_LINK: ${{ secrets.MAC_CSC_LINK }}
+          CSC_KEY_PASSWORD: ${{ secrets.MAC_CSC_KEY_PASSWORD }}
           APPLE_ID: ${{ secrets.APPLE_ID }}
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
-      - name: Resolve target tag
-        id: release_tag
+      - name: Verify macOS distribution trust
+        shell: bash
+        run: bash scripts/verify-macos-distribution.sh "${{ steps.release_tag.outputs.public == 'true' && '1' || '0' }}"
+
+      - name: Generate macOS checksums and release manifest
         shell: bash
         run: |
-          if [[ "${{ github.event_name }}" == "workflow_dispatch" ]]; then
-            echo "tag=${{ inputs.tag }}" >> "$GITHUB_OUTPUT"
-          else
-            echo "tag=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
-          fi
+          node scripts/generate-release-manifest.mjs \
+            --platform macos \
+            --tag "${{ steps.release_tag.outputs.tag }}" \
+            --public "${{ steps.release_tag.outputs.public }}" \
+            --trust-evidence macos-signing.txt
 
       - name: Ensure GitHub release exists
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          if ! gh release view "${{ steps.release_tag.outputs.tag }}" >/dev/null 2>&1; then
-            gh release create "${{ steps.release_tag.outputs.tag }}" \
-              --title "Job Ranger ${{ steps.release_tag.outputs.tag }}" \
-              --generate-notes
+          set -euo pipefail
+          tag="${{ steps.release_tag.outputs.tag }}"
+          if gh release view "$tag" >/dev/null 2>&1; then
+            exit 0
           fi
 
-      - name: Upload release assets
+          if [[ "$tag" == *-rc.* || "$tag" == *-beta* ]]; then
+            create_args=(--title "Job Ranger $tag" --generate-notes --prerelease)
+          else
+            create_args=(--title "Job Ranger $tag" --generate-notes)
+          fi
+
+          if ! gh release create "$tag" "${create_args[@]}"; then
+            gh release view "$tag" >/dev/null
+          fi
+
+      - name: Upload release assets and trust evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -199,4 +330,7 @@ jobs:
           gh release upload "${{ steps.release_tag.outputs.tag }}" \
             release/Job*macos*.dmg \
             release/Job*macos*.zip \
+            build/trust/macos-signing.txt \
+            build/trust/macos-SHA256SUMS.txt \
+            build/trust/macos-release-manifest.json \
             --clobber

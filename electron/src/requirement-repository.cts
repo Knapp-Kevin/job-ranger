@@ -17,6 +17,8 @@ type JobRow = {
   employment_type: string | null;
   url: string;
   description_snippet: string;
+  current_source_snapshot_id: string | null;
+  source_completeness: Job["sourceCompleteness"];
   salary_min: number | null;
   salary_max: number | null;
   salary_currency: string | null;
@@ -72,6 +74,8 @@ function mapJob(row: JobRow): Job {
     employmentType: row.employment_type,
     url: row.url,
     descriptionSnippet: row.description_snippet,
+    currentSourceSnapshotId: row.current_source_snapshot_id ?? null,
+    sourceCompleteness: row.source_completeness ?? "listing-only",
     salaryMin: row.salary_min,
     salaryMax: row.salary_max,
     salaryCurrency: row.salary_currency,
@@ -123,6 +127,8 @@ export class RequirementRepository {
         employment_type,
         url,
         description_snippet,
+        current_source_snapshot_id,
+        source_completeness,
         salary_min,
         salary_max,
         salary_currency,
@@ -140,6 +146,17 @@ export class RequirementRepository {
     return row ? mapJob(row) : null;
   }
 
+  async getCurrentSourceSnapshot(jobId: string): Promise<{ id: string; contentText: string; completeness: string } | null> {
+    const row = await this.sqlite.queryOne<{ id: string; content_text: string; completeness: string }>(sql`
+      SELECT snapshot.id, snapshot.content_text, snapshot.completeness
+      FROM jobs job
+      JOIN job_source_snapshots snapshot ON snapshot.id = job.current_source_snapshot_id
+      WHERE job.id = ${jobId}
+      LIMIT 1;
+    `);
+    return row ? { id: row.id, contentText: row.content_text, completeness: row.completeness } : null;
+  }
+
   async listCareerEvidence(): Promise<CandidateEvidence[]> {
     const rows = await this.sqlite.queryAll<EvidenceRow>(`
       SELECT *
@@ -150,7 +167,7 @@ export class RequirementRepository {
     return rows.map(mapEvidence);
   }
 
-  async replaceCoverage(coverage: JobEvidenceCoverage): Promise<void> {
+  async replaceCoverage(coverage: JobEvidenceCoverage, sourceSnapshotId: string | null = null): Promise<void> {
     await this.sqlite.exec(sql`
       BEGIN IMMEDIATE;
       DELETE FROM requirement_evidence_maps
@@ -162,19 +179,19 @@ export class RequirementRepository {
     `);
 
     for (const item of coverage.items) {
-      await this.insertRequirement(item.requirement);
+      await this.insertRequirement(item.requirement, sourceSnapshotId);
       await this.insertMapping(item.mapping);
     }
   }
 
-  private async insertRequirement(requirement: JobRequirement): Promise<void> {
+  private async insertRequirement(requirement: JobRequirement, sourceSnapshotId: string | null): Promise<void> {
     await this.sqlite.exec(sql`
       INSERT INTO job_requirements (
-        id, job_id, kind, text, normalized_term, importance, source_text, created_at
+        id, job_id, kind, text, normalized_term, importance, source_text, source_snapshot_id, created_at
       ) VALUES (
         ${requirement.id}, ${requirement.jobId}, ${requirement.kind}, ${requirement.text},
         ${requirement.normalizedTerm}, ${requirement.importance}, ${requirement.sourceText},
-        ${requirement.createdAt}
+        ${sourceSnapshotId}, ${requirement.createdAt}
       );
     `);
   }

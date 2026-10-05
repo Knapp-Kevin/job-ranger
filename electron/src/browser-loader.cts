@@ -5,6 +5,7 @@ import {
   assertPublicAcquisitionUrl,
   validateAcquisitionUrlSyntax,
 } from "./acquisition-network-policy.cjs";
+import { createPinnedFetch } from "./pinned-fetch.cjs";
 
 interface BrowserLoadOptions {
   url: string;
@@ -114,7 +115,7 @@ function isNonNetworkBrowserUrl(rawUrl: string): boolean {
   }
 }
 
-function attachPublicNetworkRequestGuard(
+function attachNetworkSchemeGuard(
   webContents: Electron.WebContents,
   onPolicyViolation: () => void,
 ): void {
@@ -124,13 +125,45 @@ function attachPublicNetworkRequestGuard(
       return;
     }
 
-    void assertPublicAcquisitionUrl(details.url)
-      .then(() => callback({ cancel: false }))
-      .catch(() => {
-        callback({ cancel: true });
-        onPolicyViolation();
-      });
+    try {
+      validateAcquisitionUrlSyntax(details.url);
+      callback({ cancel: false });
+    } catch {
+      callback({ cancel: true });
+      onPolicyViolation();
+    }
   });
+}
+
+export function createPinnedProtocolHandler(
+  pinnedFetch: typeof fetch = createPinnedFetch(),
+): (request: Request) => Promise<Response> {
+  return async (request) => {
+    const safeUrl = validateAcquisitionUrlSyntax(request.url).toString();
+    const body = request.method === "GET" || request.method === "HEAD" || request.body === null
+      ? undefined
+      : Buffer.from(await request.arrayBuffer());
+
+    return pinnedFetch(safeUrl, {
+      method: request.method,
+      headers: request.headers,
+      body,
+      redirect: "manual",
+      signal: request.signal,
+    });
+  };
+}
+
+function attachPinnedProtocolTransport(webContents: Electron.WebContents): () => void {
+  const handler = createPinnedProtocolHandler();
+  const protocol = webContents.session.protocol;
+  protocol.handle("http", handler);
+  protocol.handle("https", handler);
+
+  return () => {
+    protocol.unhandle("http");
+    protocol.unhandle("https");
+  };
 }
 
 function createBrowserSession(
@@ -141,11 +174,13 @@ function createBrowserSession(
   let finished = false;
   let didFinishLoad = false;
   const window = createScraperWindow(partition, options.userAgent);
+  const detachPinnedTransport = attachPinnedProtocolTransport(window.webContents);
 
   const finalize = (handler: () => void): void => {
     if (finished) return;
     finished = true;
     clearTimeout(timeoutHandle);
+    detachPinnedTransport();
     window.removeAllListeners();
     window.webContents.removeAllListeners();
     if (!window.isDestroyed()) window.destroy();
@@ -163,7 +198,7 @@ function createBrowserSession(
 
   window.webContents.once("did-finish-load", () => { didFinishLoad = true; });
 
-  attachPublicNetworkRequestGuard(window.webContents, () => {
+  attachNetworkSchemeGuard(window.webContents, () => {
     finalize(() => reject(new AcquisitionNetworkPolicyError()));
   });
 
