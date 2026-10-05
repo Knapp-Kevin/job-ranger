@@ -9,8 +9,10 @@
 
 Job Ranger will use a dual-channel distribution architecture:
 
-1. **Cross-platform mainstream:** an installable local-first web application / Progressive Web App (PWA).
+1. **Cross-platform primary runtime:** an installable local-first web application / Progressive Web App (PWA). Before demonstrated external demand, the default delivery model is self-hosted on the user's own localhost rather than a public cloud origin.
 2. **Windows native mainstream:** a Microsoft Store package produced from the existing Electron application, initially using the established electron-builder v26 `appx` target unless implementation evidence justifies a different Store package target.
+
+PWA-first does **not** mean cloud-hosted-first. A public HTTPS origin is a distribution milestone for ordinary external users, not a prerequisite for development, dogfooding, trusted testing, or product-demand validation.
 
 The PWA is not a reduced or promotional edition. It is intended to become a first-class Job Ranger runtime with functional parity wherever browser capabilities can safely provide the required behavior.
 
@@ -59,6 +61,19 @@ Target environments include modern supported browsers on:
 The PWA should be installable where the browser/OS supports installation or standalone web-app behavior. Ordinary browser use remains valid where installation is unavailable.
 
 The PWA must preserve Job Ranger's local-first principle. Web delivery does **not** imply that Career Evidence, applications, resumes, or other personal career data become server-authoritative.
+
+### Pre-demand localhost distribution
+
+Until there is evidence that public distribution is warranted, Job Ranger may be built and served entirely on the user's own machine.
+
+- `localhost` / loopback is the preferred dogfood and trusted-tester origin.
+- Each tester runs their own local instance; one developer machine is not treated as a shared LAN production host.
+- The project must use a stable canonical localhost origin for persisted test profiles. Because browser storage is origin-bound, the local server must not silently change hostnames or ports when its configured port is occupied.
+- A busy configured port should fail with a clear recovery message rather than quietly selecting a different port and making existing local data appear missing.
+- Ordinary interaction, domain logic, SQLite-WASM/OPFS persistence, IndexedDB state, service-worker behavior, and offline use remain local. The static server only serves the application shell and updates.
+- Moving later from localhost to a public HTTPS origin is an origin migration. Users migrate through the versioned `.jobranger` portable backup/import contract rather than by assuming browser storage transfers between origins.
+
+This local self-hosted stage is deliberately cheap. Public hosting is earned by external demand, not required to discover whether that demand exists.
 
 ### Windows Microsoft Store
 
@@ -170,9 +185,11 @@ Repository provenance remains independently valuable and should continue to incl
 
 ### PWA
 
-For the PWA, the trust boundary is HTTPS origin identity plus the application's deployment/provenance controls.
+During development, dogfooding, and trusted testing, loopback localhost is the accepted local trust boundary. Public network distribution is not required at this stage.
 
-The PWA production path must therefore include:
+For a publicly distributed PWA, the trust boundary is HTTPS origin identity plus the application's deployment/provenance controls.
+
+The PWA **public production** path must therefore include:
 
 - HTTPS only;
 - strict security headers/CSP appropriate to the runtime;
@@ -236,11 +253,12 @@ It may be reconsidered only if demonstrated macOS-native demand justifies the an
 
 ## Release policy implications
 
-The repository must distinguish three states:
+The repository must distinguish four states:
 
-1. **Published supported channel**: a production PWA deployment and/or certified Microsoft Store package intended for ordinary users.
-2. **Validated native candidate**: a packaged binary that passed repository/package tests but is not yet Store-certified or otherwise publicly trusted.
-3. **Advanced/test artifact**: a direct artifact retained for development, troubleshooting, archival, or informed testing.
+1. **Local self-hosted PWA candidate**: a validated build served on the user's own loopback origin for development, dogfooding, or trusted testing. This is not a public hosted release.
+2. **Published supported channel**: a production HTTPS PWA deployment and/or certified Microsoft Store package intended for ordinary users.
+3. **Validated native candidate**: a packaged binary that passed repository/package tests but is not yet Store-certified or otherwise publicly trusted.
+4. **Advanced/test artifact**: a direct artifact retained for development, troubleshooting, archival, or informed testing.
 
 A GitHub Release containing an unsigned native installer does not, by itself, make that installer the recommended mainstream distribution channel.
 
@@ -265,9 +283,11 @@ The historical v1.2.0 release remains immutable and accurately documented. This 
 2. separate shared domain/application services from Electron adapters;
 3. define browser persistence and portable-backup boundaries;
 4. prove one end-to-end local-first Career Ops workflow in the browser runtime;
-5. close capability gaps iteratively without weakening domain/security invariants;
-6. validate installability, offline/update behavior, storage durability, and cross-browser constraints;
-7. promote the PWA to mainstream only after parity/limitation evidence is documented.
+5. provide a stable localhost self-host path for dogfood and trusted testers without requiring public infrastructure;
+6. close capability gaps iteratively without weakening domain/security invariants;
+7. validate installability, offline/update behavior, storage durability, and cross-browser constraints;
+8. introduce a public HTTPS host only when external distribution is justified, then validate origin migration through the portable backup contract;
+9. promote the public PWA to mainstream only after parity/limitation and deployment-trust evidence are documented.
 
 The two tracks may proceed independently. Neither is a prerequisite for beginning the other.
 
