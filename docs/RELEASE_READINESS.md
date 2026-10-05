@@ -11,7 +11,7 @@ A merged `main` branch is **not** a release. A passing unit test is **not** a re
 - **`main`**: authority for current merged development, which may be ahead of the published product.
 - **Documentation on `main`**: must describe both boundaries honestly.
 
-The current published release is **v1.1.2**. The current default branch is materially ahead and must not be represented as shipped until a new release completes this contract.
+The current published stable release is **v1.1.2**. The v1.2.0 candidate line is materially ahead and must not be represented as shipped until a stable release completes this contract.
 
 ## Release-blocking checklist
 
@@ -59,15 +59,13 @@ Documentation drift is a release blocker because users and contributors otherwis
 - [ ] Main renderer sandboxing remains enabled.
 - [ ] Specialized hidden browser/render surfaces retain their restricted settings.
 - [ ] External navigation remains validated.
-- [ ] Automated acquisition rejects loopback, link-local, and private-network destinations, including redirects/DNS resolution behavior.
+- [ ] Automated acquisition rejects loopback, link-local, and private-network destinations and binds approved hostname resolution to the actual connection so DNS rebinding cannot silently change the destination.
 - [ ] Imported career documents remain untrusted input and do not silently trigger hosted OCR/inference.
 - [ ] No new telemetry, sync, inference, credential, or cloud transmission exists without explicit governance and user disclosure.
 
-### 5. Manual repository validation
+### 5. Repository validation
 
-Job Ranger intentionally preserves GitHub Actions budget. Hosted CI is **not required** for routine documentation/remediation or every release-preparation iteration. The maintainer may perform the equivalent checks manually in an isolated environment.
-
-Record the environment and exact commands used.
+Job Ranger may preserve hosted Actions budget for routine documentation/remediation work, but an immutable release candidate needs explicit repository validation evidence.
 
 Minimum repository validation:
 
@@ -82,7 +80,7 @@ npm run test:e2e
 
 `npm run repo:health` may be used as the combined type/build/backend gate. Do not claim a command passed if the environment could not execute it.
 
-For documentation-only remediation, code tests may reuse fresh evidence from the unchanged candidate commit, but documentation-specific validation must still be performed manually.
+For documentation-only remediation, code tests may reuse fresh evidence from the unchanged executable candidate commit, but documentation-specific validation must still be performed.
 
 ### 6. Documentation validation
 
@@ -102,8 +100,11 @@ For documentation-only remediation, code tests may reuse fresh evidence from the
 - [ ] Packaged `resources/sqlite3.exe` exists and executes.
 - [ ] With `SQLITE3_PATH` removed, runtime resolution selects the packaged SQLite binary.
 - [ ] Generated `electron-runtime` entry point exists in the packaged application.
-- [ ] Installer launch/upgrade is exercised on Windows.
+- [ ] The packaged `Job Ranger.exe` executes the headless package-smoke harness from its own `app.asar` using an isolated data root.
+- [ ] `windows-package-smoke.json` reports `passed` for the required non-software scenario and is included in release evidence.
+- [ ] Installer launch/upgrade is exercised on a clean supported Windows system before stable publication.
 - [ ] Existing user data survives installer upgrade.
+- [ ] A stable public release carries valid Authenticode signatures and records observed SmartScreen / Smart App Control behavior on a clean supported machine.
 
 ### 8. macOS package validation
 
@@ -112,38 +113,39 @@ For both x64 and arm64:
 - [ ] Build from the immutable release tag.
 - [ ] Expected DMG/ZIP artifacts are produced.
 - [ ] Generated Electron runtime entry point is present.
+- [ ] Both packaged executable architectures are verified from the unpacked build output.
+- [ ] The native hosted-runner packaged executable executes the headless package-smoke harness from its own `app.asar` using an isolated data root.
+- [ ] `macos-package-smoke.json` reports `passed` for the required non-software scenario and is included in release evidence.
 - [ ] SQLite resolution works in the packaged application.
-- [ ] Application launches and the primary workflow opens.
-- [ ] Signing/notarization evidence is recorded when release credentials are available.
-- [ ] If notarization could not be performed, release notes state that limitation rather than implying it occurred.
+- [ ] A stable public release is Developer ID signed, notarized, stapled, and passes `codesign`, `spctl`, and stapler verification.
+- [ ] The signed/notarized application launches on a clean supported macOS system under Gatekeeper before stable publication.
 
 ### 9. Product smoke validation
 
-At minimum, validate the full consumer spine on a clean profile:
+Release automation must exercise a deterministic packaged consumer spine using a materially non-software scenario. The package-smoke harness currently validates:
 
-1. first-run onboarding;
-2. create at least one target track;
-3. import or directly author Career Evidence;
-4. add/discover and approve a source;
-5. collect/review a job;
-6. inspect explainable opportunity assessment;
-7. track the job/application;
-8. prepare/export a resume;
-9. verify exact submitted-artifact linkage;
-10. add lifecycle contact/event/reminder state;
-11. open interview prep;
-12. create an application material;
-13. create/review a Career Story;
-14. inspect Search Insights with representative saved state;
-15. create and validate a backup;
-16. verify JSON Resume import/export boundaries.
+1. fresh isolated local data initialization;
+2. Career Profile creation;
+3. Target Track creation;
+4. user-authored Career Evidence;
+5. pasted evidence/source-artifact persistence;
+6. employer and filter persistence;
+7. preserved full job-source snapshot;
+8. requirement extraction/evidence coverage;
+9. application tracking/status persistence;
+10. JSON Resume export;
+11. backup creation and validation;
+12. persistence counts after the workflow completes.
 
-The smoke run should include at least one materially non-software career context before publication.
+This hosted packaged smoke is release-blocking and its machine-readable report must exist before the release manifest can be generated.
+
+It does **not** replace final clean-machine acceptance for behavior that depends on the operating system's trust/user-interaction layer. Before stable publication, record real installation/launch behavior for the signed Windows build and the signed/notarized macOS build. Human UI acceptance may reuse current Electron E2E evidence where the candidate UI code is unchanged, but any candidate-specific UI defect or installer interaction must be exercised directly.
 
 ### 10. Release publication
 
 - [ ] Release title and notes describe only behavior present in the tag.
 - [ ] Windows and macOS assets have completed upload before the release is presented as complete.
+- [ ] Each platform release manifest references both trust evidence and packaged-smoke evidence.
 - [ ] Download links in the root README are updated only after assets exist.
 - [ ] Changelog release date/version is finalized.
 - [ ] `docs/SYSTEM_STATE.md` moves candidate features from “implemented on main” to “shipped” only after publication.
@@ -159,17 +161,20 @@ Each release should record:
 - commands executed;
 - package/artifact names;
 - platform results;
+- packaged-smoke report for each supported platform;
+- signing/notarization trust evidence;
 - migrations tested from which prior version;
 - known limitations or waived checks and rationale;
-- links to any retained validation evidence.
+- links to retained validation evidence.
 
-## Current release-readiness blockers
+## Current v1.2.0 release-readiness blockers
 
-As of the October 2026 documentation reconciliation:
+As of the rc.3 reconciliation:
 
-1. v1.1.2 is still the latest published release and does not contain the large body of completed work on `main`.
-2. Public/current documentation required reconciliation before a new release could honestly be prepared.
-3. A full immutable-tag Windows/macOS packaging pass for the accumulated post-v1.1.2 changes has not yet been recorded.
-4. Production notarization must be validated when the release environment has the required Apple credentials.
+1. v1.1.2 remains the latest stable public release.
+2. rc.3 proved Windows x64 and macOS x64/arm64 packaging, bundled SQLite/trust evidence, checksums, and release-manifest upload, but predates mandatory packaged-binary smoke evidence.
+3. The next immutable candidate must prove the new packaged-binary smoke gate on both platform jobs.
+4. Stable Windows publication still requires actual Azure Artifact Signing credentials plus signed clean-machine Windows 11 installation/launch evidence.
+5. Stable macOS publication still requires Apple Developer ID signing/notarization credentials plus clean-machine Gatekeeper installation/launch evidence.
 
-These are release tasks, not reasons to mislabel `main` as shipped.
+These are release tasks, not reasons to mislabel `main` as shipped or to weaken platform security settings for ordinary users.

@@ -7,7 +7,7 @@ on:
   workflow_dispatch:
     inputs:
       tag:
-        description: "Existing release tag to build and upload, for example v1.2.0-rc.2"
+        description: "Existing release tag to build and upload, for example v1.2.0-rc.4"
         required: true
         type: string
       platform:
@@ -144,6 +144,12 @@ jobs:
             throw "Runtime resolver selected '$resolved' instead of packaged SQLite '$expected'."
           }
 
+      - name: Run packaged Windows consumer smoke
+        shell: pwsh
+        run: |
+          $version = node -p "require('./package.json').version"
+          & ./scripts/run-packaged-smoke-windows.ps1 -AppVersion $version
+
       - name: Verify Windows distribution trust
         shell: pwsh
         run: |
@@ -157,7 +163,8 @@ jobs:
             --platform windows \
             --tag "${{ steps.release_tag.outputs.tag }}" \
             --public "${{ steps.release_tag.outputs.public }}" \
-            --trust-evidence windows-signing.json
+            --trust-evidence windows-signing.json \
+            --smoke-evidence windows-package-smoke.json
 
       - name: Ensure GitHub release exists
         shell: bash
@@ -180,7 +187,7 @@ jobs:
             gh release view "$tag" >/dev/null
           fi
 
-      - name: Upload release assets and trust evidence
+      - name: Upload release assets and validation evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -190,6 +197,7 @@ jobs:
             release/Job*windows*.exe.blockmap \
             release/latest.yml \
             build/trust/windows-signing.json \
+            build/trust/windows-package-smoke.json \
             build/trust/windows-SHA256SUMS.txt \
             build/trust/windows-release-manifest.json \
             --clobber
@@ -288,6 +296,10 @@ jobs:
           APPLE_ID_PASSWORD: ${{ secrets.APPLE_ID_PASSWORD }}
           APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
 
+      - name: Run packaged macOS consumer smoke
+        shell: bash
+        run: bash scripts/run-packaged-smoke-macos.sh "$(node -p "require('./package.json').version")"
+
       - name: Verify macOS distribution trust
         shell: bash
         run: bash scripts/verify-macos-distribution.sh "${{ steps.release_tag.outputs.public == 'true' && '1' || '0' }}"
@@ -299,7 +311,8 @@ jobs:
             --platform macos \
             --tag "${{ steps.release_tag.outputs.tag }}" \
             --public "${{ steps.release_tag.outputs.public }}" \
-            --trust-evidence macos-signing.txt
+            --trust-evidence macos-signing.txt \
+            --smoke-evidence macos-package-smoke.json
 
       - name: Ensure GitHub release exists
         shell: bash
@@ -322,7 +335,7 @@ jobs:
             gh release view "$tag" >/dev/null
           fi
 
-      - name: Upload release assets and trust evidence
+      - name: Upload release assets and validation evidence
         shell: bash
         env:
           GH_TOKEN: ${{ github.token }}
@@ -331,6 +344,7 @@ jobs:
             release/Job*macos*.dmg \
             release/Job*macos*.zip \
             build/trust/macos-signing.txt \
+            build/trust/macos-package-smoke.json \
             build/trust/macos-SHA256SUMS.txt \
             build/trust/macos-release-manifest.json \
             --clobber
