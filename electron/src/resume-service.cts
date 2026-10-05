@@ -27,6 +27,10 @@ import {
   RESUME_PARSER_VERSION,
 } from "./resume-parser.cjs";
 import { SqliteClient } from "./sqlite.cjs";
+import {
+  buildTruthEvidenceIndex,
+  unsupportedTruthTokens,
+} from "./truth-gate-tokens.cjs";
 
 interface ResumeServiceOptions {
   dataDirectory: string;
@@ -350,11 +354,11 @@ export class ResumeService {
       }
 
       if (statement.userEdited && resolved.length > 0) {
-        const allowed = new Set(
-          resolved.flatMap((item) =>
-            item
-              ? contentTokens(
-                  [
+        const allowed = buildTruthEvidenceIndex(
+          resolved
+            .flatMap((item) =>
+              item
+                ? [
                     item.statement,
                     item.organization ?? "",
                     item.titleOrName ?? "",
@@ -363,21 +367,17 @@ export class ResumeService {
                     ...item.scope,
                     ...item.outcomes,
                     ...item.metrics,
-                  ].join(" "),
-                )
-              : [],
-          ),
+                  ]
+                : [],
+            )
+            .join(" "),
         );
-        const unsupported = contentTokens(statement.text).filter(
-          (token) => !allowed.has(token),
-        );
+        const unsupported = unsupportedTruthTokens(statement.text, allowed);
         if (unsupported.length > 0) {
           issues.push({
             statementId: statement.id,
             code: "unsupported-edit",
-            message: `Edited text introduces unsupported factual terms: ${Array.from(
-              new Set(unsupported),
-            )
+            message: `Edited text introduces unsupported factual terms: ${unsupported
               .slice(0, 8)
               .join(", ")}.`,
             evidenceIds: statement.evidenceIds,
