@@ -35,6 +35,21 @@ async function run() {
     ),
     ["Job.Ranger-v1.2.0-macos-arm64.dmg", "Job.Ranger-v1.2.0-macos-x64.zip"],
   );
+  assert.deepEqual(
+    selectPlatformArtifacts(
+      [
+        "Job Ranger-v1.3.0-windows-store-x64.appx",
+        "Job Ranger-v1.3.0-windows-x64.exe",
+        "job-ranger-web-v1.3.0.zip",
+      ],
+      "windows-store",
+    ),
+    ["Job Ranger-v1.3.0-windows-store-x64.appx"],
+  );
+  assert.deepEqual(
+    selectPlatformArtifacts(["job-ranger-web-v1.3.0.zip", "Job Ranger-v1.3.0-windows-x64.exe"], "web"),
+    ["job-ranger-web-v1.3.0.zip"],
+  );
   assert.throws(() => selectPlatformArtifacts([], "linux"), /Unsupported release-manifest platform/);
 
   const root = await fs.mkdtemp(path.join(os.tmpdir(), "job-ranger-release-manifest-"));

@@ -8,41 +8,10 @@ const SQLITE_BUSY_TIMEOUT_MS = 5000;
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
-function escapeSqlString(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
+import type { SqliteEngineClient } from "./sql-literal.cjs";
 
-export function toSqlLiteral(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "NULL";
-  }
-
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new Error("Non-finite number cannot be persisted to SQLite");
-    }
-    return String(value);
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "1" : "0";
-  }
-
-  if (typeof value === "string") {
-    return escapeSqlString(value);
-  }
-
-  return escapeSqlString(JSON.stringify(value));
-}
-
-export function sql(queryParts: TemplateStringsArray, ...values: unknown[]): string {
-  return queryParts.reduce((output, part, index) => {
-    if (index === values.length) {
-      return output + part;
-    }
-    return output + part + toSqlLiteral(values[index]);
-  }, "");
-}
+export { sql, toSqlLiteral } from "./sql-literal.cjs";
+export type { SqliteEngineClient } from "./sql-literal.cjs";
 
 async function findExecutable(candidates: string[]): Promise<string | null> {
   for (const candidatePath of candidates) {
@@ -120,11 +89,17 @@ export async function resolveSqliteBinary(): Promise<string> {
   );
 }
 
-export class SqliteClient {
+export class SqliteClient implements SqliteEngineClient {
   constructor(
     private readonly databasePath: string,
     private readonly sqliteBinaryPath: string,
+    private readonly mode: { readOnly?: boolean } = {},
   ) {}
+
+  /** `-readonly` makes the sqlite3 CLI refuse every write, including journal rollback. */
+  private connectionArgs(): string[] {
+    return this.mode.readOnly ? ["-readonly"] : [];
+  }
 
   async ensureDatabaseDirectory(): Promise<void> {
     await fs.mkdir(path.dirname(this.databasePath), { recursive: true });
@@ -133,6 +108,7 @@ export class SqliteClient {
   async exec(statement: string): Promise<void> {
     await this.ensureDatabaseDirectory();
     await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
@@ -160,6 +136,7 @@ export class SqliteClient {
       "COMMIT;",
     ].join("\n");
     await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-bail",
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
@@ -171,6 +148,7 @@ export class SqliteClient {
   async queryAll<T>(statement: string): Promise<T[]> {
     await this.ensureDatabaseDirectory();
     const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-json",
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,

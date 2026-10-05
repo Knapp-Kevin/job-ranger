@@ -1,0 +1,107 @@
+name: Web / PWA runtime
+
+# Builds and validates the local-first web/PWA runtime: production build with
+# the strict CSP and SHA-256-verified service-worker shell, the web document
+# parser against the shared resume-parser benchmark corpus, and the browser
+# test suite (Career Ops end to end, Electron <-> PWA portability, offline
+# shell, updates, quota failures, single-writer lock).
+
+on:
+  pull_request:
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  push:
+    branches:
+      - main
+    paths-ignore:
+      - "docs/**"
+      - "**/*.md"
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+    outputs:
+      artifact-name:
+        description: Name of the uploaded workflow artifact containing the web build and evidence
+        value: ${{ jobs.pwa.outputs.artifact-name }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pwa-${{ github.workflow }}-${{ github.ref }}-${{ inputs.ref || '' }}
+  cancel-in-progress: true
+
+jobs:
+  pwa:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    outputs:
+      artifact-name: ${{ steps.names.outputs.artifact }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Compile shared core (used by portability tests)
+        run: npm run desktop:compile
+
+      - name: Build production web runtime
+        run: npm run build:pwa
+
+      - name: Web document parser benchmark (shared corpus)
+        run: |
+          python3 -m pip install --quiet -r tests/fixtures/career-evidence/parser-benchmark/requirements.txt
+          python3 scripts/generate-resume-parser-fixtures.py
+          npm run test:pwa:parser-benchmark
+
+      - name: Install Playwright Chromium
+        run: npx playwright install --with-deps chromium
+
+      - name: Browser test suite
+        env:
+          PLAYWRIGHT_JSON_OUTPUT_NAME: build/trust/web-pwa-e2e.json
+        run: |
+          mkdir -p build/trust
+          npx playwright test --config playwright.pwa.config.ts --reporter=list,json
+
+      - name: Package web release archive
+        run: npm run package:pwa
+
+      - name: Generate checksums and release manifest
+        env:
+          RELEASE_TAG: ${{ inputs.ref || github.ref_name }}
+        run: |
+          node scripts/generate-release-manifest.mjs \
+            --platform web \
+            --tag "$RELEASE_TAG" \
+            --public false \
+            --trust-evidence web-build-info.json \
+            --smoke-evidence web-pwa-e2e.json
+
+      - name: Name artifact
+        id: names
+        run: echo "artifact=web-pwa-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload web build and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.names.outputs.artifact }}
+          path: |
+            release/job-ranger-web-*.zip
+            build/trust/web-*
+          if-no-files-found: error
+          retention-days: 30

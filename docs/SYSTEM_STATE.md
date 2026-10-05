@@ -6,7 +6,7 @@
 **Shipped release lineage:** v1.2.0 promoted from v1.2.0-rc.5
 **Release commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
-This document is the factual product/repository snapshot. It intentionally separates the published v1.1.2 installers from the much broader v1.2.0 candidate.
+This document is the factual product/repository snapshot. It separates the published v1.2.0 release from newer work on the post-v1.2.0 development line.
 
 ## Status language
 
@@ -19,11 +19,51 @@ This document is the factual product/repository snapshot. It intentionally separ
 
 ## Published product: v1.2.0
 
-The latest stable public installers remain v1.1.2 for Windows x64 and macOS x64/arm64.
-
-v1.1.2 includes the earlier desktop monitoring product, Career Profile, deterministic fit guidance, Applications tracking, filters, notifications, source monitoring, and the v1.1 Windows/macOS packaging fixes.
+v1.2.0 is the latest stable public release: Windows x64 (NSIS) and macOS x64/arm64 installers, published unsigned/unnotarized under an explicit owner-approved exception. Earlier releases (v1.1.2 and before) are historical.
 
 No supported Linux installer is published.
+
+## Post-v1.2.0 development line (implemented, not released)
+
+The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)) is implemented (PR #142). None of this is shipped: there is no release tag, Store listing, or production web origin yet.
+
+### Shared core and runtimes
+
+- The Job Ranger application core (repositories, migrations, domain services, IPC channel table, boundary validators, Truth Gate, Parseability Gate, backup/archive) runs unchanged in two runtimes. Runtime infrastructure comes from explicit adapters (`src/pwa/adapter-map.ts`), enforced by a contract test.
+- **Web/PWA runtime** (implemented, not deployed): React app + dedicated runtime worker. Persistence is SQLite WASM written to OPFS as atomic snapshots, with an exclusive Web Lock so only one writer exists.
+  - Browser DOCX/PDF parsing and a deterministic pdf-lib ATS PDF writer.
+  - Strict CSP with Trusted Types and an explicit acquisition-origin allowlist.
+  - SHA-256-verified service-worker shell with user-confirmed updates and repair; offline use after the first visit.
+  - Details and the capability parity matrix: [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md).
+- **Microsoft Store package** (implemented; package validation in CI; certification pending): electron-builder v26 `appx` target. Partner Center identity comes from repository variables. Capabilities are only `runFullTrust` + `internetClient`.
+  - The Store build uses an isolated data root, maps AppX virtualization paths for Explorer, offers an explicit read-only import of historical NSIS data, and contains no app-managed updater.
+  - An in-package smoke runs the real main process.
+  - Details: [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+- **Portable `.jobranger` archive**: single-file, versioned, CRC-32 and SHA-256 validated. Used for Electron ↔ PWA ↔ PWA moves. Restoring v1.2.0 directory backups (via their `manifest.json`) remains supported in the desktop app.
+
+### Shared-core hardening found during implementation
+
+- The Greenhouse Job Board API returns entity-escaped HTML. Requirement extraction previously saw one undifferentiated blob; it is now unescaped (`greenhouse-api-v2` extraction version).
+- Backup validation now compares against every migration this build knows (core + feature registry), not only the migrations the live database has applied.
+- Schema downgrade guard: data upgraded by a newer schema is refused with an explanation instead of being opened by older code. This applies to both runtimes and to web rollbacks.
+- The remote Google Fonts `@import` was removed. The Electron CSP already blocked it; the UI uses system font fallbacks.
+
+### Validation on this line
+
+- `npm test` adds the archive smoke, Store config test, runtime-adapter contract, PWA adapter tests, and the 18 shared-core suites re-run on the SQLite WASM engine.
+- Electron E2E: 31 tests.
+- PWA browser suite: 11 tests (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, and quota failure.
+- Web parser: 9/9 on the shared resume-parser benchmark corpus.
+- `windows-store-package` workflow: AppX build, manifest verification, install, and in-package smoke on Windows (including native DOCX import).
+- Evidence record: [`validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
+
+### Known gaps on this line
+
+- No production web origin; Firefox and Safari plus real-device installability are not yet validated.
+- Microsoft Store identity, submission, and certification are external and pending.
+- The web runtime cannot monitor career sites that need a full browser (Workday, iCIMS, etc.) or run scheduled checks while closed. These are documented platform limitations; the Windows app covers them.
+- The web PDF writer embeds Noto fonts for Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean (downloaded on first use, then cached). It fails explicitly for right-to-left and Indic scripts, which still need the Windows app.
+- Pre-existing (both runtimes): notification settings exist, but job notifications are not wired to scrape completion.
 
 ## v1.2.0 shipped capabilities
 
@@ -204,11 +244,17 @@ Future acquisition changes must preserve connection-level pinning rather than re
 
 ## Distribution trust
 
-Repository-side #125 work is implemented; actual signed public evidence is external and tracked by #130.
+> **Forward change (post-v1.2.0, implemented on the development line):**
+> - Azure Artifact Signing is opt-in (`vars.JOB_RANGER_REQUIRE_WINDOWS_SIGNING`). An unsigned direct installer is labelled tester-only in its release manifest.
+> - Native macOS builds run only on manual dispatch.
+> - Each Store package and web build gets a release manifest and a GitHub artifact attestation.
+> - Supported channels are the Microsoft Store (#125) and the web/PWA runtime (#130).
+>
+> The description below is the **v1.2.0-era** trust pipeline, kept as historical release truth.
 
-### Stable public tags
+### Stable public tags (v1.2.0-era policy)
 
-Exact stable tags matching `vMAJOR.MINOR.PATCH` fail closed unless platform trust configuration is present and verification succeeds.
+Exact stable tags matching `vMAJOR.MINOR.PATCH` failed closed unless platform trust configuration was present and verification succeeded.
 
 Windows public path:
 
@@ -317,7 +363,7 @@ Recorded rc.5 package digests:
 - x64 DMG: `82f4dfe6568bc68957f66039a467f182085a31685d699bd090f52368fd3bbec7`;
 - x64 ZIP: `daed79c4633fc92c3797b267d3e7bc2ff6a661f738712689bcd75913142b3b02`.
 
-The GitHub Release is marked `prerelease: true`. v1.1.2 remains the stable release.
+The rc.5 GitHub Release was marked `prerelease: true`; its artifacts were later promoted byte-for-byte to stable v1.2.0.
 
 ## Packaged smoke coverage
 
@@ -397,12 +443,12 @@ Career relationship/company-targeting design under #121 is complete as a bounded
 - specialized federal-resume / academic-CV projections without demonstrated demand;
 - autonomous mass auto-apply;
 - recruiter-facing ATS/team workspace;
-- Linux packaged distribution (#129 closed as deferred until demand/support justification);
-- Microsoft Store AppX/MSIX packaging (#133 closed as a valid post-release candidate, not current scope).
+- Linux packaged distribution (#129 closed as deferred). Linux users are served by the web/PWA runtime;
+- Microsoft Store packaging was not part of v1.2.0 (#133). It is implemented on the post-v1.2.0 line under #125.
 
-## Post-release distribution-trust follow-up
+## Post-release distribution follow-up
 
-Stable v1.2.0 publication is complete. Real Azure Artifact Signing and Apple Developer ID/notarization clean-machine evidence remain tracked under #125/#130 for a signed follow-up release. v1.2.0 artifacts are immutable and will not be replaced in place.
+Stable v1.2.0 publication is complete. The certificate-first follow-up (Azure Artifact Signing + Apple Developer ID) was superseded by the accepted distribution architecture: the Microsoft Store (#125) and the web/PWA runtime (#130). v1.2.0 artifacts are immutable and will not be replaced in place.
 
 ## Current sources of truth
 
@@ -414,6 +460,7 @@ Stable v1.2.0 publication is complete. Real Azure Artifact Signing and Apple Dev
 - `docs/ARCHITECTURE_PLAN.md` — architecture;
 - `docs/RELEASE_READINESS.md` — release-blocking contract;
 - `docs/DISTRIBUTION_TRUST.md` — platform trust contract;
+- `docs/design/DISTRIBUTION_ARCHITECTURE.md`, `docs/design/PWA_RUNTIME.md`, `docs/design/MICROSOFT_STORE_PACKAGING.md` — forward distribution architecture and its implementation;
 - `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` — clean-machine signed-artifact verification procedure;
 - `docs/TESTER_INSTALLATION.md` — bounded prerelease installation guidance;
 - `docs/PRODUCT_GAP_REVIEW.md` — candidate/deferred/non-goal dispositions;

@@ -1,35 +1,36 @@
 # Job Ranger Help
 
-Job Ranger is a local-first desktop application for discovering, evaluating, preparing for, and tracking job opportunities.
+Job Ranger is a local-first application for discovering, evaluating, preparing for, and tracking job opportunities.
 
-This guide distinguishes the **stable published release** from the newer v1.2.0 packaged candidate.
+This guide describes the **stable published release (v1.2.0)**. It also explains how the upcoming Microsoft Store app and web app behave; both are implemented in the repository but are **not yet available to download or open**.
 
 ## Which version am I using?
 
-The latest stable public installers are currently **v1.1.2** for:
+The latest stable public release is **v1.2.0**, available as direct-download installers for:
 
 - Windows x64;
 - macOS Apple Silicon (arm64);
 - macOS Intel (x64).
 
-There is no supported packaged Linux release at this time.
+v1.2.0 installers are unsigned. See the trust notes in the README and [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md).
 
-The validated v1.2.0 packaged candidate is **v1.2.0-rc.3**. It contains a much broader Career Ops workflow but remains a tester prerelease until packaged consumer smoke and real platform signing/notarization evidence are complete.
+### Upcoming ways to run Job Ranger (not yet available)
 
-## Stable v1.1.2 quick start
+| Way | Status | Where your data lives |
+| --- | --- | --- |
+| **Microsoft Store app** (Windows) | Package built and validated; Store certification pending | In the Store app's private storage on this PC |
+| **Web app** (any modern desktop browser on Windows, macOS, or Linux) | Built and tested; not yet deployed | In this browser profile's private storage for the Job Ranger site. Nothing is uploaded |
+| Direct-download installers | Advanced/test use going forward | In your user profile's Job Ranger folder |
 
-1. Open **Career Profile** and enter target roles, location, compensation, and work preferences.
-2. Open **Companies** and add employer career pages to monitor.
-3. Run a scrape or allow scheduled checks.
-4. Open **Find Jobs** to review locally stored opportunities and deterministic fit guidance.
-5. Choose **Track this job** for an opportunity worth following.
-6. Use **Applications** for status and notes.
-7. Use **Filters** to reduce noise.
-8. Use **Settings** for notifications, scraping behavior, themes, and tray behavior.
+Each installation keeps its own data. Move data between them with a portable `.jobranger` backup (see *Backup and restore*). Settings → **This installation** shows which one you are using, its version and build, and where its data lives.
 
-The v1.1.2 Windows installer includes Job Ranger's SQLite runtime.
+The web app supports the same Career Ops workflow, with a few browser limits:
+- It cannot monitor career sites that need a full browser window (for example Workday or iCIMS pages). It can read the Greenhouse, Lever, Ashby, and SmartRecruiters job-board APIs.
+- It checks sources only while it is open.
+- It has no system tray or desktop notifications.
+- "Show file" becomes "Download file".
 
-## v1.2.0 candidate workflow
+## Workflow
 
 ### 1. First-run onboarding
 
@@ -174,7 +175,7 @@ These are observations, not causal hiring claims. Raw application count is not t
 
 ### 14. Backup and restore
 
-v1.2.0 provides versioned local backup/restore with:
+Job Ranger provides versioned local backup/restore with:
 
 - SQLite snapshot;
 - managed artifacts;
@@ -182,6 +183,14 @@ v1.2.0 provides versioned local backup/restore with:
 - staged restore;
 - path rebasing when restored to another data root;
 - rollback preservation until the restored state is validated.
+
+Builds after v1.2.0 (including the Store app and the web app) save a backup as a single **`.jobranger` file**. The same file restores into the Windows app or the web app, which is how you move your data between installations. Restores check every file's integrity and refuse backups that are corrupted, were modified by another tool, or were created by a newer Job Ranger version.
+
+v1.2.0 backups are folders. In the Windows app, restore one by selecting the `manifest.json` inside the folder.
+
+**Microsoft Store app and an older desktop installation:** the two do not share data. In the Store app, Settings → **This installation** → **Import desktop data and restart** copies your desktop data into the Store app. Your desktop installation is not changed. Uninstalling the Store app deletes its data, so create a backup first.
+
+**Web app storage:** browsers can clear site data under storage pressure unless they grant *persistent storage*. Use Settings → **This installation** → **Request persistent storage**, install the web app if your browser offers it, and export backups regularly.
 
 ### 15. JSON Resume interoperability
 
@@ -228,27 +237,27 @@ Do not treat a source's ability to open in your normal browser as proof that Job
 
 Job Ranger is local first.
 
-The v1.2.0 candidate keeps structured career/search state behind the Electron/SQLite boundary, including Career Profile, Target Tracks, Applications, Career Evidence/provenance, job source snapshots, requirements/mappings, resumes, lifecycle records, Career Stories, application materials, and insights state.
+The desktop app keeps structured career/search state behind the Electron/SQLite boundary, including Career Profile, Target Tracks, Applications, Career Evidence/provenance, job source snapshots, requirements/mappings, resumes, lifecycle records, Career Stories, application materials, and insights state.
 
 Managed source/resume artifacts are stored in Job Ranger's local data/artifact directory rather than uploaded to a hosted Job Ranger account.
 
 Core functionality does not require a remote inference provider.
 
-## Testing v1.2.0-rc.3
+In the web app, the same data lives in the browser's private storage for the Job Ranger site (origin-private file system) on your device. The web app's security policy allows outbound requests only to the public job-board APIs it reads. Your resumes, Career Evidence, and applications never leave the device unless you download a file.
 
-rc.3 is a tester prerelease, not the stable public release.
+## Installing v1.2.0 safely
 
-Before running a prerelease artifact, verify its platform SHA-256 file and release manifest from the same GitHub Release.
+v1.2.0 direct-download installers are unsigned. Before running one, verify its platform SHA-256 file and release manifest from the same GitHub Release.
 
 ### Windows 11
 
-An unsigned tester build may be allowed through an OS-native SmartScreen per-file flow on some systems. If Smart App Control blocks the app or Windows provides no safe per-file/per-app override, stop. The unsigned prerelease is not supported on that configuration.
+An unsigned build may be allowed through an OS-native SmartScreen per-file flow on some systems. If Smart App Control blocks the app or Windows provides no safe per-file/per-app override, stop. The unsigned installer is not supported on that configuration. The Microsoft Store app will be the supported path once it is certified.
 
 Do not disable Smart App Control, SmartScreen, or Defender globally merely to run Job Ranger.
 
 ### macOS
 
-After verifying the checksum, attempt to open Job Ranger normally. If macOS blocks the unnotarized tester build and offers **System Settings → Privacy & Security → Open Anyway**, an informed tester may use that bounded exception.
+After verifying the checksum, attempt to open Job Ranger normally. If macOS blocks the unnotarized build and offers **System Settings → Privacy & Security → Open Anyway**, an informed user may use that bounded exception. Native macOS packages are not planned going forward; macOS users will be served by the web app.
 
 Do not disable Gatekeeper globally or recursively strip quarantine metadata.
 
@@ -293,7 +302,23 @@ That is an intentional reliability/security state. Review the user-facing diagno
 
 ### Notifications are not appearing
 
-Confirm notifications are enabled in Job Ranger and allowed by the operating system.
+Confirm notifications are enabled in Job Ranger and allowed by the operating system. In the web app, desktop notifications and the system tray are not available.
+
+### Web app: "Job Ranger is open in another tab or window"
+
+Only one tab can use the browser's local Job Ranger workspace at a time, which protects your data from conflicting writes. Close the other tab; the waiting tab continues automatically.
+
+### Web app: "A change could not be saved to browser storage"
+
+The browser refused to store the change, usually because storage is full. Your previous saved data is unchanged. Export a backup, free storage for the site (or for the browser), then retry.
+
+### Web app: "Job Ranger could not open its local workspace"
+
+This browser mode does not provide the durable private storage Job Ranger needs (for example some private-browsing windows). Job Ranger will not fall back to temporary storage that could lose your data. Use a normal window of a current browser. If the message appears after an update, choose **Repair app shell**; this keeps your data.
+
+### Web app: "A new version of Job Ranger is ready"
+
+Choose **Reload to update** when convenient. Updates never change your data until the new version opens it, and Job Ranger refuses to open data written by a newer version rather than risk damaging it.
 
 ### Closing the window exits the app
 
@@ -301,11 +326,11 @@ Enable **Minimize to system tray on close** in Settings if you want Job Ranger t
 
 ### Windows says SQLite is missing
 
-Stable v1.1.2 Windows installers and v1.2.0 Windows candidates bundle the SQLite runtime. Developers running from source still need `sqlite3` on `PATH` or `SQLITE3_PATH` set explicitly.
+Windows installers (v1.1.2 and later) and the Microsoft Store package bundle the SQLite runtime. Developers running from source still need `sqlite3` on `PATH` or `SQLITE3_PATH` set explicitly. The web app uses a built-in SQLite engine.
 
 ### macOS warns about the application
 
-Stable public v1.2.0 is intended to require Developer ID signing/notarization. rc.3 may remain unsigned for tester use; follow only the bounded tester guidance above.
+v1.2.0 for macOS is unsigned/unnotarized under a documented exception. Follow only the bounded guidance above. Going forward, macOS users will use the web app.
 
 ## Frequently asked questions
 

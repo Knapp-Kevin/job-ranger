@@ -11,6 +11,7 @@ lerna-debug.log*
 node_modules
 dist
 dist-ssr
+dist-pwa
 *.local
 
 # Editor directories and files
@@ -34,7 +35,7 @@ electron/main.js
 electron/main.js.map
 electron/preload.js
 electron/preload.js.map
-runtime/
+/runtime/
 tmp-electron-linux/
 resources/default_app.asar
 release
@@ -45,6 +46,7 @@ build/*.ico
 build/*.icns
 build/*.png
 build/*.bmp
+/build/pdf-fonts/
 
 # Environment
 .env
@@ -67,3 +69,7 @@ release-*
 .agent/
 .claude/
 .kilocode/
+
+# Local scratch
+.scratch/
+tests/fixtures/career-evidence/parser-benchmark/generated/

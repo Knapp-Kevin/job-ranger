@@ -1,6 +1,8 @@
 import { useEffect, useState } from "react";
 import { Bell, Database, Save, Settings2, SwatchBook } from "lucide-react";
 import { BackupRestorePanel } from "../components/BackupRestorePanel";
+import { RuntimePanel } from "../components/RuntimePanel";
+import { useRuntimeInfo } from "../services/runtime";
 import { JsonResumePanel } from "../components/JsonResumePanel";
 import { Layout } from "../components/Layout";
 import { useAppContext } from "../context/AppContext";
@@ -24,6 +26,8 @@ const fallbackSettings: RuntimeSettings = {
 export function Settings() {
   const { settings, systemStatus, updateSettings, refreshing } = useAppContext();
   const { theme, setTheme, themes } = useTheme();
+  const runtime = useRuntimeInfo();
+  const webRuntime = runtime?.kind === "web";
   const [form, setForm] = useState<RuntimeSettings>(settings ?? fallbackSettings);
 
   useEffect(() => {
@@ -170,6 +174,12 @@ export function Settings() {
             </p>
           </div>
           <div className="panel panel-strong p-6 space-y-4">
+            {webRuntime && (
+              <p className="text-sm text-[var(--color-text-secondary)]" data-testid="web-notification-limit">
+                Desktop notifications and the system tray are part of the Windows app. In the web app these preferences are
+                saved with your data but have no effect here.
+              </p>
+            )}
             <label className="flex items-center gap-3 cursor-pointer">
               <input
                 type="checkbox"
@@ -215,6 +225,7 @@ export function Settings() {
           </div>
         </section>
 
+        <RuntimePanel />
         <BackupRestorePanel />
         <JsonResumePanel />
 
@@ -222,7 +233,7 @@ export function Settings() {
           <div>
             <div className="flex items-center gap-3">
               <Database className="h-5 w-5 text-[var(--color-primary)]" />
-              <h2 className="text-2xl font-semibold">Desktop backend facts</h2>
+              <h2 className="text-2xl font-semibold">Backend facts</h2>
             </div>
             <p className="mt-2 text-sm text-[var(--color-text-secondary)]">
               A concise source of truth for where the Alpha runtime stores and executes its work.

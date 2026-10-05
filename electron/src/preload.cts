@@ -10,10 +10,13 @@ import type { InterviewPrepDesktopApi } from "../../src/shared/interview-prep.js
 import type { JsonResumeDesktopApi } from "../../src/shared/json-resume.js";
 import type { ResumeDesktopApi } from "../../src/shared/resume-api.js";
 import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discovery.js";
+import type { RuntimeDesktopApi } from "../../src/shared/runtime.js";
+import type { LegacyInstallDesktopApi } from "../../src/shared/legacy-install.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi & JsonResumeDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi & JsonResumeDesktopApi & RuntimeDesktopApi & LegacyInstallDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
+  getRuntimeInfo: () => ipcRenderer.invoke("app:get-runtime-info"),
   openExternal: (url: string) => ipcRenderer.invoke("app:open-external", url),
   showItemInFolder: (targetPath: string) =>
     ipcRenderer.invoke("app:show-item-in-folder", targetPath),
@@ -130,6 +133,10 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     create: () => ipcRenderer.invoke("backups:create"),
     selectRestore: () => ipcRenderer.invoke("backups:select-restore"),
     stageRestore: (bundlePath) => ipcRenderer.invoke("backups:stage-restore", bundlePath),
+  },
+  legacyInstall: {
+    detect: () => ipcRenderer.invoke("legacy-install:detect"),
+    stageImport: () => ipcRenderer.invoke("legacy-install:stage-import"),
   },
   jsonResume: {
     importFile: () => ipcRenderer.invoke("json-resume:import"),

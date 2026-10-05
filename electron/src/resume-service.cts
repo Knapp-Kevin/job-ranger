@@ -27,11 +27,7 @@ import {
   RESUME_PARSER_VERSION,
 } from "./resume-parser.cjs";
 import { SqliteClient } from "./sqlite.cjs";
-import {
-  extractionAnchor,
-  extractionCoverage,
-  extractionText,
-} from "./text-tokens.cjs";
+import { normalizedParseabilityText, parseabilityTokens } from "./parseability-text.cjs";
 import {
   buildTruthEvidenceIndex,
   unsupportedTruthTokens,
@@ -173,9 +169,9 @@ function renderResumeHtml(
   return html;
 }
 
-function countPdfPages(bytes: Buffer): number | null {
-  const matches = bytes
-    .toString("latin1")
+function countPdfPages(bytes: Uint8Array): number | null {
+  const matches = new TextDecoder("latin1")
+    .decode(bytes)
     .match(/\/Type\s*\/Page(?!s)\b/g);
   return matches?.length ? matches.length : null;
 }
@@ -508,13 +504,21 @@ export class ResumeService {
 
     try {
       const parsed = await extractResumeDocument(pdfPath);
-      const extracted = extractionText(parsed.rawText);
+      const extracted = normalizedParseabilityText(parsed.rawText);
+      let unverifiableScript = false;
       const contactRequired = [
         projection.contact.fullName,
         projection.contact.email || projection.contact.phone,
       ].filter(Boolean);
       for (const item of contactRequired) {
-        if (extractionCoverage(item, extracted) < 0.8) {
+        const { tokens, containsUnverifiableScript } = parseabilityTokens(item);
+        unverifiableScript ||= containsUnverifiableScript;
+        if (
+          tokens.length > 0 &&
+          tokens.filter((token) => extracted.includes(token)).length /
+            tokens.length <
+            0.8
+        ) {
           issues.push({
             code: "contact-missing",
             severity: "critical",
@@ -525,15 +529,27 @@ export class ResumeService {
 
       const positions: number[] = [];
       for (const statement of statements) {
-        if (extractionCoverage(statement.text, extracted) < 0.9) {
+        const { tokens, containsUnverifiableScript } = parseabilityTokens(statement.text);
+        unverifiableScript ||= containsUnverifiableScript;
+        const matched = tokens.filter((token) => extracted.includes(token));
+        const coverage = tokens.length === 0 ? 1 : matched.length / tokens.length;
+        if (coverage < 0.9) {
           issues.push({
             code: "statement-missing",
             severity: "critical",
             message: `Rendered PDF lost material statement content: ${statement.text}`,
           });
         }
-        const anchor = extractionAnchor(statement.text);
+        const anchor = tokens.slice(0, 3).join(" ");
         positions.push(anchor ? extracted.indexOf(anchor) : -1);
+      }
+      if (unverifiableScript) {
+        issues.push({
+          code: "unverified-script",
+          severity: "advisory",
+          message:
+            "Text in right-to-left or Indic scripts could not be verified: PDF text extraction of these scripts differs between parsers. Open the PDF and check it before submitting.",
+        });
       }
       let last = -1;
       for (const position of positions.filter((value) => value >= 0)) {

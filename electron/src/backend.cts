@@ -2,6 +2,7 @@ import { promises as fs } from "node:fs";
 import path from "node:path";
 import {
   Company,
+  CompanySourceType,
   CompanyDraft,
   CompanyUpdate,
   Filter,
@@ -19,6 +20,7 @@ import {
   sourceProfiles,
 } from "../../src/shared/contracts.js";
 import { migrations } from "./migrations.cjs";
+import { FEATURE_MIGRATION_VERSIONS } from "./feature-migrations.cjs";
 import { JobScoutRepository } from "./repository.cjs";
 import {
   detectSourceFromUrl,
@@ -115,6 +117,9 @@ interface BackendOptions {
   sqliteBinaryPath?: string;
   schedulerEnabled?: boolean;
   browserPageLoader?: BrowserPageLoader;
+  runtimeLabel?: SystemStatus["backend"];
+  /** Restricts the advertised runnable source types (web runtime). */
+  runnableSourceTypes?: readonly CompanySourceType[];
 }
 
 export class JobScoutBackend {
@@ -167,12 +172,17 @@ export class JobScoutBackend {
 
   async getSystemStatus(platform: string): Promise<SystemStatus> {
     return {
-      backend: "electron-ipc",
+      backend: this.options.runtimeLabel ?? "electron-ipc",
       platform,
       databasePath: this.databasePath,
       sqliteBinaryPath: this.sqliteBinaryPath,
       supportedSources: Object.values(sourceProfiles)
         .filter((profile) => profile.canRun)
+        .filter(
+          (profile) =>
+            !this.options.runnableSourceTypes ||
+            this.options.runnableSourceTypes.includes(profile.type),
+        )
         .map((profile) => profile.type),
     };
   }
@@ -303,6 +313,21 @@ export class JobScoutBackend {
       "SELECT version FROM schema_migrations ORDER BY version ASC;",
     );
     const applied = new Set(appliedRows.map((row) => row.version));
+    const knownVersions = new Set([
+      ...migrations.map((migration) => migration.version),
+      ...FEATURE_MIGRATION_VERSIONS,
+    ]);
+    const unknown = appliedRows
+      .map((row) => row.version)
+      .filter((version) => !knownVersions.has(version));
+    if (unknown.length > 0) {
+      // Never run an older build against data upgraded by a newer one: in
+      // both runtimes (and across PWA service-worker rollbacks) that could
+      // silently corrupt Career Evidence. Fail closed and explain.
+      throw new Error(
+        `This Job Ranger data was upgraded by a newer version (database schema ${Math.max(...unknown)}). Update Job Ranger to open it; your data has not been changed.`,
+      );
+    }
 
     for (const migration of migrations) {
       if (applied.has(migration.version)) {
@@ -377,6 +402,11 @@ export class JobScoutBackend {
   }
 
   private async processQueue(): Promise<void> {
+    // Nothing to start: do not touch the database. (A read here after the
+    // last scrape was delivered raced callers that dispose the backend.)
+    if (this.pendingQueue.length === 0) {
+      return;
+    }
     const settings = await this.getSettings();
 
     while (
@@ -399,10 +429,17 @@ export class JobScoutBackend {
         .catch((error) => {
           this.rejectScrapeListeners(next.companyId, error);
         })
-        .finally(async () => {
+        .finally(() => {
           this.inFlightCompanyIds.delete(next.companyId);
           this.runningScrapes -= 1;
-          await this.processQueue();
+          // Continue with queued scrapes; a failure to start them is reported
+          // to their callers instead of escaping as an unhandled rejection.
+          return this.processQueue().catch((error) => {
+            for (const entry of this.pendingQueue.splice(0)) {
+              this.queuedCompanyIds.delete(entry.companyId);
+              this.rejectScrapeListeners(entry.companyId, error);
+            }
+          });
         });
     }
   }

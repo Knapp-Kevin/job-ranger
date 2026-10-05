@@ -86,45 +86,43 @@ Narrower fields/capabilities that did not earn core placement remain deferred ra
 
 The unsigned/unnotarized v1.2.0 exception does not define the future distribution architecture.
 
-## Active priority 0: distribution architecture implementation
+## Active priority 0: distribution architecture — external validation and launch
 
 ### Windows Microsoft Store / #125
 
-Build the primary supported Windows-native distribution path using the Microsoft Store.
+**Status:** repository implementation complete (PR #142); package validation runs in CI; Partner Center work is external and pending. Design: [`../design/MICROSOFT_STORE_PACKAGING.md`](../design/MICROSOFT_STORE_PACKAGING.md).
 
-Implementation direction:
+- [x] AppX packaging with the pinned Electron/electron-builder v26 toolchain (`electron-builder.store.cjs`, `npm run electron:build:store`);
+- [x] package identity supplied by repository variables (validation identity otherwise; fail-closed for submission builds);
+- [x] manifest/capability generation verified: only `runFullTrust` + `internetClient`, no extensions, canonical assets;
+- [x] packaged SQLite, data root, migrations, and managed-artifact paths validated inside the package context (`windows-store-package.yml`);
+- [x] resume import/export, Chromium PDF + Parseability Gate, archive backup/restore, and external-navigation validation inside the package context;
+- [x] Store servicing owns updates (no app-managed updater; enforced by test);
+- [x] coexistence with historical NSIS installs: isolated data root, explicit read-only import, uninstall behavior recorded;
+- [ ] reserve the app in Partner Center and set `JOB_RANGER_STORE_*` repository variables (external);
+- [ ] build the submission package from a release tag and pass Store certification (external);
+- [ ] validate clean Windows 11 install, first launch, and Store upgrade from the Store listing (external);
+- [ ] make Microsoft Store the recommended Windows-native installation path (after the listing is live).
 
-- [ ] produce an AppX proof-of-concept with the pinned Electron/electron-builder v26 toolchain;
-- [ ] configure Partner Center publisher/package identity;
-- [ ] validate manifest/capability generation;
-- [ ] validate packaged SQLite and local artifact paths;
-- [ ] validate source acquisition, resume import/export/PDF generation, and backup/restore;
-- [ ] validate upgrade/coexistence/migration from historical direct installer where relevant;
-- [ ] pass Store certification;
-- [ ] validate clean Windows install and first launch from the Store;
-- [ ] make Microsoft Store the recommended Windows-native installation path.
-
-Do not block this work on Azure Artifact Signing.
+Azure Artifact Signing is opt-in only and does not block this work.
 
 ### Cross-platform local-first PWA / #130
 
-Evolve Job Ranger toward a shared domain/application core with a first-class web/PWA runtime.
+**Status:** implemented and tested in CI (PR #142); **not deployed**. Design and parity matrix: [`../design/PWA_RUNTIME.md`](../design/PWA_RUNTIME.md).
 
-Implementation direction:
+- [x] inventory of Electron-only and Node-only assumptions; shared-core versus runtime-adapter boundary (`src/pwa/adapter-map.ts`, contract test);
+- [x] browser persistence: SQLite WASM + OPFS atomic snapshots, Web Lock single writer; proven by running 18 shared-core suites on the WASM engine;
+- [x] domain identity, provenance, lineage, migrations, downgrade guard, and backup semantics preserved; `.jobranger` archive for Electron ↔ PWA;
+- [x] resume/Career Evidence import (DOCX/PDF/TXT; 9/9 on the shared parser benchmark) and deterministic PDF output through the shared Truth and Parseability Gates;
+- [x] end-to-end local-first Career Ops workflow in the browser (healthcare scenario);
+- [x] SHA-256-verified service-worker shell, user-confirmed updates, repair/recovery;
+- [x] storage quota/eviction handling (visible failures, persistence request, backup guidance);
+- [x] native-only limitations documented with their concrete platform causes;
+- [ ] production HTTPS origin with the shipped security headers (`deploy-pwa.yml`; owner configuration required);
+- [ ] installability/standalone and storage validation on real Windows, macOS, and Linux browsers (Chromium, Firefox, Safari);
+- [ ] promote the PWA to mainstream only after that evidence is recorded.
 
-- [ ] inventory Electron-only and Node-only assumptions;
-- [ ] define shared-core versus runtime-adapter boundaries;
-- [ ] select/prove browser persistence using OPFS/IndexedDB or an evidence-backed alternative;
-- [ ] preserve domain identity, provenance, lineage, migrations, and backup semantics;
-- [ ] prove resume/Career Evidence import and deterministic output boundaries;
-- [ ] prove one end-to-end local-first Career Ops workflow in the browser runtime;
-- [ ] implement safe service-worker update/recovery behavior;
-- [ ] validate storage quota/eviction behavior and user-facing backup guidance;
-- [ ] validate installability/standalone behavior across supported browsers;
-- [ ] document genuine native-only limitations rather than inheriting Electron assumptions by accident;
-- [ ] promote the PWA only after capability and trust evidence is recorded.
-
-The PWA is not intended to become a permanently reduced "Lite" edition.
+The PWA is not a reduced "Lite" edition; remaining differences are browser-platform limitations listed in the parity matrix.
 
 ## Active priority 1: source discovery and quality
 

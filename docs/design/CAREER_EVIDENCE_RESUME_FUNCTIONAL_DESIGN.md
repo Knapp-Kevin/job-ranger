@@ -563,7 +563,7 @@ For a user-edited statement, every content-bearing term of the edited text must
 appear in the linked Career Evidence (statement, organization, title, skills,
 methods/tools, scope, outcomes, metrics). Terms are produced by a script-aware
 tokenizer (`electron/src/truth-gate-tokens.cts`, built on the shared script
-classification in `electron/src/text-tokens.cts`) after NFKC normalization and
+classification in `electron/src/text-tokens.cts`; the Parseability Gate uses its own `parseability-text.cts`) after NFKC normalization and
 lowercasing, so full-width forms and composed/decomposed characters compare
 equal. Single letters are ignored in every script, but single digits (ASCII
 or any other decimal digit) are always terms, so changing "5 engineers" to
@@ -611,33 +611,11 @@ Initial checks:
 
 If `anydoc` is adopted, re-parse the PDF through the same import engine and compare normalized output to the projection.
 
-#### 12.2.1 Extraction tokens across scripts
+Implemented text comparison (`electron/src/parseability-text.cts`, shared by both runtimes):
 
-The contact, statement-coverage and reading-order checks compare the projection
-with the re-parsed PDF text using extraction-level tokens from
-`electron/src/text-tokens.cts`. Unlike the Truth Gate, these ask only whether
-text survived rendering, so every character counts and there are no
-per-language stoplists. Both sides are NFKC-normalized and lowercased, which
-also absorbs ligatures (`ﬁ`), full-width forms and decomposed accents.
-
-| Text | Token | Covered when |
-| --- | --- | --- |
-| Pure-ASCII word | legacy token (same as before) | substring of extracted text |
-| Other spaced-script word (accented Latin, Cyrillic, Greek, Hangul, Devanagari, …) | whole word, length > 1 | substring of extracted text |
-| Han, kana, Thai, Lao, Khmer, Myanmar | 4-character chunks of each run; whitespace between two such characters is removed on both sides, so mid-run line wraps do not matter | substring of extracted text |
-| Arabic, Hebrew, Syriac, Thaana, N'Ko | whole word | all of its letters are still available in the extracted text (letter multiset) |
-
-Thresholds are unchanged (contact ≥ 80 %, each statement ≥ 90 %). Reading
-order uses the first chunk for unspaced scripts and the legacy three-token
-anchor otherwise; statements that start with an RTL word have no anchor.
-
-Trade-off: the bundled extractor returns Arabic and Hebrew in visual, partly
-scrambled order (verified on Chromium-rendered PDFs), so for RTL text the gate
-proves the glyphs survived (no tofu, no dropped words) but cannot check their
-order. Statements that previously produced no ASCII tokens (CJK, Thai, Cyrillic
-names, …) were treated as fully covered; they are now actually checked, so a
-PDF that loses non-Latin content — for example because no font for that script
-was available at render time — now fails the gate instead of exporting silently.
+- Tokens are Unicode letters, marks, and digits (NFKC, lower case), so accented Latin, Greek, Cyrillic, Hangul, and other spaced scripts are verified word by word. For ASCII text the tokens are identical to the original `[a-z0-9+#.-]` tokenizer.
+- Chinese, Japanese, Thai, Lao, Khmer, and Myanmar are compared one grapheme at a time, because line wrapping may break anywhere inside them.
+- Right-to-left and Indic scripts are not used for coverage. PDF text extraction of shaped and bidirectional text differs between parsers: Chromium PDFs parsed by Anydoc returned Hebrew in visual order and reordered Arabic letters. Such content raises an advisory `unverified-script` issue asking the user to check the PDF, instead of a critical failure or silent acceptance.
 
 ### 12.3 Relevance Review — advisory
 

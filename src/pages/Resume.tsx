@@ -11,6 +11,7 @@ import { Layout } from "../components/Layout";
 import { ResumeTailoringPanel } from "../components/ResumeTailoringPanel";
 import { useCareerProfile } from "../career/storage";
 import { getDesktopApi } from "../services/api";
+import { useRuntimeInfo } from "../services/runtime";
 import type {
   CandidateEvidenceReviewItem,
   TrackedApplication,
@@ -52,6 +53,7 @@ function artifactGateLabel(artifact: ResumeArtifactRecord): string {
 }
 
 export function Resume() {
+  const revealLabel = useRuntimeInfo()?.capabilities.revealInFileManager === false ? "Download file" : "Show file";
   const [searchParams] = useSearchParams();
   const jobId = searchParams.get("job");
   const { profile } = useCareerProfile();
@@ -351,7 +353,7 @@ export function Resume() {
               </div>
 
               {active.artifacts.length > 0 && <div className="mt-6"><h3 className="font-semibold">Exported versions</h3><div className="mt-3 space-y-2">{active.artifacts.map((artifact) => (
-                <div key={artifact.id} className="panel panel-muted flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3 text-sm"><div><strong>PDF v{artifact.version}</strong><span className="ml-2 text-[var(--color-text-muted)]">{artifact.pageCount ?? "?"} page{artifact.pageCount === 1 ? "" : "s"} · {artifactGateLabel(artifact)}</span></div><button type="button" className="surface-link-button font-semibold text-[var(--color-primary)]" onClick={() => void getDesktopApi().showItemInFolder(artifact.managedPath)}>Show file</button></div>
+                <div key={artifact.id} className="panel panel-muted flex flex-wrap items-center justify-between gap-3 rounded-2xl p-3 text-sm"><div><strong>PDF v{artifact.version}</strong><span className="ml-2 text-[var(--color-text-muted)]">{artifact.pageCount ?? "?"} page{artifact.pageCount === 1 ? "" : "s"} · {artifactGateLabel(artifact)}</span></div><button type="button" className="surface-link-button font-semibold text-[var(--color-primary)]" onClick={() => void getDesktopApi().showItemInFolder(artifact.managedPath)}>{revealLabel}</button></div>
               ))}</div></div>}
 
               {diff && <div className="support-note mt-5 px-4 py-3 text-sm text-[var(--color-text-secondary)]"><p className="font-semibold text-[var(--color-text-primary)]">Latest version difference</p><p className="mt-2">{diff.addedStatements.length} added · {diff.removedStatements.length} removed · {diff.unchangedStatements.length} unchanged</p></div>}

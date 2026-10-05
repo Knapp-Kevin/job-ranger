@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
-  <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
+  <img src="https://img.shields.io/badge/stable%20platforms-Windows%20%7C%20macOS-2563eb.svg" alt="Stable release platforms: Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
 
@@ -18,7 +18,17 @@
 
 **v1.2.0 is the current stable public release.** It was published on October 5, 2026 from immutable commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`, promoted byte-for-byte from the validated rc.5 artifacts. Windows x64 and macOS x64/arm64 packages, packaged healthcare-operations smoke reports, trust-state evidence, SHA-256 files, and schema-v2 release manifests are published with the release.
 
-**Distribution trust limitation:** v1.2.0 is intentionally unsigned/unnotarized under an explicit owner-approved exception. Windows SmartScreen / Smart App Control or macOS Gatekeeper may warn or block execution depending on system policy. Do not disable platform security globally. Signed distribution remains tracked under #125/#130 as a follow-up release.
+**Distribution trust limitation:** v1.2.0 is intentionally unsigned/unnotarized under an explicit owner-approved exception. Windows SmartScreen / Smart App Control or macOS Gatekeeper may warn or block execution depending on system policy. Do not disable platform security globally.
+
+### Where Job Ranger distribution is going
+
+| Channel | Status | Notes |
+| --- | --- | --- |
+| **Microsoft Store** (Windows native) | Implemented; package validated in CI; **certification pending** (#125) | Not yet listed in the Store |
+| **Web app / PWA** (Windows, macOS, Linux browsers) | Implemented and tested; **not deployed** (#130) | Local-first: your data stays in your browser; nothing is uploaded |
+| Direct-download installers | Advanced/test artifacts going forward | v1.2.0 below remains the current stable release |
+
+Neither new channel is available yet. This README will link them only once the Store listing or production web origin actually exists. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
 
 Job Ranger uses these status terms deliberately:
 
@@ -194,11 +204,13 @@ Electron main process
 
 `electron/src/**` is the only checked-in privileged implementation authority. `electron-runtime/**` is generated for development, tests, packaging, and execution.
 
+On the post-v1.2.0 development line, the same shared core also runs in a **web/PWA runtime**: a browser runtime worker with SQLite WASM on the origin-private file system, browser document parsing, and deterministic PDF output, behind strict CSP and Trusted Types. Runtime-specific mechanics come from explicit adapters, so there is one product truth across runtimes. See [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md) and [`docs/ARCHITECTURE_PLAN.md`](./docs/ARCHITECTURE_PLAN.md).
+
 ## Privacy and security posture
 
 v1.2.0 keeps structured career/search state local and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. Main/browser/render surfaces retain sandboxing and appropriate web-security controls. Automated acquisition uses a connection-pinned private-network boundary rather than preflight-only hostname checking.
 
-The normal stable-release pipeline remains fail-closed for platform trust. v1.2.0 is the documented owner-approved exception because its rc.5 binaries were immutable, byte-verified, package-smoke validated, and accompanied by trust/checksum manifests. Signed distribution remains tracked under #125/#130; future normal releases remain fail-closed by default.
+v1.2.0 is the documented owner-approved unsigned exception: its rc.5 binaries were immutable, byte-verified, package-smoke validated, and accompanied by trust/checksum manifests. Going forward, ordinary-user trust comes from Microsoft Store certification (Windows) and the HTTPS origin plus its security policy (web). Every released artifact also carries SHA-256 evidence, a release manifest, and a GitHub artifact attestation. Azure Artifact Signing is optional. See [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
 
 Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure.
 
@@ -214,9 +226,7 @@ Examples still suitable for future evidence-backed consideration include:
 - implementation of the already-bounded Career Ops company/relationship-path design;
 - mock-interview practice and feedback;
 - calendar mirroring;
-- Microsoft Store AppX proof-of-concept after v1.2.0 if distribution demand justifies it.
-
-Linux packaging has been evaluated and deferred until real demand. It is not a v1.2.0 blocker.
+Native Linux and macOS packaging are not planned. Those platforms are served by the web app.
 
 ## Development
 
@@ -232,19 +242,33 @@ Normal users should use stable published installers. The following is for reposi
 
 ```bash
 npm ci
-npm run repo:health
+npm run repo:health          # typecheck, desktop + web builds, full test suite
 npm run test:unit
-npm run test:e2e
+npm run test:e2e             # Electron Playwright
 npm run electron:dev
-npm run electron:build:win
-npm run electron:build:mac
+npm run electron:build:win   # direct-download NSIS (advanced/test channel)
+npm run electron:build:store # Microsoft Store AppX (Windows only)
+```
+
+### Web/PWA runtime
+
+```bash
+npm run dev:pwa              # development server
+npm run build:pwa            # production build -> dist-pwa/
+npm run preview:pwa          # serve the build with production security headers
+npm run test:pwa:e2e         # browser suite (Playwright, Chromium)
+npm run test:pwa:engine      # shared-core suites on the SQLite WASM engine
 ```
 
 ## Release engineering
 
 Stable GitHub Releases are the authority for normal user-installable builds.
 
-`v1.2.0` is the current stable release and is byte-identical to the validated rc.5 package artifacts at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The outstanding distribution work is post-release hardening: configure real Windows signing and macOS Developer ID/notarization credentials, collect clean-machine trust evidence, and ship a signed follow-up without mutating v1.2.0 artifacts.
+`v1.2.0` is the current stable release and is byte-identical to the validated rc.5 package artifacts at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The outstanding distribution work is external:
+- Microsoft Store: Partner Center identity, submission, and certification;
+- web app: a production HTTPS origin and real-browser validation.
+
+No v1.2.0 artifact is ever mutated.
 
 See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
 

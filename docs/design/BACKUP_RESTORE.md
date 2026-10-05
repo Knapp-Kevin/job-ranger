@@ -100,3 +100,16 @@ Repository health must prove at minimum:
 - restored data is readable after normal backend initialization;
 - the pending restore marker is consumed once;
 - tampered artifact bytes are rejected before restore.
+
+## Portable archive (post-v1.2.0)
+
+A validated backup bundle can be packed into a single `.jobranger` file (`electron/src/portable-archive.cts`). This is the interchange format between the Electron and web/PWA runtimes.
+
+- **Container:** ZIP with STORE entries only. Compressed, encrypted, ZIP64, multi-part, symlink, or unsafe-path entries are rejected, and every entry is CRC-32 verified.
+- **`job-ranger-archive.json`:** archive format version (`job-ranger-portable-archive` v1), producing runtime/channel/version/build, content format/version (`job-ranger-backup` v1), and the SHA-256 and size of the inner `manifest.json`.
+- **Inner bundle:** unchanged backup format v1 (SQLite snapshot, managed artifacts, migrations, managed-path records, per-file SHA-256).
+- **Determinism:** entries use a fixed timestamp, so identical content produces identical archive bytes. Authoritative times live in the manifests.
+- **Restore** extracts into a private work directory, then runs the full `validateBackup` before anything is staged. Migrations are compared against the migrations this build knows (core + feature registry). Newer archive formats, newer backup formats, and unknown migrations are rejected with explicit messages. Work directories are removed after staging or on the next start.
+- **Desktop UI:** *Create backup* now saves a `.jobranger` file. *Select backup to restore* accepts a `.jobranger` file or the `manifest.json` inside a v1.2.0 backup folder.
+
+Additional validation: `tests/portable-archive-smoke-test.cjs` covers round trip, determinism, bit flips, path traversal, newer versions, tampered manifest, tampered database with a valid CRC, and re-compression, on both the CLI and WASM SQLite engines. `tests/pwa/portability.spec.ts` covers Electron ↔ PWA moves.

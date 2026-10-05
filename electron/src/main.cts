@@ -1,4 +1,4 @@
-import { app, BrowserWindow, dialog, ipcMain, Menu, shell } from "electron";
+import { app, BrowserWindow, dialog, Menu, shell } from "electron";
 import path from "node:path";
 import { JobScoutBackend } from "./backend.cjs";
 import { CareerBackend } from "./career-backend.cjs";
@@ -7,32 +7,48 @@ import { initializeResumeIpc } from "./resume-ipc.cjs";
 import { initializeEvidenceExtensionIpc } from "./evidence-extension-ipc.cjs";
 import { initializeBackupIpc } from "./backup-ipc.cjs";
 import { applyPendingRestore } from "./backup-service.cjs";
-import { publicJobFeedDiscoveryProvider } from "./source-discovery-provider.cjs";
-import { validateSourceDiscoveryRequest } from "./source-discovery-validator.cjs";
-import { assertManagedArtifactPath } from "./managed-path-policy.cjs";
-import {
-  validateExternalUrl,
-  validateId,
-  validateIntegerInRange,
-  validateCompanyDraft,
-  validateCompanyUpdate,
-  validateFilterDraft,
-  validateFilterUpdate,
-  validateSettingsUpdate,
-} from "./validators.cjs";
-import {
-  validateApplicationUpdate,
-  validateCareerEntityId,
-  validateCareerProfile,
-  validateEvidenceReviewUpdate,
-  validateLegacyCareerMigration,
-  validatePastedResumeInput,
-  validateUserAuthoredEvidenceInput,
-} from "./career-validators.cjs";
-import { validateCareerTargetTrackInput } from "./target-track-validator.cjs";
+import { validateExternalUrl } from "./validators.cjs";
+import { registerCoreIpcHandlers } from "./core-ipc.cjs";
 import { loadPageHtmlInHiddenWindow } from "./browser-loader.cjs";
 import { createTray, shouldMinimizeToTray } from "./tray-notifications.cjs";
 import { createPinnedFetch } from "./pinned-fetch.cjs";
+import {
+  detectDistributionChannel,
+  electronRuntimeInfo,
+  packageFamilyNameFromExecPath,
+  resolveStoreUserDataDirectory,
+  storeHostPath,
+} from "./distribution.cjs";
+import { initializeLegacyInstallIpc } from "./legacy-install-ipc.cjs";
+import { parsePackageSmokeArgument, runStorePackageSmoke } from "./store-package-smoke.cjs";
+
+const distributionChannel = detectDistributionChannel({
+  windowsStore: process.windowsStore,
+  isPackaged: app.isPackaged,
+  env: process.env,
+});
+
+// Store (AppX) builds isolate their data root from historical direct-download
+// installations so the two never share a live database. An explicit
+// --user-data-dir (used by automated tests) always wins.
+if (
+  distributionChannel === "microsoft-store" &&
+  !app.commandLine.hasSwitch("user-data-dir")
+) {
+  app.setPath("userData", resolveStoreUserDataDirectory(app.getPath("appData")));
+}
+
+/** Path the OS file manager sees for a path inside Job Ranger's data root. */
+function hostPath(target: string): string {
+  if (distributionChannel !== "microsoft-store" || !process.env.LOCALAPPDATA) return target;
+  return storeHostPath(target, {
+    appDataDirectory: app.getPath("appData"),
+    localAppDataDirectory: process.env.LOCALAPPDATA,
+    packageFamilyName: packageFamilyNameFromExecPath(process.execPath),
+  });
+}
+
+const packageSmokeReport = parsePackageSmokeArgument(process.argv);
 
 const moduleDirectory = __dirname;
 const processStartupFetch = globalThis.fetch;
@@ -208,7 +224,7 @@ function createMenu(): void {
         {
           label: "Open Job Ranger Data Folder",
           click: () => {
-            void shell.openPath(app.getPath("userData"));
+            void shell.openPath(hostPath(app.getPath("userData")));
           },
         },
       ],
@@ -218,189 +234,32 @@ function createMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
-function requireBackend(): JobScoutBackend {
-  if (!backend) {
-    throw new Error("Job Ranger backend is not initialized");
-  }
-  return backend;
-}
-
-function requireCareerBackend(): CareerBackend {
-  if (!careerBackend) {
-    throw new Error("Job Ranger career backend is not initialized");
-  }
-  return careerBackend;
-}
-
-function requireRequirementBackend(): RequirementBackend {
-  if (!requirementBackend) {
-    throw new Error("Job Ranger requirement backend is not initialized");
-  }
-  return requirementBackend;
-}
-
-function registerIpcHandlers(): void {
-  ipcMain.handle("app:get-version", () => app.getVersion());
-  ipcMain.handle("app:get-platform", () => process.platform);
-  ipcMain.handle("app:open-external", async (_event, url: string) => {
-    await shell.openExternal(validateExternalUrl(url));
-  });
-  ipcMain.handle("app:show-item-in-folder", async (_event, targetPath: unknown) => {
-    const safePath = assertManagedArtifactPath(
-      targetPath,
-      requireCareerBackend().getArtifactDirectory(),
-    );
-    shell.showItemInFolder(safePath);
-  });
-
-  ipcMain.handle("system:get-status", () =>
-    requireBackend().getSystemStatus(process.platform),
-  );
-
-  ipcMain.handle("companies:list", () => requireBackend().listCompanies());
-  ipcMain.handle("companies:create", (_event, draft) =>
-    requireBackend().createCompany(validateCompanyDraft(draft)),
-  );
-  ipcMain.handle("companies:update", (_event, id: string, update) =>
-    requireBackend().updateCompany(
-      validateId(id, "Company id"),
-      validateCompanyUpdate(update),
-    ),
-  );
-  ipcMain.handle("companies:delete", (_event, id: string) =>
-    requireBackend().deleteCompany(validateId(id, "Company id")),
-  );
-  ipcMain.handle("companies:run-scrape", (_event, id: string) =>
-    requireBackend().runCompanyScrape(validateId(id, "Company id")),
-  );
-
-  ipcMain.handle("discovery:discover", async (_event, request) =>
-    publicJobFeedDiscoveryProvider.discover(validateSourceDiscoveryRequest(request), {
-      fetchImpl: discoveryFetchImpl(),
-      existingCompanies: await requireBackend().listCompanies(),
-    }),
-  );
-
-  ipcMain.handle("jobs:list", () => requireBackend().listJobs());
-  ipcMain.handle("jobs:mark-seen", (_event, id: string) =>
-    requireBackend().markJobSeen(validateId(id, "Job id")),
-  );
-  ipcMain.handle("jobs:get-evidence-coverage", (_event, id: string) =>
-    requireRequirementBackend().getJobEvidenceCoverage(validateId(id, "Job id")),
-  );
-
-  ipcMain.handle("filters:list", () => requireBackend().listFilters());
-  ipcMain.handle("filters:create", (_event, draft) =>
-    requireBackend().createFilter(validateFilterDraft(draft)),
-  );
-  ipcMain.handle("filters:update", (_event, id: string, update) =>
-    requireBackend().updateFilter(
-      validateId(id, "Filter id"),
-      validateFilterUpdate(update),
-    ),
-  );
-  ipcMain.handle("filters:delete", (_event, id: string) =>
-    requireBackend().deleteFilter(validateId(id, "Filter id")),
-  );
-
-  ipcMain.handle("settings:get", () => requireBackend().getSettings());
-  ipcMain.handle("settings:update", (_event, update) =>
-    requireBackend().updateSettings(validateSettingsUpdate(update)),
-  );
-
-  ipcMain.handle("scrape-runs:list-recent", (_event, limit?: number) =>
-    requireBackend().listRecentScrapeRuns(
-      limit === undefined
-        ? undefined
-        : validateIntegerInRange(limit, "Scrape run limit", 1, 100),
-    ),
-  );
-
-  ipcMain.handle("career:get-profile", () => requireCareerBackend().getProfile());
-  ipcMain.handle("career:save-profile", (_event, profile) =>
-    requireCareerBackend().saveProfile(validateCareerProfile(profile)),
-  );
-  ipcMain.handle("career:list-target-tracks", () =>
-    requireCareerBackend().listTargetTracks(),
-  );
-  ipcMain.handle("career:create-target-track", (_event, input) =>
-    requireCareerBackend().createTargetTrack(validateCareerTargetTrackInput(input)),
-  );
-  ipcMain.handle("career:update-target-track", (_event, id: string, input) =>
-    requireCareerBackend().updateTargetTrack(
-      validateCareerEntityId(id, "Target track id"),
-      validateCareerTargetTrackInput(input),
-    ),
-  );
-  ipcMain.handle("career:delete-target-track", (_event, id: string) =>
-    requireCareerBackend().deleteTargetTrack(
-      validateCareerEntityId(id, "Target track id"),
-    ),
-  );
-  ipcMain.handle("career:migrate-legacy", (_event, payload) =>
-    requireCareerBackend().migrateLegacy(validateLegacyCareerMigration(payload)),
-  );
-  ipcMain.handle("career:select-resume-import", async () => {
-    const selection = await dialog.showOpenDialog({
-      title: "Import resume or career history",
-      properties: ["openFile"],
-      filters: [
-        { name: "Resume documents", extensions: ["docx", "pdf", "txt"] },
-        { name: "All files", extensions: ["*"] },
-      ],
+async function runPackageSmokeAndExit(reportPath: string): Promise<void> {
+  try {
+    await runStorePackageSmoke({
+      reportPath,
+      appVersion: app.getVersion(),
+      channel: distributionChannel,
+      windowsStore: process.windowsStore === true,
+      userDataDirectory: app.getPath("userData"),
+      appDataDirectory: app.getPath("appData"),
+      localAppDataDirectory: process.env.LOCALAPPDATA ?? null,
+      execPath: process.execPath,
+      resourcesPath: (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath ?? null,
+      platform: process.platform,
     });
-    if (selection.canceled || selection.filePaths.length === 0) {
-      return null;
-    }
-    return requireCareerBackend().importResumeFile(selection.filePaths[0]);
-  });
-  ipcMain.handle("career:import-pasted-text", (_event, input) =>
-    requireCareerBackend().importPastedText(validatePastedResumeInput(input)),
-  );
-  ipcMain.handle("career:create-user-evidence", (_event, input) =>
-    requireCareerBackend().createUserEvidence(validateUserAuthoredEvidenceInput(input)),
-  );
-  ipcMain.handle("career:list-source-artifacts", () =>
-    requireCareerBackend().listSourceArtifacts(),
-  );
-  ipcMain.handle("career:list-evidence", () =>
-    requireCareerBackend().listEvidence(),
-  );
-  ipcMain.handle("career:review-evidence", (_event, id: string, update) =>
-    requireCareerBackend().reviewEvidence(
-      validateCareerEntityId(id, "Evidence id"),
-      validateEvidenceReviewUpdate(update),
-    ),
-  );
-  ipcMain.handle(
-    "career:merge-evidence",
-    (_event, sourceId: string, targetId: string) =>
-      requireCareerBackend().mergeEvidence(
-        validateCareerEntityId(sourceId, "Source evidence id"),
-        validateCareerEntityId(targetId, "Target evidence id"),
-      ),
-  );
-
-  ipcMain.handle("applications:list", () =>
-    requireCareerBackend().listApplications(),
-  );
-  ipcMain.handle("applications:track", (_event, jobId: string) =>
-    requireCareerBackend().trackApplication(validateId(jobId, "Job id")),
-  );
-  ipcMain.handle("applications:update", (_event, id: string, update) =>
-    requireCareerBackend().updateApplication(
-      validateCareerEntityId(id, "Application id"),
-      validateApplicationUpdate(update),
-    ),
-  );
-  ipcMain.handle("applications:delete", (_event, id: string) =>
-    requireCareerBackend().deleteApplication(
-      validateCareerEntityId(id, "Application id"),
-    ),
-  );
+    app.exit(0);
+  } catch (error) {
+    console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    app.exit(1);
+  }
 }
 
 app.whenReady().then(async () => {
+  if (packageSmokeReport) {
+    await runPackageSmokeAndExit(packageSmokeReport);
+    return;
+  }
   try {
     const userDataDirectory = app.getPath("userData");
     const dataDirectory = path.join(userDataDirectory, "data");
@@ -438,9 +297,40 @@ app.whenReady().then(async () => {
       databasePath: systemStatus.databasePath,
       sqliteBinaryPath: systemStatus.sqliteBinaryPath,
       appVersion: app.getVersion(),
+      producer: {
+        runtime: "electron",
+        channel: distributionChannel,
+        appVersion: app.getVersion(),
+        buildId: process.env.JOB_RANGER_BUILD_ID?.trim() || `electron-${app.getVersion()}`,
+      },
     });
 
-    registerIpcHandlers();
+    registerCoreIpcHandlers({
+      backend,
+      careerBackend,
+      requirementBackend,
+      appVersion: app.getVersion(),
+      platform: process.platform,
+      discoveryFetch: discoveryFetchImpl,
+      hostPath,
+      getRuntimeInfo: async () =>
+        electronRuntimeInfo({
+          channel: distributionChannel,
+          appVersion: app.getVersion(),
+          platform: process.platform,
+          userDataDirectory,
+          sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+          buildId: process.env.JOB_RANGER_BUILD_ID,
+        }),
+    });
+    initializeLegacyInstallIpc({
+      channel: distributionChannel,
+      appDataDirectory: app.getPath("appData"),
+      userDataDirectory,
+      dataDirectory,
+      sqliteBinaryPath: systemStatus.sqliteBinaryPath,
+      appVersion: app.getVersion(),
+    });
     createWindow();
     createMenu();
     createTray(appAssetPath("ICON.png"), mainWindow, () => app.quit());
@@ -459,6 +349,8 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => {
+  // The packaged smoke renders PDFs in short-lived hidden windows; it exits explicitly.
+  if (packageSmokeReport) return;
   if (process.platform !== "darwin") {
     app.quit();
   }

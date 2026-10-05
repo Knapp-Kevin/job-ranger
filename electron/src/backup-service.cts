@@ -3,7 +3,9 @@ import { createReadStream } from "node:fs";
 import { promises as fs } from "node:fs";
 import path from "node:path";
 import type {
+  BackupArchiveRecord,
   BackupCreateResult,
+  JobRangerArchiveProducer,
   BackupFileRecord,
   BackupManagedPathRecord,
   BackupMigrationRecord,
@@ -16,11 +18,20 @@ import {
   JOB_RANGER_BACKUP_VERSION,
 } from "../../src/shared/backup.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
+import { migrations as coreMigrations } from "./migrations.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
+import {
+  BACKUP_MANIFEST_FILE as ARCHIVE_BACKUP_MANIFEST_FILE,
+  extractArchiveToBundle,
+  isArchiveFileName,
+  packBackupBundle,
+} from "./portable-archive.cjs";
 
 const BACKUP_MANIFEST_FILE = "manifest.json";
 const BACKUP_DATABASE_FILE = "jobscout.sqlite3";
 const PENDING_RESTORE_FILE = "pending-restore.json";
 const STAGED_RESTORE_STATE_FILE = ".job-ranger-restore-state.json";
+const ARCHIVE_WORK_PREFIX = ".job-ranger-archive-work-";
 const MAX_MANIFEST_BYTES = 10 * 1024 * 1024;
 const MAX_BACKUP_FILES = 100_000;
 
@@ -30,6 +41,8 @@ interface BackupServiceOptions {
   databasePath: string;
   sqliteBinaryPath: string;
   appVersion: string;
+  /** Open the source database read-only (historical installation import). */
+  readOnlySource?: boolean;
 }
 
 type ManagedPathRow = {
@@ -60,6 +73,13 @@ type StagedRestoreState = {
   databaseSha256: string;
   artifactFiles: BackupFileRecord[];
 };
+
+function knownMigrationNames(): Map<number, string> {
+  return new Map<number, string>([
+    ...coreMigrations.map((migration): [number, string] => [migration.version, migration.name]),
+    ...Object.values(FEATURE_MIGRATIONS).map((migration): [number, string] => [migration.version, migration.name]),
+  ]);
+}
 
 function isObject(value: unknown): value is Record<string, unknown> {
   return Boolean(value && typeof value === "object" && !Array.isArray(value));
@@ -119,7 +139,8 @@ async function hashFile(filePath: string): Promise<{ bytes: number; sha256: stri
   const hash = createHash("sha256");
   let bytes = 0;
   for await (const chunk of createReadStream(filePath)) {
-    const buffer = Buffer.isBuffer(chunk) ? chunk : Buffer.from(chunk);
+    const buffer: Uint8Array =
+      typeof chunk === "string" ? new TextEncoder().encode(chunk) : chunk;
     bytes += buffer.byteLength;
     hash.update(buffer);
   }
@@ -298,6 +319,17 @@ async function verifyFileRecord(root: string, record: BackupFileRecord): Promise
   }
 }
 
+async function verifyStagedRestore(root: string): Promise<void> {
+  const state = parseStagedState(await readJsonFile(path.join(root, STAGED_RESTORE_STATE_FILE)));
+  const stagedHash = await hashFile(path.join(root, BACKUP_DATABASE_FILE));
+  if (stagedHash.sha256.toLowerCase() !== state.databaseSha256.toLowerCase()) {
+    throw new Error("Pending restore database changed after validation");
+  }
+  for (const file of state.artifactFiles) {
+    await verifyFileRecord(root, file);
+  }
+}
+
 function parsePendingMarker(value: unknown): PendingRestoreMarker {
   if (
     !isObject(value) ||
@@ -340,7 +372,9 @@ export class BackupService {
   private readonly liveSqlite: SqliteClient;
 
   constructor(private readonly options: BackupServiceOptions) {
-    this.liveSqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
+    this.liveSqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath, {
+      readOnly: options.readOnlySource === true,
+    });
   }
 
   async createBackup(destinationParent: string): Promise<BackupCreateResult> {
@@ -427,6 +461,102 @@ export class BackupService {
     }
   }
 
+  /**
+   * Creates a validated backup bundle in a private work directory and packs it
+   * into a single portable `.jobranger` archive at `archivePath`.
+   */
+  async createArchive(
+    archivePath: string,
+    producer: JobRangerArchiveProducer,
+  ): Promise<BackupCreateResult> {
+    if (!isArchiveFileName(archivePath)) {
+      archivePath = `${archivePath}.jobranger`;
+      // The save dialog only confirmed overwriting the name the user typed.
+      if (await pathExists(archivePath)) {
+        throw new Error(
+          `${path.basename(archivePath)} already exists. Choose a different backup name.`,
+        );
+      }
+    }
+    const workDirectory = path.join(
+      this.options.userDataDirectory,
+      `${ARCHIVE_WORK_PREFIX}${randomUUID()}`,
+    );
+    await fs.mkdir(workDirectory, { recursive: true });
+    try {
+      const created = await this.createBackup(workDirectory);
+      await this.validateBackup(created.summary.bundlePath);
+      const packed = await packBackupBundle({
+        bundleDirectory: created.summary.bundlePath,
+        archivePath,
+        producer,
+        createdAt: created.manifest.createdAt,
+      });
+      const archive: BackupArchiveRecord = {
+        path: archivePath,
+        fileName: path.basename(archivePath),
+        bytes: packed.bytes,
+        sha256: packed.sha256,
+      };
+      return {
+        manifest: created.manifest,
+        summary: { ...created.summary, bundlePath: archivePath },
+        archive,
+      };
+    } finally {
+      await fs.rm(workDirectory, { recursive: true, force: true });
+    }
+  }
+
+  /**
+   * Accepts either a `.jobranger` archive or the `manifest.json` inside a
+   * legacy directory bundle (v1.2.0 and earlier backups) and returns a fully
+   * validated restore selection.
+   */
+  async validateRestoreSource(selectedPath: string): Promise<BackupRestoreSelection> {
+    if (path.basename(selectedPath).toLowerCase() === ARCHIVE_BACKUP_MANIFEST_FILE) {
+      return this.validateBackup(path.dirname(selectedPath));
+    }
+    const stat = await fs.lstat(selectedPath);
+    if (stat.isDirectory()) return this.validateBackup(selectedPath);
+    await this.removeArchiveWorkDirectories();
+    const extracted = path.join(
+      this.options.userDataDirectory,
+      `${ARCHIVE_WORK_PREFIX}${randomUUID()}`,
+    );
+    try {
+      const archive = await extractArchiveToBundle(selectedPath, extracted);
+      const selection = await this.validateBackup(extracted);
+      if (archive.producer.runtime !== "electron" || archive.producer.appVersion !== this.options.appVersion) {
+        selection.warnings.push(
+          `This archive was exported by the Job Ranger ${archive.producer.runtime === "web" ? "web app" : "desktop app"} ${archive.producer.appVersion} (${archive.producer.channel}).`,
+        );
+      }
+      return { ...selection, archive };
+    } catch (error) {
+      await fs.rm(extracted, { recursive: true, force: true });
+      throw error;
+    }
+  }
+
+  /** Removes extracted-archive work directories left by earlier sessions. */
+  async removeArchiveWorkDirectories(): Promise<void> {
+    let names: string[] = [];
+    try {
+      names = await fs.readdir(this.options.userDataDirectory);
+    } catch {
+      return;
+    }
+    for (const name of names) {
+      if (name.startsWith(ARCHIVE_WORK_PREFIX)) {
+        await fs.rm(path.join(this.options.userDataDirectory, name), {
+          recursive: true,
+          force: true,
+        });
+      }
+    }
+  }
+
   async validateBackup(bundlePath: string): Promise<BackupRestoreSelection> {
     const bundleStat = await fs.lstat(bundlePath);
     if (!bundleStat.isDirectory() || bundleStat.isSymbolicLink()) {
@@ -460,10 +590,9 @@ export class BackupService {
       throw new Error("Backup migration metadata is incomplete");
     }
 
-    const liveMigrations = await this.liveSqlite.queryAll<MigrationRow>(
-      "SELECT version, name FROM schema_migrations ORDER BY version ASC;",
-    );
-    const liveMigrationMap = new Map(liveMigrations.map((item) => [item.version, item.name]));
+    // Compare against every migration this build knows (core + feature
+    // modules), not only those the live database happens to have applied yet.
+    const liveMigrationMap = knownMigrationNames();
     for (const migration of manifest.migrations) {
       const knownName = liveMigrationMap.get(migration.version);
       if (!knownName || knownName !== migration.name) {
@@ -579,6 +708,12 @@ export class BackupService {
       const temporaryMarker = `${markerPath}.tmp-${randomUUID()}`;
       await fs.writeFile(temporaryMarker, `${JSON.stringify(marker, null, 2)}\n`, "utf8");
       await fs.rename(temporaryMarker, markerPath);
+      if (
+        path.basename(bundlePath).startsWith(ARCHIVE_WORK_PREFIX) &&
+        path.resolve(path.dirname(bundlePath)) === path.resolve(this.options.userDataDirectory)
+      ) {
+        await fs.rm(bundlePath, { recursive: true, force: true });
+      }
       return selection;
     } catch (error) {
       await fs.rm(stagePath, { recursive: true, force: true });
@@ -600,16 +735,21 @@ export async function applyPendingRestore(options: {
   if (path.dirname(path.resolve(stagePath)) !== expectedStageParent) {
     throw new Error("Pending restore stage is outside the Job Ranger user-data directory");
   }
-  const state = parseStagedState(
-    await readJsonFile(path.join(stagePath, STAGED_RESTORE_STATE_FILE)),
-  );
-  const stagedDatabase = path.join(stagePath, BACKUP_DATABASE_FILE);
-  const stagedHash = await hashFile(stagedDatabase);
-  if (stagedHash.sha256.toLowerCase() !== state.databaseSha256.toLowerCase()) {
-    throw new Error("Pending restore database changed after validation");
-  }
-  for (const file of state.artifactFiles) {
-    await verifyFileRecord(stagePath, file);
+  try {
+    await verifyStagedRestore(stagePath);
+  } catch (stageError) {
+    // Runtimes without an atomic directory rename (the web runtime's OPFS
+    // adapter copies, then deletes) can be interrupted after the staged data
+    // was fully copied into place but before the stage copy was removed. The
+    // live directory then still carries the staged-state file; if it verifies
+    // completely, the swap already happened and only cleanup remains.
+    if (await verifyStagedRestore(options.dataDirectory).then(() => true, () => false)) {
+      await fs.rm(markerPath, { force: true });
+      await fs.rm(stagePath, { recursive: true, force: true });
+      await fs.rm(path.join(options.dataDirectory, STAGED_RESTORE_STATE_FILE), { force: true });
+      return true;
+    }
+    throw stageError;
   }
 
   const rollbackPath = path.join(

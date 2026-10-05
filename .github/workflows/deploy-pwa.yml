@@ -1,0 +1,102 @@
+name: Deploy web app (PWA)
+
+# Controlled production deployment of an already-released, attested web build.
+# Deployment authority = the protected `production-web` environment (configure
+# required reviewers in repository settings). Nothing is rebuilt here: the
+# exact release archive is verified (SHA-256 + GitHub artifact attestation)
+# and published as-is, so the deployed origin is traceable to source.
+#
+# Hosting requirements: HTTPS and support for the `_headers` file shipped in
+# the build (CSP + Trusted Types, HSTS, frame-ancestors, etc.). Cloudflare
+# Pages satisfies both; GitHub Pages does not support custom headers.
+#
+# Required configuration (not present until the owner sets it up):
+#   secrets.CLOUDFLARE_API_TOKEN, secrets.CLOUDFLARE_ACCOUNT_ID
+#   vars.JOB_RANGER_PWA_PAGES_PROJECT  (Cloudflare Pages project name)
+#   vars.JOB_RANGER_PWA_ORIGIN         (e.g. https://app.example.org)
+#
+# Rollback: re-run with an earlier release tag. The service worker treats it
+# as a new version (user-confirmed reload) and the runtime refuses to open
+# data already upgraded by a newer schema instead of corrupting it.
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Release tag whose attested web build should be deployed"
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  attestations: read
+
+concurrency:
+  group: deploy-pwa-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    environment: production-web
+    steps:
+      - name: Download released web build and evidence
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
+        run: |
+          set -euo pipefail
+          mkdir -p artifact site
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" \
+            --pattern "job-ranger-web-*.zip" --pattern "web-SHA256SUMS.txt" \
+            --pattern "web-release-manifest.json" --pattern "web-build-info.json" --dir artifact
+
+      - name: Verify checksum and build provenance
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          cd artifact
+          sha256sum --check web-SHA256SUMS.txt
+          gh attestation verify job-ranger-web-*.zip --repo "${{ github.repository }}"
+
+      - name: Unpack and check deployable shell
+        run: |
+          set -euo pipefail
+          unzip -q artifact/job-ranger-web-*.zip -d site
+          for required in index.html sw.js _headers manifest.webmanifest build-info.json; do
+            test -s "site/$required"
+          done
+          node -e "const a=require('./site/build-info.json'), b=require('./artifact/web-build-info.json'); if (a.buildId !== b.buildId) { throw new Error('build identity mismatch'); } console.log('Deploying build', a.buildId, 'from commit', a.commit)"
+
+      - name: Deploy to Cloudflare Pages
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+        run: |
+          set -euo pipefail
+          test -n "$CLOUDFLARE_API_TOKEN" || { echo "CLOUDFLARE_API_TOKEN is not configured"; exit 1; }
+          test -n "${{ vars.JOB_RANGER_PWA_PAGES_PROJECT }}" || { echo "JOB_RANGER_PWA_PAGES_PROJECT is not configured"; exit 1; }
+          commit=$(node -p "require('./site/build-info.json').commit")
+          npx --yes wrangler@4 pages deploy site \
+            --project-name "${{ vars.JOB_RANGER_PWA_PAGES_PROJECT }}" \
+            --branch main --commit-hash "$commit" --commit-dirty=false
+
+      - name: Verify the live origin serves this build with its security headers
+        run: |
+          set -euo pipefail
+          origin="${{ vars.JOB_RANGER_PWA_ORIGIN }}"
+          test -n "$origin" || { echo "JOB_RANGER_PWA_ORIGIN is not configured"; exit 1; }
+          case "$origin" in https://*) ;; *) echo "Production origin must be HTTPS"; exit 1;; esac
+          expected=$(node -p "require('./site/build-info.json').buildId")
+          for attempt in 1 2 3 4 5 6; do
+            live=$(curl -fsS "$origin/build-info.json" | node -e "let s='';process.stdin.on('data',d=>s+=d).on('end',()=>console.log(JSON.parse(s).buildId))") || true
+            [ "$live" = "$expected" ] && break
+            sleep 10
+          done
+          [ "$live" = "$expected" ] || { echo "Live build $live does not match $expected"; exit 1; }
+          headers=$(curl -fsSI "$origin/")
+          echo "$headers" | grep -qi "content-security-policy: default-src 'none'"
+          echo "$headers" | grep -qi "strict-transport-security"
+          echo "$headers" | grep -qi "x-frame-options: DENY"
+          echo "Production origin verified: $origin serves $expected"

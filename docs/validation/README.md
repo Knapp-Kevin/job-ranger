@@ -26,6 +26,7 @@ The governing rule is simple: schema acceptance alone is not universality. A wor
 
 ## Documentation and release-readiness validation
 
+- `DISTRIBUTION_IMPLEMENTATION_2026-10-05.md` records the distribution-architecture implementation (#142): hosted CI runs, Windows Store in-package evidence, and what was not performed (certification, PWA deployment, cross-browser validation).
 - `DOCUMENTATION_REMEDIATION_2026-10-03.md` records the platinum documentation/product-gap audit, manual validation strategy, reused unchanged-code evidence, and explicit limitations.
 
 Release candidates should follow [`../RELEASE_READINESS.md`](../RELEASE_READINESS.md) and retain additional platform/package evidence when it materially improves reproducibility.

@@ -57,7 +57,8 @@ export interface ResumeParseabilityIssue {
     | "statement-missing"
     | "reading-order"
     | "hidden-content"
-    | "page-count";
+    | "page-count"
+    | "unverified-script";
   severity: "critical" | "advisory";
   message: string;
 }
