@@ -1,6 +1,6 @@
 # Web / PWA Runtime
 
-**Status:** implemented (merged to `main` via #142; post-v1.2.0, not released). **Not deployed.** No production origin exists yet, so the web app is not shipped and not a published supported channel.
+**Status:** implemented (merged to `main` via #142; post-v1.2.0, not released). **Not publicly deployed.** A production origin does not exist yet, by design. The PWA is intended to be self-hosted on localhost for dogfooding and trusted testing before external demand justifies public hosting.
 **Tracks:** #130
 **Architecture:** [`DISTRIBUTION_ARCHITECTURE.md`](./DISTRIBUTION_ARCHITECTURE.md)
 
@@ -170,7 +170,28 @@ The PWA never reads the Electron SQLite database directly. It only accepts valid
 
 Installability (standalone PWA) on Windows, macOS, and Linux browsers still needs real-device validation before the web app is promoted as mainstream (#130).
 
-## Deployment (not yet performed)
+## Local self-hosting before public deployment
+
+PWA-first does **not** require cloud hosting during development, dogfooding, or trusted testing.
+
+The accepted pre-demand model is:
+
+1. build the production PWA locally;
+2. serve it from a stable loopback origin;
+3. install/use it from that origin;
+4. keep all Career Ops data local in OPFS / browser storage;
+5. distribute builds to trusted testers who run their own localhost instance;
+6. introduce a public HTTPS host only when there is evidence that ordinary external distribution is useful.
+
+The localhost origin is part of the storage identity. Hostname and port therefore matter. A persisted test profile must use one canonical loopback origin; the local server must **fail clearly rather than silently choose another port** when the configured port is busy.
+
+Do not treat an ordinary private-LAN HTTP address as equivalent to localhost. Loopback receives secure-context treatment suitable for development, while a remote tester should normally run their own local instance unless trusted HTTPS is deliberately configured.
+
+Moving from localhost to a later public origin is a cross-origin migration. Existing testers move their data through the versioned `.jobranger` archive rather than assuming OPFS / browser state can move automatically.
+
+This stage intentionally requires no Cloudflare, Netlify, hosted database, user account service, or cloud-authoritative storage.
+
+## Public deployment (not yet performed)
 
 `.github/workflows/pwa.yml` builds and tests the web app on every pull request. Each release produces `job-ranger-web-v<version>.zip` with:
 - `web-build-info.json`: build identity, CSP, and per-asset SHA-256;
@@ -180,19 +201,21 @@ Installability (standalone PWA) on Windows, macOS, and Linux browsers still need
 
 `.github/workflows/deploy-pwa.yml` publishes an **already released and attested** archive without rebuilding it. It runs behind the protected `production-web` environment, which is the deployment authority, and targets a host that honors the shipped `_headers` file (Cloudflare Pages). After deploying, it verifies that the live origin serves the expected build ID and security headers.
 
-Required owner configuration:
+Required owner configuration **only when public deployment is intentionally activated**:
 - `CLOUDFLARE_API_TOKEN` and `CLOUDFLARE_ACCOUNT_ID` secrets;
 - `JOB_RANGER_PWA_PAGES_PROJECT` and `JOB_RANGER_PWA_ORIGIN` variables;
 - reviewers on the `production-web` environment.
 
-GitHub Pages is not suitable because it cannot send the required security headers.
+Cloudflare Pages remains the currently implemented public-host target, but public hosting is not a development or dogfood prerequisite. The build stays host-neutral apart from requiring the production host to honor the shipped security headers.
+
+GitHub Pages is not suitable for the public supported channel because it cannot send the required security headers.
 
 ## Development
 
 ```bash
 npm run dev:pwa         # Vite dev server (development CSP relaxed for HMR)
 npm run build:pwa       # production build → dist-pwa/
-npm run preview:pwa     # serve dist-pwa with production security headers
+npm run preview:pwa     # serve dist-pwa locally with production security headers; keep its canonical localhost origin stable
 npm run test:pwa:e2e    # build + browser suite (Playwright, Chromium)
 npm run test:pwa:engine # shared-core suites on the SQLite WASM engine
 ```
