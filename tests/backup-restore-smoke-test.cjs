@@ -1,6 +1,7 @@
 const assert = require('node:assert/strict');
 const { createHash } = require('node:crypto');
 const fs = require('node:fs/promises');
+const fsSync = require('node:fs');
 const os = require('node:os');
 const path = require('node:path');
 
@@ -197,7 +198,49 @@ async function run() {
       /integrity verification/i,
       'tampered artifacts must be rejected before restore staging',
     );
+
+    // Web runtimes move directories by copy-then-delete. Simulate an
+    // interruption after the staged data was copied into place but while the
+    // stage copy was being removed: startup must finish the restore instead of
+    // failing on the half-deleted stage forever.
+    const validatorUserData = path.join(root, 'validator-user-data');
+    await validator.stageRestore(created.summary.bundlePath);
     await finalInstall.backend.dispose();
+    const marker = JSON.parse(await fs.readFile(path.join(validatorUserData, 'pending-restore.json'), 'utf8'));
+    const stagePath = path.join(validatorUserData, marker.stageDirectory);
+    await fs.rm(finalInstall.dataDirectory, { recursive: true, force: true });
+    await fs.cp(stagePath, finalInstall.dataDirectory, { recursive: true });
+    await fs.rm(path.join(stagePath, 'jobscout.sqlite3'));
+    assert.equal(
+      await applyPendingRestore({ userDataDirectory: validatorUserData, dataDirectory: finalInstall.dataDirectory }),
+      true,
+      'an interrupted copy-then-delete swap must complete from verified live data',
+    );
+    assert.equal(fsSync.existsSync(path.join(validatorUserData, 'pending-restore.json')), false);
+    assert.equal(fsSync.existsSync(stagePath), false, 'the half-deleted stage must be removed');
+    assert.equal(
+      fsSync.existsSync(path.join(finalInstall.dataDirectory, '.job-ranger-restore-state.json')),
+      false,
+    );
+
+    // A damaged stage without a verified swap in place is still refused.
+    const refusing = await initializeInstallation(validatorUserData);
+    const refusingService = new BackupService({
+      dataDirectory: refusing.dataDirectory,
+      userDataDirectory: validatorUserData,
+      databasePath: refusing.status.databasePath,
+      sqliteBinaryPath: refusing.status.sqliteBinaryPath,
+      appVersion: 'test-1',
+    });
+    await refusingService.stageRestore(created.summary.bundlePath);
+    await refusing.backend.dispose();
+    const refusingMarker = JSON.parse(await fs.readFile(path.join(validatorUserData, 'pending-restore.json'), 'utf8'));
+    await fs.writeFile(path.join(validatorUserData, refusingMarker.stageDirectory, 'jobscout.sqlite3'), 'tampered');
+    await assert.rejects(
+      applyPendingRestore({ userDataDirectory: validatorUserData, dataDirectory: refusing.dataDirectory }),
+      /changed after validation/i,
+      'a tampered stage must not be applied',
+    );
   } finally {
     await fs.rm(root, { recursive: true, force: true });
   }

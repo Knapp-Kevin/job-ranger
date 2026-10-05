@@ -59,6 +59,8 @@ interface Connection {
   persistedGeneration: number;
   dirtyGeneration: number;
   flushing: Promise<void> | null;
+  /** Set while memory is being replaced by the durable image after a failed save. */
+  reloading: Promise<void> | null;
   failedGeneration: number;
   lastKnownSize: number;
   lastKnownMtime: number;
@@ -144,6 +146,7 @@ export class WasmSqliteEngine {
           persistedGeneration: 0,
           dirtyGeneration: 0,
           flushing: null,
+          reloading: null,
           failedGeneration: 0,
           lastKnownSize: image.size,
           lastKnownMtime: image.mtime,
@@ -154,6 +157,9 @@ export class WasmSqliteEngine {
       pending.catch(() => this.connections.delete(path));
     }
     const connection = await pending;
+    // Never hand out a database that is about to be replaced: a write made on
+    // it would report success and then vanish with the reload.
+    while (connection.reloading) await connection.reloading;
     if (this.options.revalidateExternalChanges && !connection.flushing) {
       const image = await this.readImage(path);
       if (image.size !== connection.lastKnownSize || image.mtime !== connection.lastKnownMtime) {
@@ -209,7 +215,12 @@ export class WasmSqliteEngine {
           // Every change made since the last durable image is reverted, so
           // every caller waiting on those changes must observe the failure.
           connection.failedGeneration = connection.dirtyGeneration;
-          await this.reloadFromDisk(connection).catch(() => undefined);
+          connection.reloading = this.reloadFromDisk(connection).catch(() => undefined);
+          try {
+            await connection.reloading;
+          } finally {
+            connection.reloading = null;
+          }
           throw connection.failure;
         } finally {
           connection.flushing = null;
@@ -305,7 +316,7 @@ export function requireActiveWasmSqliteEngine(): WasmSqliteEngine {
 export class WasmSqliteClient {
   private readonly databasePath: string;
 
-  constructor(databasePath: string, _sqliteBinaryPath?: string) {
+  constructor(databasePath: string, _sqliteBinaryPath?: string, _mode?: { readOnly?: boolean }) {
     this.databasePath = databasePath;
   }
 

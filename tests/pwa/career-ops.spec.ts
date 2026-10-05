@@ -237,7 +237,7 @@ test("healthcare operations Career Ops workflow runs end to end in the browser",
   await expect(page.getByText("Medical Office Coordinator").first()).toBeVisible();
 
   // No request ever left the browser except the explicit job-board API read.
-  expect(outbound.every((entry) => entry.startsWith("GET https://boards-api.greenhouse.io/"))).toBe(true);
+  expect(outbound.filter((entry) => !entry.startsWith("GET https://boards-api.greenhouse.io/"))).toEqual([]);
 });
 
 test("sources that need a full browser are honestly marked unavailable in the web app", async ({ page }) => {

@@ -182,6 +182,22 @@ async function run() {
       () => archive.encodeStoreZip([{ name: '../escape.txt', bytes: new Uint8Array([1]) }]),
       /unsafe path/,
     );
+    for (const aliased of ['manifest.json.', 'manifest.json ', 'manifest.json:stream', 'artifacts/CON.txt', 'artifacts/nul', 'a\u0001b']) {
+      assert.throws(
+        () => archive.encodeStoreZip([{ name: aliased, bytes: new Uint8Array([1]) }]),
+        /unsafe path/,
+        `file-system alias ${JSON.stringify(aliased)} must be rejected`,
+      );
+    }
+    assert.throws(
+      () =>
+        archive.encodeStoreZip([
+          { name: 'manifest.json', bytes: new Uint8Array([1]) },
+          { name: 'MANIFEST.JSON', bytes: new Uint8Array([2]) },
+        ]),
+      /repeats/,
+      'names that collide on case-insensitive file systems must be rejected',
+    );
     const traversal = Buffer.from(rewriteEntries(archiveBytes, (items) => [...items, { name: 'artifacts/x.txt', bytes: new Uint8Array([1]) }]));
     const traversalName = Buffer.from('artifacts/x.txt');
     for (let index = traversal.indexOf(traversalName); index >= 0; index = traversal.indexOf(traversalName, index + 1)) {

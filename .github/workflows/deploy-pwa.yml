@@ -43,10 +43,11 @@ jobs:
       - name: Download released web build and evidence
         env:
           GH_TOKEN: ${{ github.token }}
+          RELEASE_TAG: ${{ inputs.tag }}
         run: |
           set -euo pipefail
           mkdir -p artifact site
-          gh release download "${{ inputs.tag }}" --repo "${{ github.repository }}" \
+          gh release download "$RELEASE_TAG" --repo "${{ github.repository }}" \
             --pattern "job-ranger-web-*.zip" --pattern "web-SHA256SUMS.txt" \
             --pattern "web-release-manifest.json" --pattern "web-build-info.json" --dir artifact
 

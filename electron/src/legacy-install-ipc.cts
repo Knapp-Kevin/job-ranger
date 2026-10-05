@@ -66,6 +66,7 @@ export async function stageLegacyImport(options: LegacyInstallOptions): Promise<
       databasePath: path.join(status.dataDirectory, DATABASE_FILE),
       sqliteBinaryPath: options.sqliteBinaryPath,
       appVersion: options.appVersion,
+      readOnlySource: true,
     });
     const bundle = await legacyService.createBackup(workDirectory);
     const storeService = new BackupService({

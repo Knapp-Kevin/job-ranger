@@ -41,6 +41,8 @@ interface BackupServiceOptions {
   databasePath: string;
   sqliteBinaryPath: string;
   appVersion: string;
+  /** Open the source database read-only (historical installation import). */
+  readOnlySource?: boolean;
 }
 
 type ManagedPathRow = {
@@ -317,6 +319,17 @@ async function verifyFileRecord(root: string, record: BackupFileRecord): Promise
   }
 }
 
+async function verifyStagedRestore(root: string): Promise<void> {
+  const state = parseStagedState(await readJsonFile(path.join(root, STAGED_RESTORE_STATE_FILE)));
+  const stagedHash = await hashFile(path.join(root, BACKUP_DATABASE_FILE));
+  if (stagedHash.sha256.toLowerCase() !== state.databaseSha256.toLowerCase()) {
+    throw new Error("Pending restore database changed after validation");
+  }
+  for (const file of state.artifactFiles) {
+    await verifyFileRecord(root, file);
+  }
+}
+
 function parsePendingMarker(value: unknown): PendingRestoreMarker {
   if (
     !isObject(value) ||
@@ -359,7 +372,9 @@ export class BackupService {
   private readonly liveSqlite: SqliteClient;
 
   constructor(private readonly options: BackupServiceOptions) {
-    this.liveSqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
+    this.liveSqlite = new SqliteClient(options.databasePath, options.sqliteBinaryPath, {
+      readOnly: options.readOnlySource === true,
+    });
   }
 
   async createBackup(destinationParent: string): Promise<BackupCreateResult> {
@@ -456,6 +471,12 @@ export class BackupService {
   ): Promise<BackupCreateResult> {
     if (!isArchiveFileName(archivePath)) {
       archivePath = `${archivePath}.jobranger`;
+      // The save dialog only confirmed overwriting the name the user typed.
+      if (await pathExists(archivePath)) {
+        throw new Error(
+          `${path.basename(archivePath)} already exists. Choose a different backup name.`,
+        );
+      }
     }
     const workDirectory = path.join(
       this.options.userDataDirectory,
@@ -714,16 +735,21 @@ export async function applyPendingRestore(options: {
   if (path.dirname(path.resolve(stagePath)) !== expectedStageParent) {
     throw new Error("Pending restore stage is outside the Job Ranger user-data directory");
   }
-  const state = parseStagedState(
-    await readJsonFile(path.join(stagePath, STAGED_RESTORE_STATE_FILE)),
-  );
-  const stagedDatabase = path.join(stagePath, BACKUP_DATABASE_FILE);
-  const stagedHash = await hashFile(stagedDatabase);
-  if (stagedHash.sha256.toLowerCase() !== state.databaseSha256.toLowerCase()) {
-    throw new Error("Pending restore database changed after validation");
-  }
-  for (const file of state.artifactFiles) {
-    await verifyFileRecord(stagePath, file);
+  try {
+    await verifyStagedRestore(stagePath);
+  } catch (stageError) {
+    // Runtimes without an atomic directory rename (the web runtime's OPFS
+    // adapter copies, then deletes) can be interrupted after the staged data
+    // was fully copied into place but before the stage copy was removed. The
+    // live directory then still carries the staged-state file; if it verifies
+    // completely, the swap already happened and only cleanup remains.
+    if (await verifyStagedRestore(options.dataDirectory).then(() => true, () => false)) {
+      await fs.rm(markerPath, { force: true });
+      await fs.rm(stagePath, { recursive: true, force: true });
+      await fs.rm(path.join(options.dataDirectory, STAGED_RESTORE_STATE_FILE), { force: true });
+      return true;
+    }
+    throw stageError;
   }
 
   const rollbackPath = path.join(

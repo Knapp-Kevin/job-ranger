@@ -18,6 +18,21 @@ function toHex(buffer) {
   return Array.from(new Uint8Array(buffer), (byte) => byte.toString(16).padStart(2, "0")).join("");
 }
 
+/**
+ * Browsers refuse a redirected response as the answer to a navigation, so a
+ * cached redirected shell would break every later visit (hosts commonly
+ * redirect `/index.html` to `/`). Re-wrap the verified body so the cached copy
+ * is always a plain, non-redirected response.
+ */
+async function cacheableResponse(response) {
+  if (!response.redirected) return response;
+  return new Response(await response.blob(), {
+    status: response.status,
+    statusText: response.statusText,
+    headers: response.headers,
+  });
+}
+
 self.addEventListener("install", (event) => {
   event.waitUntil(
     (async () => {
@@ -25,13 +40,16 @@ self.addEventListener("install", (event) => {
       try {
         for (const asset of ASSETS) {
           const url = new URL(asset.path, self.registration.scope).toString();
-          const response = await fetch(url, { cache: "reload", credentials: "same-origin" });
+          // The shell document is fetched at its canonical directory URL:
+          // pretty-URL hosts redirect `/index.html` to `/`.
+          const source = asset.path === "index.html" ? self.registration.scope : url;
+          const response = await fetch(source, { cache: "reload", credentials: "same-origin" });
           if (!response.ok) throw new Error(`Shell asset ${asset.path} returned HTTP ${response.status}`);
           const digest = toHex(await crypto.subtle.digest("SHA-256", await response.clone().arrayBuffer()));
           if (digest !== asset.sha256) {
             throw new Error(`Shell asset ${asset.path} does not match build ${BUILD_ID}`);
           }
-          await cache.put(url, response);
+          await cache.put(url, await cacheableResponse(response));
         }
       } catch (error) {
         await caches.delete(CACHE_NAME);

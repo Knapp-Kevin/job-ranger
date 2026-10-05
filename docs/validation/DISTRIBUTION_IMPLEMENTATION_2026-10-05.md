@@ -1,10 +1,10 @@
 # Distribution Architecture Implementation Validation (2026-10-05)
 
 **Scope:** implementation of the accepted distribution architecture ([`../design/DISTRIBUTION_ARCHITECTURE.md`](../design/DISTRIBUTION_ARCHITECTURE.md)): shared runtime-neutral core, local-first web/PWA runtime (#130), Microsoft Store AppX packaging (#125), portable `.jobranger` archives, and provenance.
-**Change:** [Knapp-Kevin/job-ranger#142](https://github.com/Knapp-Kevin/job-ranger/pull/142), branch `claude/friendly-bell-62jsj4`, validated head `86d4c05217a2a98afc5622cec48ee6151f0290d5`, base `main` at `242b8761b2045b27de4936a261e663b3790c4afc`.
+**Change:** [Knapp-Kevin/job-ranger#142](https://github.com/Knapp-Kevin/job-ranger/pull/142), branch `claude/friendly-bell-62jsj4`, evidence head `86d4c05217a2a98afc5622cec48ee6151f0290d5` (the pre-merge review fixes below landed after it and were re-validated locally and by CI on the PR's final head), base `main` at `242b8761b2045b27de4936a261e663b3790c4afc`.
 **Proves:** implemented behavior. **Does not prove:** shipped behavior. No release tag, Store listing, or production web origin exists.
 
-## Hosted CI on the validated head
+## Hosted CI on the evidence head
 
 | Workflow / job | Run | Result |
 | --- | --- | --- |
@@ -42,6 +42,23 @@ Environment: GitHub-hosted `windows-latest`, Windows `10.0.26100`. Package built
   - uninstalling the package removed package data, and the historical NSIS data survived.
 
 Evidence files (`windows-store-package.json`, `windows-store-package-smoke.json`, `windows-store-install.json`) are uploaded as workflow artifacts and printed in the job log.
+
+## Pre-merge review
+
+An adversarial review of the full diff (security invariants, data integrity, workflow security) found one blocking defect, fixed before merge with a reproduced failure:
+
+- **Service worker on pretty-URL hosts.** The shell was precached from `/index.html`, which Cloudflare Pages redirects to `/`. A cached redirected response is refused for navigations, so every visit after the first would have failed. Fix: fetch the shell at its directory URL and re-wrap any redirected response. The browser-suite server now redirects `/index.html` like the production host; without the fix 3 tests fail, with it 11/11 pass.
+
+Non-blocking hardening applied in the same change:
+
+- `.jobranger` entry names that a file system could alias (case-only differences, trailing dot/space, `:` streams, reserved device names, control characters) are rejected on write and read.
+- Restores interrupted after the data was copied into place (the web runtime moves directories by copy-then-delete) now complete from the verified live data instead of failing at every startup. A tampered stage is still refused. Covered by `tests/backup-restore-smoke-test.cjs`.
+- The web SQLite engine no longer hands out a connection that is being reloaded after a failed save, so a concurrent write cannot report success and then vanish.
+- The historical NSIS database is opened with `sqlite3 -readonly` during the Store import.
+- A backup name without the `.jobranger` extension no longer silently overwrites an existing `<name>.jobranger` that the save dialog never confirmed.
+- Workflow inputs (`inputs.tag`, `inputs.ref`) reach shell steps through `env:` instead of direct interpolation.
+
+Observations kept as-is: interrupted web restores can leave a `.job-ranger-restore-rollback-*` copy of the previous data, which is kept rather than deleted automatically; validating a backup in the web runtime holds that backup's database image in memory until reload.
 
 ## Not performed (blockers and limitations)
 

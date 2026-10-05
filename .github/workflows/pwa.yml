@@ -82,10 +82,12 @@ jobs:
         run: npm run package:pwa
 
       - name: Generate checksums and release manifest
+        env:
+          RELEASE_TAG: ${{ inputs.ref || github.ref_name }}
         run: |
           node scripts/generate-release-manifest.mjs \
             --platform web \
-            --tag "${{ inputs.ref || github.ref_name }}" \
+            --tag "$RELEASE_TAG" \
             --public false \
             --trust-evidence web-build-info.json \
             --smoke-evidence web-pwa-e2e.json

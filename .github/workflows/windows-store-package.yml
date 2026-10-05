@@ -110,10 +110,12 @@ jobs:
 
       - name: Generate checksums and release manifest
         shell: bash
+        env:
+          RELEASE_TAG: ${{ inputs.ref || github.ref_name }}
         run: |
           node scripts/generate-release-manifest.mjs \
             --platform windows-store \
-            --tag "${{ inputs.ref || github.ref_name }}" \
+            --tag "$RELEASE_TAG" \
             --public false \
             --trust-evidence windows-store-package.json \
             --smoke-evidence windows-store-package-smoke.json

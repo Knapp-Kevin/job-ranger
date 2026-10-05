@@ -112,6 +112,7 @@ The PWA never reads the Electron SQLite database directly. It only accepts valid
 
 - The service worker caches **only the versioned application shell**. It never stores, reads, or proxies career data and never intercepts cross-origin requests.
 - **Integrity.** Every shell asset is checked against the build's SHA-256 manifest during install. A partial or tampered deployment fails to install, and the running version keeps working; the failure is reported in the UI.
+- **Host redirects.** The shell document is fetched at its directory URL (`/`), never `/index.html`, because pretty-URL hosts such as Cloudflare Pages redirect `/index.html`. Any redirected response is re-wrapped before caching, since browsers refuse a redirected response for a navigation. The browser suite's test server redirects `/index.html` the same way.
 - **Version pinning.** The page, runtime worker, and WASM are served from the same versioned cache, so a page never talks to a runtime from another build.
 - **User-confirmed activation.** A new version installs in the background, then waits until the user chooses "Reload to update". The first install activates immediately.
 - **Recovery.** Settings → *Repair app shell*, also shown on the startup-failure screen, unregisters the service worker and deletes only `job-ranger-shell-*` caches. Career data is untouched.

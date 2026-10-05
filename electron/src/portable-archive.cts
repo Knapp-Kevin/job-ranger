@@ -74,6 +74,29 @@ function sha256Hex(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
+const WINDOWS_RESERVED_NAME = /^(con|prn|aux|nul|com[0-9]|lpt[0-9])(\..*)?$/i;
+
+/**
+ * Rejects segments that a file system could alias to a different name:
+ * Windows drops trailing dots/spaces, treats `:` as an alternate data stream,
+ * and maps device names; control characters are never valid.
+ */
+function isUnsafeSegment(segment: string): boolean {
+  return (
+    !segment ||
+    segment === "." ||
+    segment === ".." ||
+    /[\x00-\x1f:<>"|?*]/.test(segment) ||
+    /[. ]$/.test(segment) ||
+    WINDOWS_RESERVED_NAME.test(segment)
+  );
+}
+
+/** Case-insensitive file systems (Windows, macOS) treat these as one file. */
+function archiveNameKey(name: string): string {
+  return name.normalize("NFC").toLowerCase();
+}
+
 export function normalizeArchivePath(value: string): string {
   const normalized = value.replace(/\\/g, "/");
   if (
@@ -81,7 +104,7 @@ export function normalizeArchivePath(value: string): string {
     normalized.startsWith("/") ||
     /^[a-zA-Z]:/.test(normalized) ||
     normalized.includes("\0") ||
-    normalized.split("/").some((segment) => !segment || segment === "." || segment === "..")
+    normalized.split("/").some(isUnsafeSegment)
   ) {
     throw new PortableArchiveError(`Archive contains an unsafe path: ${value}`);
   }
@@ -101,8 +124,8 @@ export function encodeStoreZip(entries: readonly ArchiveEntryInput[]): Uint8Arra
   const seen = new Set<string>();
   const prepared = entries.map((entry) => {
     const name = normalizeArchivePath(entry.name);
-    if (seen.has(name)) throw new PortableArchiveError(`Archive repeats ${name}`);
-    seen.add(name);
+    if (seen.has(archiveNameKey(name))) throw new PortableArchiveError(`Archive repeats ${name}`);
+    seen.add(archiveNameKey(name));
     return { name: encoder.encode(name), bytes: entry.bytes, crc: crc32(entry.bytes) };
   });
 
@@ -254,8 +277,8 @@ export function decodeStoreZip(archive: Uint8Array): DecodedArchiveEntry[] {
       );
     }
     const name = normalizeArchivePath(rawName);
-    if (names.has(name)) throw new PortableArchiveError(`Archive repeats ${name}`);
-    names.add(name);
+    if (names.has(archiveNameKey(name))) throw new PortableArchiveError(`Archive repeats ${name}`);
+    names.add(archiveNameKey(name));
     declaredBytes += size;
     if (declaredBytes > archive.length) throw new PortableArchiveError("Archive sizes are inconsistent");
 

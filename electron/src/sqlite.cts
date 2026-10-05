@@ -93,7 +93,13 @@ export class SqliteClient implements SqliteEngineClient {
   constructor(
     private readonly databasePath: string,
     private readonly sqliteBinaryPath: string,
+    private readonly mode: { readOnly?: boolean } = {},
   ) {}
+
+  /** `-readonly` makes the sqlite3 CLI refuse every write, including journal rollback. */
+  private connectionArgs(): string[] {
+    return this.mode.readOnly ? ["-readonly"] : [];
+  }
 
   async ensureDatabaseDirectory(): Promise<void> {
     await fs.mkdir(path.dirname(this.databasePath), { recursive: true });
@@ -102,6 +108,7 @@ export class SqliteClient implements SqliteEngineClient {
   async exec(statement: string): Promise<void> {
     await this.ensureDatabaseDirectory();
     await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
       this.databasePath,
@@ -129,6 +136,7 @@ export class SqliteClient implements SqliteEngineClient {
       "COMMIT;",
     ].join("\n");
     await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-bail",
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,
@@ -140,6 +148,7 @@ export class SqliteClient implements SqliteEngineClient {
   async queryAll<T>(statement: string): Promise<T[]> {
     await this.ensureDatabaseDirectory();
     const { stdout } = await execFileAsync(this.sqliteBinaryPath, [
+      ...this.connectionArgs(),
       "-json",
       "-cmd",
       `.timeout ${SQLITE_BUSY_TIMEOUT_MS}`,

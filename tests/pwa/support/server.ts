@@ -21,13 +21,20 @@ export interface PwaServer {
   close(): Promise<void>;
 }
 
-/** Static server that mirrors the production hosting contract (dist-pwa/_headers). */
+/** Static server that mirrors the production hosting contract (dist-pwa/_headers, pretty-URL redirects). */
 export async function startPwaServer(initialRoot: string): Promise<PwaServer> {
   let root = initialRoot;
   const headers = buildSecurityHeaders();
   const server: Server = createServer(async (request, response) => {
     try {
       const url = new URL(request.url ?? "/", "http://localhost");
+      // Mirror "pretty URL" hosts (Cloudflare Pages, Netlify): the shell
+      // document is canonical at its directory and `index.html` redirects.
+      if (url.pathname.endsWith("/index.html")) {
+        response.writeHead(308, { ...headers, Location: url.pathname.slice(0, -"index.html".length) + url.search });
+        response.end();
+        return;
+      }
       let relative = decodeURIComponent(url.pathname);
       if (relative.endsWith("/")) relative += "index.html";
       const filePath = path.join(root, path.normalize(relative).replace(/^(\.\.[/\\])+/, ""));
