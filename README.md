@@ -10,7 +10,7 @@
 
 <p align="center">
   <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/stable%20release-v1.1.2-0f172a.svg" alt="Stable release v1.1.2" /></a>
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0-rc.3"><img src="https://img.shields.io/badge/packaged%20candidate-v1.2.0--rc.3-2563eb.svg" alt="Packaged candidate v1.2.0-rc.3" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0-rc.4"><img src="https://img.shields.io/badge/packaged%20candidate-v1.2.0--rc.4-2563eb.svg" alt="Packaged candidate v1.2.0-rc.4" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
@@ -19,9 +19,9 @@
 
 **v1.1.2 remains the latest stable public release.** Its Windows and macOS installers were published on September 24, 2026.
 
-**v1.2.0-rc.3 is the current validated packaged candidate.** It was built from immutable commit `e25c61c0be21dd00bc80a0880d2a770660c283bd`; hosted Windows x64 and macOS x64/arm64 release jobs passed; expected package, trust-state, SHA-256, and release-manifest assets are present on the GitHub prerelease.
+**v1.2.0-rc.4 is the current validated packaged candidate.** It was built from immutable commit `177e89dc7325bee4787718f89b9c8e2920f28453`. Hosted Windows x64 and macOS x64/arm64 release jobs passed, including execution of the packaged application itself against a deterministic healthcare-operations Career Ops smoke scenario. Package-smoke reports, trust-state evidence, SHA-256 files, and schema-v2 release manifests are published with the prerelease.
 
-rc.3 is still a **tester prerelease**, not the stable public release. Stable v1.2.0 remains blocked on packaged consumer smoke plus real Windows signing / macOS Developer ID + notarization evidence and clean-machine validation.
+rc.4 is still a **tester prerelease**, not the stable public release. Stable v1.2.0 is now blocked on real Windows signing / macOS Developer ID + notarization credentials and clean-machine platform-trust validation, not on repository or packaged-runtime functionality.
 
 Job Ranger uses these status terms deliberately:
 
@@ -53,9 +53,11 @@ The Windows installer includes the SQLite runtime Job Ranger needs.
 
 Linux does not currently have a supported packaged release.
 
-### Testing v1.2.0-rc.3
+### Testing v1.2.0-rc.4
 
-The rc.3 artifacts are for informed testers. They may be unsigned/unnotarized and are not the normal public installation path.
+The rc.4 artifacts are for informed testers. They may be unsigned/unnotarized and are not the normal public installation path.
+
+Before upload, the Windows and macOS packaged runtimes each executed the release-blocking healthcare-operations package-smoke harness from their own packaged application, and the resulting `windows-package-smoke.json` / `macos-package-smoke.json` files are published with the prerelease.
 
 Verify the platform SHA-256 file and release manifest before using a prerelease artifact. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md) and [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
 
@@ -118,6 +120,7 @@ Job Ranger does **not** autonomously mass-apply, invent qualifications or relati
 | Verified backup / staged restore | Not shipped | **Implemented** |
 | JSON Resume interoperability | Not shipped | **Implemented** |
 | Connection-level DNS-rebinding protection | Not shipped | **Implemented** |
+| Packaged-binary release smoke | Not shipped | **Implemented and passed on rc.4** |
 | Stable Windows/macOS trust fail-closed pipeline | Not shipped | **Implemented; real credentials/evidence pending** |
 | Remote inference provider | Not shipped | Deferred |
 | OCR for scanned/image-only resumes | Not shipped | Deferred |
@@ -167,7 +170,7 @@ Job Ranger does not pretend every careers site is equally automatable.
 
 Current structured adapters are Greenhouse, Lever, SmartRecruiters, and Ashby. Recognized Workday, iCIMS, BambooHR, Taleo, Oracle Careers, Microsoft Careers, and known browser portals use detected or browser-backed paths where applicable.
 
-v1.2.0 keeps arbitrary generic career-site hostnames manual-review/non-runnable. Governed acquisition now uses connection-level address pinning: policy resolves the approved public address set, direct sockets connect only to approved addresses while TLS continues to verify the original hostname, redirects are independently pinned, and isolated browser HTTP/HTTPS traffic is routed through the governed transport. See [`SECURITY.md`](./SECURITY.md).
+v1.2.0 keeps arbitrary generic career-site hostnames manual-review/non-runnable. Governed acquisition uses connection-level address pinning: policy resolves the approved public address set, direct sockets connect only to approved addresses while TLS continues to verify the original hostname, redirects are independently pinned, and isolated browser HTTP/HTTPS traffic is routed through the governed transport. See [`SECURITY.md`](./SECURITY.md).
 
 Source discovery remains separate from source acquisition. A discovered opportunity or employer is not silently converted into a monitored trusted source; the user approves monitoring explicitly.
 
@@ -201,12 +204,12 @@ Electron main process
 
 The v1.2.0 candidate keeps structured career/search state local and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. Main/browser/render surfaces retain sandboxing and appropriate web-security controls. Automated acquisition uses a connection-pinned private-network boundary rather than preflight-only hostname checking.
 
-Stable public distribution is also fail-closed:
+Stable public distribution is fail-closed:
 
 - Windows direct distribution requires configured Azure Artifact Signing and valid Authenticode evidence;
 - macOS direct distribution requires Developer ID signing, notarization, stapling, and platform verification.
 
-The repository plumbing exists, but actual credential-backed clean-machine evidence is still pending under #125/#130.
+The repository plumbing and packaged-runtime validation exist, but actual credential-backed clean-machine evidence is still pending under #125/#130.
 
 Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure.
 
@@ -252,16 +255,15 @@ npm run electron:build:mac
 
 Stable GitHub Releases are the authority for normal user-installable builds.
 
-v1.2.0-rc.3 proves immutable prerelease packaging for Windows x64 and macOS x64/arm64, including bundled SQLite verification on Windows and per-platform trust/checksum manifests.
+`v1.2.0-rc.4` proves immutable prerelease packaging for Windows x64 and macOS x64/arm64, including bundled SQLite verification on Windows, actual packaged-runtime smoke on both platforms, platform trust-state evidence, SHA-256 files, and schema-v2 release manifests.
 
 Before stable v1.2.0:
 
-- complete packaged consumer smoke on rc.3;
 - configure and verify real Windows signing;
 - configure and verify real macOS Developer ID signing/notarization/stapling;
-- record clean-machine Windows/macOS launch behavior;
+- record clean-machine Windows/macOS platform-trust launch behavior;
 - build the immutable stable tag;
-- verify final stable asset inventory/downloads;
+- verify final stable package-smoke/trust/checksum/manifest evidence and downloads;
 - only then switch README download links and shipped-status documentation from v1.1.2 to v1.2.0.
 
 See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
