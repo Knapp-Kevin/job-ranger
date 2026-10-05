@@ -99,6 +99,15 @@ jobs:
           $version = node -p "require('./package.json').version"
           ./scripts/run-store-package-smoke.ps1 -AppVersion $version
 
+      - name: Show validation evidence
+        if: always()
+        shell: powershell
+        run: |
+          foreach ($file in Get-ChildItem build/trust -Filter "windows-store-*.json" -ErrorAction SilentlyContinue) {
+            Write-Host "===== $($file.Name) ====="
+            Get-Content -LiteralPath $file.FullName -Raw
+          }
+
       - name: Generate checksums and release manifest
         shell: bash
         run: |
