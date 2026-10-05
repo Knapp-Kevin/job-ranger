@@ -65,6 +65,6 @@ Observations kept as-is: interrupted web restores can leave a `.job-ranger-resto
 - **Microsoft Store:** no Partner Center reservation, identity variables, submission, or certification. No Store-delivered install, Store upgrade, or clean Windows 11 Store install. #125 stays open.
 - **Web/PWA:** no production deployment (`deploy-pwa.yml` needs a header-capable HTTPS host and the `production-web` environment). Firefox, Safari, mobile browsers, and real-device install not validated. #130 stays open.
 - Live job-board CORS behavior in real browsers, and live acquisition inside the Store package, were not exercised. All CI smokes are network-free.
-- The web PDF writer supports Latin-script (Windows-1252) text only and fails explicitly otherwise.
+- The web PDF writer supported Latin-script (Windows-1252) text only at this evidence head. Later work adds embedded fonts for further scripts; see `docs/design/PWA_RUNTIME.md`.
 - Pre-existing, unchanged by this work: job notifications are not wired to scrape completion in any build.
 - v1.2.0 and its artifacts were not modified.

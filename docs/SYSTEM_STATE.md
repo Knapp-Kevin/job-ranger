@@ -62,7 +62,7 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
 - No production web origin; Firefox and Safari plus real-device installability are not yet validated.
 - Microsoft Store identity, submission, and certification are external and pending.
 - The web runtime cannot monitor career sites that need a full browser (Workday, iCIMS, etc.) or run scheduled checks while closed. These are documented platform limitations; the Windows app covers them.
-- The web PDF writer supports Latin-script (Windows-1252) text only and fails explicitly otherwise.
+- The web PDF writer embeds Noto fonts for Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean (downloaded on first use, then cached). It fails explicitly for right-to-left and Indic scripts, which still need the Windows app.
 - Pre-existing (both runtimes): notification settings exist, but job notifications are not wired to scrape completion.
 
 ## v1.2.0 shipped capabilities

@@ -574,6 +574,12 @@ Initial checks:
 
 If `anydoc` is adopted, re-parse the PDF through the same import engine and compare normalized output to the projection.
 
+Implemented text comparison (`electron/src/parseability-text.cts`, shared by both runtimes):
+
+- Tokens are Unicode letters, marks, and digits (NFKC, lower case), so accented Latin, Greek, Cyrillic, Hangul, and other spaced scripts are verified word by word. For ASCII text the tokens are identical to the original `[a-z0-9+#.-]` tokenizer.
+- Chinese, Japanese, Thai, Lao, Khmer, and Myanmar are compared one grapheme at a time, because line wrapping may break anywhere inside them.
+- Right-to-left and Indic scripts are not used for coverage. PDF text extraction of shaped and bidirectional text differs between parsers: Chromium PDFs parsed by Anydoc returned Hebrew in visual order and reordered Arabic letters. Such content raises an advisory `unverified-script` issue asking the user to check the PDF, instead of a critical failure or silent acceptance.
+
 ### 12.3 Relevance Review — advisory
 
 Question:

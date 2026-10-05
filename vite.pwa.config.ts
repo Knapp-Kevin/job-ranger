@@ -16,6 +16,7 @@ import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { buildContentSecurityPolicy, buildSecurityHeaders } from "./src/pwa/security/policy.ts";
 import { NODE_BUILTIN_ADAPTERS, SHARED_CORE_ADAPTERS } from "./src/pwa/adapter-map.ts";
+import { buildPdfFonts } from "./scripts/pdf-fonts.mjs";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const electronSource = path.join(root, "electron", "src");
@@ -62,6 +63,48 @@ function runtimeAdapterPlugin(target: "page" | "worker"): Plugin {
   };
 }
 
+const PDF_FONTS_MODULE = "virtual:job-ranger-pdf-fonts";
+const PDF_FONTS_DIRECTORY = "fonts";
+
+/**
+ * Resume PDF fonts for non-Windows-1252 text (scripts/pdf-fonts.mjs). The
+ * manifest is compiled into the runtime worker; the font files are emitted
+ * under fonts/ and loaded on demand (never precached), verified by SHA-256.
+ */
+function pdfFontsPlugin(emit: boolean): Plugin {
+  let fonts: Awaited<ReturnType<typeof buildPdfFonts>> | null = null;
+  const load = async () => (fonts ??= await buildPdfFonts());
+  return {
+    name: `job-ranger-pdf-fonts${emit ? "" : ":worker"}`,
+    resolveId(source) {
+      return source === PDF_FONTS_MODULE ? `\0${PDF_FONTS_MODULE}` : null;
+    },
+    async load(id) {
+      if (id !== `\0${PDF_FONTS_MODULE}`) return null;
+      const { manifest } = await load();
+      const { schemaVersion, families, fonts: entries } = manifest;
+      return `export default ${JSON.stringify({ schemaVersion, families, fonts: entries })};`;
+    },
+    configureServer(server) {
+      server.middlewares.use(`/${PDF_FONTS_DIRECTORY}/`, async (request, response, next) => {
+        const { directory, manifest } = await load();
+        const name = decodeURIComponent((request.url ?? "").split("?")[0].replace(/^\//, ""));
+        const known = manifest.fonts.some((font) => font.file === name) || manifest.licenses.some((license) => license.file === name);
+        if (!known) return next();
+        response.setHeader("Content-Type", name.endsWith(".ttf") ? "font/ttf" : "text/plain; charset=utf-8");
+        response.end(readFileSync(path.join(directory, name)));
+      });
+    },
+    async generateBundle() {
+      if (!emit) return;
+      const { directory, manifest } = await load();
+      for (const file of [...manifest.fonts.map((font) => font.file), ...manifest.licenses.map((license) => license.file)]) {
+        this.emitFile({ type: "asset", fileName: `${PDF_FONTS_DIRECTORY}/${file}`, source: readFileSync(path.join(directory, file)) });
+      }
+    },
+  };
+}
+
 function listFiles(directory: string, base = directory): string[] {
   return readdirSync(directory).flatMap((name) => {
     const full = path.join(directory, name);
@@ -74,6 +117,7 @@ function headersFile(): string {
   const lines = ["/*", ...Object.entries(headers).map(([key, value]) => `  ${key}: ${value}`)];
   lines.push("", "/sw.js", "  Cache-Control: no-cache", "", "/index.html", "  Cache-Control: no-cache", "");
   lines.push("/assets/*", "  Cache-Control: public, max-age=31536000, immutable", "");
+  lines.push(`/${PDF_FONTS_DIRECTORY}/*.ttf`, "  Cache-Control: public, max-age=31536000, immutable", "");
   return `${lines.join("\n")}\n`;
 }
 
@@ -88,8 +132,18 @@ function shellManifestPlugin(): Plugin {
     },
     closeBundle() {
       const files = listFiles(outDir).filter(
-        (file) => !file.endsWith(".map") && !["sw.js", "_headers", "build-info.json"].includes(file),
+        (file) =>
+          !file.endsWith(".map") &&
+          !file.startsWith(`${PDF_FONTS_DIRECTORY}/`) &&
+          !["sw.js", "_headers", "build-info.json"].includes(file),
       );
+      const fontFiles = listFiles(path.join(outDir, PDF_FONTS_DIRECTORY))
+        .filter((file) => file.endsWith(".ttf"))
+        .sort()
+        .map((file) => ({
+          path: `${PDF_FONTS_DIRECTORY}/${file}`,
+          sha256: createHash("sha256").update(readFileSync(path.join(outDir, PDF_FONTS_DIRECTORY, file))).digest("hex"),
+        }));
       const assets = files.sort().map((file) => ({
         path: file,
         sha256: createHash("sha256").update(readFileSync(path.join(outDir, file))).digest("hex"),
@@ -99,7 +153,8 @@ function shellManifestPlugin(): Plugin {
         path.join(outDir, "sw.js"),
         template
           .replace("__JOB_RANGER_BUILD_ID__", buildId)
-          .replace("__JOB_RANGER_PRECACHE__", JSON.stringify(assets, null, 2)),
+          .replace("__JOB_RANGER_PRECACHE__", JSON.stringify(assets, null, 2))
+          .replace("__JOB_RANGER_ON_DEMAND__", JSON.stringify(fontFiles)),
       );
       writeFileSync(path.join(outDir, "_headers"), headersFile());
       writeFileSync(
@@ -115,6 +170,11 @@ function shellManifestPlugin(): Plugin {
             workflowRun: process.env.GITHUB_RUN_ID ?? null,
             contentSecurityPolicy: buildContentSecurityPolicy(),
             assets,
+            onDemandAssets: {
+              purpose: "resume PDF fonts for text outside Windows-1252, loaded only when a resume needs them",
+              count: fontFiles.length,
+              files: fontFiles,
+            },
           },
           null,
           2,
@@ -128,7 +188,7 @@ export default defineConfig({
   root: path.join(root, "web"),
   publicDir: path.join(root, "public"),
   base: "./",
-  plugins: [runtimeAdapterPlugin("page"), react(), tailwindcss(), shellManifestPlugin()],
+  plugins: [runtimeAdapterPlugin("page"), pdfFontsPlugin(true), react(), tailwindcss(), shellManifestPlugin()],
   resolve: {
     alias: { "@": path.resolve(root, "src") },
   },
@@ -138,7 +198,7 @@ export default defineConfig({
   },
   worker: {
     format: "es",
-    plugins: () => [runtimeAdapterPlugin("worker")],
+    plugins: () => [runtimeAdapterPlugin("worker"), pdfFontsPlugin(false)],
   },
   optimizeDeps: {
     exclude: ["@sqlite.org/sqlite-wasm"],

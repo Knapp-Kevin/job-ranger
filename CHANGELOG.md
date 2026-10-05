@@ -12,6 +12,7 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
   - SQLite WASM persisted to the origin-private file system with atomic writes; a single-writer tab lock.
   - Browser DOCX/PDF resume import.
   - Deterministic ATS PDF generation through the unchanged Truth Gate and Parseability Gate.
+  - Resume PDFs in Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean, set in embedded Noto fonts. The fonts are downloaded only when a resume needs them, verified, and then cached for offline use. Right-to-left and Indic scripts fail export with an explanation and remain served by the Windows app.
   - Strict Content Security Policy with Trusted Types and an explicit job-feed origin allowlist.
   - An installable manifest and an integrity-verified offline app shell with user-confirmed updates and repair.
   - Visible storage-quota and persistence handling.
@@ -41,6 +42,7 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
 
 ### Fixed
 
+- The Parseability Gate compared only ASCII letters and digits, so a PDF that lost Chinese, Cyrillic, Greek, or accented text could still pass. It now verifies Unicode text in both runtimes. Right-to-left and Indic content, which PDF parsers extract inconsistently, is reported as an advisory to check manually instead of being silently ignored.
 - Greenhouse job descriptions (entity-escaped HTML from the Greenhouse API) are now unescaped before requirement extraction, so requirements are detected individually instead of as one block.
 
 ## v1.2.0 - 2026-10-05

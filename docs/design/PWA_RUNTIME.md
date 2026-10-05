@@ -112,10 +112,11 @@ The PWA never reads the Electron SQLite database directly. It only accepts valid
 
 - The service worker caches **only the versioned application shell**. It never stores, reads, or proxies career data and never intercepts cross-origin requests.
 - **Integrity.** Every shell asset is checked against the build's SHA-256 manifest during install. A partial or tampered deployment fails to install, and the running version keeps working; the failure is reported in the UI.
+- **On-demand assets.** Resume PDF fonts are listed in the service worker with their SHA-256 but are not precached (see "Resume / PDF path"). On first use they are fetched, verified, and kept in a content-addressed cache that survives app updates; entries no longer in the current build are pruned on activation.
 - **Host redirects.** The shell document is fetched at its directory URL (`/`), never `/index.html`, because pretty-URL hosts such as Cloudflare Pages redirect `/index.html`. Any redirected response is re-wrapped before caching, since browsers refuse a redirected response for a navigation. The browser suite's test server redirects `/index.html` the same way.
 - **Version pinning.** The page, runtime worker, and WASM are served from the same versioned cache, so a page never talks to a runtime from another build.
 - **User-confirmed activation.** A new version installs in the background, then waits until the user chooses "Reload to update". The first install activates immediately.
-- **Recovery.** Settings → *Repair app shell*, also shown on the startup-failure screen, unregisters the service worker and deletes only `job-ranger-shell-*` caches. Career data is untouched.
+- **Recovery.** Settings → *Repair app shell*, also shown on the startup-failure screen, unregisters the service worker and deletes only the `job-ranger-shell-*` and `job-ranger-on-demand-*` caches. Career data is untouched.
 - **Offline.** After the first visit, the full app (including SQLite WASM, the parser, and the PDF writer) works offline. Only job-source refreshes need the network.
 - **Build identity.** Every build carries `version+commit` (`<meta name="job-ranger-build">`, `build-info.json`, Settings → This installation).
 
@@ -143,9 +144,20 @@ The PWA never reads the Electron SQLite database directly. It only accepts valid
 
 - **Truth Gate and evidence links.** Identical; the code is shared.
 - **Deterministic evidence selection and projection.** Identical; the code is shared.
-- **Rendering.** Electron prints the template HTML with sandboxed Chromium. The web runtime writes the same projection (contact snapshot, section order, statement order, statement text) with pdf-lib in standard Helvetica. The output is deterministic: identical inputs produce identical bytes, and metadata dates are fixed to the projection.
+- **Rendering.** Electron prints the template HTML with sandboxed Chromium. The web runtime writes the same projection (contact snapshot, section order, statement order, statement text) with pdf-lib. The output is deterministic: identical inputs produce identical bytes in the same browser engine, and metadata dates are fixed to the projection.
+- **Fonts and scripts.**
+  - Text that Windows-1252 can encode is set in standard Helvetica, and no font is embedded.
+  - Other text is set in embedded, subset **Noto Sans** fonts (SIL OFL 1.1), chosen per character. This covers Latin extended, Vietnamese, Greek, Cyrillic, Thai, Simplified and Traditional Chinese, Japanese, and Korean.
+  - Shared Han characters take the regional glyph forms of the document's language. Kana selects Japanese and Hangul selects Korean. Common Traditional forms outnumbering Simplified ones select Traditional Chinese; otherwise Simplified is used.
+  - Lines break between words, and between characters in Chinese, Japanese, and Thai (`Intl.Segmenter`).
+  - Every one of these scripts is tested end to end through the Parseability Gate (`tests/pwa-unicode-pdf.test.mjs`, `tests/pwa/unicode-resume.spec.ts`).
+- **Font delivery.**
+  - `scripts/pdf-fonts.mjs` turns the pinned `@fontsource` Noto slices into content-addressed TrueType files under `fonts/`, plus a manifest with each file's SHA-256 and code-point ranges. pdf-lib cannot subset WOFF/WOFF2 input, which is why the slices are converted.
+  - The fonts are about 20 MB in total but are **not** part of the precached shell. The runtime downloads only the slices a resume needs (typically 4–30 files, tens of kilobytes each) and verifies each one against the manifest before use.
+  - The service worker caches verified fonts in `job-ranger-on-demand-v1`, so a resume that rendered once renders again offline.
+  - A resume in a new script needs one online export first; offline, export fails with an explanation.
 - **Parseability Gate.** The shared gate re-parses the exact produced bytes and enforces the same contact, statement-coverage, reading-order, and page-count rules. The parser differs: Electron uses Anydoc, the web runtime uses pdf.js. The gate records the parser ID and version in every artifact.
-- **Bounded limitation.** The web PDF writer encodes Windows-1252 (Latin-script) text. A statement containing characters it cannot encode fails export with an explicit message naming the characters, instead of silently dropping them. Use the Windows app for such resumes until a Unicode font is embedded.
+- **Bounded limitation.** Right-to-left scripts (Arabic, Hebrew, …) and Indic scripts (Devanagari, Tamil, …) need bidirectional layout and complex shaping. pdf-lib does not perform these, and in testing the extracted text came back reordered or garbled. The web writer therefore fails export for these scripts with an explicit message pointing to the Windows app, whose Chromium renderer lays them out. Characters no bundled font covers (for example Armenian or Georgian) fail the same way, naming the characters, instead of being dropped.
 
 ## Browser support
 
