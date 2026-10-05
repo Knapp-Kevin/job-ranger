@@ -11,7 +11,13 @@ A merged `main` branch is **not** a release. A passing unit test is **not** a re
 - **`main`**: authority for current merged development, which may be ahead of the published product.
 - **Documentation on `main`**: must describe both boundaries honestly.
 
-The current published stable release is **v1.1.2**. The current validated packaged candidate is **v1.2.0-rc.5** at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. It must not be represented as the stable shipped release until the remaining public-trust gates complete.
+The current published stable release is **v1.2.0** (`71f9b790a1f456321aee2c783f39f4a6784b83a9`, promoted byte-for-byte from rc.5). It is immutable historical release truth.
+
+Forward releases follow the accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)):
+
+- **Supported channels:** the Microsoft Store package (Windows native) and the web/PWA runtime (cross-platform).
+- **Advanced/test artifacts:** the direct-download NSIS installer, unless it is independently signed. Azure Artifact Signing is optional and never blocks a release.
+- **Not part of the forward architecture:** native macOS and Linux packages.
 
 ## Release-blocking checklist
 
@@ -92,7 +98,7 @@ For documentation-only remediation, code tests may reuse fresh evidence from the
 - [ ] Historical plans are unmistakably historical from the documentation index.
 - [ ] Screens/workspace names in HELP match current navigation.
 
-### 7. Windows package validation
+### 7. Windows direct-download (NSIS) package validation — advanced/test channel
 
 - [ ] Build from the immutable release tag on the supported Windows builder.
 - [ ] NSIS x64 installer is produced with the expected versioned filename.
@@ -105,9 +111,38 @@ For documentation-only remediation, code tests may reuse fresh evidence from the
 - [ ] The Windows trust verifier executes successfully in the native release runner.
 - [ ] Installer launch/upgrade is exercised on a clean supported Windows system before stable publication.
 - [ ] Existing user data survives installer upgrade.
-- [ ] A stable public release carries valid Authenticode signatures and records observed SmartScreen / Smart App Control behavior on a clean supported machine.
+- [ ] If (and only if) the direct installer is promoted as an ordinary-user channel, it carries valid Authenticode signatures and observed SmartScreen / Smart App Control behavior is recorded on a clean supported machine. Otherwise its release manifest marks it `testerOnly` and release notes label it an advanced/test artifact.
+- [ ] A GitHub artifact attestation exists for the installer.
 
-### 8. macOS package validation
+### 7a. Microsoft Store package validation (supported Windows channel)
+
+Design and procedure: [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+
+- [ ] `windows-store-package` workflow passed for the release commit:
+  - `windows-store-package.json`: identity, version, capabilities exactly `runFullTrust` + `internetClient`, no extensions, canonical assets, bundled `sqlite3.exe`;
+  - `windows-store-package-smoke.json`: in-package healthcare Career Ops smoke, `windowsStore: true`, isolated data root, Chromium PDF and native parseability, archive round trip;
+  - `windows-store-install.json`: data in package storage, no leak into `%APPDATA%`, historical NSIS data unchanged, uninstall behavior.
+- [ ] Partner Center identity variables are configured and the submission package was built with `JOB_RANGER_REQUIRE_STORE_IDENTITY=1`.
+- [ ] The `.appx`, its checksums, `windows-store-release-manifest.json`, and its artifact attestation are attached to the release.
+- [ ] Partner Center certification passed (record the submission ID).
+- [ ] A clean supported Windows 11 install from the Store listing, first launch, an upgrade from an earlier Store version, and backup/restore are recorded.
+- [ ] README/HELP direct Windows users to the Store **only after** the listing is live.
+
+### 7b. Web/PWA validation (supported cross-platform channel)
+
+Design and procedure: [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md).
+
+- [ ] The `pwa` workflow passed for the release commit: production build, web-parser benchmark, and the browser suite (Career Ops end to end, Electron↔PWA portability, rejected backups, offline shell, verified/rejected updates, quota failure, tab lock).
+- [ ] `job-ranger-web-v<version>.zip`, `web-build-info.json` (build ID, commit, CSP, asset hashes), the browser-suite report, checksums, the release manifest, and the artifact attestation are attached to the release.
+- [ ] Deployment uses `deploy-pwa.yml` from the attested archive (no rebuild), behind the protected `production-web` environment, to an HTTPS origin that serves the shipped `_headers`.
+- [ ] The post-deploy check confirms the live build ID and security headers.
+- [ ] The browser/platform matrix is recorded from real validation: Chromium-based browsers on Windows, macOS, and Linux; Firefox; Safari, including install/standalone behavior where supported.
+- [ ] Storage persistence and eviction guidance, and known web limitations, are visible in the app and HELP.
+- [ ] README/HELP link the production origin **only after** it is live.
+
+### 8. macOS package validation (historical/manual only)
+
+Native macOS distribution is not part of the forward architecture. The release workflow builds macOS packages only on explicit manual dispatch. The checklist below applies only if such a build is published:
 
 For both x64 and arm64:
 
@@ -145,7 +180,11 @@ It does **not** replace final clean-machine acceptance for behavior that depends
 
 ### 10. Clean-machine public trust validation
 
-The stable public candidate must be tested as an ordinary downloaded/installed application on clean supported systems.
+The supported channels must be tested as ordinary users receive them:
+- **Microsoft Store:** a Store-delivered install on a clean supported Windows 11 system (see 7a).
+- **Web app:** the production origin in real browsers (see 7b).
+
+The evidence below applies to directly downloaded native binaries that are promoted as ordinary-user channels.
 
 Windows evidence must include:
 
@@ -172,6 +211,7 @@ Use `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` and the platform verifier scripts. 
 - [ ] Release title and notes describe only behavior present in the tag.
 - [ ] Windows and macOS assets have completed upload before the release is presented as complete.
 - [ ] Each platform release manifest references both trust evidence and packaged-smoke evidence.
+- [ ] Every released artifact has a GitHub artifact attestation (`gh attestation verify <file> --repo Knapp-Kevin/job-ranger`).
 - [ ] Download links in the root README are updated only after assets exist.
 - [ ] Changelog release date/version is finalized.
 - [ ] `docs/SYSTEM_STATE.md` moves candidate features from implemented/candidate to shipped only after publication.
@@ -198,4 +238,4 @@ Each release should record:
 
 **Published:** `v1.2.0` → `71f9b790a1f456321aee2c783f39f4a6784b83a9` on 2026-10-05.
 
-The release is non-prerelease and GitHub's current latest release. Its Windows/macOS assets are byte-identical to the validated rc.5 packages and include packaged smoke, trust-state, checksum, and release-manifest evidence. v1.2.0 was published under an explicit owner-approved unsigned/unnotarized exception. Signed distribution remains post-release work under #125/#130 and must ship as a new release rather than mutating v1.2.0.
+The release is non-prerelease and GitHub's current latest release. Its Windows/macOS assets are byte-identical to the validated rc.5 packages and include packaged smoke, trust-state, checksum, and release-manifest evidence. v1.2.0 was published under an explicit owner-approved unsigned/unnotarized exception. Forward distribution moved to the Microsoft Store (#125) and the web/PWA runtime (#130). Any change ships as a new release; v1.2.0 is never mutated.

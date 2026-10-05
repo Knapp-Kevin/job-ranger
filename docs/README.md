@@ -31,6 +31,8 @@ A stale plan does not outrank merged code merely because it contains more checkb
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Factual current repository/product snapshot. |
 | [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture, authority model, trust boundaries, and accepted evolution. |
 | [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md) | Accepted post-v1.2 dual-channel distribution architecture: cross-platform PWA plus Microsoft Store Windows native app. |
+| [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md) | Web/PWA runtime implementation: shared core and adapters, persistence, security, service worker, capability parity, deployment. |
+| [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md) | Microsoft Store (AppX) packaging, Store runtime behavior, NSIS coexistence/migration, validation, external steps. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Actual prioritized next work. |
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release-blocking validation and publication contract. |
 | [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md) | Evaluated missing capabilities with needed/candidate/deferred/rejected dispositions. |
@@ -55,6 +57,8 @@ These describe implemented architecture or accepted long-lived contracts and sho
 - [`design/BACKUP_RESTORE.md`](./design/BACKUP_RESTORE.md)
 - [`design/R5_PORTABILITY_SCOPE_DECISIONS.md`](./design/R5_PORTABILITY_SCOPE_DECISIONS.md)
 - [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)
+- [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md)
+- [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md)
 
 A design document may preserve detailed implementation rationale even after its issue closes. Its status must not be used to infer whether a feature is shipped; use `SYSTEM_STATE.md` and the release record for that.
 
@@ -100,7 +104,7 @@ Release truth is deliberately strict:
 
 The latest published stable release is **v1.2.0**, published 2026-10-05 from commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`.
 
-The accepted post-v1.2 distribution direction does not retroactively change v1.2.0. The historical release remains immutable; Store/PWA work is forward-looking until implemented and validated.
+The accepted post-v1.2 distribution direction does not retroactively change v1.2.0. The historical release remains immutable; Store/PWA work is implemented on the post-v1.2.0 line (PR #142) and remains forward-looking until certified or deployed.
 
 ## Current documentation baseline
 

@@ -4,7 +4,44 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-Post-v1.2.0 development is open. Discovery provider tranche #136 may proceed against the shipped v1.2.0 baseline.
+Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification, and the web app awaits a production deployment.
+
+### Added
+
+- **Web/PWA runtime** (#130): Job Ranger runs in modern desktop browsers on the same shared application core as the desktop app.
+  - SQLite WASM persisted to the origin-private file system with atomic writes; a single-writer tab lock.
+  - Browser DOCX/PDF resume import.
+  - Deterministic ATS PDF generation through the unchanged Truth Gate and Parseability Gate.
+  - Strict Content Security Policy with Trusted Types and an explicit job-feed origin allowlist.
+  - An installable manifest and an integrity-verified offline app shell with user-confirmed updates and repair.
+  - Visible storage-quota and persistence handling.
+- **Portable `.jobranger` backups**: a single file moves data between the Windows app and the web app in either direction. It is validated (CRC-32, SHA-256, safe paths, version and schema checks) before anything is replaced. v1.2.0 backup folders remain restorable in the desktop app via their `manifest.json`.
+- **Microsoft Store packaging** (#125): AppX package of the existing Electron app (electron-builder v26).
+  - Partner Center identity comes from repository configuration.
+  - Narrow capabilities (`runFullTrust`, `internetClient`).
+  - Canonical Store tile assets.
+  - An isolated Store data root with correct Explorer paths.
+  - An explicit, read-only import of data from an earlier desktop installation.
+  - No app-managed updater (the Store services updates).
+- Settings → **This installation**: channel, version/build, data location, persistent-storage status and request, web limitations, app-shell repair, and Store desktop-data import.
+- CI and release workflows:
+  - `windows-store-package`: builds the AppX, verifies the manifest, installs it, and runs the non-software Career Ops smoke inside the package context;
+  - `pwa`: build, web-parser benchmark, and browser suite;
+  - `deploy-pwa`: verified, attested, environment-gated deployment of a released web build;
+  - GitHub artifact attestations for released artifacts.
+
+### Changed
+
+- Azure Artifact Signing is opt-in for direct-download Windows builds (`JOB_RANGER_REQUIRE_WINDOWS_SIGNING`). Unsigned direct installers are labelled tester-only in their release manifest instead of blocking a release.
+- Native macOS packages are built only on manual dispatch. macOS users are served by the web app going forward.
+- Job Ranger refuses to open data upgraded by a newer database schema instead of running older code against it.
+- Backup validation checks migrations against everything the current build knows, not only those the live database has applied.
+- The UI no longer requests remote Google Fonts (the desktop CSP already blocked them).
+- The IPC handler table and SQL literal encoding moved into shared modules used by both runtimes.
+
+### Fixed
+
+- Greenhouse job descriptions (entity-escaped HTML from the Greenhouse API) are now unescaped before requirement extraction, so requirements are detected individually instead of as one block.
 
 ## v1.2.0 - 2026-10-05
 
