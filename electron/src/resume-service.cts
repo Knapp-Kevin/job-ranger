@@ -28,6 +28,11 @@ import {
 } from "./resume-parser.cjs";
 import { SqliteClient } from "./sqlite.cjs";
 import {
+  extractionAnchor,
+  extractionCoverage,
+  extractionText,
+} from "./text-tokens.cjs";
+import {
   buildTruthEvidenceIndex,
   unsupportedTruthTokens,
 } from "./truth-gate-tokens.cjs";
@@ -56,12 +61,6 @@ const sectionOrder = [
   "Additional",
 ];
 
-const stopWords = new Set([
-  "a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of",
-  "on", "or", "the", "to", "with", "using", "through", "across", "within",
-  "while", "that", "this", "these", "those", "is", "are", "was", "were",
-]);
-
 function sectionForEvidence(evidence: CandidateEvidence): string {
   switch (evidence.subjectType) {
     case "role":
@@ -86,22 +85,6 @@ function compareEvidence(a: CandidateEvidence, b: CandidateEvidence): number {
   const aDate = a.startDate ?? a.endDate ?? a.updatedAt;
   const bDate = b.startDate ?? b.endDate ?? b.updatedAt;
   return bDate.localeCompare(aDate);
-}
-
-function contentTokens(value: string): string[] {
-  return value
-    .toLowerCase()
-    .match(/[a-z0-9+#.-]+/g)
-    ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
-    .filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
-}
-
-function normalizedText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function htmlEscape(value: string): string {
@@ -525,19 +508,13 @@ export class ResumeService {
 
     try {
       const parsed = await extractResumeDocument(pdfPath);
-      const extracted = normalizedText(parsed.rawText);
+      const extracted = extractionText(parsed.rawText);
       const contactRequired = [
         projection.contact.fullName,
         projection.contact.email || projection.contact.phone,
       ].filter(Boolean);
       for (const item of contactRequired) {
-        const tokens = contentTokens(item);
-        if (
-          tokens.length > 0 &&
-          tokens.filter((token) => extracted.includes(token)).length /
-            tokens.length <
-            0.8
-        ) {
+        if (extractionCoverage(item, extracted) < 0.8) {
           issues.push({
             code: "contact-missing",
             severity: "critical",
@@ -548,17 +525,14 @@ export class ResumeService {
 
       const positions: number[] = [];
       for (const statement of statements) {
-        const tokens = contentTokens(statement.text);
-        const matched = tokens.filter((token) => extracted.includes(token));
-        const coverage = tokens.length === 0 ? 1 : matched.length / tokens.length;
-        if (coverage < 0.9) {
+        if (extractionCoverage(statement.text, extracted) < 0.9) {
           issues.push({
             code: "statement-missing",
             severity: "critical",
             message: `Rendered PDF lost material statement content: ${statement.text}`,
           });
         }
-        const anchor = tokens.slice(0, 3).join(" ");
+        const anchor = extractionAnchor(statement.text);
         positions.push(anchor ? extracted.indexOf(anchor) : -1);
       }
       let last = -1;

@@ -23,11 +23,13 @@
 // cannot detect a new claim assembled only from characters already present in
 // the evidence. That residual risk is documented in the functional design.
 
-const englishStopWords = new Set([
-  "a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of",
-  "on", "or", "the", "to", "with", "using", "through", "across", "within",
-  "while", "that", "this", "these", "those", "is", "are", "was", "were",
-]);
+import {
+  asciiTokenPattern,
+  englishStopWords,
+  normalizeUnicodeText as normalize,
+  splitByScript,
+  tokenRunPattern,
+} from "./text-tokens.cjs";
 
 // Function words for non-ASCII alphabetic tokens only, so English behaviour is
 // untouched. Single-letter words are already dropped by the length filter.
@@ -80,14 +82,6 @@ const southeastAsianStopWords = new Set([
   "ยัง", "ผ่าน",
 ]);
 
-type CharClass =
-  | "alpha"
-  | "han"
-  | "hiragana"
-  | "katakana"
-  | "hangul"
-  | "southeast-asian";
-
 interface TruthToken {
   value: string;
   // exact: any variant must be an evidence token; substring: the value must
@@ -101,41 +95,10 @@ export interface TruthEvidenceIndex {
   text: string;
 }
 
-const tokenRunPattern = /[\p{L}\p{M}\p{N}+#.\-ー]+/gu;
-const asciiTokenPattern = /^[a-z0-9+#.-]+$/;
 const segmenter =
   typeof Intl.Segmenter === "function"
     ? new Intl.Segmenter("th", { granularity: "word" })
     : undefined;
-
-function normalize(value: string): string {
-  // NFKC folds full-width/half-width forms; the katakana middle dot is a word
-  // separator inside compounds and is dropped so compounds compare equal.
-  return value.normalize("NFKC").toLowerCase().replace(/[・]/g, "");
-}
-
-function classify(char: string, previous: CharClass | undefined): CharClass {
-  if (/\p{Script=Han}/u.test(char)) return "han";
-  if (/\p{Script=Hiragana}/u.test(char)) return "hiragana";
-  if (/\p{Script=Katakana}/u.test(char) || char === "ー") return "katakana";
-  if (/\p{Script=Hangul}/u.test(char)) return "hangul";
-  if (/[\p{Script=Thai}\p{Script=Lao}\p{Script=Khmer}\p{Script=Myanmar}]/u.test(char)) {
-    return "southeast-asian";
-  }
-  if (/\p{M}/u.test(char) && previous) return previous;
-  return "alpha";
-}
-
-function splitByScript(run: string): Array<{ cls: CharClass; text: string }> {
-  const parts: Array<{ cls: CharClass; text: string }> = [];
-  for (const char of run) {
-    const last = parts.at(-1);
-    const cls = classify(char, last?.cls);
-    if (last && last.cls === cls) last.text += char;
-    else parts.push({ cls, text: char });
-  }
-  return parts;
-}
 
 function stripMarks(value: string): string {
   return value.normalize("NFD").replace(/\p{M}/gu, "").normalize("NFC");
