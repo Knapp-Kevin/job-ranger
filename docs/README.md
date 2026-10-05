@@ -14,7 +14,7 @@ When documents disagree, use this order:
 4. **Root `README.md` and `HELP.md`** for public/user-facing product behavior.
 5. **`ARCHITECTURE_PLAN.md`** for current architecture and accepted trust boundaries.
 6. **`planning/PLAN.md`** for genuine next work.
-7. **Current design documents** for normative contracts.
+7. **Current design documents** for normative contracts and accepted architectural decisions.
 8. **Validation/research documents** for evidence and alternatives.
 9. **Historical plans / internal provenance** for how the project got here, not what it is now.
 
@@ -30,6 +30,7 @@ A stale plan does not outrank merged code merely because it contains more checkb
 | [`CONCEPT.md`](./CONCEPT.md) | Product purpose, Career Ops quality-over-quantity principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Factual current repository/product snapshot. |
 | [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture, authority model, trust boundaries, and accepted evolution. |
+| [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md) | Accepted post-v1.2 dual-channel distribution architecture: cross-platform PWA plus Microsoft Store Windows native app. |
 | [`planning/PLAN.md`](./planning/PLAN.md) | Actual prioritized next work. |
 | [`RELEASE_READINESS.md`](./RELEASE_READINESS.md) | Release-blocking validation and publication contract. |
 | [`PRODUCT_GAP_REVIEW.md`](./PRODUCT_GAP_REVIEW.md) | Evaluated missing capabilities with needed/candidate/deferred/rejected dispositions. |
@@ -53,6 +54,7 @@ These describe implemented architecture or accepted long-lived contracts and sho
 - [`design/SEARCH_LEARNING.md`](./design/SEARCH_LEARNING.md)
 - [`design/BACKUP_RESTORE.md`](./design/BACKUP_RESTORE.md)
 - [`design/R5_PORTABILITY_SCOPE_DECISIONS.md`](./design/R5_PORTABILITY_SCOPE_DECISIONS.md)
+- [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)
 
 A design document may preserve detailed implementation rationale even after its issue closes. Its status must not be used to infer whether a feature is shipped; use `SYSTEM_STATE.md` and the release record for that.
 
@@ -96,11 +98,13 @@ Release truth is deliberately strict:
 - package/build configuration defines what can theoretically be built, not what was actually published;
 - platform validation records what was actually exercised.
 
-The latest published release remains **v1.1.2**. `main` is substantially ahead.
+The latest published stable release is **v1.2.0**, published 2026-10-05 from commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`.
+
+The accepted post-v1.2 distribution direction does not retroactively change v1.2.0. The historical release remains immutable; Store/PWA work is forward-looking until implemented and validated.
 
 ## Current documentation baseline
 
-As of the October 2026 reconciliation, current docs must reflect that `main` includes:
+As of the October 2026 reconciliation, current docs must reflect that the v1.2 line includes:
 
 - progressive onboarding;
 - Target Tracks and explicit constraint semantics;
@@ -120,9 +124,18 @@ As of the October 2026 reconciliation, current docs must reflect that `main` inc
 - JSON Resume interoperability;
 - cross-career validation fixtures.
 
-Current product documentation must also preserve the accepted strategic distinction that Job Ranger is a **quality-over-quantity Career Ops product**. It may automate discovery, analysis, preparation, and organization aggressively while keeping consequential external actions intentional. Candidate relationship-path features tracked in #121 must remain clearly labeled as candidates until implemented.
+Current product documentation must also preserve the accepted strategic distinction that Job Ranger is a **quality-over-quantity Career Ops product**. It may automate discovery, analysis, preparation, and organization aggressively while keeping consequential external actions intentional. Candidate relationship-path features tracked in #121 remain historical design context unless separately implemented.
 
-A current source-of-truth document that describes completed capabilities as "planned" is stale and should be corrected. A current source-of-truth document that describes candidate Career Ops capabilities as already implemented is equally stale.
+Current architecture documentation must preserve the accepted post-v1.2 distribution direction:
+
+- cross-platform mainstream through a local-first PWA/web runtime;
+- Windows-native mainstream through Microsoft Store packaging/certification;
+- no required Azure Artifact Signing dependency;
+- no planned native macOS distribution or Apple Developer Program dependency;
+- no SignPath dependency;
+- direct unsigned GitHub native binaries are not the preferred ordinary-user path.
+
+A current source-of-truth document that describes completed capabilities as "planned" is stale and should be corrected. A current source-of-truth document that describes accepted future distribution work as already implemented is equally stale.
 
 ## Historical planning records
 
