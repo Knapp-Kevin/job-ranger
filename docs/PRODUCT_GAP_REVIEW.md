@@ -3,320 +3,240 @@
 **Review date:** October 2026  
 **Scope:** current `main`, not only the published v1.1.2 installers
 
-This document asks a deliberately uncomfortable question: **what might Job Ranger still be missing even after the Universal User Stories and Career Evidence programs are complete?**
-
-The purpose is not to copy competitors. It is to make omissions visible and intentional.
-
-Job Ranger's accepted strategic direction is **quality over quantity**. The product should help a person find the right path to employment, not maximize application throughput. Candidate capabilities are therefore evaluated not only by whether they save time, but by whether they improve fit, intentionality, truthful preparation, useful relationships, and downstream progress without creating another source of hiring-market noise.
+This document identifies meaningful product gaps without turning competitor feature lists into a shopping spree. Job Ranger's accepted strategic direction is **quality over quantity**: help a person find the right path to employment, not maximize application throughput.
 
 ## Disposition vocabulary
 
 | Disposition | Meaning |
 | --- | --- |
-| **Needed** | A demonstrated gap in the current product contract or a reliability deficiency that materially limits core workflows. |
-| **Candidate** | Plausibly valuable, but requires additional evidence, UX design, or boundary review before becoming roadmap work. |
-| **Deferred** | Intentionally postponed because current evidence does not justify the complexity, privacy cost, or maintenance burden. |
+| **Needed** | A demonstrated reliability/product-delivery gap that materially limits the current contract. |
+| **Candidate** | Plausibly valuable, but still requires evidence, UX design, or boundary review before implementation. |
+| **Deferred** | Intentionally postponed because current evidence does not justify the complexity, privacy cost, or support burden. |
 | **Rejected / non-goal** | Conflicts with accepted product principles unless governance explicitly changes. |
-| **Covered** | The capability is already represented by current `main`, even if another product implements it differently. |
+| **Covered** | Represented by current `main`, even if future refinement may still be useful. |
 
-## Baseline reviewed
+## Current baseline
 
-Current `main` already covers a broad job-seeker workflow:
+Current `main` covers:
 
 - progressive onboarding;
-- multiple search/target tracks;
-- required/preferred/target constraint semantics;
-- Career Evidence import, direct authoring, provenance, correction, structured credentials, references, and lineage;
-- company/source monitoring and source-support classification;
-- partial consumer source discovery with explicit approval before monitoring;
+- multiple Target Tracks with required/preferred/target semantics;
+- Career Evidence import/direct authoring, provenance, correction, credentials, references, and lineage;
+- company/source monitoring and explicit source-support classification;
+- consumer source discovery with explicit approval before monitoring;
+- durable canonical job-source snapshots;
+- source acquisition diagnostics;
+- connection-pinned anti-rebinding network transport;
 - multi-dimensional opportunity assessment;
 - deterministic resume creation, validation, tailoring, versioning, and exact submitted-artifact linkage;
-- application lifecycle contacts, milestones, reminders, follow-up state, interviews, and offers;
-- evidence-grounded interview preparation;
-- Career Stories;
-- evidence-grounded application materials;
-- recurring-gap and outcome analysis;
-- verified backup/restore;
-- JSON Resume interoperability.
-
-The review also considered current product patterns in Huntr, Teal, Simplify, Careerflow, Jobscan, ApplyBlast, and broader auto-apply tooling. These products commonly emphasize browser-assisted job capture, autofill, broad aggregated job feeds, networking CRM, resume optimization, mock-interview tooling, and in some cases delegated or autonomous application submission. Those patterns are evidence of user demand or market pressure, not automatic Job Ranger requirements.
+- application lifecycle contacts, milestones, reminders, interviews, follow-up, and offers;
+- evidence-grounded interview preparation, Career Stories, and application materials;
+- recurring-gap and observed-outcome analysis;
+- verified backup/restore and JSON Resume interoperability;
+- release-blocking packaged-binary smoke on Windows/macOS prerelease builds.
 
 The October 4, 2026 auto-apply research is retained in [`research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md`](./research/AUTO_APPLY_MARKET_RESEARCH_2026-10-04.md).
 
-## Needed gaps
+## Covered gaps
 
-### 1. Canonical full job-description preservation
+### Canonical full job-description/source preservation
+
+**Disposition: Covered**
+
+Completed under #117.
+
+Job Ranger now stores durable source snapshots with source URL, retrieval time, content hash, extraction/version metadata, completeness state, changed-content history, and deduplication. Requirement analysis reasons over preserved source text rather than the legacy short description snippet and retains source linkage for later application/interview context.
+
+Future source-specific improvements may still increase completeness, but the underlying truth/provenance gap is closed.
+
+### Source reliability and diagnostics for dynamic portals
+
+**Disposition: Covered**
+
+Completed under #118.
+
+Acquisition now distinguishes success, successful zero-result runs, cooldown/circuit states, unsupported sources, browser unavailability, network-policy rejection, access denial, rate limiting, timeouts/retrieval errors, extraction failures, parser failures, and unclassified failures. User-facing explanations are separated from raw diagnostics.
+
+Future source-family improvements should be evidence-driven rather than restoring generic “scrape failed” ambiguity.
+
+### Career Ops relationship-path design
+
+**Disposition: Design covered; implementation remains a candidate**
+
+Issue #121 completed the bounded design/governance pass.
+
+Accepted direction includes:
+
+- intentional company targets before an opening exists;
+- relationships independent of one application;
+- real referrals/introductions/recruiters/hiring managers/former employees/communities/events where the data is user-supplied or explicitly connected;
+- explicit distinction between an existing relationship, a plausible path, and a person merely worth researching;
+- user-controlled outreach preparation/follow-up;
+- no contact scraping/enrichment by default;
+- no invented familiarity/referral/endorsement;
+- no automated connection-request or cold-outreach spam;
+- no silent external action;
+- no networking-volume vanity metric.
+
+Those broader relationship-path features are **not implemented in v1.2.0** merely because their design contract is complete.
+
+## Needed gap
+
+### Publish the accumulated product
 
 **Disposition: Needed**
 
-Current requirement/evidence mapping can reason only over listing text Job Ranger successfully collected. Dynamic and partially extracted sources can therefore create false incompleteness: a requirement may exist on the employer's posting but be absent from Job Ranger's stored text.
+The remaining material gap is delivery, not another feature subsystem. v1.1.2 remains the stable public release while v1.2.0-rc.4 contains the newer product.
 
-Needed direction:
+The repository, migration, package, packaged-runtime, checksum, and prerelease trust gates are complete. Stable publication is now blocked by actual Windows/macOS public signing credentials and clean-machine OS trust evidence under #119/#125/#130.
 
-- preserve a canonical source snapshot or bounded complete-description artifact whenever the source can provide it;
-- identify source/extraction version and retrieval time;
-- maintain the difference between “not present in collected text” and “not required by employer”;
-- use snapshots for later interview/application context even if the live posting disappears;
-- avoid storing arbitrary executable page state merely to call it a snapshot.
+## Strong candidates after v1.2.0
 
-This is a direct quality improvement to existing requirement mapping, interview prep, and application history.
-
-### 2. Source reliability and diagnostics for dynamic portals
-
-**Disposition: Needed**
-
-Structured adapters are reliable by design, while Workday/iCIMS/BambooHR/Oracle/Taleo/generic browser-backed sources remain variable.
-
-Needed direction:
-
-- better user-visible failure diagnostics;
-- clearer distinction between no jobs found, unsupported page shape, blocked acquisition, timeout, and parser failure;
-- measured adapter/browser success by source family in local diagnostic state;
-- targeted pagination/infinite-load improvements only where evidence shows value;
-- preserve the acquisition-network security boundary while improving coverage.
-
-A system that silently fails to find jobs is worse than one that honestly says why it could not.
-
-### 3. Release discipline for the accumulated `main` product
-
-**Disposition: Needed**
-
-This is not a feature gap in code, but it is a product-delivery gap. The published v1.1.2 installers predate the majority of the current product.
-
-Needed direction:
-
-- complete the release-readiness contract;
-- validate upgrade/migrations from v1.1.2;
-- run immutable-tag Windows/macOS package validation;
-- publish a release before treating the completed `main` programs as delivered product.
-
-## Strong candidates
-
-### 4. Browser-assisted one-click job capture
-
-**Disposition: Candidate**
-
-Huntr, Teal, Careerflow, and Simplify all reduce friction by allowing users to save a job encountered while browsing. Job Ranger currently centers on monitored sources and its own discovery surfaces.
-
-A Job Ranger version could be valuable if it preserves local-first/user-authority rules:
-
-- browser extension or protocol handler sends the current job URL/text to the local desktop app;
-- user explicitly confirms import;
-- captured text is treated as untrusted source evidence;
-- no account requirement;
-- no automatic application submission;
-- acquisition security rules still apply.
-
-Before implementation, validate whether a simpler “paste/open URL into Job Ranger” quick-capture workflow solves most of the need without maintaining a browser extension.
-
-### 5. Broader opportunity discovery providers
+### Broader opportunity discovery providers
 
 **Disposition: Candidate, strategically important**
 
-The current no-auth discovery tranche proves the provider/approval boundary but has limited market coverage.
-
-Candidate classes:
+Potential classes include:
 
 - USAJOBS/federal;
 - state/local government;
 - school districts;
 - hospitals/health systems;
-- academic job boards;
+- academic boards;
 - professional associations;
 - union/apprenticeship sources;
 - staffing/contract marketplaces;
 - broader general job feeds.
 
-Constraints:
+Provider credentials must not become mandatory ordinary-user setup. Discovery candidates remain untrusted until user approval, and a provider should earn inclusion through coverage value, stability, terms/licensing, and maintenance cost.
 
-- official USAJOBS Search API requires registered credentials, so it is not currently an out-of-box local-first provider;
-- provider credentials must not become mandatory setup for ordinary users;
-- discovery candidates remain untrusted until user approval;
-- a provider should earn inclusion through coverage benefit, stability, terms/licensing, and maintenance cost.
-
-### 6. Reusable application-question answer library
+### Faster job capture from arbitrary browsing
 
 **Disposition: Candidate**
 
-Job seekers repeatedly answer the same factual and narrative questions. Simplify explicitly reuses answers to repeated application questions.
+Before maintaining a browser extension, validate whether a simpler local paste/import or protocol-handler flow solves most of the need. Any captured content remains untrusted source evidence, requires explicit user action, and does not imply application submission.
 
-A Job Ranger implementation could remain evidence-safe:
+### Reusable application-question answers
 
-- save user-authored answers and the exact question text;
-- classify answers as factual, narrative, or preference;
-- link factual assertions to Career Evidence where appropriate;
-- suggest prior answers when the same or meaningfully equivalent question appears;
-- require the user to review before reuse;
+**Disposition: Candidate**
+
+Potential direction:
+
+- preserve exact question text and user-authored answer;
+- classify factual, narrative, and preference answers;
+- link factual claims to Career Evidence where appropriate;
+- suggest prior answers for review rather than silently reusing them;
 - never auto-submit.
 
-This could reduce repetitive work without crossing into autonomous application behavior.
-
-### 7. User-controlled application form assistance
+### User-controlled application form assistance
 
 **Disposition: Candidate, high governance threshold**
 
-Browser autofill is a major feature in Simplify and Careerflow. It can save substantial time, but it expands Job Ranger's browser authority and interaction surface.
+A bounded implementation could fill confirmed/user-authored facts on a specific user-initiated application page while keeping every value visible/editable and leaving final submission to the user.
 
-A safe direction, if evidence justifies it, would be narrower than an auto-apply product:
+No CAPTCHA bypass, stealth automation, or mass submission. Browser authority and supported ATS boundaries require explicit security review.
 
-- user initiates assistance on a specific application page;
-- only confirmed/user-authored profile facts may populate factual fields;
-- every filled value remains visible and editable;
-- the user remains responsible for final submission;
-- unique questions may be suggested from approved prior answers or application-material projections;
-- no CAPTCHA bypass, stealth automation, or mass submission;
-- browser permissions and supported ATS boundaries require explicit security review.
-
-Do not confuse “autofill” with “auto-apply.” They have materially different authority implications.
-
-### 8. Career Ops company targeting and relationship-path discovery
+### Career Ops company targeting and relationship-path implementation
 
 **Disposition: Candidate, strategically important**
 
-Current `main` can associate contacts with applications, but the path to employment often begins before a specific job exists. A quality-over-quantity Career Ops product should be able to reason about companies and legitimate relationship paths without assuming that every search ends in a cold ATS submission.
+The #121 design contract is complete. Actual implementation should happen only after v1.2.0 delivery and should preserve the user-authority/privacy boundaries already documented.
 
-Potential Job Ranger value:
-
-- maintain a company as an intentional career target before a specific opening exists;
-- relate one person to multiple companies, applications, target tracks, or career directions;
-- preserve conversation/follow-up history independent of one job;
-- represent referrals, introductions, recruiters, hiring managers, former employees, communities, events, and other user-relevant paths;
-- help the user identify who they already know or where a plausible relationship path exists when the underlying data is user-supplied or explicitly connected;
-- surface user-controlled preparation for outreach and follow-up;
-- distinguish a real relationship, a possible connection path, and a suggested person to research;
-- allow the user to pursue an organization intentionally even when there is not yet an open role.
-
-Required boundaries:
-
-- no contact scraping or enrichment by default;
-- no invented familiarity, relationship, referral, or endorsement;
-- no automated connection-request or cold-outreach spam;
-- no silent external action;
-- no assumption that a relationship path is inherently superior to a direct application;
-- no conversion of networking activity into a vanity-volume metric.
-
-Issue [#121](https://github.com/Knapp-Kevin/job-ranger/issues/121) governs this design pass. The intent is to expand Job Ranger's ability to find **paths**, not to replace one form of application spam with networking spam.
-
-### 9. Calendar integration
+### Calendar integration
 
 **Disposition: Candidate**
 
-Job Ranger already owns interview/follow-up/deadline/reminder state locally. A narrow calendar adapter could mirror selected events into the user's calendar while keeping Job Ranger authoritative.
+A narrow opt-in adapter could mirror selected interviews/deadlines/follow-ups while keeping Job Ranger authoritative. Deleting a calendar event must not silently erase Job Ranger history.
 
-Required boundary:
-
-- explicit opt-in;
-- one-way or carefully reconciled sync semantics;
-- no calendar provider becomes the canonical application lifecycle;
-- deleting a calendar event must not silently erase Job Ranger history.
-
-### 10. Mock interview practice and answer feedback
+### Mock interview practice and answer feedback
 
 **Disposition: Candidate**
 
-Careerflow and similar products provide simulated interviews and answer feedback. Job Ranger currently produces deterministic, grounded interview preparation but does not run a conversational practice session.
+Potential layers include deterministic question practice, optional inference-backed follow-ups, and optional audio feedback. Any remote path must disclose exactly what career/job/answer content leaves the device.
 
-Potential implementation classes:
-
-- deterministic question practice with user self-notes;
-- optional inference-backed follow-up questions;
-- optional audio practice/feedback as a separate high-privacy capability.
-
-Any remote model path must disclose exactly what job/evidence/answer content leaves the device. This is enhancement, not a requirement for useful interview prep.
-
-### 11. User-defined tags / richer application organization
+### User-defined tags / richer organization
 
 **Disposition: Candidate, low urgency**
 
-Competitor trackers frequently provide custom tags, boards, and saved filters. Job Ranger has canonical lifecycle statuses and target tracks, which already cover much of the organization problem.
+Validate actual organization pain before adding another taxonomy beside Target Tracks and lifecycle statuses.
 
-Possible value:
-
-- user tags such as `dream`, `referral`, `needs follow-up`, `contract`, `local`, or event-specific groupings;
-- saved application/job views;
-- tags never alter factual evidence or lifecycle semantics.
-
-Validate actual organization pain before adding a second taxonomy beside target tracks and statuses.
-
-### 12. Compensation-basis expansion
+### Compensation-basis expansion
 
 **Disposition: Candidate**
 
-Current target-track compensation focuses on hourly/annual semantics. Some contractors/freelancers reason in daily rates, project totals, commissions, or mixed base/variable packages.
-
-Do not generalize prematurely. Add bases only when fixtures or real user demand show that hourly/annual plus notes are insufficient.
+Add daily/project/commission/mixed compensation semantics only when real workflows demonstrate that hourly/annual plus notes are insufficient.
 
 ## Deferred capabilities
 
-### 13. Remote inference provider
+### Remote inference provider
 
 **Disposition: Deferred**
 
-The deterministic core already supports opportunity assessment, tailoring, application materials, interview prep, Career Stories, and insights. A provider-neutral inference seam remains architecturally possible but has not demonstrated enough value to justify privacy/configuration complexity.
+The deterministic core already supports assessment, tailoring, materials, interview preparation, Career Stories, and insights. A provider-neutral inference seam remains possible but has not demonstrated enough incremental value to justify privacy/configuration complexity.
 
-Potential future uses must remain evidence-bound and disclosed.
-
-### 14. OCR for scanned/image-only resumes
+### OCR for scanned/image-only resumes
 
 **Disposition: Deferred**
 
-Current import reports an explicit OCR-required state rather than silently transmitting documents. Add OCR only after evaluating a local or clearly disclosed provider path, accuracy, packaging cost, and actual demand.
+Current import surfaces an explicit OCR-required state. Add OCR only after evaluating local or clearly disclosed provider options, accuracy, packaging cost, and demand.
 
-### 15. DOCX resume export
+### DOCX resume export
 
 **Disposition: Deferred**
 
-PDF is the governed output path with Truth and Parseability Gates. DOCX introduces another rendering/compatibility surface. Add only if actual applications/employers make editable Word output materially necessary.
+PDF remains the governed output path with Truth and Parseability Gates. DOCX should earn its additional rendering/compatibility surface through demonstrated demand.
 
-### 16. Federal resume / academic CV specialized artifact types
+### Federal resume / academic CV specialized projections
 
 **Disposition: Deferred / candidate on demonstrated demand**
 
-The core evidence model is capable of representing the facts, but these formats have materially different document requirements. Do not overload the standard resume projection until representative workflows demonstrate the need.
+The core evidence model can represent the facts, but these artifact types have materially different document requirements.
 
-### 17. Travel, relocation, sponsorship/work-authorization fields as universal core
+### Travel, relocation, sponsorship/work-authorization fields as universal core
 
 **Disposition: Deferred**
 
-These remain legitimate concepts, but previous cross-career validation did not justify forcing them into every target track. Introduce bounded fields if repeated fixtures/real users show that notes/unknowns are insufficient.
+Cross-career validation did not justify forcing them into every Target Track. Add bounded fields only when repeated real workflows show notes/unknowns are insufficient.
 
-### 18. Cloud sync / multi-device state
+### Cloud sync / multi-device state
 
 **Disposition: Deferred, high-impact**
 
-Backup/restore solves portability without introducing account, encryption/key-management, conflict-resolution, server, and privacy obligations. Sync must earn those costs through evidence-backed demand.
+Backup/restore provides portability without account, encryption/key-management, conflict-resolution, server, and privacy obligations. Sync must earn those costs.
 
-### 19. Linux packaged distribution
+### Linux packaged distribution
 
-**Disposition: Deferred / undecided**
+**Disposition: Deferred pending demand**
 
-The codebase may run on Linux development environments, but a supported installer requires packaging, runtime, source-acquisition, desktop-integration, and release-validation ownership. Do not mark Linux supported until those responsibilities are accepted.
+Evaluation #129 is closed. Electron packaging options exist, but a supported Linux product means owning packaging, runtime, source acquisition, desktop integration, update behavior, and release validation. Linux is not being added merely to avoid Windows/macOS signing requirements.
+
+### Microsoft Store AppX/MSIX distribution
+
+**Disposition: Valid future distribution candidate, deferred past v1.2.0**
+
+Evaluation #133 is closed. Microsoft Store distribution is a legitimate way to obtain a Microsoft-trusted Store package without owning the same direct-download signing path, but introducing a new package/store lifecycle during v1.2.0 stabilization would create unnecessary release scope.
 
 ## Rejected / non-goals
 
-### 20. Autonomous mass auto-apply
+### Autonomous mass auto-apply
 
 **Disposition: Rejected / non-goal**
 
-Job Ranger's value is Career Ops decision support and truthful preparation, not maximizing application volume by impersonating the user. High-volume automated submission would undermine user authority, evidence review, application quality, and the product's goal of improving signal rather than adding hiring-market noise.
+Job Ranger automates work around good employment decisions, not submission volume. It may automate discovery, assessment, preparation, reminders, and bounded user-controlled form assistance. Autonomous mass submission conflicts with user authority and the product's quality-over-quantity contract.
 
-The relevant distinction is not whether AI or automation helped. Job Ranger may automate discovery, assessment, preparation, reminders, and bounded form assistance. It rejects making autonomous submission volume the product advantage.
-
-### 21. Opaque ATS / hiring probability as product truth
+### Opaque ATS / hiring probability as product truth
 
 **Disposition: Rejected / non-goal**
 
-Job Ranger may expose evidence coverage, keywords, parseability, or known requirements. It must not present a proprietary percentage as an employer's hidden ranking or a probability of being hired.
+Job Ranger may expose evidence coverage, keywords, parseability, or known requirements. It must not present a proprietary percentage as an employer's hidden ranking or probability of being hired.
 
-### 22. Recruiter-facing ATS / team workspace
+### Recruiter-facing ATS / team workspace
 
 **Disposition: Rejected unless product governance changes**
 
-The product is currently a personal job-seeker tool. Multi-user recruiter workflow would alter the data model, privacy boundary, and product identity.
+The product is a personal job-seeker tool. Being recruiter-friendly through higher-intent candidates does not require Job Ranger to become recruiter software.
 
-Being recruiter-friendly through higher-intent candidates does not require Job Ranger to become recruiter software.
-
-### 23. Generic agent framework, vector database, or workflow engine as product architecture
+### Generic agent framework, vector database, or workflow engine as product architecture
 
 **Disposition: Rejected without a measured requirement**
 
@@ -324,31 +244,17 @@ These are implementation choices, not user capabilities. Current vertical domain
 
 ## Competitive-pattern observations
 
-The review used public product/help material as directional evidence, including:
-
-- Huntr Job Tracker: https://help.huntr.co/en/articles/9883324-job-tracker
-- Teal Job Matcher: https://help.tealhq.com/en/articles/12060992-using-the-job-matcher
-- Simplify Copilot: https://simplify.jobs/copilot
-- Simplify application autofill guidance: https://help.simplify.jobs/help/articles/2415391-using-copilot-to-autofill-applications
-- Careerflow feature catalog: https://www.careerflow.ai/features
-- Careerflow Job Tracker: https://www.careerflow.ai/job-tracker
-- Jobscan tools: https://www.jobscan.co/tools
-- ApplyBlast product and terms: https://applyblast.com/get_hired and https://applyblast.com/terms
-- LinkedIn Easy Apply limits: https://www.linkedin.com/help/linkedin/answer/a8068422
-- Indeed Apply For Me test/update: https://www.indeed.com/news/releases/indeed-tests-apply-for-me-job-search
-
-This is not a feature-parity checklist. Job Ranger should be better at its own contract rather than becoming an offline imitation of every SaaS career product simultaneously.
+Public product/help material from Huntr, Teal, Simplify, Careerflow, Jobscan, ApplyBlast, LinkedIn, Indeed, and related tools remains useful directional evidence. It is not a feature-parity checklist. Job Ranger should be better at its own contract rather than becoming an offline imitation of every career SaaS simultaneously.
 
 ## Recommended next-work order
 
-After the next release is prepared and published, the highest-value investigation order is:
+After **stable v1.2.0 is published**, the current investigation order is:
 
-1. canonical job-description/source snapshots;
-2. source reliability diagnostics and dynamic-source success measurement;
-3. broader source discovery, beginning with the most underserved validated career contexts;
-4. Career Ops company targeting and relationship-path design under #121, with explicit privacy/user-authority boundaries;
-5. quick job capture from arbitrary browsing, first testing whether a native paste/import flow is sufficient before building an extension;
-6. reusable application-question answers and bounded form assistance;
-7. calendar/mock-interview candidates only after real use shows the existing lifecycle is insufficient.
+1. broaden opportunity discovery, prioritizing underserved validated career contexts;
+2. test low-friction job capture, beginning with native paste/import before maintaining a browser extension;
+3. evaluate reusable application-question answers and bounded user-controlled form assistance;
+4. select a first implementation slice from the completed Career Ops relationship-path design;
+5. evaluate calendar and mock-interview enhancements only when real use demonstrates the need;
+6. revisit Linux and Store distribution only when user demand/support economics justify the additional release surface.
 
-Release delivery comes before speculative expansion. Shipping the product that already exists is currently more valuable than adding another major subsystem, but the strategic direction after that release should favor **better paths and better decisions over more applications**.
+Release delivery remains the immediate priority. Future work should favor **better paths and better decisions over more applications**.
