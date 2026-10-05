@@ -565,11 +565,15 @@ methods/tools, scope, outcomes, metrics). Terms are produced by a script-aware
 tokenizer (`electron/src/truth-gate-tokens.cts`, built on the shared script
 classification in `electron/src/text-tokens.cts`) after NFKC normalization and
 lowercasing, so full-width forms and composed/decomposed characters compare
-equal:
+equal. Single letters are ignored in every script, but single digits (ASCII
+or any other decimal digit) are always terms, so changing "5 engineers" to
+"9 engineers" is flagged. Before this, one-character tokens were dropped, so
+single-digit changes passed. Numbers are compared literally: "5" in an edit
+is not supported by "five" in evidence, and vice versa.
 
 | Text | Term | Match against evidence |
 | --- | --- | --- |
-| Pure-ASCII word | unchanged legacy token (`[a-z0-9+#.-]`, edge `.`/`-` trimmed, length > 1, English stoplist) | exact |
+| Pure-ASCII word | legacy token (`[a-z0-9+#.-]`, edge `.`/`-` trimmed, length > 1 or a single digit, English stoplist) | exact |
 | Other alphabetic word (accented Latin, Cyrillic, Greek, Arabic, Hebrew, Devanagari, …) | whole word, split on `.`/`-`, length > 1, small per-language function-word stoplist | exact; Latin/Greek/Cyrillic also accent-folded; Arabic/Hebrew also with attached proclitics (و/ال/ب…, ו/ה/ב…) removed |
 | Han (Chinese, Japanese kanji) | each character, minus grammatical characters (的, 了, 和, 与, 在, 是 …) | character occurs in evidence |
 | Hiragana | ignored (particles, okurigana) | — |

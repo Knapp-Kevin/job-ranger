@@ -69,20 +69,23 @@ function test(name, fn) {
   cases.push([name, fn]);
 }
 
-test("English behaviour is unchanged", () => {
+test("English behaviour matches the legacy tokenizer, plus single digits", () => {
   const item = evidence("en", {
     statement: "Led migration of billing services to Kubernetes for 12 teams",
     skills: ["Kubernetes", "Go"],
   });
   assertPasses("Led the Kubernetes migration of billing services across 12 teams", item, "en reword");
   assertFlagged("Led Kubernetes migration and earned AWS certification", item, ["aws", "certification", "earned"], "en add");
-  // Parity with the pre-Unicode tokenizer on ASCII text.
+  // Parity with the pre-Unicode tokenizer on ASCII text, plus single digits.
   const legacy = (value) =>
     value
       .toLowerCase()
       .match(/[a-z0-9+#.-]+/g)
       ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
-      .filter((token) => token.length > 1 && !legacyStopWords.has(token)) ?? [];
+      .filter(
+        (token) =>
+          (token.length > 1 || /^[0-9]$/.test(token)) && !legacyStopWords.has(token),
+      ) ?? [];
   const samples = [
     "Reduced p95 latency 38% by rewriting the C# ingestion path in Go 1.21.",
     "Owned CI/CD for 40+ services; migrated Jenkins -> GitHub Actions (2019-2021).",
@@ -100,6 +103,22 @@ test("English behaviour is unchanged", () => {
     unsupportedTruthTokens("C++, node.js, ci, cd, rust.", index),
     ["rust"],
   );
+});
+
+test("Single-digit numbers are checked", () => {
+  const item = evidence("num", {
+    statement: "Hired 5 engineers and cut release time from 3 weeks to 2 days",
+    metrics: ["3 weeks", "2 days"],
+  });
+  assertPasses("Cut release time from 3 weeks to 2 days and hired 5 engineers", item, "same digits");
+  assertFlagged("Hired 9 engineers and cut release time from 3 weeks to 2 days", item, ["9"], "changed digit");
+  assertFlagged("Hired 5 engineers and cut release time from 3 weeks to 1 day", item, ["1", "day"], "changed metric");
+  // Mixed-script and non-ASCII digits.
+  assertFlagged("带领9人团队", evidence("zh-num", { statement: "带领5人团队" }), ["9"], "zh digit");
+  assertPasses("带领5人团队", evidence("zh-num-ok", { statement: "带领5人团队" }), "zh digit ok");
+  assertFlagged("قاد ٩ مهندسين", evidence("ar-num", { statement: "قاد ٥ مهندسين" }), ["٩"], "arabic-indic digit");
+  // Single letters are still ignored.
+  assertPasses("Hired 5 engineers (team a)", evidence("letter", { statement: "Hired 5 engineers team" }), "single letter");
 });
 
 test("Chinese: unsupported certification is flagged", () => {

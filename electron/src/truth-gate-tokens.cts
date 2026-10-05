@@ -4,8 +4,10 @@
 // terms that the linked Career Evidence does not contain? Each script needs a
 // different notion of "term":
 //
-// - Pure-ASCII words keep the original behaviour exactly (same character class,
-//   same edge trimming, same length filter, same English stoplist, exact match).
+// - Pure-ASCII words keep the original behaviour (same character class, same
+//   edge trimming, same English stoplist, exact match), except that single
+//   digits are now tokens: one-character tokens used to be dropped, which let
+//   "5 engineers" become "9 engineers".
 // - Other alphabetic words (accented Latin, Cyrillic, Greek, Arabic, Hebrew,
 //   Devanagari, ...) are whole-word tokens matched exactly, with a small
 //   function-word stoplist. Latin/Greek/Cyrillic also match accent-folded, and
@@ -127,10 +129,16 @@ function wordVariants(word: string): string[] {
   return Array.from(variants);
 }
 
+// Single characters are dropped as noise, except digits: "managed 9 engineers"
+// must not pass against evidence that says 5.
+function isTokenLength(token: string): boolean {
+  return Array.from(token).length > 1 || /^\p{Nd}$/u.test(token);
+}
+
 function alphaTokens(text: string): TruthToken[] {
   if (asciiTokenPattern.test(text)) {
     const token = text.replace(/^[.-]+|[.-]+$/g, "");
-    return token.length > 1 && !englishStopWords.has(token)
+    return isTokenLength(token) && !englishStopWords.has(token)
       ? [{ value: token, mode: "exact", variants: [token] }]
       : [];
   }
@@ -139,7 +147,7 @@ function alphaTokens(text: string): TruthToken[] {
     .map((part) => part.replace(/^[+#]+|[+#]+$/g, ""))
     .filter(
       (part) =>
-        Array.from(part).length > 1 &&
+        isTokenLength(part) &&
         !englishStopWords.has(part) &&
         !unicodeWordStopWords.has(part),
     )
