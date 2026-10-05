@@ -1,10 +1,10 @@
 # Job Ranger v1.2.0 Release Candidate Evidence
 
-**Status:** packaged prerelease candidate validated; signed public trust evidence pending  
-**Target version:** v1.2.0  
-**Published predecessor:** v1.1.2  
-**Validated packaged candidate:** v1.2.0-rc.5  
-**Candidate commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`  
+**Status:** stable v1.2.0 published; signed platform-trust follow-up pending
+**Target version:** v1.2.0
+**Published predecessor:** v1.1.2
+**Published release:** v1.2.0 (promoted from v1.2.0-rc.5)
+**Release commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 **Validation date:** 2026-10-05
 
 ## Scope decision
@@ -257,9 +257,4 @@ The connected Desktop Commander Windows runner is currently offline, so clean-ma
 
 ## Publication boundary
 
-Until the stable trust gates complete:
-
-- v1.1.2 remains the latest stable shipped release;
-- v1.2.0-rc.5 is the validated tester prerelease, not the stable public release;
-- stable README download links remain on v1.1.2;
-- unsigned prerelease installation guidance does not substitute for public platform signing/notarization.
+v1.2.0 is the latest stable shipped release and GitHub's current latest release. It is byte-identical to rc.5 and intentionally unsigned/unnotarized under an explicit owner-approved exception. README download links point to v1.2.0. Signed platform-trust distribution remains a follow-up release rather than an in-place mutation of v1.2.0.

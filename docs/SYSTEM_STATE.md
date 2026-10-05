@@ -1,10 +1,10 @@
 # System State
 
-**Snapshot date:** 2026-10-05  
-**Published release:** v1.1.2  
-**Selected next release:** v1.2.0  
-**Validated packaged candidate:** v1.2.0-rc.5  
-**Candidate commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`
+**Snapshot date:** 2026-10-05
+**Published release:** v1.2.0
+**Current development line:** post-v1.2.0
+**Shipped release lineage:** v1.2.0 promoted from v1.2.0-rc.5
+**Release commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
 This document is the factual product/repository snapshot. It intentionally separates the published v1.1.2 installers from the much broader v1.2.0 candidate.
 
@@ -17,7 +17,7 @@ This document is the factual product/repository snapshot. It intentionally separ
 - **Deferred** — intentionally not active.
 - **Historical** — provenance only.
 
-## Published product: v1.1.2
+## Published product: v1.2.0
 
 The latest stable public installers remain v1.1.2 for Windows x64 and macOS x64/arm64.
 
@@ -25,7 +25,7 @@ v1.1.2 includes the earlier desktop monitoring product, Career Profile, determin
 
 No supported Linux installer is published.
 
-## v1.2.0 candidate
+## v1.2.0 shipped capabilities
 
 v1.2.0 is a substantial backward-compatible expansion of Job Ranger into a local-first Career Ops workspace.
 
@@ -251,11 +251,11 @@ macOS verifier support includes explicit `.app`/report paths and records/enforce
 
 `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` defines the normal-user install/first-launch evidence procedure. These tools do not automate around SmartScreen, Smart App Control, or Gatekeeper user prompts.
 
-## Validated packaged candidate: v1.2.0-rc.5
+## Shipped v1.2.0 release evidence
 
 Immutable tag:
 
-`v1.2.0-rc.5` → `71f9b790a1f456321aee2c783f39f4a6784b83a9`
+`v1.2.0` → `71f9b790a1f456321aee2c783f39f4a6784b83a9` (promoted byte-for-byte from `v1.2.0-rc.5`)
 
 Hosted release run `37259653622` succeeded on both Windows and macOS.
 
@@ -400,21 +400,9 @@ Career relationship/company-targeting design under #121 is complete as a bounded
 - Linux packaged distribution (#129 closed as deferred until demand/support justification);
 - Microsoft Store AppX/MSIX packaging (#133 closed as a valid post-release candidate, not current scope).
 
-## Remaining stable-release gates
+## Post-release distribution-trust follow-up
 
-Repository implementation, migration validation, immutable prerelease packaging, packaged-runtime smoke, and native release-verifier compatibility are complete.
-
-Still required:
-
-1. actual Azure Artifact Signing credentials and signed Windows evidence;
-2. clean supported Windows 11 install/launch evidence, including SmartScreen / Smart App Control behavior;
-3. actual Apple Developer ID credentials and signed/notarized/stapled macOS evidence;
-4. clean supported macOS Gatekeeper launch evidence;
-5. immutable stable `v1.2.0` tag/build from the approved lineage;
-6. final stable asset inventory/download spot-check;
-7. README and shipped-status transition from v1.1.2 to v1.2.0 only after stable assets exist.
-
-The connected Desktop Commander runner is currently offline, so clean-machine Windows observation cannot be executed from this session. Hosted packaged-runtime smoke and native verifier execution have passed and are not the remaining blockers.
+Stable v1.2.0 publication is complete. Real Azure Artifact Signing and Apple Developer ID/notarization clean-machine evidence remain tracked under #125/#130 for a signed follow-up release. v1.2.0 artifacts are immutable and will not be replaced in place.
 
 ## Current sources of truth
 
