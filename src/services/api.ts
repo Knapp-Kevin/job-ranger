@@ -9,6 +9,8 @@ import type { InterviewPrepDesktopApi } from "../shared/interview-prep";
 import type { JsonResumeDesktopApi } from "../shared/json-resume";
 import type { ResumeDesktopApi } from "../shared/resume-api";
 import type { SourceDiscoveryDesktopApi } from "../shared/source-discovery";
+import type { RuntimeDesktopApi } from "../shared/runtime";
+import type { LegacyInstallDesktopApi } from "../shared/legacy-install";
 
 export type JobRangerDesktopApi = DesktopApi &
   ResumeDesktopApi &
@@ -20,7 +22,9 @@ export type JobRangerDesktopApi = DesktopApi &
   ApplicationMaterialsDesktopApi &
   BackupDesktopApi &
   ApplicationInsightsDesktopApi &
-  JsonResumeDesktopApi;
+  JsonResumeDesktopApi &
+  RuntimeDesktopApi &
+  LegacyInstallDesktopApi;
 
 export class DesktopApiError extends Error {
   constructor(message: string) {

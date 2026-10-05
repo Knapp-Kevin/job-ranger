@@ -8,41 +8,10 @@ const SQLITE_BUSY_TIMEOUT_MS = 5000;
 
 type ElectronProcess = NodeJS.Process & { resourcesPath?: string };
 
-function escapeSqlString(value: string): string {
-  return `'${value.replace(/'/g, "''")}'`;
-}
+import type { SqliteEngineClient } from "./sql-literal.cjs";
 
-export function toSqlLiteral(value: unknown): string {
-  if (value === null || value === undefined) {
-    return "NULL";
-  }
-
-  if (typeof value === "number") {
-    if (!Number.isFinite(value)) {
-      throw new Error("Non-finite number cannot be persisted to SQLite");
-    }
-    return String(value);
-  }
-
-  if (typeof value === "boolean") {
-    return value ? "1" : "0";
-  }
-
-  if (typeof value === "string") {
-    return escapeSqlString(value);
-  }
-
-  return escapeSqlString(JSON.stringify(value));
-}
-
-export function sql(queryParts: TemplateStringsArray, ...values: unknown[]): string {
-  return queryParts.reduce((output, part, index) => {
-    if (index === values.length) {
-      return output + part;
-    }
-    return output + part + toSqlLiteral(values[index]);
-  }, "");
-}
+export { sql, toSqlLiteral } from "./sql-literal.cjs";
+export type { SqliteEngineClient } from "./sql-literal.cjs";
 
 async function findExecutable(candidates: string[]): Promise<string | null> {
   for (const candidatePath of candidates) {
@@ -120,7 +89,7 @@ export async function resolveSqliteBinary(): Promise<string> {
   );
 }
 
-export class SqliteClient {
+export class SqliteClient implements SqliteEngineClient {
   constructor(
     private readonly databasePath: string,
     private readonly sqliteBinaryPath: string,

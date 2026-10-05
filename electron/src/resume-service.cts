@@ -186,9 +186,9 @@ function renderResumeHtml(
   return html;
 }
 
-function countPdfPages(bytes: Buffer): number | null {
-  const matches = bytes
-    .toString("latin1")
+function countPdfPages(bytes: Uint8Array): number | null {
+  const matches = new TextDecoder("latin1")
+    .decode(bytes)
     .match(/\/Type\s*\/Page(?!s)\b/g);
   return matches?.length ? matches.length : null;
 }

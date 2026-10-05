@@ -9,9 +9,10 @@ import type {
   EvidenceVerificationState,
 } from "../../src/shared/contracts.js";
 import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
 
-const CAREER_STORY_MIGRATION_VERSION = 1002;
-const CAREER_STORY_MIGRATION_NAME = "career_story_projections";
+const CAREER_STORY_MIGRATION_VERSION = FEATURE_MIGRATIONS.careerStories.version;
+const CAREER_STORY_MIGRATION_NAME = FEATURE_MIGRATIONS.careerStories.name;
 
 const CAREER_STORY_SCHEMA = `
   CREATE TABLE IF NOT EXISTS career_stories (

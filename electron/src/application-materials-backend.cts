@@ -10,9 +10,10 @@ import type {
 } from "../../src/shared/contracts.js";
 import { RequirementBackend } from "./requirement-backend.cjs";
 import { sql, SqliteClient } from "./sqlite.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
 
-const APPLICATION_MATERIALS_MIGRATION_VERSION = 1003;
-const APPLICATION_MATERIALS_MIGRATION_NAME = "application_material_projections";
+const APPLICATION_MATERIALS_MIGRATION_VERSION = FEATURE_MIGRATIONS.applicationMaterials.version;
+const APPLICATION_MATERIALS_MIGRATION_NAME = FEATURE_MIGRATIONS.applicationMaterials.name;
 
 const APPLICATION_MATERIALS_SCHEMA = `
   CREATE TABLE IF NOT EXISTS application_materials (

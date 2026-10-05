@@ -11,9 +11,10 @@ import type {
   StrategySignal,
 } from "../../src/shared/application-insights.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
 
-const APPLICATION_INSIGHTS_MIGRATION_VERSION = 1004;
-const APPLICATION_INSIGHTS_MIGRATION_NAME = "application_insights_and_offers";
+const APPLICATION_INSIGHTS_MIGRATION_VERSION = FEATURE_MIGRATIONS.applicationInsights.version;
+const APPLICATION_INSIGHTS_MIGRATION_NAME = FEATURE_MIGRATIONS.applicationInsights.name;
 
 const APPLICATION_INSIGHTS_SCHEMA = `
   CREATE TABLE IF NOT EXISTS application_search_context (

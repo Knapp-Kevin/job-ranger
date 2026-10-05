@@ -1,12 +1,17 @@
 import { BrowserWindow } from "electron";
 import { promises as fs } from "node:fs";
-import type { ResumePageFormat } from "../../src/shared/contracts.js";
+import type { PreparedResumeRender } from "./resume-service.cjs";
 
-export async function renderResumePdf(
-  html: string,
-  pageFormat: ResumePageFormat,
-  targetPath: string,
-): Promise<void> {
+export const RESUME_RENDERER_ID = "electron-chromium-print-to-pdf";
+
+/**
+ * Electron runtime adapter: renders the prepared, Truth-Gate-approved resume
+ * HTML in an isolated, JavaScript-disabled Chromium window. The browser
+ * runtime substitutes a deterministic pdf-lib renderer for this module.
+ */
+export async function renderResumePdf(prepared: PreparedResumeRender): Promise<void> {
+  const { html, temporaryPath: targetPath } = prepared;
+  const pageFormat = prepared.projection.pageFormat;
   const window = new BrowserWindow({
     show: false,
     webPreferences: {

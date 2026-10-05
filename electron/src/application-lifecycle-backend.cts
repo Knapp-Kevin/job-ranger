@@ -9,9 +9,10 @@ import type {
   ApplicationLifecycle,
 } from "../../src/shared/application-lifecycle.js";
 import { sql, SqliteClient } from "./sqlite.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
 
-const APPLICATION_LIFECYCLE_MIGRATION_VERSION = 1001;
-const APPLICATION_LIFECYCLE_MIGRATION_NAME = "application_lifecycle_foundation";
+const APPLICATION_LIFECYCLE_MIGRATION_VERSION = FEATURE_MIGRATIONS.applicationLifecycle.version;
+const APPLICATION_LIFECYCLE_MIGRATION_NAME = FEATURE_MIGRATIONS.applicationLifecycle.name;
 
 const APPLICATION_LIFECYCLE_SCHEMA = `
   CREATE TABLE IF NOT EXISTS application_contacts (

@@ -329,7 +329,7 @@ export interface Settings {
 export type SettingsUpdate = Partial<Settings>;
 
 export interface SystemStatus {
-  backend: "electron-ipc";
+  backend: "electron-ipc" | "web-worker";
   platform: string;
   databasePath: string;
   sqliteBinaryPath: string;

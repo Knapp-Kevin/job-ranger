@@ -70,7 +70,7 @@ export function BackupRestorePanel() {
           <h2 className="text-2xl font-semibold">Backup and restore</h2>
         </div>
         <p className="mt-2 text-sm leading-6 text-[var(--color-text-secondary)]">
-          Create a portable local backup of Job Ranger career data and managed artifacts. Restores are validated before the current data is replaced and require an app restart.
+          Create a portable <code>.jobranger</code> backup of Job Ranger career data and managed artifacts. The same file restores into the Windows app or the web app. Restores are validated before the current data is replaced and require a restart (the web app reloads).
         </p>
       </div>
 
@@ -99,7 +99,10 @@ export function BackupRestorePanel() {
         {created && (
           <div className="panel panel-muted p-4 text-sm text-[var(--color-text-secondary)]">
             <p className="font-semibold text-[var(--color-text-primary)]">Backup verified</p>
-            <p className="mt-1 break-all">{created.summary.bundlePath}</p>
+            <p className="mt-1 break-all" data-testid="backup-created-name">{created.archive?.fileName ?? created.summary.bundlePath}</p>
+            {created.archive && (
+              <p className="mt-1 break-all text-xs" data-testid="backup-created-sha256">SHA-256 {created.archive.sha256}</p>
+            )}
             <p className="mt-2">
               {created.summary.artifactFileCount} managed artifact{created.summary.artifactFileCount === 1 ? "" : "s"} · {formatBytes(created.summary.totalBytes)}
             </p>
@@ -118,6 +121,14 @@ export function BackupRestorePanel() {
                 <dt className="font-medium text-[var(--color-text-primary)]">Job Ranger version</dt>
                 <dd>{selection.summary.appVersion}</dd>
               </div>
+              {selection.archive && (
+                <div>
+                  <dt className="font-medium text-[var(--color-text-primary)]">Exported from</dt>
+                  <dd data-testid="restore-producer">
+                    {selection.archive.producer.runtime === "web" ? "Job Ranger web app" : "Job Ranger desktop app"} · build {selection.archive.producer.buildId}
+                  </dd>
+                </div>
+              )}
               <div>
                 <dt className="font-medium text-[var(--color-text-primary)]">Contents</dt>
                 <dd>
@@ -135,7 +146,7 @@ export function BackupRestorePanel() {
             )}
 
             <div className="mt-5 rounded-xl bg-[var(--color-surface-muted)] p-3 text-sm leading-6 text-[var(--color-text-secondary)]">
-              Restoring replaces the current local Job Ranger database and managed artifacts with this verified backup. Job Ranger will restart automatically after the restore is staged.
+              Restoring replaces the current local Job Ranger database and managed artifacts in this installation with this verified backup. Job Ranger will restart automatically after the restore is staged.
             </div>
             <button
               type="button"

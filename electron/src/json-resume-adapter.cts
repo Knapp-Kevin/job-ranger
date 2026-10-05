@@ -62,7 +62,7 @@ function unique(values: string[]): string[] {
   return Array.from(new Set(values.map((value) => value.trim()).filter(Boolean)));
 }
 
-function hashBytes(bytes: Buffer): string {
+function hashBytes(bytes: Uint8Array): string {
   return createHash("sha256").update(bytes).digest("hex");
 }
 
@@ -422,7 +422,7 @@ export class JsonResumeAdapter {
       throw new Error("JSON Resume import must be a regular JSON file under 10 MB");
     }
     const bytes = await fs.readFile(filePath);
-    const raw = bytes.toString("utf8");
+    const raw = new TextDecoder("utf-8", { ignoreBOM: true }).decode(bytes);
     let parsed: unknown;
     try {
       parsed = JSON.parse(raw);
