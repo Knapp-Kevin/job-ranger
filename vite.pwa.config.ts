@@ -15,6 +15,7 @@ import tailwindcss from "@tailwindcss/vite";
 import react from "@vitejs/plugin-react";
 import { defineConfig, type Plugin } from "vite";
 import { buildContentSecurityPolicy, buildSecurityHeaders } from "./src/pwa/security/policy.ts";
+import { NODE_BUILTIN_ADAPTERS, SHARED_CORE_ADAPTERS } from "./src/pwa/adapter-map.ts";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
 const electronSource = path.join(root, "electron", "src");
@@ -33,23 +34,6 @@ function gitCommit(): string {
 
 const commit = gitCommit();
 const buildId = process.env.JOB_RANGER_BUILD_ID?.trim() || `${packageJson.version}+${commit.slice(0, 12)}`;
-
-/** Shared-core modules whose implementation is runtime-specific. */
-export const SHARED_CORE_ADAPTERS: Record<string, string> = {
-  "sqlite.cts": "sqlite.ts",
-  "resume-parser.cts": "resume-parser.ts",
-  "resume-renderer.cts": "resume-renderer.ts",
-  "pinned-fetch.cts": "pinned-fetch.ts",
-};
-
-/** Node built-ins the shared core uses, mapped to browser adapters. */
-export const NODE_BUILTIN_ADAPTERS: Record<string, string> = {
-  fs: "node-fs.ts",
-  path: "node-path.ts",
-  crypto: "node-crypto.ts",
-  net: "node-net.ts",
-  "dns/promises": "node-dns-promises.ts",
-};
 
 function runtimeAdapterPlugin(target: "page" | "worker"): Plugin {
   return {

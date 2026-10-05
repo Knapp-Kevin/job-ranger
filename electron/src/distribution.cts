@@ -78,3 +78,38 @@ export function electronRuntimeInfo(input: {
     },
   };
 }
+
+/**
+ * Package family name of a running AppX/MSIX desktop app, derived from its
+ * install path: `...\WindowsApps\<Name>_<Version>_<Arch>_<ResourceId>_<PublisherId>\...`.
+ */
+export function packageFamilyNameFromExecPath(execPath: string): string | null {
+  const match = execPath.replace(/\\/g, "/").match(/\/WindowsApps\/([^/]+)\//i);
+  if (!match) return null;
+  const parts = match[1].split("_");
+  if (parts.length < 5 || !parts[0] || !parts[parts.length - 1]) return null;
+  return `${parts[0]}_${parts[parts.length - 1]}`;
+}
+
+/**
+ * AppX file-system virtualization stores files a packaged app creates under
+ * %APPDATA% in `%LOCALAPPDATA%\Packages\<PFN>\LocalCache\Roaming`. The app
+ * sees the virtual path; Explorer and other apps need the real one. Paths
+ * outside %APPDATA% are returned unchanged.
+ */
+export function storeHostPath(
+  virtualPath: string,
+  input: { appDataDirectory: string; localAppDataDirectory: string; packageFamilyName: string | null },
+): string {
+  if (!input.packageFamilyName) return virtualPath;
+  const relative = path.win32.relative(input.appDataDirectory, virtualPath);
+  if (!relative || relative.startsWith("..") || path.win32.isAbsolute(relative)) return virtualPath;
+  return path.win32.join(
+    input.localAppDataDirectory,
+    "Packages",
+    input.packageFamilyName,
+    "LocalCache",
+    "Roaming",
+    relative,
+  );
+}

@@ -35,6 +35,8 @@ export interface CoreIpcOptions {
   platform: string;
   discoveryFetch: () => typeof fetch;
   getRuntimeInfo: () => Promise<RuntimeInfo>;
+  /** Maps a managed path to the path the OS file manager sees (Store virtualization). */
+  hostPath?: (managedPath: string) => string;
 }
 
 /**
@@ -55,7 +57,7 @@ export function registerCoreIpcHandlers(options: CoreIpcOptions): void {
       targetPath,
       options.careerBackend.getArtifactDirectory(),
     );
-    shell.showItemInFolder(safePath);
+    shell.showItemInFolder(options.hostPath ? options.hostPath(safePath) : safePath);
   });
 
   ipcMain.handle("system:get-status", () =>

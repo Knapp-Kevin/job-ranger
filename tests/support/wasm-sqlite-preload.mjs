@@ -3,7 +3,7 @@
 // unchanged Job Ranger repositories, migrations, and domain services run on
 // the exact engine the PWA uses.
 //
-// Usage: node --import ./tests/support/wasm-sqlite-preload.mjs <test file>
+// Usage: node --experimental-strip-types --import ./tests/support/wasm-sqlite-preload.mjs <test file>
 import { createRequire } from "node:module";
 import { promises as fs } from "node:fs";
 import path from "node:path";

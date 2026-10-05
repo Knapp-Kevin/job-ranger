@@ -15,9 +15,12 @@ import { createPinnedFetch } from "./pinned-fetch.cjs";
 import {
   detectDistributionChannel,
   electronRuntimeInfo,
+  packageFamilyNameFromExecPath,
   resolveStoreUserDataDirectory,
+  storeHostPath,
 } from "./distribution.cjs";
 import { initializeLegacyInstallIpc } from "./legacy-install-ipc.cjs";
+import { parsePackageSmokeArgument, runStorePackageSmoke } from "./store-package-smoke.cjs";
 
 const distributionChannel = detectDistributionChannel({
   windowsStore: process.windowsStore,
@@ -34,6 +37,18 @@ if (
 ) {
   app.setPath("userData", resolveStoreUserDataDirectory(app.getPath("appData")));
 }
+
+/** Path the OS file manager sees for a path inside Job Ranger's data root. */
+function hostPath(target: string): string {
+  if (distributionChannel !== "microsoft-store" || !process.env.LOCALAPPDATA) return target;
+  return storeHostPath(target, {
+    appDataDirectory: app.getPath("appData"),
+    localAppDataDirectory: process.env.LOCALAPPDATA,
+    packageFamilyName: packageFamilyNameFromExecPath(process.execPath),
+  });
+}
+
+const packageSmokeReport = parsePackageSmokeArgument(process.argv);
 
 const moduleDirectory = __dirname;
 const processStartupFetch = globalThis.fetch;
@@ -209,7 +224,7 @@ function createMenu(): void {
         {
           label: "Open Job Ranger Data Folder",
           click: () => {
-            void shell.openPath(app.getPath("userData"));
+            void shell.openPath(hostPath(app.getPath("userData")));
           },
         },
       ],
@@ -219,7 +234,32 @@ function createMenu(): void {
   Menu.setApplicationMenu(Menu.buildFromTemplate(template));
 }
 
+async function runPackageSmokeAndExit(reportPath: string): Promise<void> {
+  try {
+    await runStorePackageSmoke({
+      reportPath,
+      appVersion: app.getVersion(),
+      channel: distributionChannel,
+      windowsStore: process.windowsStore === true,
+      userDataDirectory: app.getPath("userData"),
+      appDataDirectory: app.getPath("appData"),
+      localAppDataDirectory: process.env.LOCALAPPDATA ?? null,
+      execPath: process.execPath,
+      resourcesPath: (process as NodeJS.Process & { resourcesPath?: string }).resourcesPath ?? null,
+      platform: process.platform,
+    });
+    app.exit(0);
+  } catch (error) {
+    console.error(error instanceof Error ? error.stack ?? error.message : String(error));
+    app.exit(1);
+  }
+}
+
 app.whenReady().then(async () => {
+  if (packageSmokeReport) {
+    await runPackageSmokeAndExit(packageSmokeReport);
+    return;
+  }
   try {
     const userDataDirectory = app.getPath("userData");
     const dataDirectory = path.join(userDataDirectory, "data");
@@ -272,6 +312,7 @@ app.whenReady().then(async () => {
       appVersion: app.getVersion(),
       platform: process.platform,
       discoveryFetch: discoveryFetchImpl,
+      hostPath,
       getRuntimeInfo: async () =>
         electronRuntimeInfo({
           channel: distributionChannel,
@@ -308,6 +349,8 @@ app.whenReady().then(async () => {
 });
 
 app.on("window-all-closed", () => {
+  // The packaged smoke renders PDFs in short-lived hidden windows; it exits explicitly.
+  if (packageSmokeReport) return;
   if (process.platform !== "darwin") {
     app.quit();
   }

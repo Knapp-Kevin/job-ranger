@@ -6,7 +6,9 @@ import { fileURLToPath } from "node:url";
 
 const PLATFORM_PATTERNS = {
   windows: /^Job.*windows.*\.exe$/i,
+  "windows-store": /^Job.*windows-store.*\.appx$/i,
   macos: /^Job.*macos.*\.(?:dmg|zip)$/i,
+  web: /^job-ranger-web-.*\.zip$/i,
 };
 
 function parseBoolean(value) {

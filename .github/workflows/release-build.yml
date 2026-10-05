@@ -11,22 +11,37 @@ on:
         required: true
         type: string
       platform:
-        description: "Which release assets to build"
+        description: "Which release assets to build (macOS native builds are historical/manual only)"
         required: true
-        default: macos
+        default: windows
         type: choice
         options:
-          - macos
           - windows
+          - windows-store
+          - web
+          - macos
           - all
 
 permissions:
   contents: write
 
+# Distribution architecture (docs/design/DISTRIBUTION_ARCHITECTURE.md):
+# - supported channels are the Microsoft Store package and the web/PWA build;
+# - the direct-download NSIS installer is an advanced/test artifact unless it
+#   is signed (Azure Artifact Signing is optional and never blocks a release);
+# - native macOS packaging is not part of the forward architecture and only
+#   runs on explicit manual dispatch.
+# Every produced artifact gets SHA-256 evidence, a release manifest, and a
+# GitHub artifact attestation (SLSA build provenance).
+
 jobs:
   build-windows:
     if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == 'windows'
     runs-on: windows-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
 
     steps:
       - name: Check out repository
@@ -45,11 +60,14 @@ jobs:
             tag="${GITHUB_REF_NAME}"
           fi
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          if [[ "$tag" =~ ^v[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
-            echo "public=true" >> "$GITHUB_OUTPUT"
+          # Azure Artifact Signing is optional. Signing is required only when
+          # the repository explicitly opts in; an unsigned direct installer is
+          # published as an advanced/test artifact, never as the mainstream path.
+          if [[ "${{ vars.JOB_RANGER_REQUIRE_WINDOWS_SIGNING }}" == "1" ]]; then
+            echo "signed=true" >> "$GITHUB_OUTPUT"
             echo "JOB_RANGER_REQUIRE_WINDOWS_SIGNING=1" >> "$GITHUB_ENV"
           else
-            echo "public=false" >> "$GITHUB_OUTPUT"
+            echo "signed=false" >> "$GITHUB_OUTPUT"
             echo "JOB_RANGER_REQUIRE_WINDOWS_SIGNING=0" >> "$GITHUB_ENV"
           fi
 
@@ -62,8 +80,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Verify public Windows signing configuration
-        if: steps.release_tag.outputs.public == 'true'
+      - name: Verify Windows signing configuration (opt-in)
+        if: steps.release_tag.outputs.signed == 'true'
         shell: pwsh
         env:
           AZURE_TENANT_ID: ${{ secrets.AZURE_TENANT_ID }}
@@ -89,31 +107,7 @@ jobs:
           }
 
       - name: Provision pinned SQLite CLI
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          $sqliteUrl = "https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip"
-          $expectedSha3 = "88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b"
-          $archive = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400.zip"
-          $extractDir = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400"
-
-          Invoke-WebRequest -Uri $sqliteUrl -OutFile $archive
-          $actualSha3 = node -e "const fs=require('fs'),crypto=require('crypto'); console.log(crypto.createHash('sha3-256').update(fs.readFileSync(process.argv[1])).digest('hex'))" $archive
-          if ($actualSha3.Trim().ToLowerInvariant() -ne $expectedSha3) {
-            throw "SQLite archive SHA3-256 mismatch. Expected $expectedSha3 but received $actualSha3."
-          }
-
-          Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
-          $sqlite = Get-ChildItem -Path $extractDir -Recurse -Filter sqlite3.exe | Select-Object -First 1
-          if (-not $sqlite) {
-            throw "sqlite3.exe was not found in the verified SQLite tools archive."
-          }
-
-          New-Item -ItemType Directory -Path build/sqlite -Force | Out-Null
-          Copy-Item -LiteralPath $sqlite.FullName -Destination build/sqlite/sqlite3.exe -Force
-          $sqlitePath = (Resolve-Path build/sqlite/sqlite3.exe).Path
-          "SQLITE3_PATH=$sqlitePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
-          & $sqlitePath --version
+        uses: ./.github/actions/provision-windows-sqlite
 
       - name: Build release artifacts
         run: npm run electron:build:win
@@ -153,7 +147,7 @@ jobs:
       - name: Verify Windows distribution trust
         shell: pwsh
         run: |
-          $requireSigned = "${{ steps.release_tag.outputs.public }}" -eq "true"
+          $requireSigned = "${{ steps.release_tag.outputs.signed }}" -eq "true"
           & ./scripts/verify-windows-distribution.ps1 -RequireSigned:$requireSigned
 
       - name: Generate Windows checksums and release manifest
@@ -162,9 +156,14 @@ jobs:
           node scripts/generate-release-manifest.mjs \
             --platform windows \
             --tag "${{ steps.release_tag.outputs.tag }}" \
-            --public "${{ steps.release_tag.outputs.public }}" \
+            --public "${{ steps.release_tag.outputs.signed }}" \
             --trust-evidence windows-signing.json \
             --smoke-evidence windows-package-smoke.json
+
+      - name: Attest build provenance (direct-download installer)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: release/Job*windows*.exe
 
       - name: Ensure GitHub release exists
         shell: bash
@@ -203,7 +202,9 @@ jobs:
             --clobber
 
   build-macos:
-    if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == 'macos'
+    # Historical/manual only: native macOS distribution is not part of the
+    # accepted architecture (macOS users are served by the web/PWA runtime).
+    if: github.event_name == 'workflow_dispatch' && (inputs.platform == 'all' || inputs.platform == 'macos')
     runs-on: macos-latest
 
     steps:
@@ -348,3 +349,76 @@ jobs:
             build/trust/macos-SHA256SUMS.txt \
             build/trust/macos-release-manifest.json \
             --clobber
+
+  store-package:
+    if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == 'windows-store'
+    uses: ./.github/workflows/windows-store-package.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+      submission: ${{ vars.JOB_RANGER_STORE_IDENTITY_NAME != '' }}
+
+  publish-store-package:
+    needs: store-package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download Store package and evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.store-package.outputs.artifact-name }}
+          path: store
+
+      - name: Attest build provenance (Store package)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: store/release/Job*windows-store*.appx
+
+      - name: Upload Store package candidate and evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Job Ranger $tag" --generate-notes --prerelease
+          gh release upload "$tag" store/release/Job*windows-store*.appx store/build/trust/windows-store-* --clobber
+
+  web:
+    if: github.event_name != 'workflow_dispatch' || inputs.platform == 'all' || inputs.platform == 'web'
+    uses: ./.github/workflows/pwa.yml
+    with:
+      ref: ${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}
+
+  publish-web:
+    needs: web
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+      attestations: write
+    steps:
+      - name: Download web build and evidence
+        uses: actions/download-artifact@v4
+        with:
+          name: ${{ needs.web.outputs.artifact-name }}
+          path: web
+
+      - name: Attest build provenance (web build)
+        uses: actions/attest-build-provenance@v2
+        with:
+          subject-path: web/release/job-ranger-web-*.zip
+
+      - name: Upload web build and evidence
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GH_REPO: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          tag="${{ github.event_name == 'workflow_dispatch' && inputs.tag || github.ref_name }}"
+          gh release view "$tag" >/dev/null 2>&1 || gh release create "$tag" --title "Job Ranger $tag" --generate-notes --prerelease
+          gh release upload "$tag" web/release/job-ranger-web-*.zip web/build/trust/web-* --clobber

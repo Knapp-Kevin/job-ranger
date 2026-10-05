@@ -1,0 +1,125 @@
+name: Windows Store package
+
+# Builds the Microsoft Store (AppX) package from the existing Electron app with
+# the pinned electron-builder v26 `appx` target, verifies its manifest, then
+# installs it on a Windows runner and runs the packaged non-software Career
+# Ops smoke *inside the package context*.
+#
+# Without Partner Center identity (repository variables) this produces a
+# clearly labelled validation package. Store certification happens in Partner
+# Center and is never claimed by this workflow.
+
+on:
+  pull_request:
+    paths:
+      - "electron/**"
+      - "src/shared/**"
+      - "electron-builder.json"
+      - "electron-builder.store.cjs"
+      - "scripts/store-identity.cjs"
+      - "scripts/verify-store-package.ps1"
+      - "scripts/run-store-package-smoke.ps1"
+      - "build/appx/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/actions/provision-windows-sqlite/**"
+      - ".github/workflows/windows-store-package.yml"
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref to package (defaults to the selected branch)"
+        required: false
+        type: string
+      submission:
+        description: "Require Partner Center identity (submission package)"
+        required: false
+        default: false
+        type: boolean
+  workflow_call:
+    inputs:
+      ref:
+        required: true
+        type: string
+      submission:
+        required: false
+        default: false
+        type: boolean
+    outputs:
+      artifact-name:
+        description: Name of the uploaded workflow artifact containing the package and evidence
+        value: ${{ jobs.store-package.outputs.artifact-name }}
+
+permissions:
+  contents: read
+
+concurrency:
+  group: windows-store-${{ github.ref }}-${{ inputs.ref || '' }}
+  cancel-in-progress: true
+
+jobs:
+  store-package:
+    runs-on: windows-latest
+    timeout-minutes: 60
+    outputs:
+      artifact-name: ${{ steps.names.outputs.artifact }}
+    env:
+      JOB_RANGER_STORE_IDENTITY_NAME: ${{ vars.JOB_RANGER_STORE_IDENTITY_NAME }}
+      JOB_RANGER_STORE_PUBLISHER: ${{ vars.JOB_RANGER_STORE_PUBLISHER }}
+      JOB_RANGER_STORE_PUBLISHER_DISPLAY_NAME: ${{ vars.JOB_RANGER_STORE_PUBLISHER_DISPLAY_NAME }}
+      JOB_RANGER_STORE_DISPLAY_NAME: ${{ vars.JOB_RANGER_STORE_DISPLAY_NAME }}
+      JOB_RANGER_REQUIRE_STORE_IDENTITY: ${{ inputs.submission && '1' || '0' }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.ref || github.ref }}
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22.12.0"
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Provision pinned SQLite CLI
+        uses: ./.github/actions/provision-windows-sqlite
+
+      - name: Build Store package (repo health + AppX)
+        run: npm run electron:build:store
+
+      - name: Verify AppX manifest, capabilities, and assets
+        shell: powershell
+        run: ./scripts/verify-store-package.ps1
+
+      - name: Install package and run packaged Career Ops smoke in package context
+        shell: powershell
+        run: |
+          $version = node -p "require('./package.json').version"
+          ./scripts/run-store-package-smoke.ps1 -AppVersion $version
+
+      - name: Generate checksums and release manifest
+        shell: bash
+        run: |
+          node scripts/generate-release-manifest.mjs \
+            --platform windows-store \
+            --tag "${{ inputs.ref || github.ref_name }}" \
+            --public false \
+            --trust-evidence windows-store-package.json \
+            --smoke-evidence windows-store-package-smoke.json
+
+      - name: Name artifact
+        id: names
+        shell: bash
+        run: echo "artifact=windows-store-package-${{ github.run_id }}" >> "$GITHUB_OUTPUT"
+
+      - name: Upload package and evidence
+        uses: actions/upload-artifact@v4
+        with:
+          name: ${{ steps.names.outputs.artifact }}
+          path: |
+            release/Job*windows-store*.appx
+            build/trust/windows-store-*
+          if-no-files-found: error
+          retention-days: 30

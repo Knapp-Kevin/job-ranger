@@ -61,3 +61,10 @@ export function createPinnedFetch(): typeof fetch {
   };
   return browserFetch as typeof fetch;
 }
+
+/** Socket-level pinned requests do not exist in browsers; fail explicitly. */
+export const executePinnedAddressRequest = async (): Promise<never> => {
+  throw new BrowserAcquisitionError(
+    "Connection-level DNS pinning is only available in the Windows app; the web runtime uses the browser network policy.",
+  );
+};

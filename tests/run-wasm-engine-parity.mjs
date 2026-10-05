@@ -30,7 +30,7 @@ let failed = 0;
 for (const suite of suites) {
   const result = spawnSync(
     process.execPath,
-    ["--import", "./tests/support/wasm-sqlite-preload.mjs", `tests/${suite}.cjs`],
+    ["--experimental-strip-types", "--import", "./tests/support/wasm-sqlite-preload.mjs", `tests/${suite}.cjs`],
     { encoding: "utf8", timeout: 300_000 },
   );
   const engineLine = (result.stdout ?? "").split("\n").find((line) => line.startsWith("[sqlite-wasm parity]"));
