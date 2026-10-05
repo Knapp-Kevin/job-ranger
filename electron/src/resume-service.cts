@@ -27,6 +27,7 @@ import {
   RESUME_PARSER_VERSION,
 } from "./resume-parser.cjs";
 import { SqliteClient } from "./sqlite.cjs";
+import { normalizedParseabilityText, parseabilityTokens } from "./parseability-text.cjs";
 
 interface ResumeServiceOptions {
   dataDirectory: string;
@@ -90,14 +91,6 @@ function contentTokens(value: string): string[] {
     .match(/[a-z0-9+#.-]+/g)
     ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
     .filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
-}
-
-function normalizedText(value: string): string {
-  return value
-    .toLowerCase()
-    .replace(/[^a-z0-9+#.-]+/g, " ")
-    .replace(/\s+/g, " ")
-    .trim();
 }
 
 function htmlEscape(value: string): string {
@@ -525,13 +518,15 @@ export class ResumeService {
 
     try {
       const parsed = await extractResumeDocument(pdfPath);
-      const extracted = normalizedText(parsed.rawText);
+      const extracted = normalizedParseabilityText(parsed.rawText);
+      let unverifiableScript = false;
       const contactRequired = [
         projection.contact.fullName,
         projection.contact.email || projection.contact.phone,
       ].filter(Boolean);
       for (const item of contactRequired) {
-        const tokens = contentTokens(item);
+        const { tokens, containsUnverifiableScript } = parseabilityTokens(item);
+        unverifiableScript ||= containsUnverifiableScript;
         if (
           tokens.length > 0 &&
           tokens.filter((token) => extracted.includes(token)).length /
@@ -548,7 +543,8 @@ export class ResumeService {
 
       const positions: number[] = [];
       for (const statement of statements) {
-        const tokens = contentTokens(statement.text);
+        const { tokens, containsUnverifiableScript } = parseabilityTokens(statement.text);
+        unverifiableScript ||= containsUnverifiableScript;
         const matched = tokens.filter((token) => extracted.includes(token));
         const coverage = tokens.length === 0 ? 1 : matched.length / tokens.length;
         if (coverage < 0.9) {
@@ -560,6 +556,14 @@ export class ResumeService {
         }
         const anchor = tokens.slice(0, 3).join(" ");
         positions.push(anchor ? extracted.indexOf(anchor) : -1);
+      }
+      if (unverifiableScript) {
+        issues.push({
+          code: "unverified-script",
+          severity: "advisory",
+          message:
+            "Text in right-to-left or Indic scripts could not be verified: PDF text extraction of these scripts differs between parsers. Open the PDF and check it before submitting.",
+        });
       }
       let last = -1;
       for (const position of positions.filter((value) => value >= 0)) {

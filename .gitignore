@@ -46,6 +46,7 @@ build/*.ico
 build/*.icns
 build/*.png
 build/*.bmp
+/build/pdf-fonts/
 
 # Environment
 .env
