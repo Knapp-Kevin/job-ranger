@@ -1,11 +1,10 @@
 # System State
 
-**Snapshot date:** 2026-10-04  
+**Snapshot date:** 2026-10-05  
 **Published release:** v1.1.2  
 **Selected next release:** v1.2.0  
-**Validated packaged candidate:** v1.2.0-rc.3  
-**Candidate commit:** `e25c61c0be21dd00bc80a0880d2a770660c283bd`  
-**Release-preparation branch:** `release/v1.2.0-rc1`
+**Validated packaged candidate:** v1.2.0-rc.4  
+**Candidate commit:** `177e89dc7325bee4787718f89b9c8e2920f28453`
 
 This document is the factual product/repository snapshot. It intentionally separates the published v1.1.2 installers from the much broader v1.2.0 candidate.
 
@@ -13,7 +12,7 @@ This document is the factual product/repository snapshot. It intentionally separ
 
 - **Shipped** — present in a stable published GitHub Release.
 - **Packaged candidate** — built from an immutable prerelease tag and validated as a release artifact, but not yet promoted as the stable public release.
-- **Implemented** — merged into the release/default-branch lineage, but not necessarily present in the latest stable installer.
+- **Implemented** — merged into `main`, but not necessarily present in the latest stable installer.
 - **Candidate / next** — plausible follow-on work, not a product commitment.
 - **Deferred** — intentionally not active.
 - **Historical** — provenance only.
@@ -53,7 +52,7 @@ Implemented:
 - provenance to source artifacts and extraction snapshots;
 - confirm/edit/reject/merge/supersede workflows;
 - structured credential status, jurisdiction, expiration, and lineage;
-- factual authority rules that prevent unconfirmed imports from becoming application claims.
+- factual-authority rules that prevent unconfirmed imports from becoming application claims.
 
 ### Resume import
 
@@ -72,7 +71,7 @@ Image-only/scanned OCR remains deferred rather than silently invoking a hosted s
 
 #117 is complete.
 
-The candidate now preserves durable source snapshots for collected job content, including:
+Job Ranger preserves durable source snapshots for collected job content, including:
 
 - source URL;
 - retrieval time;
@@ -188,7 +187,7 @@ Implemented:
 
 #123 is complete.
 
-The v1.2.0 acquisition boundary now provides connection-level anti-rebinding protection:
+The v1.2.0 acquisition boundary provides connection-level anti-rebinding protection:
 
 - URL policy rejects unsafe loopback, private, link-local, reserved, and otherwise disallowed targets;
 - hostname policy resolution returns the exact approved public address set;
@@ -229,45 +228,101 @@ macOS public path:
 
 Unsigned prerelease artifacts are explicitly tester-only.
 
-Every platform package build emits SHA-256 identity evidence after packaging from the exact uploaded files:
+Every platform package build emits:
 
-- `windows-SHA256SUMS.txt`;
-- `windows-release-manifest.json`;
-- `macos-SHA256SUMS.txt`;
-- `macos-release-manifest.json`.
+- trust-state evidence;
+- SHA-256 checksums;
+- a schema-v2 release manifest;
+- a packaged-binary smoke report.
+
+The release manifest is fail-closed: it is not generated unless both the trust report and packaged-smoke report exist.
 
 Windows Smart App Control may make an unsigned tester build non-runnable without a safe per-app override. Job Ranger does not recommend disabling Smart App Control, SmartScreen, or Defender.
 
 macOS tester guidance uses Apple's bounded Privacy & Security → Open Anyway flow when macOS offers it. Job Ranger does not recommend disabling Gatekeeper globally.
 
-## Validated packaged candidate: v1.2.0-rc.3
+## Validated packaged candidate: v1.2.0-rc.4
 
 Immutable tag:
 
-`v1.2.0-rc.3` → `e25c61c0be21dd00bc80a0880d2a770660c283bd`
+`v1.2.0-rc.4` → `177e89dc7325bee4787718f89b9c8e2920f28453`
 
-Hosted release run `37239803933` succeeded on both Windows and macOS.
+Hosted release run `37258455958` succeeded on both Windows and macOS.
 
-Verified Windows prerelease assets:
+### Windows rc.4 evidence
+
+Passed:
+
+- NSIS x64 packaging;
+- bundled SQLite verification and packaged resolver verification;
+- packaged `Job Ranger.exe` execution from its own `app.asar`;
+- deterministic healthcare-operations package-smoke scenario;
+- prerelease Windows trust-state verification;
+- SHA-256 generation;
+- schema-v2 release-manifest generation;
+- GitHub prerelease upload.
+
+Published evidence/assets include:
 
 - `Job.Ranger-v1.2.0-windows-x64.exe`;
 - `.exe.blockmap`;
 - `latest.yml`;
+- `windows-package-smoke.json`;
 - `windows-signing.json`;
 - `windows-SHA256SUMS.txt`;
 - `windows-release-manifest.json`.
 
-Verified macOS prerelease assets:
+The GitHub API records SHA-256 digest `6d7e4b95fe7fc5bbf60900c8f45130ed0f327e1809d989b7b5586902143765b4` for the rc.4 Windows installer.
 
-- arm64 DMG;
-- arm64 ZIP;
-- x64 DMG;
-- x64 ZIP;
+### macOS rc.4 evidence
+
+Passed:
+
+- x64 and arm64 packaging;
+- x64/arm64 packaged executable architecture checks;
+- native packaged `.app` execution from its own `app.asar` on the hosted runner architecture;
+- deterministic healthcare-operations package-smoke scenario;
+- prerelease macOS trust-state verification;
+- SHA-256 generation;
+- schema-v2 release-manifest generation;
+- GitHub prerelease upload.
+
+Published evidence/assets include:
+
+- arm64 DMG and ZIP;
+- x64 DMG and ZIP;
+- `macos-package-smoke.json`;
 - `macos-signing.txt`;
 - `macos-SHA256SUMS.txt`;
 - `macos-release-manifest.json`.
 
-The release is correctly marked as a GitHub prerelease. v1.1.2 remains the stable release.
+Recorded rc.4 package digests include:
+
+- arm64 DMG: `f35a4cc3adfc037ddecbc7cc8f8b3fdc630ed0ff742a0cbbefe2ae84d38df849`;
+- arm64 ZIP: `2a9e6bf16c8bbc50ad375fd1d578e472e01b8a8feab7353b449a9b657f07b446`;
+- x64 DMG: `44bb8d32063c203bf6e1bd1ff4d9755a89fd81ba938fc51d15fb73a3b07f1986`;
+- x64 ZIP: `b6981cb7986aaf3ac0c1652502922da21faa242023353aeefbeed802a3aa0f8c`.
+
+The GitHub Release is marked `prerelease: true`. v1.1.2 remains the stable release.
+
+## Packaged smoke coverage
+
+The rc.4 packaged smoke uses a materially non-software healthcare operations scenario and validates the packaged application's real local stack:
+
+- isolated fresh data initialization;
+- Career Profile creation;
+- Target Track creation;
+- user-authored Career Evidence;
+- pasted evidence/source-artifact persistence;
+- company and filter persistence;
+- preserved full job-source snapshot;
+- requirement extraction and evidence coverage;
+- application tracking/status persistence;
+- JSON Resume export;
+- backup creation/validation;
+- durable persistence counts.
+
+The hosted package-smoke reports are release evidence, not a substitute for platform signing or clean-machine trust behavior.
 
 ## Upgrade validation
 
@@ -281,9 +336,11 @@ The representative v1.1.2 → v1.2.0 upgrade fixture proves:
 - post-upgrade backup validates;
 - upgraded state restores into another data root with managed paths rebased.
 
-## Repository validation
+## Repository and UI validation
 
-The release lineage has passed clean install, dependency/security gating, explicit unit suites, typecheck, production build, repository smoke suites, and Electron E2E after the major implementation/hardening tranches.
+The release lineage has passed clean install, dependency/security gating, explicit unit suites, typecheck, production build, repository smoke suites, and Electron E2E.
+
+Current E2E coverage includes 31 tests spanning onboarding, Career Evidence, resume generation/tailoring, source discovery, opportunity assessment, application lifecycle, application materials, Career Stories, interview preparation, Search Insights, and Target Tracks.
 
 Dedicated regressions cover:
 
@@ -303,6 +360,7 @@ Dedicated regressions cover:
 - JSON Resume;
 - distribution trust configuration;
 - release manifest/checksum generation;
+- packaged-binary smoke;
 - optional macOS signing-environment normalization.
 
 ## Product direction
@@ -324,25 +382,24 @@ Career relationship/company-targeting design under #121 is complete as a bounded
 - specialized federal-resume / academic-CV projections without demonstrated demand;
 - autonomous mass auto-apply;
 - recruiter-facing ATS/team workspace;
-- Linux packaged distribution (evaluation #129 closed as deferred until demand);
-- Microsoft Store AppX/MSIX packaging (evaluation #133 closed as a valid post-release candidate, not current scope).
+- Linux packaged distribution (#129 closed as deferred until demand/support justification);
+- Microsoft Store AppX/MSIX packaging (#133 closed as a valid post-release candidate, not current scope).
 
 ## Remaining stable-release gates
 
-Repository implementation and packaged prerelease generation are no longer blockers.
+Repository implementation, migration validation, immutable prerelease packaging, and packaged-runtime smoke are complete.
 
 Still required:
 
-1. packaged consumer smoke against rc.3, including a materially non-software career workflow;
-2. actual Azure Artifact Signing credentials and signed Windows evidence;
-3. clean supported Windows 11 install/launch evidence;
-4. actual Apple Developer ID credentials and signed/notarized/stapled macOS evidence;
-5. clean supported macOS Gatekeeper launch evidence;
-6. immutable stable `v1.2.0` tag/build from the approved lineage;
-7. final stable asset inventory/download spot-check;
-8. README and shipped-status transition from v1.1.2 to v1.2.0 only after stable assets exist.
+1. actual Azure Artifact Signing credentials and signed Windows evidence;
+2. clean supported Windows 11 install/launch evidence, including SmartScreen / Smart App Control behavior;
+3. actual Apple Developer ID credentials and signed/notarized/stapled macOS evidence;
+4. clean supported macOS Gatekeeper launch evidence;
+5. immutable stable `v1.2.0` tag/build from the approved lineage;
+6. final stable asset inventory/download spot-check;
+7. README and shipped-status transition from v1.1.2 to v1.2.0 only after stable assets exist.
 
-The connected Desktop Commander runner is currently offline, so packaged local consumer smoke is not being claimed.
+The connected Desktop Commander runner is currently offline, so clean-machine Windows observation cannot be executed from this session. Hosted packaged-runtime smoke has already passed and is not the remaining blocker.
 
 ## Current sources of truth
 
