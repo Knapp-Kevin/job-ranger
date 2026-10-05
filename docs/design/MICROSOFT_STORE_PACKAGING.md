@@ -1,6 +1,6 @@
 # Microsoft Store Packaging (Windows native channel)
 
-**Status:** implemented on the development line. Package build, manifest verification, and in-package runtime validation run in CI (`.github/workflows/windows-store-package.yml`). **Partner Center reservation, submission, and certification are external and pending.** No Store listing exists, so the Store channel is not shipped.
+**Status:** implemented (merged to `main` via #142; post-v1.2.0, not released). Package build, manifest verification, and in-package runtime validation run in CI (`.github/workflows/windows-store-package.yml`). **Partner Center reservation, submission, and certification are external and pending.** No Store listing exists, so the Store channel is not shipped.
 **Tracks:** #125 (decision record: #133)
 **Architecture:** [`DISTRIBUTION_ARCHITECTURE.md`](./DISTRIBUTION_ARCHITECTURE.md)
 
@@ -82,9 +82,10 @@ The Store build deliberately uses a **different folder name**. Under AppX virtua
    - seeds a historical NSIS data root, signs a copy of the package with an ephemeral certificate, and installs it;
    - runs `Job Ranger.exe --job-ranger-package-smoke-report=…` **inside the package context**: the real Electron main process, with package identity and virtualization;
    - the smoke covers the non-software healthcare-operations Career Ops scenario: profile, Target Track, authored and imported evidence, company/filter, preserved job snapshot, requirement coverage, application, JSON Resume, and backup;
-   - it also covers the bundled SQLite, Chromium PDF rendering with the native Anydoc Parseability Gate, the Truth Gate, external-navigation validation, a `.jobranger` round trip into a second data root, and legacy-install detection;
+   - it also covers the bundled SQLite, native DOCX resume import through Anydoc, Chromium PDF rendering with the native Anydoc Parseability Gate, the Truth Gate, external-navigation validation, a `.jobranger` round trip into a second data root, and legacy-install detection;
    - it records data isolation (data present in package `LocalCache`, no leak into the real `%APPDATA%`), that the historical database is unchanged, and uninstall behavior. Evidence goes to `windows-store-package-smoke.json` and `windows-store-install.json`.
-4. Checksums, a release manifest (`windows-store-release-manifest.json`), and a GitHub artifact attestation are produced for the package on release tags.
+4. First passing run: [37352798825](https://github.com/Knapp-Kevin/job-ranger/actions/runs/37352798825), recorded in [`../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
+5. Checksums, a release manifest (`windows-store-release-manifest.json`), and a GitHub artifact attestation are produced for the package on release tags.
 
 ### External (pending, never claimed without evidence)
 

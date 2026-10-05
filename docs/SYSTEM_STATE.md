@@ -54,7 +54,8 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
 - Electron E2E: 31 tests.
 - PWA browser suite: 11 tests (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, and quota failure.
 - Web parser: 9/9 on the shared resume-parser benchmark corpus.
-- `windows-store-package` workflow: AppX build, manifest verification, install, and in-package smoke on Windows.
+- `windows-store-package` workflow: AppX build, manifest verification, install, and in-package smoke on Windows (including native DOCX import).
+- Evidence record: [`validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
 
 ### Known gaps on this line
 

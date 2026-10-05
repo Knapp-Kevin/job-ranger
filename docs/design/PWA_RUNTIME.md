@@ -1,6 +1,6 @@
 # Web / PWA Runtime
 
-**Status:** implemented on the development line (post-v1.2.0). **Not deployed.** No production origin exists yet, so the web app is not shipped and not a published supported channel.
+**Status:** implemented (merged to `main` via #142; post-v1.2.0, not released). **Not deployed.** No production origin exists yet, so the web app is not shipped and not a published supported channel.
 **Tracks:** #130
 **Architecture:** [`DISTRIBUTION_ARCHITECTURE.md`](./DISTRIBUTION_ARCHITECTURE.md)
 

@@ -18,7 +18,7 @@ The Windows Store application remains a first-class native runtime where native 
 
 ## Implementation status
 
-The architecture is implemented on the post-v1.2.0 development line (PR #142). Status words follow [`../SYSTEM_STATE.md`](../SYSTEM_STATE.md): *implemented* means merged; *shipped* requires a published supported channel.
+The architecture is implemented on the post-v1.2.0 development line (merged via #142; evidence: [`../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md)). Status words follow [`../SYSTEM_STATE.md`](../SYSTEM_STATE.md): *implemented* means merged; *shipped* requires a published supported channel.
 
 | Track | State | Evidence / remaining external step |
 | --- | --- | --- |

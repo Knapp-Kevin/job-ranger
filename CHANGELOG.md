@@ -4,7 +4,7 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification, and the web app awaits a production deployment.
+Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification, and the web app awaits a production deployment. Validation evidence: [`docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
 
 ### Added
 

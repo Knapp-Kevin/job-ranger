@@ -120,7 +120,7 @@ Design and procedure: [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT
 
 - [ ] `windows-store-package` workflow passed for the release commit:
   - `windows-store-package.json`: identity, version, capabilities exactly `runFullTrust` + `internetClient`, no extensions, canonical assets, bundled `sqlite3.exe`;
-  - `windows-store-package-smoke.json`: in-package healthcare Career Ops smoke, `windowsStore: true`, isolated data root, Chromium PDF and native parseability, archive round trip;
+  - `windows-store-package-smoke.json`: in-package healthcare Career Ops smoke, `windowsStore: true`, isolated data root, native DOCX resume import, Chromium PDF and native parseability, archive round trip;
   - `windows-store-install.json`: data in package storage, no leak into `%APPDATA%`, historical NSIS data unchanged, uninstall behavior.
 - [ ] Partner Center identity variables are configured and the submission package was built with `JOB_RANGER_REQUIRE_STORE_IDENTITY=1`.
 - [ ] The `.appx`, its checksums, `windows-store-release-manifest.json`, and its artifact attestation are attached to the release.
