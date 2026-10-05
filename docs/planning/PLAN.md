@@ -1,6 +1,6 @@
 # Job Ranger Roadmap
 
-**Current as of:** 2026-10-03
+**Current as of:** 2026-10-05
 
 This is the active roadmap. Historical phase/remediation plans remain implementation provenance only.
 
@@ -25,17 +25,28 @@ See [`../design/UNIVERSAL_USER_STORIES.md`](../design/UNIVERSAL_USER_STORIES.md)
 
 ## Current release boundary
 
-The latest published installers remain **v1.1.2**.
+Stable **v1.2.0** was published on 2026-10-05 from commit:
 
-`main` is materially ahead and contains the completed Career Evidence/Resume Intelligence program, the completed Universal User Stories program, and the broader application lifecycle/portability work described in `CHANGELOG.md` under **Unreleased**.
+`71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
-The highest-priority product-delivery task is now to prepare and publish a fully validated release rather than adding another large subsystem first.
+The release was promoted byte-for-byte from validated `v1.2.0-rc.5` artifacts. Its Windows/macOS packages are intentionally unsigned/unnotarized under the documented owner-approved exception and remain immutable historical release artifacts.
+
+Post-v1.2 work no longer assumes that Job Ranger must purchase/maintain both Windows public-trust signing and Apple Developer credentials. The accepted forward distribution architecture is:
+
+- **cross-platform mainstream:** local-first PWA/web runtime;
+- **Windows-native mainstream:** Microsoft Store packaged Electron application;
+- direct GitHub native binaries: development/testing/advanced use unless independently publicly trusted;
+- no planned native macOS or Linux distribution;
+- SignPath excluded;
+- Azure Artifact Signing optional rather than release-critical.
+
+See [`../design/DISTRIBUTION_ARCHITECTURE.md`](../design/DISTRIBUTION_ARCHITECTURE.md) and [`../DISTRIBUTION_TRUST.md`](../DISTRIBUTION_TRUST.md).
 
 ## Completed programs
 
 ### Career Evidence and Resume Intelligence / #59
 
-**Status: complete on `main`.**
+**Status: complete.**
 
 - [x] R0 durable Career Profile/Application persistence and Career Evidence foundation;
 - [x] R1 local resume import, source preservation, extraction snapshots, evidence review, and provenance;
@@ -48,7 +59,7 @@ Optional remote inference was not required to complete R4/R5 and remains deferre
 
 ### Universal User Stories / #81
 
-**Status: complete on `main`.**
+**Status: complete.**
 
 - [x] progressive onboarding;
 - [x] multiple Target Tracks;
@@ -63,78 +74,85 @@ Optional remote inference was not required to complete R4/R5 and remains deferre
 
 Narrower fields/capabilities that did not earn core placement remain deferred rather than being forced into the universal model.
 
-## Active priority 0: documentation and release readiness
+### v1.2.0 release / #119
 
-### Platinum documentation remediation / #116
+**Status: complete.**
 
-- [ ] reconcile README, HELP, CHANGELOG, SYSTEM_STATE, architecture, roadmap, governance, and security with current `main`;
-- [ ] make shipped vs implemented-on-main status unmistakable;
-- [ ] add durable release-readiness contract;
-- [ ] record product-gap dispositions;
-- [ ] run manual validation without consuming GitHub Actions budget;
-- [ ] convert genuine gaps into follow-on issues.
+- [x] immutable release candidate lineage;
+- [x] Windows/macOS package smoke;
+- [x] checksum and schema-v2 manifest evidence;
+- [x] stable v1.2.0 publication;
+- [x] post-release documentation reconciliation.
 
-### Next release
+The unsigned/unnotarized v1.2.0 exception does not define the future distribution architecture.
 
-Before publication:
+## Active priority 0: distribution architecture implementation
 
-- [ ] select the next version deliberately;
-- [ ] validate upgrade/migrations from v1.1.2;
-- [ ] validate backup/restore before destructive migration/package testing;
-- [ ] run repository health and Electron workflow validation manually or through the chosen release environment;
-- [ ] repeat Windows package validation on the immutable release tag;
-- [ ] repeat macOS x64/arm64 packaging validation on the immutable release tag;
-- [ ] record notarization evidence when credentials are available;
-- [ ] publish Windows/macOS assets;
-- [ ] finalize release notes, README download links, and shipped-state docs only after assets exist.
+### Windows Microsoft Store / #125
 
-See [`../RELEASE_READINESS.md`](../RELEASE_READINESS.md).
+Build the primary supported Windows-native distribution path using the Microsoft Store.
 
-## Active priority 1: source truth and reliability
+Implementation direction:
 
-These are the strongest product gaps discovered during the October 2026 capability review.
+- [ ] produce an AppX proof-of-concept with the pinned Electron/electron-builder v26 toolchain;
+- [ ] configure Partner Center publisher/package identity;
+- [ ] validate manifest/capability generation;
+- [ ] validate packaged SQLite and local artifact paths;
+- [ ] validate source acquisition, resume import/export/PDF generation, and backup/restore;
+- [ ] validate upgrade/coexistence/migration from historical direct installer where relevant;
+- [ ] pass Store certification;
+- [ ] validate clean Windows install and first launch from the Store;
+- [ ] make Microsoft Store the recommended Windows-native installation path.
 
-### Canonical job-description/source snapshots
+Do not block this work on Azure Artifact Signing.
 
-**Need:** preserve fuller source/job-description evidence so requirement mapping, interview prep, and historical application context do not depend solely on partial text collected during one scrape.
+### Cross-platform local-first PWA / #130
 
-Acceptance direction:
+Evolve Job Ranger toward a shared domain/application core with a first-class web/PWA runtime.
 
-- preserve complete/bounded source text where the source permits it;
-- record retrieval time/source identity/extraction version;
-- retain historical posting context after a listing disappears;
-- distinguish “not found in collected text” from “not required by employer”;
-- do not store arbitrary executable page state merely to call it a snapshot.
+Implementation direction:
 
-### Dynamic-source diagnostics and reliability
+- [ ] inventory Electron-only and Node-only assumptions;
+- [ ] define shared-core versus runtime-adapter boundaries;
+- [ ] select/prove browser persistence using OPFS/IndexedDB or an evidence-backed alternative;
+- [ ] preserve domain identity, provenance, lineage, migrations, and backup semantics;
+- [ ] prove resume/Career Evidence import and deterministic output boundaries;
+- [ ] prove one end-to-end local-first Career Ops workflow in the browser runtime;
+- [ ] implement safe service-worker update/recovery behavior;
+- [ ] validate storage quota/eviction behavior and user-facing backup guidance;
+- [ ] validate installability/standalone behavior across supported browsers;
+- [ ] document genuine native-only limitations rather than inheriting Electron assumptions by accident;
+- [ ] promote the PWA only after capability and trust evidence is recorded.
 
-**Need:** improve Workday/iCIMS/BambooHR/Oracle/Taleo/generic browser-backed reliability and make failure states understandable.
+The PWA is not intended to become a permanently reduced "Lite" edition.
 
-Acceptance direction:
+## Active priority 1: source discovery and quality
 
-- distinguish no-results, unsupported shape, access block, timeout, parse failure, and network-policy rejection;
-- improve pagination/infinite-load handling only where measured value justifies it;
-- collect local diagnostic evidence by source family without creating telemetry;
-- preserve the acquisition network/security boundary.
+### Post-v1.2 provider tranche / #136
+
+Implement or evidence-reject the first bounded post-v1.2 provider tranche:
+
+- Himalayas;
+- We Work Remotely.
+
+Requirements include first-party terms/attribution verification, deterministic normalization, provenance, explicit coverage limitations, duplicate-rate measurement, and material unique coverage rather than listing-count inflation.
+
+ReliefWeb remains a later niche candidate subject to registration and terms/IP review.
+
+### Source truth and reliability
+
+Continue to preserve and improve:
+
+- canonical source/job-description snapshots;
+- full/partial/listing-only completeness semantics;
+- dynamic-source diagnostics;
+- acquisition failure isolation;
+- connection-level DNS rebinding protections;
+- honest unsupported/unavailable states.
 
 ## Priority 2 candidates: evaluate before implementation
 
 See [`../PRODUCT_GAP_REVIEW.md`](../PRODUCT_GAP_REVIEW.md) for full disposition rationale.
-
-### Broader opportunity discovery
-
-Candidate source classes:
-
-- federal/USAJOBS;
-- state/local government;
-- school districts;
-- hospitals/health systems;
-- academic/professional associations;
-- apprenticeship/union sources;
-- staffing/contract marketplaces;
-- broader general feeds.
-
-Do not require ordinary users to configure developer/API credentials merely to use the product.
 
 ### Faster arbitrary-job capture
 
@@ -176,7 +194,16 @@ Do not schedule these without new evidence:
 - federal-resume/academic-CV specialized projections;
 - universal travel/relocation/sponsorship fields;
 - cloud sync / hosted account;
-- Linux packaged distribution.
+- native macOS distribution;
+- native Linux distribution;
+- Apple Developer ID/notarization;
+- Azure Artifact Signing as a required release dependency.
+
+## Explicitly rejected under current distribution architecture
+
+- SignPath as a Job Ranger signing/distribution dependency.
+
+Changing this disposition requires a new explicit architecture decision.
 
 ## Explicit non-goals under current governance
 
@@ -206,6 +233,9 @@ These can change only through an explicit evidence-backed governance decision, n
 10. Search learning proposes strategy changes; it does not silently mutate profile/evidence.
 11. Occupation knowledge is bounded data/rules before plugin/runtime complexity.
 12. External services remain adapters, not domain authorities.
+13. Browser delivery does not make personal career data server-authoritative.
+14. Runtime adapters do not become product/domain authorities.
+15. Public code-signing certificates are optional tools, not foundational release dependencies.
 
 ## Historical plans
 
