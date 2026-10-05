@@ -81,6 +81,40 @@ Consequences:
 
 The renderer owns presentation and ordinary interaction. It does not receive direct Node.js, SQLite, parser, arbitrary filesystem, or general browser authority.
 
+## Multi-runtime architecture (post-v1.2.0 development line)
+
+The diagram above is the Electron runtime. The post-v1.2.0 line adds a second, first-class runtime: the local-first web/PWA runtime. Both run the **same shared application core**. Decision record: [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md).
+
+```text
+                    React renderer (src/) + shared preload bridge
+                                   │
+             ┌─────────────────────┴─────────────────────┐
+             ▼                                           ▼
+   Electron main process                      Web runtime worker (src/pwa/runtime)
+   (Windows native: Microsoft Store /         (exclusive Web Lock, same IPC channel
+    direct download)                           table and boundary validators)
+             │                                           │
+             └──────────── shared application core ──────┘
+               electron/src: core-ipc, *-ipc registration, backends,
+               repositories, migrations + feature-migration registry,
+               Truth Gate, Parseability Gate, BackupService, portable archive
+                                   │
+             ┌─────────────────────┴─────────────────────┐
+             ▼                                           ▼
+   Electron adapters                          Web adapters (src/pwa/adapters)
+   sqlite3 CLI · node:fs · Anydoc ·           SQLite WASM + OPFS · OPFS fs · pdf.js/DOCX ·
+   Chromium printToPDF · DNS-pinned fetch     pdf-lib · allowlisted CORS fetch
+```
+
+Rules:
+
+- `src/pwa/adapter-map.ts` lists every runtime-specific module and Node built-in the web runtime replaces. `tests/runtime-adapter-contract.test.mjs` requires each adapter to export the full contract and confines Electron imports to IPC/infrastructure modules. The web build fails on any unadapted `node:*` import.
+- Adapters implement mechanics only (persistence, files, parsing, rendering, transport). Domain rules (evidence authority, provenance, lineage, Truth Gate, explicit source approval) are never re-implemented per runtime.
+- Cross-runtime data movement uses the versioned `.jobranger` archive, never another runtime's live database.
+- Runtime identity and capabilities (`src/shared/runtime.ts`) are environment facts surfaced honestly in the UI. They are not product-truth switches.
+
+Details: [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md) and [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+
 ## Build and runtime authority
 
 `electron/src/**` is the only checked-in privileged implementation authority.
@@ -520,6 +554,8 @@ Managed artifact paths stored as absolute paths are rebased inside the staged da
 
 The old live data remains a rollback candidate until restored state successfully initializes.
 
+A backup bundle can be packed into a single-file `.jobranger` portable archive: ZIP STORE entries, CRC-32 per entry, and an archive manifest pinning the SHA-256 of the backup manifest. This is the interchange format between the Electron and web runtimes. Restore validation compares migrations against those the build knows and rejects newer formats or schemas explicitly.
+
 ## JSON Resume adapter
 
 JSON Resume import/export is an interoperability boundary.
@@ -570,6 +606,14 @@ The desktop shell and privileged services retain:
 - managed artifact storage;
 - import content/size validation.
 
+The web runtime keeps an equivalent boundary:
+- the page has no direct storage or parser authority; everything goes through the runtime worker's validated IPC table;
+- strict CSP with Trusted Types; no remote code;
+- `connect-src` limited to an explicit allowlist of public job-feed APIs, credential-less;
+- external navigation validated twice;
+- a SHA-256-verified service-worker shell that never touches career data;
+- user-gesture-only file pickers with size limits.
+
 Any weakening of these boundaries is a material governance change.
 
 ## Persistence strategy
@@ -592,6 +636,8 @@ Durable domains include:
 - application materials;
 - application insights support state;
 - backup metadata where applicable.
+
+The web runtime uses the same SQLite schema and migrations through SQLite WASM. The database image is persisted to the origin-private file system with atomic writes; managed files live under the OPFS data root. A shared downgrade guard refuses data written by a newer schema in either runtime.
 
 Cloud sync is not foundational. Verified backup/restore exists first.
 

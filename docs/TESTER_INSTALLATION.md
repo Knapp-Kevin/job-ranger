@@ -1,7 +1,7 @@
 # Tester Installation Guidance
 
 **Audience:** informed testers using Job Ranger prerelease artifacts.  
-**Not the normal public-installation path.** Stable Job Ranger releases are expected to be signed/notarized and verified by the release workflow.
+**Not the normal public-installation path.** Going forward, ordinary users install Job Ranger from the Microsoft Store (Windows) or use the web app; both are pending external certification or deployment (see [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)). Direct-download installers are advanced/test artifacts unless independently signed.
 
 Unsigned or unnotarized prerelease artifacts can trigger platform security controls. Job Ranger does not instruct testers to disable SmartScreen, Smart App Control, Defender, Gatekeeper, quarantine protections, or other system security globally.
 
@@ -13,6 +13,13 @@ Every Job Ranger release build publishes platform-specific SHA-256 evidence next
 - `macos-SHA256SUMS.txt` and `macos-release-manifest.json`.
 
 The manifest identifies the tag, whether the build is a public release or tester-only prerelease, the artifact filename, byte size, SHA-256 digest, and the corresponding signing-verification evidence file.
+
+Releases after v1.2.0 also publish:
+- `windows-store-*` files for the Microsoft Store package candidate;
+- `web-*` files for the web build;
+- a GitHub artifact attestation for every artifact. Verify it with `gh attestation verify <file> --repo Knapp-Kevin/job-ranger`.
+
+The Store package attached to a GitHub Release is the unsigned submission artifact. It is not installable as-is and is not a substitute for the Store listing.
 
 ### Windows
 

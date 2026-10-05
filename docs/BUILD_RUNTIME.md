@@ -42,6 +42,19 @@ Main-process code must not infer application assets from the compiled module dir
 
 Renderer HTML and packaged assets resolve from `app.getAppPath()`. Preload resolves relative to the generated main-process module because it is emitted beside it.
 
+## Web/PWA build
+
+`npm run build:pwa` (`vite.pwa.config.ts`) bundles the **same** `electron/src/**` shared core for the browser. It does not use `electron-runtime/`. Runtime-specific modules and Node built-ins are replaced at build time by the adapters listed in `src/pwa/adapter-map.ts`. The build fails on any unadapted `node:*` import. Output goes to `dist-pwa/` (ignored by Git) and includes:
+- `sw.js`, with the SHA-256 shell manifest;
+- `_headers`, with the production security headers;
+- `build-info.json`, with build ID, commit, CSP, and asset hashes.
+
+See [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md).
+
+## Microsoft Store build
+
+`npm run electron:build:store` packages the same generated runtime with `electron-builder.store.cjs` (AppX). It runs on Windows only. Package identity comes from environment/repository variables. See [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+
 ## Source-control rules
 
 - track `electron/src/**`;

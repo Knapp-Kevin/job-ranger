@@ -121,6 +121,47 @@ The PWA must remain local-first. A hosted origin is a delivery mechanism, not au
 
 Before the PWA is described as mainstream, validation must cover storage durability/eviction behavior, backup/restore, browser support, update safety, installability where supported, and any environment-specific capability limitations.
 
+## Implementation on the post-v1.2.0 line
+
+Implemented in PR #142. Nothing here is shipped until a release, a Store listing, or a production origin actually exists.
+
+### Provenance (all channels, independent of any certificate)
+
+| Artifact | Built by | Evidence published with the release |
+| --- | --- | --- |
+| Microsoft Store package `Job Ranger-v<version>-windows-store-x64.appx` | `windows-store-package.yml` (called by `release-build.yml`) | `windows-store-package.json`, `windows-store-AppxManifest.xml`, `windows-store-package-smoke.json`, `windows-store-install.json`, `windows-store-SHA256SUMS.txt`, `windows-store-release-manifest.json`, GitHub artifact attestation |
+| Web build `job-ranger-web-v<version>.zip` | `pwa.yml` (called by `release-build.yml`) | `web-build-info.json` (build ID, commit, CSP, per-asset SHA-256), `web-pwa-e2e.json`, `web-SHA256SUMS.txt`, `web-release-manifest.json`, GitHub artifact attestation |
+| Direct NSIS installer (advanced/test) | `release-build.yml` | `windows-signing.json`, `windows-package-smoke.json`, `windows-SHA256SUMS.txt`, `windows-release-manifest.json` (`testerOnly: true` unless signed), GitHub artifact attestation |
+
+Verify any artifact:
+
+```bash
+sha256sum --check <platform>-SHA256SUMS.txt
+gh attestation verify <artifact> --repo Knapp-Kevin/job-ranger
+```
+
+Attestations are SLSA build-provenance statements signed through GitHub's OIDC identity for the exact workflow run, commit, and tag. They do not depend on Azure Artifact Signing or any purchased certificate.
+
+### Azure Artifact Signing (optional)
+
+The release workflow signs the direct NSIS installer only when the repository variable `JOB_RANGER_REQUIRE_WINDOWS_SIGNING` is `1`; in that case it fails closed if the Azure configuration is incomplete. Without it, the installer is published as an advanced/test artifact. Store and web releases never depend on it.
+
+### Microsoft Store channel
+
+- The `.appx` submitted to Partner Center is **unsigned**; Microsoft signs it after certification.
+- CI signs only a temporary copy, with an ephemeral self-signed certificate, so it can be installed for validation. That certificate is removed afterwards and never published.
+- Package identity comes from repository variables, never from source.
+- Store-specific evidence, coexistence and migration behavior, and remaining external steps: [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+
+### Web channel
+
+- **Deployment authority:** `deploy-pwa.yml`, run in the protected `production-web` environment (owner-configured reviewers).
+- **No rebuild:** it deploys only an already-released archive whose checksum and attestation verify, then checks that the live origin serves that build ID with the required security headers.
+- **Update integrity:** the service worker refuses any deployment whose shell assets do not match the build's SHA-256 manifest. Updates activate only after the user confirms.
+- **Rollback:** redeploy an earlier tag. The runtime refuses to open data upgraded by a newer schema instead of corrupting it.
+- **Local-first:** browser delivery never makes the server authoritative for user data. CSP `connect-src` limits outbound requests to public job-feed APIs, and nothing else leaves the device unless the user downloads a file.
+- Details: [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md).
+
 ## macOS
 
 Native macOS distribution is not currently planned.

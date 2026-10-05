@@ -1,0 +1,97 @@
+{
+  "schemaVersion": 1,
+  "product": "job-ranger-web",
+  "version": "1.2.0",
+  "buildId": "1.2.0+242b8761b204",
+  "commit": "242b8761b2045b27de4936a261e663b3790c4afc",
+  "sourceRepository": "Knapp-Kevin/job-ranger",
+  "workflowRun": null,
+  "contentSecurityPolicy": "default-src 'none'; script-src 'self' 'wasm-unsafe-eval'; worker-src 'self'; style-src 'self'; img-src 'self' data: blob:; font-src 'self'; connect-src 'self' https://boards-api.greenhouse.io https://api.lever.co https://api.ashbyhq.com https://api.smartrecruiters.com https://remoteok.com https://www.arbeitnow.com; manifest-src 'self'; media-src 'none'; object-src 'none'; frame-src 'none'; child-src 'self'; base-uri 'none'; form-action 'none'; frame-ancestors 'none'; upgrade-insecure-requests; require-trusted-types-for 'script'; trusted-types job-ranger-script-url",
+  "assets": [
+    {
+      "path": "ICON.png",
+      "sha256": "08cbbc38092e136d2db204cd5527277f548f7bdf9584b124beb999fee7b9a665"
+    },
+    {
+      "path": "assets/App-CnZpZyow.js",
+      "sha256": "fb13f90f35addf71c9cc050e276cad1b969441da09b1311ecf96e81d8e3da7db"
+    },
+    {
+      "path": "assets/client-D0BSeb7t.js",
+      "sha256": "2759f53b4293e138f5b7ad8a4873265127e2cc2ed61fb16952b61b3361aabe71"
+    },
+    {
+      "path": "assets/index-Bm3XDank.js",
+      "sha256": "a7d8e00d673832d0182a2b60915e8d2112ce1d71ccfa99b26f761e97716d4bb6"
+    },
+    {
+      "path": "assets/index-CwMqb0bL.css",
+      "sha256": "7dbb5a73c99b5f53a9b408c16854fd109dc327358190d4651298848fa525d2e5"
+    },
+    {
+      "path": "assets/preload-BgtSBH65.js",
+      "sha256": "ddd5c4412d34f9d44c82f1a31b4f995cfcbb1dcc5fd83f2f2fbe662e91042aef"
+    },
+    {
+      "path": "assets/preload-helper-DitTytIM.js",
+      "sha256": "77aebac6eef61d243e30c1c3b2d67f3cc3ee554890fe2e24100e5b77d6632dca"
+    },
+    {
+      "path": "assets/rolldown-runtime-D2aABDIb.js",
+      "sha256": "760907b0f57761fcae7a1113e535296fa7e31deaa87aa6138e19917ae7e00a86"
+    },
+    {
+      "path": "assets/sqlite3-Con_VOcu.wasm",
+      "sha256": "2ee8f3dab694532afc8840e07703127287662d08b74e6ff50491ce63f00d5752"
+    },
+    {
+      "path": "assets/sqlite3-opfs-async-proxy-Ck-yCayi.js",
+      "sha256": "9f1970e05ee07a79332498858740b705eeb1dcee03bc150f6f690bc0fb5f0a06"
+    },
+    {
+      "path": "assets/sqlite3-worker1-B5PleR0d.js",
+      "sha256": "1b789fe317824d32075d72d8acae0018b67e4c169722f84ddb9833b13ea6723a"
+    },
+    {
+      "path": "assets/worker-main-D-WkJxLJ.js",
+      "sha256": "53ae29d27b5f55c703201769b20fcfb16a87023952234e01e7489cecf9cb2585"
+    },
+    {
+      "path": "favicon.png",
+      "sha256": "08cbbc38092e136d2db204cd5527277f548f7bdf9584b124beb999fee7b9a665"
+    },
+    {
+      "path": "help.html",
+      "sha256": "20642f309d915d64f196e529094bc1a01fd13e297b7ef216b4cc75855a2b7c4b"
+    },
+    {
+      "path": "index.html",
+      "sha256": "42c8bd8a3648252db087d8b437b6999aeaeab9b99e848375b6c9083fe4bb3e8b"
+    },
+    {
+      "path": "manifest.webmanifest",
+      "sha256": "52578984e73432b4248d7329ba0a98cdb012e0495ba4e594e05e033a06054c00"
+    },
+    {
+      "path": "pwa/apple-touch-icon.png",
+      "sha256": "92818efa7a7b3672ab6570a7d26f18c4885913fa2c45a777baabb55106fec11b"
+    },
+    {
+      "path": "pwa/icon-192.png",
+      "sha256": "be5e56bb19b58b9ad6b89ee7ade709076254ff01773c7ffc12ad0bd7a1852013"
+    },
+    {
+      "path": "pwa/icon-512.png",
+      "sha256": "0737c42437fb56cfab88e04d241ca7b48065fc4d418fd60d8d42f7a49d3b22ba"
+    },
+    {
+      "path": "pwa/icon-maskable-512.png",
+      "sha256": "4129d8008c6ef2273620a22093b7450d9ad7f72e30c76d54a392abc5971e328e"
+    }
+  ],
+  "archive": {
+    "name": "job-ranger-web-v1.2.0.zip",
+    "sha256": "b98ece935150ba599d603b6a7f01bf4238b3536e5b3d57124c6b77b545504dd8",
+    "bytes": 2410828
+  }
+}

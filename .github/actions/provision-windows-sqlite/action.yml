@@ -1,0 +1,31 @@
+name: Provision pinned SQLite CLI (Windows)
+description: Downloads the pinned sqlite-tools archive, verifies its SHA3-256, and stages sqlite3.exe for packaging and tests.
+runs:
+  using: composite
+  steps:
+    - name: Provision pinned SQLite CLI
+      shell: pwsh
+      run: |
+        $ErrorActionPreference = "Stop"
+        $sqliteUrl = "https://www.sqlite.org/2026/sqlite-tools-win-x64-3530400.zip"
+        $expectedSha3 = "88b4659fe747896b853af10157316b4ade143553efb89c1c8ca7423a278dcc8b"
+        $archive = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400.zip"
+        $extractDir = Join-Path $env:RUNNER_TEMP "sqlite-tools-win-x64-3530400"
+
+        Invoke-WebRequest -Uri $sqliteUrl -OutFile $archive
+        $actualSha3 = node -e "const fs=require('fs'),crypto=require('crypto'); console.log(crypto.createHash('sha3-256').update(fs.readFileSync(process.argv[1])).digest('hex'))" $archive
+        if ($actualSha3.Trim().ToLowerInvariant() -ne $expectedSha3) {
+          throw "SQLite archive SHA3-256 mismatch. Expected $expectedSha3 but received $actualSha3."
+        }
+
+        Expand-Archive -LiteralPath $archive -DestinationPath $extractDir -Force
+        $sqlite = Get-ChildItem -Path $extractDir -Recurse -Filter sqlite3.exe | Select-Object -First 1
+        if (-not $sqlite) {
+          throw "sqlite3.exe was not found in the verified SQLite tools archive."
+        }
+
+        New-Item -ItemType Directory -Path build/sqlite -Force | Out-Null
+        Copy-Item -LiteralPath $sqlite.FullName -Destination build/sqlite/sqlite3.exe -Force
+        $sqlitePath = (Resolve-Path build/sqlite/sqlite3.exe).Path
+        "SQLITE3_PATH=$sqlitePath" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+        & $sqlitePath --version

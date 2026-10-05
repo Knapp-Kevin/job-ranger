@@ -19,6 +19,8 @@ import { Layout } from "../components/Layout";
 import { Modal } from "../components/Modal";
 import { useAppContext } from "../context/AppContext";
 import { getDesktopApi } from "../services/api";
+import { useRuntimeInfo } from "../services/runtime";
+import { isRunnableInRuntime } from "../shared/runtime";
 import type {
   SourceDiscoveryCandidate,
   SourceDiscoveryResult,
@@ -33,6 +35,7 @@ const SUPPORT_BADGE_CLASSES: Record<string, string> = {
 };
 
 export function Companies() {
+  const runtimeKind = useRuntimeInfo()?.kind;
   const { companies, addCompany, deleteCompany, runScraper, refreshing } = useAppContext();
   const targetTracks = useTargetTracks();
   const [modalOpen, setModalOpen] = useState(false);
@@ -426,6 +429,7 @@ export function Companies() {
             {companies.map((company) => {
               const profile = getSourceProfile(company.sourceType);
               const canRun = canRunSourceType(company.sourceType);
+              const runnableHere = isRunnableInRuntime(runtimeKind, company.sourceType);
               const badgeClass = SUPPORT_BADGE_CLASSES[profile.supportLevel] ?? "soft-badge-danger";
 
               return (
@@ -460,6 +464,11 @@ export function Companies() {
                           ? "Browser-backed extraction required"
                           : "No reliable acquisition path yet"}
                     </p>
+                    {canRun && !runnableHere && (
+                      <p className="mt-1 text-sm text-[var(--color-warning)]" data-testid="web-source-limit">
+                        Needs the Windows app: this site cannot be read from a browser tab.
+                      </p>
+                    )}
                     <p className="mt-1 text-xs uppercase tracking-[0.12em] text-[var(--color-text-muted)]">
                       {company.isActive ? "Scheduled locally" : "Paused"}
                     </p>

@@ -19,6 +19,7 @@ import type {
   ApplicationEventKind,
 } from "../shared/application-lifecycle";
 import { getDesktopApi } from "../services/api";
+import { useRuntimeInfo } from "../services/runtime";
 
 interface ApplicationLifecyclePanelProps {
   applicationId: string;
@@ -60,6 +61,7 @@ function eventKindLabel(kind: ApplicationEventKind): string {
 }
 
 export function ApplicationLifecyclePanel({ applicationId }: ApplicationLifecyclePanelProps) {
+  const revealLabel = useRuntimeInfo()?.capabilities.revealInFileManager === false ? "Download file" : "Show file";
   const [open, setOpen] = useState(false);
   const lifecycle = useApplicationLifecycle(applicationId, open);
   const [contactDraft, setContactDraft] = useState<ApplicationContactInput>(emptyContact);
@@ -156,7 +158,7 @@ export function ApplicationLifecyclePanel({ applicationId }: ApplicationLifecycl
                           className="secondary-button"
                           onClick={() => void getDesktopApi().showItemInFolder(artifact.managedPath)}
                         >
-                          Show file
+                          {revealLabel}
                         </button>
                       </div>
                     ))

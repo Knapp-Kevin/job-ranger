@@ -16,6 +16,20 @@ The PWA is not a reduced or promotional edition. It is intended to become a firs
 
 The Windows Store application remains a first-class native runtime where native capabilities materially improve the product.
 
+## Implementation status
+
+The architecture is implemented on the post-v1.2.0 development line (merged via #142; evidence: [`../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](../validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md)). Status words follow [`../SYSTEM_STATE.md`](../SYSTEM_STATE.md): *implemented* means merged; *shipped* requires a published supported channel.
+
+| Track | State | Evidence / remaining external step |
+| --- | --- | --- |
+| Shared core and runtime adapters | Implemented | Shared modules run unchanged in both runtimes. `src/pwa/adapter-map.ts` is enforced by `tests/runtime-adapter-contract.test.mjs`. 18 shared-core suites pass on the SQLite WASM engine |
+| Web/PWA runtime | Implemented, **not deployed** | Design and parity matrix: [`PWA_RUNTIME.md`](./PWA_RUNTIME.md). The browser suite runs in CI (`pwa.yml`). A production deployment needs a header-capable HTTPS origin (`deploy-pwa.yml`). Firefox, Safari, and real-device install validation are pending |
+| Portable data boundary | Implemented | `.jobranger` archive. Electron→PWA, PWA→Electron, and corruption/version rejection are tested in the browser suite |
+| Microsoft Store package | Implemented; package validation in CI; **certification pending** | Design: [`MICROSOFT_STORE_PACKAGING.md`](./MICROSOFT_STORE_PACKAGING.md). `windows-store-package.yml` builds, verifies, installs, and smoke-tests inside the package context. Partner Center identity, submission, and certification remain external |
+| Store/NSIS coexistence | Implemented | Isolated Store data root; explicit read-only import of historical NSIS data; uninstall behavior recorded by CI |
+| Provenance | Implemented | SHA-256 files, release manifests (`windows`, `windows-store`, `web`), and GitHub artifact attestations. Azure Artifact Signing is opt-in only (`vars.JOB_RANGER_REQUIRE_WINDOWS_SIGNING`) |
+| Native macOS / Linux | Not part of the target architecture | macOS release job runs only on manual dispatch, for historical/advanced use |
+
 ## Why this decision exists
 
 Public code-signing certificates are useful for publisher identity and native OS trust, but they are not the only defensible software-distribution trust model and must not become a mandatory economic or operational dependency for Job Ranger.

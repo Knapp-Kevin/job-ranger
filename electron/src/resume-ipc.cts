@@ -50,11 +50,7 @@ export async function initializeResumeIpc(
   ipcMain.handle("resume:export-pdf", async (_event, rawRequest) => {
     const request: ResumeExportRequest = validateResumeExportRequest(rawRequest);
     const prepared = await service.prepareRender(request.projectionId);
-    await renderResumePdf(
-      prepared.html,
-      prepared.projection.pageFormat,
-      prepared.temporaryPath,
-    );
+    await renderResumePdf(prepared);
     return service.finalizeRenderedPdf(prepared, request);
   });
   ipcMain.handle(

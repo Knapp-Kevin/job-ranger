@@ -12,6 +12,9 @@ export function classifySourceFailure(error: unknown): SourceFailureDiagnostic {
   if (error instanceof Error && error.name === "AbortError" || /timeout|timed out|aborted/.test(value)) {
     return { code: "timeout", message: "The source did not respond before the configured timeout." };
   }
+  if (/cross-origin/.test(value)) {
+    return { code: "browser-unavailable", message: "The web app cannot read this source because the site does not allow cross-origin access from browsers. The Windows app can monitor it." };
+  }
   if (/http\s+(401|403)\b/.test(value)) {
     return { code: "access-blocked", message: "The source refused automated access. Job Ranger did not bypass the site's access controls." };
   }
