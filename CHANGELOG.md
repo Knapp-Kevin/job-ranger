@@ -4,11 +4,11 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-v1.2.0 release-candidate work is frozen around the validated `v1.2.0-rc.3` packaged candidate. Stable publication remains blocked on packaged consumer smoke plus real Windows signing / macOS signing-notarization clean-machine evidence.
+Post-v1.2.0 development is open. Discovery provider tranche #136 may proceed against the shipped v1.2.0 baseline.
 
-## v1.2.0 - Release candidate
+## v1.2.0 - 2026-10-05
 
-The current immutable packaged candidate is `v1.2.0-rc.3` at `e25c61c0be21dd00bc80a0880d2a770660c283bd`. Windows x64 and macOS x64/arm64 packages, prerelease trust reports, SHA-256 sums, and release manifests have been built and published successfully. v1.2.0 is **not** the stable public release until the remaining trust/smoke gates complete.
+v1.2.0 is the stable public release, promoted from immutable `v1.2.0-rc.5` at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The Windows/macOS artifacts are byte-identical to the rc.5 packages that passed packaged-runtime smoke, native trust-verifier execution, SHA-256 verification, and schema-v2 release-manifest generation. The release is intentionally unsigned/unnotarized under an explicit owner-approved exception.
 
 ### Added
 
@@ -67,7 +67,7 @@ The current immutable packaged candidate is `v1.2.0-rc.3` at `e25c61c0be21dd00bc
 - Hardened SQLite-backed persistence, migration, and E2E locking behavior.
 - Made high-severity dependency audit findings fail closed except for narrowly documented upstream-blocked tooling exceptions.
 - Added backup integrity validation and staged restore safeguards.
-- Stable exact-semver release builds fail closed when required Windows signing or macOS signing/notarization configuration/verification is absent.
+- Stable exact-semver release builds normally fail closed when required Windows signing or macOS signing/notarization configuration/verification is absent. v1.2.0 is the documented owner-approved exception, promoted byte-for-byte from validated rc.5 artifacts with explicit unsigned-distribution warnings.
 
 ### Release engineering
 
@@ -83,16 +83,9 @@ The current immutable packaged candidate is `v1.2.0-rc.3` at `e25c61c0be21dd00bc
 - Fixed unsigned macOS prerelease packaging so blank/incomplete signing environment variables are removed before electron-builder rather than being misinterpreted as a certificate source.
 - `v1.2.0-rc.3` hosted release run `37239803933` completed successfully for Windows x64 and macOS x64/arm64 with expected package/trust/checksum/manifest assets uploaded.
 
-### Remaining stable-release boundary
+### Post-release distribution trust follow-up
 
-Before stable v1.2.0 publication:
-
-- perform packaged consumer smoke against rc.3, including a materially non-software career scenario;
-- configure/verify real Azure Artifact Signing and record clean Windows 11 behavior;
-- configure/verify real Developer ID signing, Apple notarization/stapling, and clean macOS Gatekeeper behavior;
-- build the immutable stable tag;
-- verify final stable assets/downloads;
-- only then update README download links and shipped-status documentation from v1.1.2 to v1.2.0.
+Stable v1.2.0 is published. Real Windows signing and macOS Developer ID/notarization evidence remain tracked under #125/#130 for a signed follow-up release. v1.2.0 artifacts are immutable and must not be replaced in place.
 
 ## v1.1.2 - 2026-09-24
 

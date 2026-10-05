@@ -196,34 +196,6 @@ Each release should record:
 
 ## Current v1.2.0 release-readiness status
 
-Validated candidate:
+**Published:** `v1.2.0` → `71f9b790a1f456321aee2c783f39f4a6784b83a9` on 2026-10-05.
 
-`v1.2.0-rc.5` → `71f9b790a1f456321aee2c783f39f4a6784b83a9`
-
-Hosted release run `37259653622` completed successfully on both platforms.
-
-Completed:
-
-1. v1.2.0 scope/version selection and repository implementation;
-2. representative v1.1.2 migration/backup/restore validation;
-3. dependency/security, unit, repository-health, and Electron E2E gates;
-4. connection-pinned anti-rebinding acquisition transport;
-5. Windows x64 immutable-tag package build and bundled SQLite verification;
-6. macOS x64/arm64 immutable-tag package builds and architecture checks;
-7. packaged Windows healthcare-operations smoke from the built `Job Ranger.exe`;
-8. packaged macOS healthcare-operations smoke from the built `.app` runtime;
-9. native execution of the refactored Windows/macOS trust-verification scripts;
-10. platform trust-state reports, SHA-256 files, and schema-v2 release manifests;
-11. upload of packaged-smoke reports and all expected rc.5 prerelease assets;
-12. clean-machine verifier/runbook implementation for downloaded/installed artifacts.
-
-Remaining stable-publication blockers:
-
-1. actual Azure Artifact Signing credentials/profile and valid Authenticode evidence for the stable Windows build;
-2. clean supported Windows 11 installation/launch with observed SmartScreen / Smart App Control behavior;
-3. actual Apple Developer ID Application credentials and successful stable macOS signing/notarization/stapling;
-4. clean supported macOS launch under Gatekeeper with `codesign`, `spctl`, and stapler evidence;
-5. immutable stable `v1.2.0` build from the approved lineage;
-6. final stable asset inventory/download spot-check and documentation transition from v1.1.2 to v1.2.0.
-
-Repository implementation, hosted packaged-runtime validation, and native verifier compatibility are no longer blockers. Do not weaken platform security settings or convert unsigned tester artifacts into a nominal stable release merely to make the checklist shorter.
+The release is non-prerelease and GitHub's current latest release. Its Windows/macOS assets are byte-identical to the validated rc.5 packages and include packaged smoke, trust-state, checksum, and release-manifest evidence. v1.2.0 was published under an explicit owner-approved unsigned/unnotarized exception. Signed distribution remains post-release work under #125/#130 and must ship as a new release rather than mutating v1.2.0.

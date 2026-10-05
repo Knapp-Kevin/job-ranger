@@ -9,26 +9,23 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.1.2"><img src="https://img.shields.io/badge/stable%20release-v1.1.2-0f172a.svg" alt="Stable release v1.1.2" /></a>
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0-rc.5"><img src="https://img.shields.io/badge/packaged%20candidate-v1.2.0--rc.5-2563eb.svg" alt="Packaged candidate v1.2.0-rc.5" /></a>
+  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
   <img src="https://img.shields.io/badge/platform-Windows%20%7C%20macOS-2563eb.svg" alt="Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
 </p>
 
 ## Release status
 
-**v1.1.2 remains the latest stable public release.** Its Windows and macOS installers were published on September 24, 2026.
+**v1.2.0 is the current stable public release.** It was published on October 5, 2026 from immutable commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`, promoted byte-for-byte from the validated rc.5 artifacts. Windows x64 and macOS x64/arm64 packages, packaged healthcare-operations smoke reports, trust-state evidence, SHA-256 files, and schema-v2 release manifests are published with the release.
 
-**v1.2.0-rc.5 is the current validated packaged candidate.** It was built from immutable commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`. Hosted Windows x64 and macOS x64/arm64 release jobs passed, including packaged healthcare-operations smoke, native platform trust-verifier execution, SHA-256 generation, schema-v2 release manifests, and release-asset upload.
-
-rc.5 is still a **tester prerelease**, not the stable public release. Stable v1.2.0 is blocked on real Windows signing / macOS Developer ID + notarization credentials and clean-machine platform-trust validation, not on repository, package, or release-verifier functionality.
+**Distribution trust limitation:** v1.2.0 is intentionally unsigned/unnotarized under an explicit owner-approved exception. Windows SmartScreen / Smart App Control or macOS Gatekeeper may warn or block execution depending on system policy. Do not disable platform security globally. Signed distribution remains tracked under #125/#130 as a follow-up release.
 
 Job Ranger uses these status terms deliberately:
 
 | Status | Meaning |
 | --- | --- |
 | **Shipped / stable** | Present in a stable GitHub Release intended for normal users. |
-| **Packaged candidate** | Built from an immutable prerelease tag and validated as release artifacts, but not promoted as stable. |
+| **Shipped** | Built from an immutable prerelease tag and validated as release artifacts, but not promoted as stable. |
 | **Implemented** | Present in repository/release lineage but not necessarily in the latest stable installer. |
 | **Candidate / next** | Evidence-backed possible future work, not a commitment. |
 | **Deferred** | Intentionally inactive. |
@@ -42,26 +39,22 @@ Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account
 
 ### Windows
 
-**[Download Job Ranger v1.1.2 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-windows-x64.exe)**
+**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
 
 The Windows installer includes the SQLite runtime Job Ranger needs.
 
 ### macOS
 
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.1.2/Job.Ranger-v1.1.2-macos-x64.dmg)**
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
 
 Linux does not currently have a supported packaged release.
 
-### Testing v1.2.0-rc.5
+### v1.2.0 distribution trust note
 
-The rc.5 artifacts are for informed testers. They may be unsigned/unnotarized and are not the normal public installation path.
+v1.2.0 uses the exact rc.5 binaries that passed packaged-runtime smoke and native trust-verifier execution. The release remains unsigned/unnotarized. Verify the platform SHA-256 file and release manifest before use. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md).
 
-Before upload, the Windows and macOS packaged runtimes each executed the release-blocking healthcare-operations package-smoke harness from their own packaged application. The refactored platform trust verifiers also ran successfully in their native hosted release environments. The resulting package-smoke reports, trust reports, checksums, and release manifests are published with the prerelease.
-
-Verify the platform SHA-256 file and release manifest before using a prerelease artifact. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md).
-
-Job Ranger does not recommend disabling Smart App Control, SmartScreen, Defender, Gatekeeper, or other platform security globally merely to run a tester build.
+Job Ranger does not recommend disabling Smart App Control, SmartScreen, Defender, Gatekeeper, or other platform security globally. Use only bounded OS-provided per-app/per-file exceptions when available.
 
 ## What Job Ranger is
 
@@ -92,9 +85,9 @@ Job Ranger does **not** autonomously mass-apply, invent qualifications or relati
 
 ## Capability map
 
-| Capability | Stable v1.1.2 | v1.2.0 candidate |
+| Capability | v1.1.2 | v1.2.0 stable |
 | --- | --- | --- |
-| Electron desktop app / local job-source state | **Shipped** | **Packaged candidate** |
+| Electron desktop app / local job-source state | **Shipped** | **Shipped** |
 | Greenhouse, Lever, SmartRecruiters, Ashby adapters | **Shipped** | **Hardened** |
 | Recognized dynamic/browser provider acquisition | Best effort | Governed connection-pinned transport |
 | Arbitrary generic career-page automation | Best effort | Manual review / non-runnable |
@@ -148,7 +141,7 @@ Remote preference, compensation target, commute, schedule, employment arrangemen
 
 ### Explain uncertainty instead of scoring around it
 
-The v1.2.0 candidate separates eligibility, evidence coverage, career-track alignment, preference alignment, blockers, and unknowns. Missing job data stays missing instead of becoming fake precision.
+v1.2.0 separates eligibility, evidence coverage, career-track alignment, preference alignment, blockers, and unknowns. Missing job data stays missing instead of becoming fake precision.
 
 ### Local first, useful before AI
 
@@ -203,14 +196,9 @@ Electron main process
 
 ## Privacy and security posture
 
-The v1.2.0 candidate keeps structured career/search state local and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. Main/browser/render surfaces retain sandboxing and appropriate web-security controls. Automated acquisition uses a connection-pinned private-network boundary rather than preflight-only hostname checking.
+v1.2.0 keeps structured career/search state local and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. Main/browser/render surfaces retain sandboxing and appropriate web-security controls. Automated acquisition uses a connection-pinned private-network boundary rather than preflight-only hostname checking.
 
-Stable public distribution is fail-closed:
-
-- Windows direct distribution requires configured Azure Artifact Signing and valid Authenticode evidence;
-- macOS direct distribution requires Developer ID signing, notarization, stapling, and platform verification.
-
-The repository plumbing, packaged-runtime validation, and clean-machine evidence tooling exist, but actual credential-backed clean-machine evidence is still pending under #125/#130.
+The normal stable-release pipeline remains fail-closed for platform trust. v1.2.0 is the documented owner-approved exception because its rc.5 binaries were immutable, byte-verified, package-smoke validated, and accompanied by trust/checksum manifests. Signed distribution remains tracked under #125/#130; future normal releases remain fail-closed by default.
 
 Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure.
 
@@ -256,16 +244,7 @@ npm run electron:build:mac
 
 Stable GitHub Releases are the authority for normal user-installable builds.
 
-`v1.2.0-rc.5` proves immutable prerelease packaging for Windows x64 and macOS x64/arm64, including bundled SQLite verification on Windows, actual packaged-runtime smoke on both platforms, native execution of the refactored trust-verification scripts, platform trust-state evidence, SHA-256 files, and schema-v2 release manifests.
-
-Before stable v1.2.0:
-
-- configure and verify real Windows signing;
-- configure and verify real macOS Developer ID signing/notarization/stapling;
-- record clean-machine Windows/macOS platform-trust launch behavior;
-- build the immutable stable tag;
-- verify final stable package-smoke/trust/checksum/manifest evidence and downloads;
-- only then switch README download links and shipped-status documentation from v1.1.2 to v1.2.0.
+`v1.2.0` is the current stable release and is byte-identical to the validated rc.5 package artifacts at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The outstanding distribution work is post-release hardening: configure real Windows signing and macOS Developer ID/notarization credentials, collect clean-machine trust evidence, and ship a signed follow-up without mutating v1.2.0 artifacts.
 
 See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
 
