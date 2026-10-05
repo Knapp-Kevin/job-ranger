@@ -11,7 +11,7 @@ A merged `main` branch is **not** a release. A passing unit test is **not** a re
 - **`main`**: authority for current merged development, which may be ahead of the published product.
 - **Documentation on `main`**: must describe both boundaries honestly.
 
-The current published stable release is **v1.1.2**. The v1.2.0 candidate line is materially ahead and must not be represented as shipped until a stable release completes this contract.
+The current published stable release is **v1.1.2**. The current validated packaged candidate is **v1.2.0-rc.4**. It must not be represented as the stable shipped release until the remaining public-trust gates complete.
 
 ## Release-blocking checklist
 
@@ -65,7 +65,7 @@ Documentation drift is a release blocker because users and contributors otherwis
 
 ### 5. Repository validation
 
-Job Ranger may preserve hosted Actions budget for routine documentation/remediation work, but an immutable release candidate needs explicit repository validation evidence.
+An immutable release candidate needs explicit repository validation evidence.
 
 Minimum repository validation:
 
@@ -122,7 +122,7 @@ For both x64 and arm64:
 
 ### 9. Product smoke validation
 
-Release automation must exercise a deterministic packaged consumer spine using a materially non-software scenario. The package-smoke harness currently validates:
+Release automation must exercise a deterministic packaged consumer spine using a materially non-software scenario. The package-smoke harness validates:
 
 1. fresh isolated local data initialization;
 2. Career Profile creation;
@@ -148,7 +148,7 @@ It does **not** replace final clean-machine acceptance for behavior that depends
 - [ ] Each platform release manifest references both trust evidence and packaged-smoke evidence.
 - [ ] Download links in the root README are updated only after assets exist.
 - [ ] Changelog release date/version is finalized.
-- [ ] `docs/SYSTEM_STATE.md` moves candidate features from “implemented on main” to “shipped” only after publication.
+- [ ] `docs/SYSTEM_STATE.md` moves candidate features from implemented/candidate to shipped only after publication.
 - [ ] Post-release install/download is spot-checked from the actual GitHub Release page.
 
 ## Evidence record
@@ -167,14 +167,34 @@ Each release should record:
 - known limitations or waived checks and rationale;
 - links to retained validation evidence.
 
-## Current v1.2.0 release-readiness blockers
+## Current v1.2.0 release-readiness status
 
-As of the rc.3 reconciliation:
+Validated candidate:
 
-1. v1.1.2 remains the latest stable public release.
-2. rc.3 proved Windows x64 and macOS x64/arm64 packaging, bundled SQLite/trust evidence, checksums, and release-manifest upload, but predates mandatory packaged-binary smoke evidence.
-3. The next immutable candidate must prove the new packaged-binary smoke gate on both platform jobs.
-4. Stable Windows publication still requires actual Azure Artifact Signing credentials plus signed clean-machine Windows 11 installation/launch evidence.
-5. Stable macOS publication still requires Apple Developer ID signing/notarization credentials plus clean-machine Gatekeeper installation/launch evidence.
+`v1.2.0-rc.4` → `177e89dc7325bee4787718f89b9c8e2920f28453`
 
-These are release tasks, not reasons to mislabel `main` as shipped or to weaken platform security settings for ordinary users.
+Hosted release run `37258455958` completed successfully on both platforms.
+
+Completed:
+
+1. v1.2.0 scope/version selection and repository implementation;
+2. representative v1.1.2 migration/backup/restore validation;
+3. dependency/security, unit, repository-health, and Electron E2E gates;
+4. connection-pinned anti-rebinding acquisition transport;
+5. Windows x64 immutable-tag package build and bundled SQLite verification;
+6. macOS x64/arm64 immutable-tag package builds and architecture checks;
+7. packaged Windows healthcare-operations smoke from the built `Job Ranger.exe`;
+8. packaged macOS healthcare-operations smoke from the built `.app` runtime;
+9. platform trust-state reports, SHA-256 files, and schema-v2 release manifests;
+10. upload of both packaged-smoke reports and all expected rc.4 prerelease assets.
+
+Remaining stable-publication blockers:
+
+1. actual Azure Artifact Signing credentials/profile and valid Authenticode evidence for the stable Windows build;
+2. clean supported Windows 11 installation/launch with observed SmartScreen / Smart App Control behavior;
+3. actual Apple Developer ID Application credentials and successful stable macOS signing/notarization/stapling;
+4. clean supported macOS launch under Gatekeeper with `codesign`, `spctl`, and stapler evidence;
+5. immutable stable `v1.2.0` build from the approved lineage;
+6. final stable asset inventory/download spot-check and documentation transition from v1.1.2 to v1.2.0.
+
+Repository implementation and hosted packaged-runtime validation are no longer blockers. Do not weaken platform security settings or convert unsigned tester artifacts into a nominal stable release merely to make the checklist shorter.
