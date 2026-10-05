@@ -1,162 +1,205 @@
 # Distribution Trust
 
-**Status:** release-readiness contract for v1.2.0 and later  
-**Tracked by:** #125  
-**Last reviewed:** 2026-10-04
+**Status:** forward distribution trust contract for post-v1.2 releases  
+**Tracked by:** #125, #130  
+**Last reviewed:** 2026-10-05
 
-Job Ranger distinguishes a **public release** from a **tester/prerelease build**. Producing an installer is not sufficient evidence that the installer has the platform trust properties expected by ordinary users.
+Job Ranger separates **artifact provenance**, **platform installation trust**, and **runtime security**. A certificate is one possible trust mechanism, not the product's foundational security model.
 
-## Release policy
+The accepted distribution architecture is defined in [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md).
 
-A stable tag matching `vMAJOR.MINOR.PATCH` is a public release and must fail closed unless platform trust checks pass.
+## Historical v1.2.0 boundary
 
-Prerelease tags such as `-rc.*` or `-beta*` may be produced without signing/notarization for bounded testing. Those artifacts must remain explicitly described as tester artifacts. The release workflow records trust evidence for them rather than silently treating missing signatures as success.
+Stable **v1.2.0** was published on 2026-10-05 from commit:
 
-Do not disable SmartScreen, Smart App Control, Gatekeeper, Defender, or macOS system security globally to make Job Ranger installable.
+`71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
-## Artifact identity and release evidence
+It was promoted byte-for-byte from validated `v1.2.0-rc.5` artifacts and intentionally published unsigned/unnotarized under an explicit owner-approved exception.
 
-Every platform build publishes cryptographic identity evidence generated **after packaging from the exact files uploaded to the release**:
+That release remains immutable. The forward distribution decision does not replace, mutate, or retroactively relabel its artifacts.
 
-- `windows-SHA256SUMS.txt` and `windows-release-manifest.json`;
-- `macos-SHA256SUMS.txt` and `macos-release-manifest.json`.
+## Forward release policy
 
-Each release manifest records:
+The normal-user distribution strategy after v1.2.0 has two supported targets:
 
-- release tag;
-- platform;
-- public-release versus tester-only state;
-- artifact filename;
-- byte size;
-- SHA-256 digest;
-- the platform signing-verification evidence filename.
+1. **Cross-platform PWA/web runtime** delivered from a controlled HTTPS production origin.
+2. **Windows-native Microsoft Store package** certified and signed through the Store distribution path.
 
-Checksums let a user prove that a downloaded file matches the GitHub Release asset before making any tester-only security exception. A matching checksum does not make an unsigned artifact signed or trusted by the operating system.
+Public code-signing certificates owned directly by Job Ranger are no longer a prerequisite for those supported paths.
 
-See [`TESTER_INSTALLATION.md`](./TESTER_INSTALLATION.md) for the bounded prerelease path.
+Direct native binaries published through GitHub may remain useful for development, testing, archival, or informed advanced users, but they are not the preferred mainstream installation path unless they independently satisfy applicable public OS trust requirements.
 
-## Windows public distribution
+Job Ranger documentation must never instruct users to disable SmartScreen, Smart App Control, Defender, Gatekeeper, browser security, or equivalent platform security globally.
 
-### Selected path: Microsoft Azure Artifact Signing
+## Trust layers
 
-Job Ranger uses electron-builder v26's `win.azureSignOptions` integration when Artifact Signing configuration is present. electron-builder signs the application executables and installer during packaging rather than signing only the outer NSIS installer afterward.
+### 1. Source and build provenance
 
-Microsoft currently recommends Azure Artifact Signing for non-Store Windows distribution. As of 2026-10-04, the Basic plan is USD $9.99/month for up to 5,000 signatures, with additional signatures priced at $0.005 each.
+Regardless of distribution channel, releases should preserve verifiable relationships between source, build, and artifact.
 
-References:
+Current or accepted evidence includes:
 
-- https://learn.microsoft.com/windows/apps/package-and-deploy/code-signing-options
-- https://learn.microsoft.com/azure/artifact-signing/how-to-change-sku
-- https://www.electron.build/v26/docs/features/code-signing/code-signing-win/
+- immutable release/tag relationships;
+- SHA-256 artifact hashes;
+- machine-readable release manifests;
+- packaged-runtime smoke evidence;
+- exact release commit identity;
+- dependency and repository validation;
+- artifact/build attestations where they materially improve provenance.
 
-### Required repository variables
+A checksum proves byte identity against a published digest. It does not, by itself, create OS trust.
 
-- `JOB_RANGER_WINDOWS_SIGN_ENDPOINT`
-- `JOB_RANGER_WINDOWS_SIGN_ACCOUNT`
-- `JOB_RANGER_WINDOWS_SIGN_PROFILE`
-- `JOB_RANGER_WINDOWS_SIGN_PUBLISHER`
+### 2. Distribution-channel trust
 
-The publisher value must exactly match the certificate profile's subject/common name expected by electron-builder.
+The supported channel determines how an ordinary user's platform establishes installation trust.
 
-### Required GitHub secrets
+- **Microsoft Store:** Store certification and Microsoft-managed package signing establish the normal Windows installation trust path.
+- **PWA:** HTTPS origin identity, browser security boundaries, controlled deployment, and service-worker/update integrity establish the normal web-app trust path.
 
-- `AZURE_TENANT_ID`
-- `AZURE_CLIENT_ID`
-- `AZURE_CLIENT_SECRET`
+### 3. Runtime security
 
-The Azure application/service principal should receive only the role required to sign with the selected Artifact Signing certificate profile. Do not grant subscription-wide administrative roles merely to make CI convenient.
+Trusting the installer or origin does not grant the application unlimited authority.
 
-### Verification
+Existing Job Ranger invariants remain in force, including:
 
-`scripts/verify-windows-distribution.ps1` checks both the unpacked Job Ranger executable and generated Windows installer(s) with `Get-AuthenticodeSignature` and writes `build/trust/windows-signing.json`.
+- local-first personal career data;
+- explicit user authority for consequential actions;
+- acquisition network protections;
+- strict renderer/browser security boundaries;
+- validated imports;
+- evidence-grounded factual claims;
+- deterministic backup/export integrity.
 
-For a stable public tag, every checked executable must report a valid Authenticode signature. The trust report is uploaded with the release assets alongside the SHA-256 checksum and release-manifest files.
+## Microsoft Store Windows path
 
-A valid signature does not guarantee that Microsoft SmartScreen has accumulated enough publisher/file reputation to suppress every initial warning. SmartScreen reputation is an external platform decision and still requires clean-machine release validation.
+### Selected native Windows path
 
-## Windows tester path
+The Microsoft Store is the primary supported native Windows distribution channel going forward.
 
-Unsigned prerelease artifacts are allowed only for informed testers. They are not equivalent to public distribution.
+The first implementation should prefer the already-evaluated electron-builder v26 `appx` target unless implementation evidence justifies another target.
 
-Windows 11 may warn about or block unsigned/unrecognized applications. Smart App Control specifically blocks unknown unsigned code when Microsoft cannot establish sufficient trust. An OS-native SmartScreen flow may offer a per-file option to run an unrecognized app on some systems, but that is not a universal unsigned installation mechanism.
+The Store proof-of-concept must validate:
 
-If Smart App Control blocks Job Ranger or Windows does not offer a per-app/per-file override, the unsigned build is **not installable on that configuration**. Job Ranger documentation must not instruct a user to disable Smart App Control, SmartScreen, Defender, or other Windows security globally.
+- Partner Center publisher/package identity;
+- AppX manifest/capability generation;
+- Store certification;
+- packaged Electron sandbox behavior;
+- bundled SQLite behavior;
+- local data and managed artifact paths;
+- source discovery/acquisition;
+- resume import/export and PDF generation;
+- backup/restore;
+- upgrade/update behavior;
+- coexistence or migration from the historical NSIS installer where relevant.
 
-Before using an unsigned tester artifact, verify its SHA-256 digest against `windows-SHA256SUMS.txt` from the same GitHub Release.
+Once certified, the Store package should become the recommended Windows-native install path.
 
-References:
+### Azure Artifact Signing disposition
 
-- https://learn.microsoft.com/windows/apps/develop/smart-app-control/overview
-- https://learn.microsoft.com/windows/apps/develop/smart-app-control/code-signing-for-smart-app-control
+Azure Artifact Signing is no longer required to unblock Job Ranger's supported Windows distribution strategy.
 
-## macOS public distribution
+Existing Azure signing integration may remain as optional/dormant infrastructure if its maintenance cost is low, but inability to obtain or maintain a Public Trust certificate profile must not block Store or PWA releases.
 
-### Selected path: Developer ID Application + Apple notarization
+If Job Ranger later chooses to make a direct-download native Windows installer a normal mainstream channel again, that decision must establish an appropriate public trust path before the installer is promoted as equivalent to the Store channel.
 
-Directly distributed Job Ranger builds must use an Apple Developer ID Application certificate, Hardened Runtime, Apple notarization, and a stapled notarization ticket.
+## PWA / web distribution path
 
-As of 2026-10-04, Apple Developer Program membership is USD $99/year in the United States. Developer ID certificates are available to eligible program members for software distributed outside the Mac App Store.
+The PWA is the primary cross-platform distribution target.
 
-References:
+Its trust contract is different from native installer signing and must explicitly cover:
 
-- https://developer.apple.com/help/account/membership/program-enrollment/
-- https://developer.apple.com/help/account/certificates/create-developer-id-certificates
-- https://developer.apple.com/documentation/security/notarizing-macos-software-before-distribution
+- HTTPS-only production delivery;
+- strict CSP/security headers appropriate to the runtime;
+- controlled production deployment authority;
+- immutable/versioned build identity;
+- auditable source-to-deployment provenance;
+- service-worker lifecycle, update, and rollback behavior;
+- safe local storage migration;
+- no silent transmission of Career Evidence or other personal career data merely because the runtime is delivered over the web.
 
-### Required GitHub secrets
+The PWA must remain local-first. A hosted origin is a delivery mechanism, not automatic permission to make the server the authority for user data.
 
-For code signing:
+Before the PWA is described as mainstream, validation must cover storage durability/eviction behavior, backup/restore, browser support, update safety, installability where supported, and any environment-specific capability limitations.
 
-- `MAC_CSC_LINK` — base64-encoded Developer ID Application `.p12` accepted by electron-builder
-- `MAC_CSC_KEY_PASSWORD`
+## macOS
 
-For the current notarization hook:
+Native macOS distribution is not currently planned.
 
-- `APPLE_ID`
-- `APPLE_ID_PASSWORD` — an Apple app-specific password, not the user's normal Apple Account password
-- `APPLE_TEAM_ID`
+Job Ranger will not make Apple Developer Program membership, Developer ID Application signing, notarization, or native macOS packaging a required dependency under the accepted architecture.
 
-A future migration to App Store Connect API-key authentication is acceptable and may reduce reliance on an Apple ID credential, but it is not required to close the current release gap.
+macOS users are served through the PWA/web runtime once that runtime meets its validation and capability-parity boundary.
 
-### Verification
-
-The build hook submits the signed `.app` with `notarytool`, waits for Apple approval, and staples the returned ticket.
-
-`scripts/verify-macos-distribution.sh` then checks packaged app bundles with:
-
-- `codesign --verify --deep --strict`;
-- `spctl --assess --type exec`;
-- `xcrun stapler validate`.
-
-For a stable public tag, any failure blocks release. The trust report is uploaded as `build/trust/macos-signing.txt` alongside the SHA-256 checksum and release-manifest files.
-
-## macOS tester path
-
-Unsigned or unnotarized prerelease artifacts may be used by informed testers when macOS permits an explicit user override. Apple warns that opening unnotarized or unidentified software carries additional risk.
-
-After attempting to open the app, a tester who has independently verified the artifact and trusts its source may use the OS-native **System Settings → Privacy & Security → Open Anyway** flow when macOS offers it. Do not instruct testers to disable Gatekeeper globally, remove quarantine recursively, or weaken system security.
-
-Before making that exception, verify the artifact SHA-256 digest against `macos-SHA256SUMS.txt` from the same GitHub Release.
-
-Reference:
-
-- https://support.apple.com/102445
-
-## Clean-machine validation still required
-
-Repository checks cannot prove the full end-user trust experience. Before #125 is complete, release evidence must include:
-
-1. a signed Windows installer built through Artifact Signing;
-2. valid Authenticode verification for both the packaged app executable and installer;
-3. installation/launch on a clean supported Windows 11 system with the observed SmartScreen/Smart App Control behavior recorded;
-4. Developer ID-signed macOS x64 and arm64 artifacts;
-5. successful Apple notarization and stapling verification;
-6. launch on clean supported macOS systems with Gatekeeper behavior recorded;
-7. checksum/release-manifest assets matching the tested packages;
-8. release notes that distinguish any remaining tester-only path from normal public distribution.
-
-Until those observations exist, #125 remains open even if the repository is fully prepared to consume the credentials.
+Historical macOS v1.2.0 artifacts remain historical release evidence.
 
 ## Linux
 
-Linux packaging is tracked separately in #129 and should be evaluated on user value, support burden, update strategy, and target distributions. It must not be introduced merely as a way to avoid Windows or macOS trust requirements.
+Native Linux packaging is not currently planned.
+
+Linux users are served through the PWA/web runtime where supported and validated.
+
+A future native Linux package requires evidence that user value justifies its packaging, update, QA, and support burden.
+
+## SignPath
+
+SignPath is explicitly **not part of the Job Ranger distribution strategy**.
+
+Do not add it as a signing dependency without a future explicit architecture decision reversing this disposition.
+
+## Direct GitHub native artifacts
+
+Direct GitHub binaries may continue to be produced when useful for:
+
+- development;
+- package validation;
+- troubleshooting;
+- archival/reproducibility;
+- informed advanced-user testing.
+
+For such artifacts:
+
+- publish exact hashes and provenance evidence;
+- label unsigned/untrusted state clearly;
+- do not imply Store-equivalent installation trust;
+- do not recommend weakening OS security globally;
+- keep historical release assets immutable.
+
+## Evidence required before mainstream promotion
+
+### Microsoft Store
+
+Record at minimum:
+
+- exact source commit/tag used for the package;
+- package identity/version;
+- successful Store certification;
+- Store-delivered package identity/signing state;
+- clean supported Windows install;
+- first launch;
+- local persistence behavior;
+- upgrade behavior;
+- backup/restore behavior;
+- packaged smoke result;
+- known Store-specific limitations.
+
+### PWA
+
+Record at minimum:
+
+- exact source/build/deployment identity;
+- HTTPS origin and production deployment boundary;
+- browser/platform matrix exercised;
+- local persistence implementation and migration behavior;
+- backup/export/restore behavior;
+- install/standalone behavior where supported;
+- service-worker update and recovery behavior;
+- offline/limited-connectivity behavior where claimed;
+- known browser/runtime limitations;
+- confirmation that personal career data remains local-first by default.
+
+## Relationship to previous signing work
+
+The repository's existing Windows Authenticode verification, macOS verification scripts, checksum generation, package smoke, and release manifests remain valid historical engineering work.
+
+They should not be deleted solely because the distribution strategy changed. They may continue to support direct-artifact verification and historical releases.
+
+What changed is the **forward dependency**: normal Job Ranger distribution no longer requires Job Ranger to obtain and maintain both a Windows public-trust signing profile and Apple Developer ID credentials.
