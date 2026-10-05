@@ -2,7 +2,7 @@
 
 This document defines the minimum evidence required before Job Ranger publishes a new user-installable release.
 
-A merged `main` branch is **not** a release. A passing unit test is **not** a release. Electron Builder being theoretically configured for a platform is **not** a release. A release exists only when an immutable version/tag has been validated and published with the artifacts users are actually expected to run.
+A merged `main` branch is **not** a release. A passing unit test is **not** a release. Electron Builder being configured for a platform is **not** a release. A release exists only when an immutable version/tag has been validated and published with the artifacts users are actually expected to run.
 
 ## Status authority
 
@@ -11,7 +11,7 @@ A merged `main` branch is **not** a release. A passing unit test is **not** a re
 - **`main`**: authority for current merged development, which may be ahead of the published product.
 - **Documentation on `main`**: must describe both boundaries honestly.
 
-The current published stable release is **v1.1.2**. The current validated packaged candidate is **v1.2.0-rc.4**. It must not be represented as the stable shipped release until the remaining public-trust gates complete.
+The current published stable release is **v1.1.2**. The current validated packaged candidate is **v1.2.0-rc.5** at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. It must not be represented as the stable shipped release until the remaining public-trust gates complete.
 
 ## Release-blocking checklist
 
@@ -28,7 +28,7 @@ Do not bump versions early merely to create the appearance of release progress.
 
 ### 2. Product truth and documentation
 
-- [ ] `README.md` distinguishes shipped behavior from newer `main` behavior correctly.
+- [ ] `README.md` distinguishes shipped behavior from newer candidate/`main` behavior correctly.
 - [ ] `HELP.md` matches the actual user interface and workflows in the candidate.
 - [ ] `CHANGELOG.md` has a complete candidate entry derived from the `Unreleased` section.
 - [ ] `docs/SYSTEM_STATE.md` matches the candidate architecture and capabilities.
@@ -86,7 +86,7 @@ For documentation-only remediation, code tests may reuse fresh evidence from the
 
 - [ ] Markdown links among current source-of-truth documents resolve.
 - [ ] No current document describes completed work as planned.
-- [ ] No current document claims unreleased `main` functionality is shipped.
+- [ ] No current document claims unreleased candidate/`main` functionality is shipped.
 - [ ] References to issues/PRs use the correct completion state.
 - [ ] No current document points users to removed runtime files or obsolete commands.
 - [ ] Historical plans are unmistakably historical from the documentation index.
@@ -102,6 +102,7 @@ For documentation-only remediation, code tests may reuse fresh evidence from the
 - [ ] Generated `electron-runtime` entry point exists in the packaged application.
 - [ ] The packaged `Job Ranger.exe` executes the headless package-smoke harness from its own `app.asar` using an isolated data root.
 - [ ] `windows-package-smoke.json` reports `passed` for the required non-software scenario and is included in release evidence.
+- [ ] The Windows trust verifier executes successfully in the native release runner.
 - [ ] Installer launch/upgrade is exercised on a clean supported Windows system before stable publication.
 - [ ] Existing user data survives installer upgrade.
 - [ ] A stable public release carries valid Authenticode signatures and records observed SmartScreen / Smart App Control behavior on a clean supported machine.
@@ -117,6 +118,7 @@ For both x64 and arm64:
 - [ ] The native hosted-runner packaged executable executes the headless package-smoke harness from its own `app.asar` using an isolated data root.
 - [ ] `macos-package-smoke.json` reports `passed` for the required non-software scenario and is included in release evidence.
 - [ ] SQLite resolution works in the packaged application.
+- [ ] The macOS trust verifier executes successfully in the native release runner.
 - [ ] A stable public release is Developer ID signed, notarized, stapled, and passes `codesign`, `spctl`, and stapler verification.
 - [ ] The signed/notarized application launches on a clean supported macOS system under Gatekeeper before stable publication.
 
@@ -141,7 +143,31 @@ This hosted packaged smoke is release-blocking and its machine-readable report m
 
 It does **not** replace final clean-machine acceptance for behavior that depends on the operating system's trust/user-interaction layer. Before stable publication, record real installation/launch behavior for the signed Windows build and the signed/notarized macOS build. Human UI acceptance may reuse current Electron E2E evidence where the candidate UI code is unchanged, but any candidate-specific UI defect or installer interaction must be exercised directly.
 
-### 10. Release publication
+### 10. Clean-machine public trust validation
+
+The stable public candidate must be tested as an ordinary downloaded/installed application on clean supported systems.
+
+Windows evidence must include:
+
+- artifact SHA-256 and valid Authenticode result;
+- signer subject/issuer;
+- Windows version/architecture;
+- SmartScreen / Smart App Control state and observed behavior;
+- normal install result;
+- normal first-launch result.
+
+macOS evidence must include:
+
+- artifact SHA-256;
+- `codesign --verify --deep --strict` result;
+- Gatekeeper `spctl` assessment;
+- stapler validation;
+- macOS version/build/architecture;
+- normal install and first-launch result under Gatekeeper.
+
+Use `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` and the platform verifier scripts. Do not globally weaken platform security to force a passing result.
+
+### 11. Release publication
 
 - [ ] Release title and notes describe only behavior present in the tag.
 - [ ] Windows and macOS assets have completed upload before the release is presented as complete.
@@ -163,6 +189,7 @@ Each release should record:
 - platform results;
 - packaged-smoke report for each supported platform;
 - signing/notarization trust evidence;
+- clean-machine trust/launch observations;
 - migrations tested from which prior version;
 - known limitations or waived checks and rationale;
 - links to retained validation evidence.
@@ -171,9 +198,9 @@ Each release should record:
 
 Validated candidate:
 
-`v1.2.0-rc.4` → `177e89dc7325bee4787718f89b9c8e2920f28453`
+`v1.2.0-rc.5` → `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
-Hosted release run `37258455958` completed successfully on both platforms.
+Hosted release run `37259653622` completed successfully on both platforms.
 
 Completed:
 
@@ -185,8 +212,10 @@ Completed:
 6. macOS x64/arm64 immutable-tag package builds and architecture checks;
 7. packaged Windows healthcare-operations smoke from the built `Job Ranger.exe`;
 8. packaged macOS healthcare-operations smoke from the built `.app` runtime;
-9. platform trust-state reports, SHA-256 files, and schema-v2 release manifests;
-10. upload of both packaged-smoke reports and all expected rc.4 prerelease assets.
+9. native execution of the refactored Windows/macOS trust-verification scripts;
+10. platform trust-state reports, SHA-256 files, and schema-v2 release manifests;
+11. upload of packaged-smoke reports and all expected rc.5 prerelease assets;
+12. clean-machine verifier/runbook implementation for downloaded/installed artifacts.
 
 Remaining stable-publication blockers:
 
@@ -197,4 +226,4 @@ Remaining stable-publication blockers:
 5. immutable stable `v1.2.0` build from the approved lineage;
 6. final stable asset inventory/download spot-check and documentation transition from v1.1.2 to v1.2.0.
 
-Repository implementation and hosted packaged-runtime validation are no longer blockers. Do not weaken platform security settings or convert unsigned tester artifacts into a nominal stable release merely to make the checklist shorter.
+Repository implementation, hosted packaged-runtime validation, and native verifier compatibility are no longer blockers. Do not weaken platform security settings or convert unsigned tester artifacts into a nominal stable release merely to make the checklist shorter.
