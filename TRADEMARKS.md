@@ -1,8 +1,8 @@
 # Job Ranger Name and Marks
 
-Job Ranger's source code and documentation are distributed under the repository's [MIT License](./LICENSE), except where a third-party component carries its own terms.
+Job Ranger's source code and documentation are distributed under the repository's [GNU Affero General Public License v3.0 only](./LICENSE), except where a third-party component carries its own terms.
 
-The MIT License permits commercial use, modification, distribution, sublicensing, and sale of the licensed software. It does **not** grant trademark rights or permission to present a modified or redistributed build as an official Job Ranger release.
+The AGPL permits commercial use, modification, distribution, and charging for copies or services subject to its terms. It does **not** grant trademark rights or permission to present a modified or redistributed build as an official Job Ranger release.
 
 ## Project identity
 
@@ -22,8 +22,8 @@ Modified distributions should use their own product identity and should not pres
 
 An "official Job Ranger" build or service is one published by the project maintainer through a channel explicitly identified by the official repository or project documentation as an official distribution channel.
 
-The project may offer official builds, distribution, signing, support, hosted services, or other commercial offerings for a fee even though the underlying MIT-licensed source remains available.
+The project may offer official builds, distribution, signing, support, hosted services, or other commercial offerings for a fee while the underlying AGPL-licensed source remains available.
 
-Nothing in this policy limits the rights granted by the MIT License to the software itself, and nothing here overrides third-party trademark, copyright, or license obligations recorded in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
+Nothing in this policy limits the rights granted by the AGPL to the software itself, and nothing here overrides third-party trademark, copyright, or license obligations recorded in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md).
 
 This policy is intended to prevent source or sponsorship confusion, not to restrict fair, truthful reference to the project.
