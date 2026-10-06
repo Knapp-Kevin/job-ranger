@@ -183,7 +183,7 @@ The accepted pre-demand model is:
 5. distribute builds to trusted testers who run their own localhost instance;
 6. introduce a public HTTPS host only when there is evidence that ordinary external distribution is useful.
 
-The localhost origin is part of the storage identity. Hostname and port therefore matter. A persisted test profile must use one canonical loopback origin; the local server must **fail clearly rather than silently choose another port** when the configured port is busy.
+The localhost origin is part of the storage identity. Hostname and port therefore matter. The canonical production-build self-host origin is **`http://localhost:4174`**. A persisted test profile must use that origin; the local server uses Vite `strictPort` and **fails clearly rather than silently choosing another port** when 4174 is busy.
 
 Do not treat an ordinary private-LAN HTTP address as equivalent to localhost. Loopback receives secure-context treatment suitable for development, while a remote tester should normally run their own local instance unless trusted HTTPS is deliberately configured.
 
@@ -215,7 +215,8 @@ GitHub Pages is not suitable for the public supported channel because it cannot 
 ```bash
 npm run dev:pwa         # Vite dev server (development CSP relaxed for HMR)
 npm run build:pwa       # production build → dist-pwa/
-npm run preview:pwa     # serve dist-pwa locally with production security headers; keep its canonical localhost origin stable
+npm run preview:pwa     # serve an existing dist-pwa at http://localhost:4174
+npm run selfhost:pwa    # build + serve the production PWA at the canonical localhost origin
 npm run test:pwa:e2e    # build + browser suite (Playwright, Chromium)
 npm run test:pwa:engine # shared-core suites on the SQLite WASM engine
 ```
