@@ -242,3 +242,7 @@ Each release should record:
 **Published:** `v1.2.0` → `71f9b790a1f456321aee2c783f39f4a6784b83a9` on 2026-10-05.
 
 The release is non-prerelease and GitHub's current latest release. Its Windows/macOS assets are byte-identical to the validated rc.5 packages and include packaged smoke, trust-state, checksum, and release-manifest evidence. v1.2.0 was published under an explicit owner-approved unsigned/unnotarized exception. Forward distribution moved to the Microsoft Store (#125) and the web/PWA runtime (#130). Any change ships as a new release; v1.2.0 is never mutated.
+
+## Current v1.3.0 release-readiness status
+
+**Candidate preparation.** v1.3.0 is the selected next version (`package.json`). No `v1.3.0-rc.N` tag exists yet. The scope, the pre-tag validation, the automated upgrade evidence from v1.2.0, and the remaining gates are recorded in [`validation/RELEASE_CANDIDATE_V1.3.0.md`](./validation/RELEASE_CANDIDATE_V1.3.0.md).
