@@ -11,7 +11,7 @@
 <p align="center">
   <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
   <img src="https://img.shields.io/badge/stable%20platforms-Windows%20%7C%20macOS-2563eb.svg" alt="Stable release platforms: Windows and macOS" />
-  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-15803d.svg" alt="MIT License" /></a>
+  <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-15803d.svg" alt="AGPL-3.0-only License" /></a>
 </p>
 
 ## Release status
@@ -314,4 +314,4 @@ Start with [`docs/README.md`](./docs/README.md).
 
 ## License
 
-Job Ranger is open source under the [MIT License](./LICENSE). MIT permits commercial use and paid distribution, so the project may charge for official builds, distribution, support, or future services while keeping the source available. MIT also permits others to fork and redistribute the licensed code. The license does not grant trademark rights or permission to present a fork or modified distribution as an official Job Ranger release; see [`TRADEMARKS.md`](./TRADEMARKS.md). Third-party dependencies and adapted components retain their own obligations as recorded in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
+Job Ranger's current development line is open source under the [GNU Affero General Public License v3.0 only (AGPL-3.0-only)](./LICENSE). Commercial use and paid distribution are permitted, while covered modified versions remain subject to AGPL source-sharing requirements. Historical versions already released under MIT, including v1.2.0, retain their prior MIT grants; see [`LICENSE_HISTORY.md`](./LICENSE_HISTORY.md). The Job Ranger name and official-distribution identity remain governed separately by [`TRADEMARKS.md`](./TRADEMARKS.md). Third-party dependencies and adapted components retain their own obligations as recorded in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
