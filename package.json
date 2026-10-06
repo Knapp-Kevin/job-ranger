@@ -28,13 +28,14 @@
     "electron:build:mac": "npm run repo:health && node scripts/build-macos.cjs",
     "electron:pack": "npm run repo:health && electron-builder --dir",
     "build:pwa": "vite build --config vite.pwa.config.ts",
-    "preview:pwa": "vite preview --config vite.pwa.config.ts --host 127.0.0.1",
+    "preview:pwa": "vite preview --config vite.pwa.config.ts",
     "dev:pwa": "vite --config vite.pwa.config.ts",
     "test:pwa:engine": "npm run desktop:compile && node tests/run-wasm-engine-parity.mjs",
     "test:pwa:parser-benchmark": "node --experimental-strip-types tests/pwa-document-parser-benchmark.mjs",
     "test:pwa:e2e": "npm run build:pwa && npm run desktop:compile && playwright test --config playwright.pwa.config.ts",
     "electron:build:store": "npm run repo:health && electron-builder --win --publish never --config electron-builder.store.cjs",
-    "package:pwa": "node scripts/package-pwa.mjs"
+    "package:pwa": "node scripts/package-pwa.mjs",
+    "selfhost:pwa": "npm run build:pwa && npm run preview:pwa"
   },
   "dependencies": {
     "@firecrawl/anydoc": "0.2.4",
