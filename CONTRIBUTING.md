@@ -125,9 +125,9 @@ Current documentation authority is indexed in [docs/README.md](./docs/README.md)
 
 ## Licensing
 
-By contributing, you agree that your contribution may be distributed under the repository's MIT License.
+By contributing, you agree that your contribution may be distributed under the repository's GNU Affero General Public License v3.0 only (AGPL-3.0-only).
 
-Do not copy third-party code/assets into Job Ranger unless the exact license permits the intended use and attribution obligations are preserved. A permissive repository license does not automatically cover every bundled template, font, model, dataset, or hosted service.
+Do not copy third-party code/assets into Job Ranger unless the exact license permits the intended use and attribution obligations are preserved. The repository license does not automatically replace or override the terms of bundled templates, fonts, models, datasets, dependencies, or hosted services.
 
 Substantial adopted/adapted work should be reflected in [THIRD_PARTY_NOTICES.md](./THIRD_PARTY_NOTICES.md) where required.
 
