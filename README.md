@@ -28,7 +28,7 @@
 | **Web app / PWA** (Windows, macOS, Linux browsers) | Implemented and tested; **not deployed** (#130) | Local-first: your data stays in your browser; nothing is uploaded |
 | Direct-download installers | Advanced/test artifacts going forward | v1.2.0 below remains the current stable release |
 
-Neither new channel is available yet. This README will link them only once the Store listing or production web origin actually exists. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
+Neither new channel is yet a supported **public** distribution channel. The PWA is available now for local dogfooding through the self-host path below; a public URL will be added only when a production web origin is intentionally promoted. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
 
 Job Ranger uses these status terms deliberately:
 
