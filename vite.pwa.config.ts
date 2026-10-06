@@ -166,7 +166,7 @@ function shellManifestPlugin(): Plugin {
             version: packageJson.version,
             buildId,
             commit,
-            sourceRepository: process.env.GITHUB_REPOSITORY ?? "Knapp-Kevin/job-ranger",
+            sourceRepository: process.env.GITHUB_REPOSITORY ?? "MythologIQ-Labs-LLC/job-ranger",
             workflowRun: process.env.GITHUB_RUN_ID ?? null,
             contentSecurityPolicy: buildContentSecurityPolicy(),
             assets,

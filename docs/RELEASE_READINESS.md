@@ -214,7 +214,7 @@ Use `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` and the platform verifier scripts. 
 - [ ] Release title and notes describe only behavior present in the tag.
 - [ ] Windows and macOS assets have completed upload before the release is presented as complete.
 - [ ] Each platform release manifest references both trust evidence and packaged-smoke evidence.
-- [ ] Every released artifact has a GitHub artifact attestation (`gh attestation verify <file> --repo Knapp-Kevin/job-ranger`).
+- [ ] Every released artifact has a GitHub artifact attestation (`gh attestation verify <file> --repo MythologIQ-Labs-LLC/job-ranger`).
 - [ ] Download links in the root README are updated only after assets exist.
 - [ ] Changelog release date/version is finalized.
 - [ ] `docs/SYSTEM_STATE.md` moves candidate features from implemented/candidate to shipped only after publication.

@@ -169,7 +169,7 @@ The strongest current **needed** gaps are:
 
 Current **candidate** ideas include broader discovery providers, faster arbitrary-job capture, reusable application-question answers, bounded user-controlled form assistance, broader Career Ops relationship/networking paths, company targeting before a specific opening exists, calendar mirroring, and mock-interview practice.
 
-Issue [#121](https://github.com/Knapp-Kevin/job-ranger/issues/121) governs the next design pass for relationship-path discovery and intentional pursuit. It is a candidate direction, not a claim that those capabilities are already implemented.
+Issue [#121](https://github.com/MythologIQ-Labs-LLC/job-ranger/issues/121) governs the next design pass for relationship-path discovery and intentional pursuit. It is a candidate direction, not a claim that those capabilities are already implemented.
 
 Current **deferred** capabilities include remote inference, OCR, DOCX resume export, specialized federal/academic document projections, cloud sync, and Linux packaging until evidence justifies the complexity.
 
