@@ -557,6 +557,43 @@ Checks:
 
 A failure blocks finalization.
 
+#### 12.1.1 Unsupported-edit check across scripts
+
+For a user-edited statement, every content-bearing term of the edited text must
+appear in the linked Career Evidence (statement, organization, title, skills,
+methods/tools, scope, outcomes, metrics). Terms are produced by a script-aware
+tokenizer (`electron/src/truth-gate-tokens.cts`, built on the shared script
+classification in `electron/src/text-tokens.cts`; the Parseability Gate uses its own `parseability-text.cts`) after NFKC normalization and
+lowercasing, so full-width forms and composed/decomposed characters compare
+equal. Single letters are ignored in every script, but single digits (ASCII
+or any other decimal digit) are always terms, so changing "5 engineers" to
+"9 engineers" is flagged. Before this, one-character tokens were dropped, so
+single-digit changes passed. Numbers are compared literally: "5" in an edit
+is not supported by "five" in evidence, and vice versa.
+
+| Text | Term | Match against evidence |
+| --- | --- | --- |
+| Pure-ASCII word | legacy token (`[a-z0-9+#.-]`, edge `.`/`-` trimmed, length > 1 or a single digit, English stoplist) | exact |
+| Other alphabetic word (accented Latin, Cyrillic, Greek, Arabic, Hebrew, Devanagari, …) | whole word, split on `.`/`-`, length > 1, small per-language function-word stoplist | exact; Latin/Greek/Cyrillic also accent-folded; Arabic/Hebrew also with attached proclitics (و/ال/ب…, ו/ה/ב…) removed |
+| Han (Chinese, Japanese kanji) | each character, minus grammatical characters (的, 了, 和, 与, 在, 是 …) | character occurs in evidence |
+| Hiragana | ignored (particles, okurigana) | — |
+| Katakana | whole run (`・` removed) | substring of evidence |
+| Hangul | word with attached particles/endings (은/는, 을/를, 에서, 했습니다 …) stripped | stem is a substring of evidence |
+| Thai, Lao, Khmer, Myanmar | `Intl.Segmenter` word segments, Thai function-word stoplist | substring of evidence |
+
+Trade-off: the check is aimed at new *content-bearing* material — new Han
+characters, words, loanwords, Latin terms (certification acronyms, tools),
+non-ASCII numbers — while tolerating particles, word order changes, and
+conjugation in languages without stable word boundaries. It cannot detect a new
+claim assembled only from characters or words that already appear in the
+evidence (for example recombining existing Han characters), and fully
+hiragana-written content words are not checked. English behaviour is identical
+to the previous ASCII tokenizer. Function words in languages that are written in
+plain ASCII (Spanish `de`, German `und`, …) are not stoplisted, to avoid
+changing English behaviour; they normally appear in same-language evidence.
+Inflection differences in alphabetic languages (`managed` vs `manage`,
+`руководил` vs `руководство`) are flagged, as before for English.
+
 ### 12.2 Parseability Gate — blocking on critical failures, advisory otherwise
 
 Checks the exported artifact rather than merely trusting the source template.

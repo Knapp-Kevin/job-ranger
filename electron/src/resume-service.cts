@@ -28,6 +28,10 @@ import {
 } from "./resume-parser.cjs";
 import { SqliteClient } from "./sqlite.cjs";
 import { normalizedParseabilityText, parseabilityTokens } from "./parseability-text.cjs";
+import {
+  buildTruthEvidenceIndex,
+  unsupportedTruthTokens,
+} from "./truth-gate-tokens.cjs";
 
 interface ResumeServiceOptions {
   dataDirectory: string;
@@ -53,12 +57,6 @@ const sectionOrder = [
   "Additional",
 ];
 
-const stopWords = new Set([
-  "a", "an", "and", "as", "at", "by", "for", "from", "in", "into", "of",
-  "on", "or", "the", "to", "with", "using", "through", "across", "within",
-  "while", "that", "this", "these", "those", "is", "are", "was", "were",
-]);
-
 function sectionForEvidence(evidence: CandidateEvidence): string {
   switch (evidence.subjectType) {
     case "role":
@@ -83,14 +81,6 @@ function compareEvidence(a: CandidateEvidence, b: CandidateEvidence): number {
   const aDate = a.startDate ?? a.endDate ?? a.updatedAt;
   const bDate = b.startDate ?? b.endDate ?? b.updatedAt;
   return bDate.localeCompare(aDate);
-}
-
-function contentTokens(value: string): string[] {
-  return value
-    .toLowerCase()
-    .match(/[a-z0-9+#.-]+/g)
-    ?.map((token) => token.replace(/^[.-]+|[.-]+$/g, ""))
-    .filter((token) => token.length > 1 && !stopWords.has(token)) ?? [];
 }
 
 function htmlEscape(value: string): string {
@@ -343,11 +333,11 @@ export class ResumeService {
       }
 
       if (statement.userEdited && resolved.length > 0) {
-        const allowed = new Set(
-          resolved.flatMap((item) =>
-            item
-              ? contentTokens(
-                  [
+        const allowed = buildTruthEvidenceIndex(
+          resolved
+            .flatMap((item) =>
+              item
+                ? [
                     item.statement,
                     item.organization ?? "",
                     item.titleOrName ?? "",
@@ -356,21 +346,17 @@ export class ResumeService {
                     ...item.scope,
                     ...item.outcomes,
                     ...item.metrics,
-                  ].join(" "),
-                )
-              : [],
-          ),
+                  ]
+                : [],
+            )
+            .join(" "),
         );
-        const unsupported = contentTokens(statement.text).filter(
-          (token) => !allowed.has(token),
-        );
+        const unsupported = unsupportedTruthTokens(statement.text, allowed);
         if (unsupported.length > 0) {
           issues.push({
             statementId: statement.id,
             code: "unsupported-edit",
-            message: `Edited text introduces unsupported factual terms: ${Array.from(
-              new Set(unsupported),
-            )
+            message: `Edited text introduces unsupported factual terms: ${unsupported
               .slice(0, 8)
               .join(", ")}.`,
             evidenceIds: statement.evidenceIds,
