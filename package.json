@@ -4,7 +4,7 @@
   "version": "1.2.0",
   "description": "Local-first Career Ops workspace: Career Evidence, Target Tracks, opportunity assessment, applications, resumes, and interview preparation.",
   "author": "Job Ranger Team",
-  "license": "MIT",
+  "license": "AGPL-3.0-only",
   "type": "module",
   "main": "electron-runtime/electron/src/main.cjs",
   "engines": {
