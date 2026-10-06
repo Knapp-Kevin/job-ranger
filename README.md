@@ -28,7 +28,7 @@
 | **Web app / PWA** (Windows, macOS, Linux browsers) | Implemented and tested; **not deployed** (#130) | Local-first: your data stays in your browser; nothing is uploaded |
 | Direct-download installers | Advanced/test artifacts going forward | v1.2.0 below remains the current stable release |
 
-Neither new channel is available yet. This README will link them only once the Store listing or production web origin actually exists. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
+Neither new channel is yet a supported **public** distribution channel. The PWA is available now for local dogfooding through the self-host path below; a public URL will be added only when a production web origin is intentionally promoted. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
 
 Job Ranger uses these status terms deliberately:
 
@@ -42,6 +42,31 @@ Job Ranger uses these status terms deliberately:
 | **Historical** | Retained for provenance. |
 
 For exact current state, see [`docs/SYSTEM_STATE.md`](./docs/SYSTEM_STATE.md) and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
+
+## Try the current PWA locally
+
+The post-v1.2 development line is ready for persistent local dogfooding in a Chromium desktop browser. This does **not** require a public host, a Job Ranger account, or the unsigned desktop installer.
+
+Prerequisites for the PWA path are Node.js `>=22.12.0` and npm.
+
+```bash
+git clone https://github.com/Knapp-Kevin/job-ranger.git
+cd job-ranger
+npm ci
+npm run selfhost:pwa
+```
+
+Then open **http://localhost:4174** and install the PWA from Chrome or Edge if desired.
+
+Important persistence rules:
+
+- Keep using the exact `http://localhost:4174` origin. Job Ranger deliberately refuses silent port fallback because browser storage is origin-bound.
+- Application updates replace the application shell, not your Career Ops data. The PWA stores its SQLite database and managed artifacts in browser-local OPFS.
+- Before meaningful upgrades or experiments, export a `.jobranger` portable backup from Job Ranger. The archive is the supported recovery and later localhost → public-origin migration path.
+- Do not clear this site's browser storage unless you intend to remove the local Job Ranger profile.
+- Firefox/Safari and real-device installability are still validation work under #130; Chrome/Edge Chromium is the current evidence-backed dogfood path.
+
+The implementation and persistence guarantees are documented in [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md).
 
 ## Install the current stable release
 
@@ -255,7 +280,8 @@ npm run electron:build:store # Microsoft Store AppX (Windows only)
 ```bash
 npm run dev:pwa              # development server
 npm run build:pwa            # production build -> dist-pwa/
-npm run preview:pwa          # serve the build with production security headers
+npm run preview:pwa          # serve an existing build at http://localhost:4174
+npm run selfhost:pwa         # build + serve the persistent localhost dogfood runtime
 npm run test:pwa:e2e         # browser suite (Playwright, Chromium)
 npm run test:pwa:engine      # shared-core suites on the SQLite WASM engine
 ```
