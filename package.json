@@ -80,5 +80,8 @@
   },
   "build": {
     "extends": "electron-builder.json"
+  },
+  "overrides": {
+    "shell-quote": "^1.11.0"
   }
 }
