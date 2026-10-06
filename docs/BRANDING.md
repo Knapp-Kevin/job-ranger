@@ -75,3 +75,10 @@ The brand asset hierarchy is:
 4. `docs/assets/branding/job-ranger-social-preview.png` for social/link previews.
 
 If another copy appears elsewhere in the repository, consolidate it back into this structure rather than creating another canonical candidate.
+
+
+## Trademark and Distribution Identity
+
+The repository's MIT License governs the licensed software and documentation. It does not grant trademark rights or make third-party builds official Job Ranger distributions.
+
+For naming, fork branding, and official-distribution identity, see [`TRADEMARKS.md`](../TRADEMARKS.md).
