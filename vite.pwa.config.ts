@@ -222,6 +222,7 @@ export default defineConfig({
     },
   },
   preview: {
+    host: "localhost",
     port: 4174,
     strictPort: true,
     headers: buildSecurityHeaders(),
