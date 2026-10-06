@@ -31,6 +31,7 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
   - `pwa`: build, web-parser benchmark, and browser suite;
   - `deploy-pwa`: verified, attested, environment-gated deployment of a released web build;
   - GitHub artifact attestations for released artifacts.
+  - `release-upgrade` CI job (`npm run test:release-upgrade`): builds the latest published release, writes data with its own smoke tests, and verifies that the current build opens that data without changing it, applies every migration, and backs it up and restores it.
 
 ### Changed
 

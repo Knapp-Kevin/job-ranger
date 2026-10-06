@@ -57,6 +57,8 @@ Documentation drift is a release blocker because users and contributors otherwis
 - [ ] Restore into a different data root is exercised and managed paths rebase correctly.
 - [ ] A staged restore is not allowed to destroy the only known-good live copy before the restored database initializes successfully.
 
+`npm run test:release-upgrade` automates the first five items against real data written by the latest published release. It runs in CI as the `release-upgrade` job; its report is `build/trust/release-upgrade-report.json`. The script checks the newest stable `vX.Y.Z` tag out into a temporary worktree, builds it, and runs that release's own package smoke and feature smokes to write data directories. It then opens each directory with the current build and verifies three things. First, no existing table changes; settings are compared by key and value, because startup re-saves timestamps. Second, every migration applies and the read paths work. Third, backup, staged restore into a different data root, and reopening succeed wherever the baseline release itself could back the directory up. Pass `--baseline <tag>` to check a different release. Representative data from real users or testers is still worth exercising by hand before stable publication.
+
 ### 4. Security and dependency review
 
 - [ ] Current dependency audit is reviewed.
@@ -82,6 +84,7 @@ npm run build
 npm run test
 npm run test:unit
 npm run test:e2e
+npm run test:release-upgrade
 ```
 
 `npm run repo:health` may be used as the combined type/build/backend gate. Do not claim a command passed if the environment could not execute it.
