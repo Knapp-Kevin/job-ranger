@@ -3,6 +3,7 @@
 // relies on (usually against Node's own implementation).
 import assert from "node:assert/strict";
 import { createHash, randomBytes } from "node:crypto";
+import { readFileSync } from "node:fs";
 import nodePath from "node:path";
 import { isIP as nodeIsIP } from "node:net";
 import { strToU8, zipSync } from "fflate";
@@ -100,6 +101,21 @@ const headers = buildSecurityHeaders();
 assert.match(headers["Strict-Transport-Security"], /max-age=\d{8,}/);
 assert.equal(headers["X-Content-Type-Options"], "nosniff");
 assert.equal(headers["Referrer-Policy"], "no-referrer");
+
+// --- Stable localhost self-host contract ---
+const packageJson = JSON.parse(readFileSync(new URL("../package.json", import.meta.url), "utf8"));
+assert.equal(
+  packageJson.scripts["preview:pwa"],
+  "vite preview --config vite.pwa.config.ts",
+  "preview command must defer host/port authority to the checked-in PWA config",
+);
+assert.equal(
+  packageJson.scripts["selfhost:pwa"],
+  "npm run build:pwa && npm run preview:pwa",
+  "one command must build and serve the production PWA locally",
+);
+const pwaConfigSource = readFileSync(new URL("../vite.pwa.config.ts", import.meta.url), "utf8");
+assert.match(pwaConfigSource, /preview:\s*\{[\s\S]*?host:\s*"localhost"[\s\S]*?port:\s*4174[\s\S]*?strictPort:\s*true/, "local PWA preview must stay on http://localhost:4174 and fail if the port is busy");
 
 // --- DOCX extraction ---
 const documentXml = `<?xml version="1.0"?><w:document xmlns:w="w"><w:body>
