@@ -1,0 +1,40 @@
+name: Refresh vulnerable source-map-js lock entry
+
+on:
+  push:
+    branches:
+      - pwa/stable-local-selfhost
+    paths:
+      - ".github/workflows/refresh-source-map-js-lock.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  refresh-lock:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1
+        with:
+          ref: pwa/stable-local-selfhost
+          persist-credentials: true
+      - uses: actions/setup-node@820762786026740c76f36085b0efc47a31fe5020
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Regenerate package lock with patched source-map-js
+        run: |
+          npm update source-map-js --package-lock-only --ignore-scripts
+          npm audit --audit-level=high
+          git diff -- package-lock.json
+      - name: Commit generated lockfile
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "No lockfile change was required."
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "Refresh source-map-js lock entry after security advisory"
+          git push origin HEAD:pwa/stable-local-selfhost
