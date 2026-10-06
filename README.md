@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
+  <a href="https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
   <img src="https://img.shields.io/badge/stable%20platforms-Windows%20%7C%20macOS-2563eb.svg" alt="Stable release platforms: Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-15803d.svg" alt="AGPL-3.0-only License" /></a>
 </p>
@@ -50,7 +50,7 @@ The post-v1.2 development line is ready for persistent local dogfooding in a Chr
 Prerequisites for the PWA path are Node.js `>=22.12.0` and npm.
 
 ```bash
-git clone https://github.com/Knapp-Kevin/job-ranger.git
+git clone https://github.com/MythologIQ-Labs-LLC/job-ranger.git
 cd job-ranger
 npm ci
 npm run selfhost:pwa
@@ -74,14 +74,14 @@ Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account
 
 ### Windows
 
-**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
+**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
 
 The Windows installer includes the SQLite runtime Job Ranger needs.
 
 ### macOS
 
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
 
 Linux does not currently have a supported packaged release.
 
