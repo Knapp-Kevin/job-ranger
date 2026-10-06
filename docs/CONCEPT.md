@@ -24,7 +24,7 @@ The full catalog lives in [`design/UNIVERSAL_USER_STORIES.md`](./design/UNIVERSA
 
 ## Product shape
 
-The latest published release is still **v1.1.2**, but current `main` is a much broader product.
+The latest published release is **v1.2.0**, which ships the workflow below as a desktop app. Current `main` adds a local-first web/PWA runtime and Microsoft Store packaging that are not yet published.
 
 The implemented workflow now spans:
 

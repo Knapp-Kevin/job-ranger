@@ -292,7 +292,7 @@ Stable GitHub Releases are the authority for normal user-installable builds.
 
 `v1.2.0` is the current stable release and is byte-identical to the validated rc.5 package artifacts at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The outstanding distribution work is external:
 - Microsoft Store: Partner Center identity, submission, and certification;
-- web app: a production HTTPS origin and real-browser validation.
+- web app: real-browser validation (Firefox, Safari, real devices), and a production HTTPS origin once external distribution is justified. Until then, localhost self-hosting is the supported dogfood path.
 
 No v1.2.0 artifact is ever mutated.
 

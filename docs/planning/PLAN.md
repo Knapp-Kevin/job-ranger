@@ -108,7 +108,7 @@ Azure Artifact Signing is opt-in only and does not block this work.
 
 ### Cross-platform local-first PWA / #130
 
-**Status:** implemented and tested in CI (PR #142); **not deployed**. Design and parity matrix: [`../design/PWA_RUNTIME.md`](../design/PWA_RUNTIME.md).
+**Status:** implemented and tested in CI (PR #142); self-hostable on localhost (#145, #147, #149); **no public deployment**. Design and parity matrix: [`../design/PWA_RUNTIME.md`](../design/PWA_RUNTIME.md).
 
 - [x] inventory of Electron-only and Node-only assumptions; shared-core versus runtime-adapter boundary (`src/pwa/adapter-map.ts`, contract test);
 - [x] browser persistence: SQLite WASM + OPFS atomic snapshots, Web Lock single writer; proven by running 18 shared-core suites on the WASM engine;
@@ -118,7 +118,8 @@ Azure Artifact Signing is opt-in only and does not block this work.
 - [x] SHA-256-verified service-worker shell, user-confirmed updates, repair/recovery;
 - [x] storage quota/eviction handling (visible failures, persistence request, backup guidance);
 - [x] native-only limitations documented with their concrete platform causes;
-- [ ] production HTTPS origin with the shipped security headers (`deploy-pwa.yml`; owner configuration required);
+- [x] stable localhost self-host origin (`npm run selfhost:pwa`, `http://localhost:4174`, no silent port fallback) for dogfood and trusted testing;
+- [ ] *(deferred until external distribution is justified)* production HTTPS origin with the shipped security headers (`deploy-pwa.yml`; owner configuration required);
 - [ ] installability/standalone and storage validation on real Windows, macOS, and Linux browsers (Chromium, Firefox, Safari);
 - [ ] promote the PWA to mainstream only after that evidence is recorded.
 
@@ -213,7 +214,7 @@ Changing this disposition requires a new explicit architecture decision.
 - vector database without measured need;
 - agent-memory platform;
 - managed browser platform as the default architecture;
-- noncommercial/share-alike template assets inside the MIT product.
+- noncommercial/share-alike template assets inside the AGPL-3.0-only product.
 
 These can change only through an explicit evidence-backed governance decision, not through architectural drift.
 

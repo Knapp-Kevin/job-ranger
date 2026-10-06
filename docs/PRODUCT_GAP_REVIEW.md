@@ -1,7 +1,7 @@
 # Product Gap Review
 
 **Review date:** October 2026  
-**Scope:** current `main`, not only the published v1.1.2 installers
+**Scope:** current `main`, not only the published v1.2.0 release
 
 This document identifies meaningful product gaps without turning competitor feature lists into a shopping spree. Job Ranger's accepted strategic direction is **quality over quantity**: help a person find the right path to employment, not maximize application throughput.
 
@@ -84,11 +84,9 @@ Those broader relationship-path features are **not implemented in v1.2.0** merel
 
 ### Publish the accumulated product
 
-**Disposition: Needed**
+**Disposition: Done for v1.2.0; distribution channels in progress**
 
-The remaining material gap is delivery, not another feature subsystem. v1.1.2 remains the stable public release while v1.2.0-rc.4 contains the newer product.
-
-The repository, migration, package, packaged-runtime, checksum, and prerelease trust gates are complete. Stable publication is now blocked by actual Windows/macOS public signing credentials and clean-machine OS trust evidence under #119/#125/#130.
+v1.2.0 published the accumulated product on 2026-10-05 as an owner-approved unsigned desktop release. Ordinary-user delivery now runs through the Microsoft Store package (#125, which awaits Partner Center certification) and the local-first web/PWA runtime (#130, self-hosted on localhost until public demand justifies a production origin). Neither channel needs Job Ranger-owned signing certificates.
 
 ## Strong candidates after v1.2.0
 

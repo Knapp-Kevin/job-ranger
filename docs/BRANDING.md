@@ -79,6 +79,6 @@ If another copy appears elsewhere in the repository, consolidate it back into th
 
 ## Trademark and Distribution Identity
 
-The repository's MIT License governs the licensed software and documentation. It does not grant trademark rights or make third-party builds official Job Ranger distributions.
+The repository's license, AGPL-3.0-only for development after v1.2.0, governs the licensed software and documentation (see [`LICENSE_HISTORY.md`](../LICENSE_HISTORY.md); v1.2.0 and earlier keep their MIT grants). It does not grant trademark rights or make third-party builds official Job Ranger distributions.
 
 For naming, fork branding, and official-distribution identity, see [`TRADEMARKS.md`](../TRADEMARKS.md).

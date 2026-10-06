@@ -16,4 +16,4 @@ For each fixture it:
 
 The harness also asserts that all ten matrix fixture codes are present and that each fixture records at least one known model pressure. Credential-heavy and career-change fixtures assert the presence of credential and transferable mappings respectively.
 
-This is deliberately a domain-level regression suite. It complements rather than replaces Electron E2E. #87 remains open after this slice because representative end-to-end fixture paths and broader US-0 through US-30 evidence are still required.
+This is deliberately a domain-level regression suite. It complements rather than replaces Electron E2E. #87 remained open after this slice because representative end-to-end fixture paths and broader US-0 through US-30 evidence were still required. (#87 has since been completed; see [`UNIVERSAL_USER_STORY_MATRIX.md`](./UNIVERSAL_USER_STORY_MATRIX.md).)
