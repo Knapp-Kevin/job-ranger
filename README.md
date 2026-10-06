@@ -309,8 +309,9 @@ Start with [`docs/README.md`](./docs/README.md).
 - [`CONTRIBUTING.md`](./CONTRIBUTING.md) — contribution workflow.
 - [`CODE_OF_CONDUCT.md`](./CODE_OF_CONDUCT.md) — community expectations.
 - [`docs/BRANDING.md`](./docs/BRANDING.md) — canonical visual assets and usage.
+- [`TRADEMARKS.md`](./TRADEMARKS.md) — Job Ranger name/mark usage and official-distribution identity.
 - [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md) — third-party attribution and provenance.
 
 ## License
 
-Job Ranger is open source under the [MIT License](./LICENSE). Third-party dependencies and adapted components retain their own obligations as recorded in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
+Job Ranger is open source under the [MIT License](./LICENSE). MIT permits commercial use and paid distribution, so the project may charge for official builds, distribution, support, or future services while keeping the source available. MIT also permits others to fork and redistribute the licensed code. The license does not grant trademark rights or permission to present a fork or modified distribution as an official Job Ranger release; see [`TRADEMARKS.md`](./TRADEMARKS.md). Third-party dependencies and adapted components retain their own obligations as recorded in [`THIRD_PARTY_NOTICES.md`](./THIRD_PARTY_NOTICES.md).
