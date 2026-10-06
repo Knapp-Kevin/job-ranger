@@ -9,10 +9,52 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/Knapp-Kevin/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
+  <a href="https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
   <img src="https://img.shields.io/badge/stable%20platforms-Windows%20%7C%20macOS-2563eb.svg" alt="Stable release platforms: Windows and macOS" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-15803d.svg" alt="AGPL-3.0-only License" /></a>
 </p>
+
+<p align="center">
+  <strong>Open source · local first · no account required · no mass auto-apply</strong>
+</p>
+
+<p align="center">
+  Maintained by <strong>MythologIQ Labs, LLC</strong>.
+</p>
+
+## What Job Ranger can do for you
+
+Job Ranger is for people who want help making a **better job-search decision**, not merely sending more applications.
+
+It can help you:
+
+- define the roles, environments, locations, compensation, schedules, and constraints that actually fit what you want next;
+- turn a resume, pasted history, or direct entry into a factual **Career Evidence** record you can review and correct;
+- discover opportunities and keep the original job evidence that Job Ranger used;
+- evaluate a role using separate signals for eligibility, evidence coverage, career-track alignment, preferences, blockers, and unknowns;
+- build evidence-backed resumes and application materials without inventing qualifications;
+- track applications, contacts, milestones, reminders, interviews, offers, and the exact materials you submitted;
+- prepare for interviews using your real experience and the actual requirements of the role;
+- learn from recurring gaps and search outcomes without treating application count as progress;
+- keep the core workflow on your own machine and useful without an AI subscription or Job Ranger account.
+
+Job Ranger deliberately does **not** mass-apply, fabricate qualifications or relationships, silently upload your career history, or turn one opaque score into hiring truth.
+
+### A typical workflow
+
+> **Person → Career Direction → Companies → People → Opportunities → Applications**
+
+You can enter anywhere in that flow. A resume is evidence about work you have done, not an instruction to keep doing the same thing forever.
+
+## Start here
+
+| How you want to use Job Ranger | Best current path | What to expect |
+| --- | --- | --- |
+| **I want the simplest stable install today** | v1.2.0 desktop release | Windows x64 and macOS x64/arm64. No Git, Node.js, database setup, account, or AI subscription required. The current installers are unsigned/unnotarized, so the OS may show a trust warning. |
+| **I want the local web/PWA experience** | Self-host the current PWA | Runs in a Chromium desktop browser on Windows, macOS, or Linux. Requires Node.js and a few terminal commands once; after that it can be installed from Chrome/Edge like an app. Career data stays in browser-local storage. |
+| **I want a zero-setup hosted website** | Not offered yet | If there is enough interest, MythologIQ Labs may offer a very low-cost hosted PWA as a convenience. Local/self-hosted use remains a first-class path. |
+
+For the self-hosted route, see the short [Self-hosting guide](./docs/SELF_HOSTING.md) or use the quick start below.
 
 ## Release status
 
@@ -43,14 +85,14 @@ Job Ranger uses these status terms deliberately:
 
 For exact current state, see [`docs/SYSTEM_STATE.md`](./docs/SYSTEM_STATE.md) and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
 
-## Try the current PWA locally
+## Self-host the current PWA
 
-The post-v1.2 development line is ready for persistent local dogfooding in a Chromium desktop browser. This does **not** require a public host, a Job Ranger account, or the unsigned desktop installer.
+The current development line can run as a persistent local PWA in a Chromium desktop browser. This does **not** require a public host, a Job Ranger account, a separate database, Docker, an AI subscription, or the unsigned desktop installer.
 
-Prerequisites for the PWA path are Node.js `>=22.12.0` and npm.
+Prerequisites are Node.js `>=22.12.0`, npm, and either Git or a downloaded source archive. The complete beginner-friendly steps are in [`docs/SELF_HOSTING.md`](./docs/SELF_HOSTING.md).
 
 ```bash
-git clone https://github.com/Knapp-Kevin/job-ranger.git
+git clone https://github.com/MythologIQ-Labs-LLC/job-ranger.git
 cd job-ranger
 npm ci
 npm run selfhost:pwa
@@ -68,20 +110,24 @@ Important persistence rules:
 
 The implementation and persistence guarantees are documented in [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md).
 
+### A hosted option later
+
+The architecture intentionally keeps self-hosting and local use independent of any hosted service. If enough people want a zero-setup version, MythologIQ Labs may offer a **very low-cost hosted PWA** later. That would be a convenience layer, not a requirement to use Job Ranger, and no hosted Job Ranger service is offered today.
+
 ## Install the current stable release
 
 Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account.
 
 ### Windows
 
-**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
+**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
 
 The Windows installer includes the SQLite runtime Job Ranger needs.
 
 ### macOS
 
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/Knapp-Kevin/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
+- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
+- **[Intel Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
 
 Linux does not currently have a supported packaged release.
 
