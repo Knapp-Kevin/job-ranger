@@ -4,6 +4,12 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
+Release-candidate preparation for v1.3.0 is active. Changes after the candidate freeze belong here until they are deliberately admitted to the release.
+
+## v1.3.0 - Release candidate
+
+Not yet published. Candidate evidence: [`docs/validation/RELEASE_CANDIDATE_V1.3.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.3.0.md).
+
 Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification. The web app runs today as a local self-hosted install at `http://localhost:4174`; a public production deployment is deliberately deferred until there is demand for external distribution (#145). Validation evidence: [`docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
 
 ### Added

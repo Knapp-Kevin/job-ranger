@@ -2,7 +2,7 @@
 
 **Snapshot date:** 2026-10-06
 **Published release:** v1.2.0
-**Current development line:** post-v1.2.0
+**Current development line:** post-v1.2.0; v1.3.0 release candidate in preparation ([`validation/RELEASE_CANDIDATE_V1.3.0.md`](./validation/RELEASE_CANDIDATE_V1.3.0.md))
 **Shipped release lineage:** v1.2.0 promoted from v1.2.0-rc.5
 **Release commit:** `71f9b790a1f456321aee2c783f39f4a6784b83a9`
 
