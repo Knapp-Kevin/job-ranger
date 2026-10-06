@@ -441,7 +441,7 @@ The hidden Chromium render surface uses:
 - document CSP denying remote resources;
 - HTML-escaped user content.
 
-After PDF generation, Job Ranger reparses the artifact through Anydoc and runs critical/advisory checks for extractable text, content retention, contact/section presence, reading order, and parser success.
+After PDF generation, Job Ranger reparses the artifact (through Anydoc on desktop, pdf.js in the web runtime) and runs critical/advisory checks for extractable text, content retention, contact/section presence, reading order, and parser success. Comparison is Unicode-aware; right-to-left and Indic content, which parsers extract inconsistently, produces an advisory `unverified-script` issue instead of a critical failure (`electron/src/parseability-text.cts`).
 
 Critical failures prevent artifact finalization.
 
@@ -702,6 +702,6 @@ Reference-only by default:
 - proprietary services;
 - repositories without a clear license.
 
-A permissive repository license does not automatically relicense bundled templates, fonts, models, datasets, plugins, or hosted services.
+The repository license does not automatically relicense bundled templates, fonts, models, datasets, plugins, or hosted services.
 
 Every adopted component must be reviewed at the exact code/asset/dependency boundary and attributed in `THIRD_PARTY_NOTICES.md` where required.

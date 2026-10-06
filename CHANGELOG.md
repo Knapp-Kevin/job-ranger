@@ -4,14 +4,14 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 ## Unreleased
 
-Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification, and the web app awaits a production deployment. Validation evidence: [`docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
+Implements the accepted distribution architecture (Microsoft Store + local-first web/PWA runtime; #125, #130). Nothing below is shipped yet. The Store channel awaits Partner Center certification. The web app runs today as a local self-hosted install at `http://localhost:4174`; a public production deployment is deliberately deferred until there is demand for external distribution (#145). Validation evidence: [`docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./docs/validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
 
 ### Added
 
 - **Web/PWA runtime** (#130): Job Ranger runs in modern desktop browsers on the same shared application core as the desktop app.
   - SQLite WASM persisted to the origin-private file system with atomic writes; a single-writer tab lock.
   - Browser DOCX/PDF resume import.
-  - Deterministic ATS PDF generation through the unchanged Truth Gate and Parseability Gate.
+  - Deterministic ATS PDF generation through the same Truth Gate and Parseability Gate as the desktop app.
   - Resume PDFs in Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean, set in embedded Noto fonts. The fonts are downloaded only when a resume needs them, verified, and then cached for offline use. Right-to-left and Indic scripts fail export with an explanation and remain served by the Windows app.
   - Strict Content Security Policy with Trusted Types and an explicit job-feed origin allowlist.
   - An installable manifest and an integrity-verified offline app shell with user-confirmed updates and repair.
@@ -24,6 +24,7 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
   - An isolated Store data root with correct Explorer paths.
   - An explicit, read-only import of data from an earlier desktop installation.
   - No app-managed updater (the Store services updates).
+- **Local self-hosting of the web app** (#145, #147, #149): `npm run selfhost:pwa` builds and serves the production web app at the fixed origin `http://localhost:4174`. A busy port fails with an explanation instead of silently moving to another port, because browser storage is tied to the exact origin. README documents the persistent dogfood path and the `.jobranger` backup-before-upgrade rule.
 - Settings → **This installation**: channel, version/build, data location, persistent-storage status and request, web limitations, app-shell repair, and Store desktop-data import.
 - CI and release workflows:
   - `windows-store-package`: builds the AppX, verifies the manifest, installs it, and runs the non-software Career Ops smoke inside the package context;
@@ -33,6 +34,7 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
 
 ### Changed
 
+- **License:** development after v1.2.0 is licensed under **AGPL-3.0-only**. v1.2.0 and earlier releases keep their MIT grants. See [`LICENSE_HISTORY.md`](./LICENSE_HISTORY.md) and the new [`TRADEMARKS.md`](./TRADEMARKS.md).
 - Azure Artifact Signing is opt-in for direct-download Windows builds (`JOB_RANGER_REQUIRE_WINDOWS_SIGNING`). Unsigned direct installers are labelled tester-only in their release manifest instead of blocking a release.
 - Native macOS packages are built only on manual dispatch. macOS users are served by the web app going forward.
 - Job Ranger refuses to open data upgraded by a newer database schema instead of running older code against it.
@@ -43,6 +45,8 @@ Implements the accepted distribution architecture (Microsoft Store + local-first
 ### Fixed
 
 - The Parseability Gate compared only ASCII letters and digits, so a PDF that lost Chinese, Cyrillic, Greek, or accented text could still pass. It now verifies Unicode text in both runtimes. Right-to-left and Indic content, which PDF parsers extract inconsistently, is reported as an advisory to check manually instead of being silently ignored.
+- The Truth Gate's unsupported-edit check compared only ASCII letters and digits, and it ignored one-character tokens (#143). Edited resume statements could therefore add unsupported claims in Chinese, Japanese, Korean, Cyrillic, Greek, Arabic, Hebrew, Devanagari, Thai, or accented Latin text, or change a single-digit number ("5 engineers" → "9 engineers"), and still pass. These edits are now flagged, and English checking is otherwise unchanged. See the trade-offs in [`CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md` §12.1.1](./docs/design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md).
+- After a scrape finished, the idle scrape queue could still read the database. That read raced shutdown and produced an unhandled "unable to open database" error.
 - Greenhouse job descriptions (entity-escaped HTML from the Greenhouse API) are now unescaped before requirement extraction, so requirements are detected individually instead of as one block.
 
 ## v1.2.0 - 2026-10-05

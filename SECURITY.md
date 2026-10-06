@@ -2,15 +2,15 @@
 
 ## Supported scope
 
-Job Ranger is a local-first personal desktop application.
+Job Ranger is a local-first personal career application. It runs as a desktop (Electron) app and, on the post-v1.2 development line, as a local-first web/PWA app built on the same shared core.
 
-The latest stable published installers remain **v1.1.2**. The v1.2.0 release line contains substantially newer persistence, Career Evidence, source-truth, resume, lifecycle, discovery, portability, distribution-trust, and hardening work. The validated packaged prerelease is `v1.2.0-rc.3`.
+The latest stable published release is **v1.2.0** (`71f9b790a1f456321aee2c783f39f4a6784b83a9`). It is a desktop release. The web/PWA runtime and the Microsoft Store package exist on `main` but are not yet published channels. See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md) for the shipped and unreleased boundary.
 
 Job Ranger should not be represented as a hardened enterprise endpoint, centrally managed security product, or sandbox for arbitrary web content.
 
 ## Security model
 
-The v1.2.0 candidate uses the following desktop boundaries:
+The desktop app uses the following boundaries:
 
 - Electron renderer `nodeIntegration: false`;
 - `contextIsolation: true`;
@@ -22,6 +22,16 @@ The v1.2.0 candidate uses the following desktop boundaries:
 - constrained hidden browser surfaces for recognized browser-required acquisition;
 - isolated Chromium resume rendering;
 - local persistence rather than a hosted account backend.
+
+The web/PWA runtime (post-v1.2, unreleased) uses the browser's equivalents, documented in [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md):
+
+- a strict Content Security Policy with Trusted Types and an explicit allowlist of job-feed origins for `connect-src`;
+- career data kept in origin-private browser storage (SQLite WASM on OPFS), never uploaded;
+- a single-writer tab lock;
+- a service worker that serves an integrity-verified app shell and activates updates only after the user confirms them;
+- a refusal to open data written by a newer schema.
+
+The Microsoft Store package (post-v1.2, unreleased) declares only the `runFullTrust` and `internetClient` capabilities. It keeps its data in package-isolated storage and reads an earlier desktop installation's data only through an explicit, read-only import. See [`docs/design/MICROSOFT_STORE_PACKAGING.md`](./docs/design/MICROSOFT_STORE_PACKAGING.md).
 
 These controls reduce risk but do not make third-party content trustworthy. Career pages, resumes, and imported documents remain untrusted input.
 
@@ -135,17 +145,21 @@ A restore feature that deletes the only known-good copy before proving the repla
 
 Repository-side distribution trust is governed by [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
 
-### Stable releases
+### Supported channels after v1.2.0
 
-An exact stable tag matching `vMAJOR.MINOR.PATCH` must fail closed unless required platform trust configuration exists and verification succeeds.
+The supported ordinary-user channels are the Microsoft Store package and the web/PWA runtime served from a controlled HTTPS origin. In those channels, Store certification with Microsoft-managed signing, and HTTPS origin identity with browser security, establish installation trust. Job Ranger-owned code-signing certificates are not a prerequisite for either.
 
-Windows direct-distribution path:
+### Direct-download binaries
+
+Direct-download installers are advanced/test artifacts unless they are independently signed. Azure Artifact Signing is opt-in (`JOB_RANGER_REQUIRE_WINDOWS_SIGNING`) and never blocks a release; an unsigned installer is labelled `testerOnly` in its release manifest. Native macOS packages are built only on manual dispatch.
+
+When direct-download signing is used, the Windows path is:
 
 - Microsoft Azure Artifact Signing;
 - Authenticode verification of packaged application executable and installer;
 - release trust evidence recorded in `windows-signing.json`.
 
-macOS direct-distribution path:
+When a native macOS package is published, its path is:
 
 - Developer ID Application signing;
 - hardened runtime;
@@ -153,7 +167,7 @@ macOS direct-distribution path:
 - `codesign`, `spctl`, and stapler validation;
 - release trust evidence recorded in `macos-signing.txt`.
 
-Actual credential-backed/clean-machine evidence remains tracked by #130.
+Clean-machine evidence for promoted direct-download binaries follows [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md). Store and web channel evidence is tracked by #125 and #130.
 
 ### Prerelease/tester builds
 
@@ -238,15 +252,16 @@ A lack of a hosted Actions run is not itself a security defect. A lack of valida
 
 ## Release security
 
-Before stable v1.2.0 publication, the candidate must satisfy [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
+Before any new release is published, the candidate must satisfy [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), including:
 
 - current dependency review;
-- migration/upgrade and backup/restore validation;
+- migration/upgrade and backup/restore validation from the latest published release;
 - connection-pinned acquisition regression evidence;
 - Windows bundled-SQLite validation;
 - immutable packaged candidate evidence;
-- actual Windows signing and clean-machine evidence;
-- actual macOS signing/notarization/stapling and clean-machine evidence;
+- Microsoft Store package validation and certification for the Store channel;
+- web/PWA build, browser-suite, and deployment validation for the web channel;
+- signing and clean-machine evidence for any direct-download binary promoted to ordinary users;
 - packaged product-smoke validation;
 - documentation truthfulness.
 

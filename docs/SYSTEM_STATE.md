@@ -1,6 +1,6 @@
 # System State
 
-**Snapshot date:** 2026-10-05
+**Snapshot date:** 2026-10-06
 **Published release:** v1.2.0
 **Current development line:** post-v1.2.0
 **Shipped release lineage:** v1.2.0 promoted from v1.2.0-rc.5
@@ -25,7 +25,7 @@ No supported Linux installer is published.
 
 ## Post-v1.2.0 development line (implemented, not released)
 
-The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)) is implemented (PR #142). None of this is shipped: there is no release tag, Store listing, or production web origin yet.
+The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)) is implemented (PR #142). None of this is shipped: there is no release tag, Store listing, or production web origin yet. Development after v1.2.0 is licensed AGPL-3.0-only; v1.2.0 and earlier keep their MIT grants ([`LICENSE_HISTORY.md`](../LICENSE_HISTORY.md)).
 
 ### Shared core and runtimes
 
@@ -39,6 +39,7 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
   - The Store build uses an isolated data root, maps AppX virtualization paths for Explorer, offers an explicit read-only import of historical NSIS data, and contains no app-managed updater.
   - An in-package smoke runs the real main process.
   - Details: [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md).
+- **Local self-hosting** (#145, #147, #149): `npm run selfhost:pwa` serves the production web build at the canonical origin `http://localhost:4174` with `strictPort`, so a busy port fails instead of silently changing the origin and hiding origin-bound browser data. This is the accepted pre-demand dogfood and trusted-testing path; a public HTTPS origin waits until external distribution is justified.
 - **Portable `.jobranger` archive**: single-file, versioned, CRC-32 and SHA-256 validated. Used for Electron ↔ PWA ↔ PWA moves. Restoring v1.2.0 directory backups (via their `manifest.json`) remains supported in the desktop app.
 
 ### Shared-core hardening found during implementation
@@ -46,20 +47,23 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
 - The Greenhouse Job Board API returns entity-escaped HTML. Requirement extraction previously saw one undifferentiated blob; it is now unescaped (`greenhouse-api-v2` extraction version).
 - Backup validation now compares against every migration this build knows (core + feature registry), not only the migrations the live database has applied.
 - Schema downgrade guard: data upgraded by a newer schema is refused with an explanation instead of being opened by older code. This applies to both runtimes and to web rollbacks.
+- Parseability Gate (#144): tokens are Unicode-aware (NFKC; per-grapheme for scripts without word spaces) and identical to the old tokenizer for ASCII. Right-to-left and Indic content raises an advisory `unverified-script` issue instead of being silently ignored (`electron/src/parseability-text.cts`).
+- Truth Gate (#143): the unsupported-edit check is script-aware (`electron/src/truth-gate-tokens.cts`) and counts single digits, so unsupported edits in non-Latin scripts and changed single-digit numbers are flagged. Trade-offs: [`design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md` §12.1.1](./design/CAREER_EVIDENCE_RESUME_FUNCTIONAL_DESIGN.md).
+- An idle scrape queue no longer reads the database after the last scrape is delivered; that read raced backend disposal.
 - The remote Google Fonts `@import` was removed. The Electron CSP already blocked it; the UI uses system font fallbacks.
 
 ### Validation on this line
 
 - `npm test` adds the archive smoke, Store config test, runtime-adapter contract, PWA adapter tests, and the 18 shared-core suites re-run on the SQLite WASM engine.
 - Electron E2E: 31 tests.
-- PWA browser suite: 11 tests (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, and quota failure.
+- PWA browser suite: 12 tests (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, quota failure, and non-Latin resume PDFs with on-demand fonts.
 - Web parser: 9/9 on the shared resume-parser benchmark corpus.
 - `windows-store-package` workflow: AppX build, manifest verification, install, and in-package smoke on Windows (including native DOCX import).
 - Evidence record: [`validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
 
 ### Known gaps on this line
 
-- No production web origin; Firefox and Safari plus real-device installability are not yet validated.
+- No production web origin (deliberately deferred until there is demand; localhost self-hosting is the current path). Firefox and Safari plus real-device installability are not yet validated.
 - Microsoft Store identity, submission, and certification are external and pending.
 - The web runtime cannot monitor career sites that need a full browser (Workday, iCIMS, etc.) or run scheduled checks while closed. These are documented platform limitations; the Windows app covers them.
 - The web PDF writer embeds Noto fonts for Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean (downloaded on first use, then cached). It fails explicitly for right-to-left and Indic scripts, which still need the Windows app.

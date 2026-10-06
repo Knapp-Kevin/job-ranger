@@ -565,8 +565,9 @@ methods/tools, scope, outcomes, metrics). Terms are produced by a script-aware
 tokenizer (`electron/src/truth-gate-tokens.cts`, built on the shared script
 classification in `electron/src/text-tokens.cts`; the Parseability Gate uses its own `parseability-text.cts`) after NFKC normalization and
 lowercasing, so full-width forms and composed/decomposed characters compare
-equal. Single letters are ignored in every script, but single digits (ASCII
-or any other decimal digit) are always terms, so changing "5 engineers" to
+equal. Single letters are ignored in alphabetic scripts (Han is checked per
+character by design; Hangul stems and Thai-family segments have no length
+filter), but single digits (ASCII or any other decimal digit) are always terms, so changing "5 engineers" to
 "9 engineers" is flagged. Before this, one-character tokens were dropped, so
 single-digit changes passed. Numbers are compared literally: "5" in an edit
 is not supported by "five" in evidence, and vice versa.
@@ -588,7 +589,7 @@ conjugation in languages without stable word boundaries. It cannot detect a new
 claim assembled only from characters or words that already appear in the
 evidence (for example recombining existing Han characters), and fully
 hiragana-written content words are not checked. English behaviour is identical
-to the previous ASCII tokenizer. Function words in languages that are written in
+to the previous ASCII tokenizer except that single digits are now terms. Function words in languages that are written in
 plain ASCII (Spanish `de`, German `und`, …) are not stoplisted, to avoid
 changing English behaviour; they normally appear in same-language evidence.
 Inflection differences in alphabetic languages (`managed` vs `manage`,

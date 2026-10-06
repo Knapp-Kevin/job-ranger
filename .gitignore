@@ -73,3 +73,7 @@ release-*
 # Local scratch
 .scratch/
 tests/fixtures/career-evidence/parser-benchmark/generated/
+
+# Generated release/test evidence (never commit)
+/build/trust/
+playwright-report/

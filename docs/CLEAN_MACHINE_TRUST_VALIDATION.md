@@ -173,4 +173,4 @@ Record the exact release tag and commit SHA with both evidence sets.
 
 The clean-machine gate is complete only when the signed stable candidate succeeds on the supported Windows and macOS paths without globally weakening platform security.
 
-See #125 for the public-distribution trust contract and #130 for the external evidence checklist.
+After v1.2.0 this procedure applies to direct-download binaries that are promoted to ordinary users. The forward trust contract is [`DISTRIBUTION_TRUST.md`](./DISTRIBUTION_TRUST.md). The supported channels are tracked by #125 (Microsoft Store) and #130 (web/PWA).

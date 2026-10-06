@@ -41,6 +41,12 @@ A stale plan does not outrank merged code merely because it contains more checkb
 | [`../GOVERNANCE.md`](../GOVERNANCE.md) | Decision authority, truth/status language, merge/release expectations. |
 | [`../SECURITY.md`](../SECURITY.md) | Current security model, boundaries, reporting, and dependency expectations. |
 | [`../THIRD_PARTY_NOTICES.md`](../THIRD_PARTY_NOTICES.md) | Required attribution and third-party provenance. |
+| [`../LICENSE_HISTORY.md`](../LICENSE_HISTORY.md) | License history: AGPL-3.0-only for development after v1.2.0; MIT grants for v1.2.0 and earlier. |
+| [`../TRADEMARKS.md`](../TRADEMARKS.md) | Job Ranger name/brand use and official-distribution identity. |
+| [`DISTRIBUTION_TRUST.md`](./DISTRIBUTION_TRUST.md) | Forward distribution trust contract: provenance, channel trust, runtime security. |
+| [`TESTER_INSTALLATION.md`](./TESTER_INSTALLATION.md) | Bounded guidance for informed testers of unsigned/prerelease artifacts. |
+| [`CLEAN_MACHINE_TRUST_VALIDATION.md`](./CLEAN_MACHINE_TRUST_VALIDATION.md) | Clean-machine install/first-launch evidence procedure for promoted direct-download binaries. |
+| [`BUILD_RUNTIME.md`](./BUILD_RUNTIME.md) | Electron build and runtime authority (`electron/src/` as the only checked-in implementation). |
 
 ## Current product/design contracts
 
@@ -153,6 +159,7 @@ The following files are retained for implementation provenance and must not be u
 - `plan-phase4-caching-circuit-breaker.md`
 - `planning/plan-phase5-notifications-tray.md`
 - `planning/plan-phase5-notifications-tray-v2.md`
+- `windows-package-validation.md` (Windows packaging validation for #38, 2026-09-24)
 
 These documents are not rewritten merely to make history look tidy. Where they conflict with current source, tests, or current source-of-truth documents, the newer evidence wins.
 

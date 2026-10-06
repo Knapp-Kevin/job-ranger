@@ -200,4 +200,4 @@ Third-party code or design mechanisms may be incorporated only when the exact li
 
 Required copyright and license notices must be retained. Trademark and branding rights are treated separately from source-code licenses.
 
-A permissive repository license does not automatically relicense bundled templates, fonts, models, datasets, plugins, or hosted services.
+The repository license does not automatically relicense bundled templates, fonts, models, datasets, plugins, or hosted services.

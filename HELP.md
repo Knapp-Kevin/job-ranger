@@ -2,7 +2,7 @@
 
 Job Ranger is a local-first application for discovering, evaluating, preparing for, and tracking job opportunities.
 
-This guide describes the **stable published release (v1.2.0)**. It also explains how the upcoming Microsoft Store app and web app behave; both are implemented in the repository but are **not yet available to download or open**.
+This guide describes the **stable published release (v1.2.0)**. It also explains how the newer Microsoft Store app and web app behave. Both are implemented in the repository but are **not yet published**: the Store app awaits certification, and the web app has no public site yet but can be self-hosted on your own computer (see below).
 
 ## Which version am I using?
 
@@ -14,12 +14,12 @@ The latest stable public release is **v1.2.0**, available as direct-download ins
 
 v1.2.0 installers are unsigned. See the trust notes in the README and [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md).
 
-### Upcoming ways to run Job Ranger (not yet available)
+### Newer ways to run Job Ranger (not yet published)
 
 | Way | Status | Where your data lives |
 | --- | --- | --- |
 | **Microsoft Store app** (Windows) | Package built and validated; Store certification pending | In the Store app's private storage on this PC |
-| **Web app** (any modern desktop browser on Windows, macOS, or Linux) | Built and tested; not yet deployed | In this browser profile's private storage for the Job Ranger site. Nothing is uploaded |
+| **Web app** (Chrome or Edge on Windows, macOS, or Linux; Firefox and Safari are not yet validated) | No public site yet. You can self-host it locally at `http://localhost:4174`; see *Running the web app locally* below | In this browser profile's private storage for that exact address. Nothing is uploaded |
 | Direct-download installers | Advanced/test use going forward | In your user profile's Job Ranger folder |
 
 Each installation keeps its own data. Move data between them with a portable `.jobranger` backup (see *Backup and restore*). Settings → **This installation** shows which one you are using, its version and build, and where its data lives.
@@ -29,6 +29,19 @@ The web app supports the same Career Ops workflow, with a few browser limits:
 - It checks sources only while it is open.
 - It has no system tray or desktop notifications.
 - "Show file" becomes "Download file".
+- It cannot export resume PDFs that contain right-to-left (Arabic, Hebrew) or Indic (for example Devanagari) text; use the Windows app for those. Other scripts (accented Latin, Greek, Cyrillic, Thai, Chinese, Japanese, Korean) are supported.
+- The first export that uses a new script must be online so the matching font can be downloaded and verified. After that it works offline.
+
+#### Running the web app locally
+
+Until a public site exists, you can run the web app on your own computer. You need Node.js 22.12 or newer and a copy of the repository:
+
+```bash
+npm ci
+npm run selfhost:pwa
+```
+
+Then open **http://localhost:4174** in Chrome or Edge. Your data belongs to that exact address, so always use the same one. If the port is busy, Job Ranger stops with an error instead of quietly moving to another port, where your data would look missing. Before upgrading or experimenting, export a `.jobranger` backup. Do not clear this site's browser storage unless you mean to delete your local Job Ranger data.
 
 ## Workflow
 
@@ -64,7 +77,7 @@ Evidence can be corrected, rejected, merged, or superseded without erasing histo
 
 ### 4. Resume import
 
-The v1.2.0 candidate supports:
+Job Ranger supports:
 
 - DOCX;
 - text-bearing PDF;
@@ -122,7 +135,7 @@ Unknown information remains unknown instead of being converted into fake precisi
 
 ### 8. Resume workspace
 
-The candidate can create a deterministic resume from confirmed Career Evidence with:
+Job Ranger can create a deterministic resume from confirmed Career Evidence with:
 
 - ATS-oriented templates;
 - target-job evidence selection;
@@ -135,6 +148,10 @@ The candidate can create a deterministic resume from confirmed Career Evidence w
 - exact application-artifact linkage.
 
 A tailored resume may emphasize supported evidence. It may not invent experience.
+
+The **Truth Gate** blocks export when a statement lacks confirmed Career Evidence, or when you edited a statement to add words or numbers that its linked evidence does not contain. If it flags an edit, either reword the statement using what your evidence says or add the missing fact to your Career Evidence first. In builds after v1.2.0 this check also covers non-Latin text (for example Chinese, Japanese, Korean, Cyrillic, Arabic, or accented words) and single-digit numbers.
+
+The **Parseability Gate** re-reads the generated PDF the way an applicant-tracking system would and blocks export if your name, contact details, or statement text did not survive. In builds after v1.2.0 it checks non-Latin text too. Right-to-left and Indic text cannot be checked reliably by PDF parsers, so for those Job Ranger shows an advisory asking you to open the PDF and check it yourself before submitting.
 
 ### 9. Applications
 
@@ -165,7 +182,7 @@ Career Stories provide reusable evidence-linked narratives for interviews/applic
 
 ### 12. Application materials
 
-The candidate can prepare versioned evidence-grounded application materials. If supporting Career Evidence changes, prior drafts remain historical and are marked stale rather than silently rewritten.
+Job Ranger can prepare versioned evidence-grounded application materials. If supporting Career Evidence changes, prior drafts remain historical and are marked stale rather than silently rewritten.
 
 ### 13. Search Insights
 
