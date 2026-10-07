@@ -14,7 +14,7 @@ Consequences:
 
 - a parser may extract evidence but cannot establish truth;
 - a discovery provider may find opportunities but cannot silently create trusted monitored sources;
-- an inference provider may someday propose language or mappings but cannot establish truth;
+- an inference provider may propose bounded, schema-validated language or mappings but cannot establish truth; the normative boundary is [design/INFERENCE_CONTRACT.md](./design/INFERENCE_CONTRACT.md);
 - a renderer formats an artifact but does not own canonical state;
 - a browser retrieves pages but does not silently submit consequential actions;
 - a calendar or notification integration may mirror lifecycle state but does not own it;
@@ -238,6 +238,31 @@ Application Lifecycle / Interview Prep / Search Insights
 ```
 
 The canonical product asset is Career Evidence, not a resume file, JSON Resume record, parser output, generated paragraph, or model response.
+
+## Optional inference architecture
+
+Optional inference is a proposal layer around the deterministic core, not a replacement for it.
+
+The normative contract is [design/INFERENCE_CONTRACT.md](./design/INFERENCE_CONTRACT.md) (#162).
+
+Core rules:
+
+- Job Ranger remains fully useful without inference.
+- The inference-disabled product is the reference baseline. Inference-specific governance is additive and may not replace or weaken existing deterministic gates or make those gates provider-dependent.
+- Inference tasks are explicit and schema-bounded; there is no generic autonomous-agent capability.
+- The shared core constructs the minimum task payload, computes the transmission manifest from everything it transmits, and validates every response.
+- Remote providers require explicit disclosure/consent for the data classes leaving the device.
+- Provider output cannot directly write Career Evidence, Target Tracks, applications, sources, resumes, or settings.
+- Career Evidence authority, deterministic requirement/evidence state, Truth Gate, Parseability Gate, source approval, and consequential user actions remain authoritative.
+- Generated factual language must remain evidence-linked. Inference-generated resume wording is evaluated by the unchanged Truth Gate as edited text, bound to the source statement's own evidence, and then requires explicit user review. Truth Gate success is not semantic proof. Factual drafting for application materials, Career Stories, and interview answers cannot be enabled in contract v1, because those surfaces have no deterministic factual token gate. Every v1 task schema is closed and structured-only.
+- Inference failures fall back to deterministic behavior rather than turning into empty evidence, negative assessment, or partial state mutation.
+- Provider adapters are replaceable and runtime-gated. Job Ranger classifies provider location itself (`in-process`, `loopback`, or `remote`), and loopback endpoints need the same consent as remote ones for private data. A PWA must not claim remote-provider support until its credential/transport boundary is independently approved.
+- Deterministic modules never import inference modules; the inference layer receives deterministic gates by injection and never modifies them.
+- The first implementation slice (#164) is contract types + broker + adjudication hooks + a test-only synthetic fake provider + conformance tests, with no network, credentials, IPC, UI, or persistence.
+
+The contract received its adversarial architecture/security review in Phase 13 (Draft 0.2). Remote provider implementation remains deferred until a separate provider/security decision is made.
+
+Job Ranger does not currently require a general agent framework, workflow engine, vector database, or agent-memory runtime.
 
 ## Resume import architecture
 
@@ -571,23 +596,6 @@ Export:
 - projects current confirmed/user-authored evidence into compatible standard fields;
 - may be intentionally lossy where Job Ranger has richer provenance/semantics;
 - does not mutate canonical state.
-
-## Optional inference architecture
-
-Remote inference is currently deferred because the deterministic product now covers core assessment, tailoring, application materials, interview preparation, Career Stories, and Search Insights.
-
-A future provider-neutral seam remains possible if measured value justifies it.
-
-Hard requirements remain:
-
-- explicit disclosure before personal career data leaves the device;
-- structured output validation;
-- evidence linkage for factual claims;
-- deterministic fallback;
-- no silent resume/profile transmission;
-- no bypass of Career Evidence authority or Truth Gate.
-
-Job Ranger does not currently require a general agent framework, workflow engine, vector database, or agent-memory runtime.
 
 ## Security boundaries
 

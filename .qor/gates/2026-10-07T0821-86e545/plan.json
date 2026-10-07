@@ -1,0 +1,27 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0821-86e545",
+  "ts": "2026-10-07T17:24:56Z",
+  "plan_path": "docs/plan-qor-phase13-inference-contract-review.md",
+  "phases": [
+    "Phase 1: Contract amendments"
+  ],
+  "ci_commands": [
+    "npm test",
+    "qor-logic-plus governance-index --enforce --repo-root ."
+  ],
+  "open_questions": [],
+  "doc_tier": "standard",
+  "high_risk_target": false,
+  "pr_target": "main",
+  "originating_remediation": "PR #163 adversarial review",
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T17:24:56Z"
+  }
+}

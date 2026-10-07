@@ -183,6 +183,27 @@ Job Ranger remains authoritative. A future calendar adapter may mirror selected 
 
 Deterministic grounded prep already exists. Conversational practice/feedback is a candidate enhancement, with remote inference/audio privacy reviewed separately.
 
+## Architecture in progress
+
+### Provider-neutral inference contract / #162
+
+**Status:** Contract Draft 0.2, adversarially reviewed (Phase 13, findings F1-F23). Slice A (#164) is authorized; provider implementation remains deferred.
+
+Current slice:
+
+- [x] open a new inference-specific architecture issue rather than reopening completed R4;
+- [x] define a provider-neutral request/response/provenance/failure contract;
+- [x] define explicit task capability and data-class/transmission boundaries;
+- [x] preserve proposal-only inference authority, deterministic adjudication, Truth Gate, and user review;
+- [x] define local-versus-remote and Electron-versus-PWA credential/runtime constraints;
+- [x] define provider conformance and benchmark requirements;
+- [x] complete adversarial architecture/security review (Phase 13; review record in the contract);
+- [x] define blocked implementation Slice A in #164: contract types + broker + synthetic fake provider, with no network or credentials;
+- [ ] implement #164 (Slice A) after #163 merges;
+- [ ] only after Slice A is proven, evaluate a local provider against measured semantic-lift benchmarks.
+
+Remote provider adoption is **not** implied by this work. It remains deferred until a separate provider/security decision is made.
+
 ## Deferred
 
 Do not schedule these without new evidence:
@@ -235,6 +256,7 @@ These can change only through an explicit evidence-backed governance decision, n
 13. Browser delivery does not make personal career data server-authoritative.
 14. Runtime adapters do not become product/domain authorities.
 15. Public code-signing certificates are optional tools, not foundational release dependencies.
+16. Inference-specific governance is additive: inference-disabled workflows preserve the deterministic baseline, and inference may not replace, weaken, or make deterministic gates provider-dependent.
 
 ## Historical plans
 

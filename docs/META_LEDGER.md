@@ -1910,6 +1910,167 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #67: PLAN (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:24:55Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Content Hash**: `a6f35e87e4c875f033bc43e08e1de3aa817184b2eca3f07398959f5a90753fc4`
+
+**Previous Hash**: `e0eec9981121bba93b92423b9cba400dc8b7888c08748737884b4ee970eea78b`
+
+**Chain Hash**: `36d44f7d827cf8c2c36ae580e74f985a7dedd15aa1e0852ed1e188ae6948bc12`
+
+**Decision**: Phase 13 plan created. It is the adversarial architecture and security review of PR #163 (`docs/design/INFERENCE_CONTRACT.md` Draft 0.1). The review found eighteen defects (F1-F18). The most serious is that the Truth Gate runs its unsupported-token check only for user-edited statements, so Draft 0.1's "must pass the existing Truth Gate" would let an invented metric through. Documentation-only amendments LD1-LD11 fix all eighteen. Awaiting GATE tribunal.
+
+---
+
+### Entry #68: GATE TRIBUNAL (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:28:34Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Verdict**: VETO
+
+**Content Hash**: `839772c65f645adb5592f8fc1b8d63f01d07d0b4d9a28c6c1fb79883f81d735b`
+
+**Previous Hash**: `36d44f7d827cf8c2c36ae580e74f985a7dedd15aa1e0852ed1e188ae6948bc12`
+
+**Chain Hash**: `0c16380aedb282e2b41d1699e5ca07753588e43011ed9d60e2bc3fe5ef094275`
+
+**Decision**: VETO for plan iteration 1. Three gaps remain: (1) loopback endpoints can proxy remote providers; (2) LD1 does not bind the gate to the source statement's evidence set, and the existing write path cannot carry a different one; (3) non-resume factual drafting has no deterministic token gate. Also required: provenance write ordering and a separate store, and limiting the model-alias exception to `modelId`. Governor must amend and resubmit.
+
+---
+
+### Entry #69: GATE TRIBUNAL (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:32:33Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Verdict**: VETO
+
+**Content Hash**: `d7fd64a6bdea4e979c78c7c365a26809170fdec0b673362353bdc07af83552ad`
+
+**Previous Hash**: `0c16380aedb282e2b41d1699e5ca07753588e43011ed9d60e2bc3fe5ef094275`
+
+**Chain Hash**: `2d569a2ec79482f1d7a80fee36052c8ba51582c7f337b19f962e787e6a30e686`
+
+**Decision**: VETO for plan iteration 2. The iteration-1 findings are closed. Explanation, prioritization and search-insight prose still has no deterministic factual control. Governor must amend and resubmit.
+
+---
+
+### Entry #70: GATE TRIBUNAL (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:34:38Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Verdict**: VETO
+
+**Content Hash**: `f1ec4a76e5405863a3f3cd1d747d180576c452b397190802991907463266b080`
+
+**Previous Hash**: `2d569a2ec79482f1d7a80fee36052c8ba51582c7f337b19f962e787e6a30e686`
+
+**Chain Hash**: `1819745a38ef70548f7d0839f26f1da348fdc48b120cbb1e18d9f1448fae1c1a`
+
+**Decision**: VETO for plan iteration 3. All earlier findings are closed. The structured-only prose rule (LD13) does not cover the free-text `rationale`, `unknowns` and `unsupportedRequirementsAcknowledged` fields of the two tasks Slice A ships. Governor must amend and resubmit.
+
+---
+
+### Entry #71: GATE TRIBUNAL (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:38:31Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Verdict**: PASS
+
+**Content Hash**: `af0ea846579eb2f3ee9e2f2051c18d3065e6e3a8ff8c75c3680d5ada2b77ad0d`
+
+**Previous Hash**: `1819745a38ef70548f7d0839f26f1da348fdc48b120cbb1e18d9f1448fae1c1a`
+
+**Chain Hash**: `91dd5721843cdcebb145879ada7a2ab289a4a04f38b25dffc0be4c62925b7d7b`
+
+**Decision**: PASS for plan iteration 4, after VETOs #68-#70 and a `/qor-remediate` pass on the cycle-count escalation. That pass found no unaddressed process events; the VETOs were converging on distinct findings. Non-blocking observations 1-6 are carried into the contract text or deferred to the slice that enables each task. Implementation unlocked.
+
+---
+
+### Entry #72: IMPLEMENTATION (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:51:05Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Content Hash**: `fcb2d6e65299d06981c9b0276866157d9de8738eb1321e75f231b16a594222aa`
+
+**Previous Hash**: `91dd5721843cdcebb145879ada7a2ab289a4a04f38b25dffc0be4c62925b7d7b`
+
+**Chain Hash**: `73adc00b472de03696c7b78a539e777e3a1e84faa6d6fd8f62a85c06ae95507b`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- `docs/design/INFERENCE_CONTRACT.md`: Draft 0.2. It implements LD1-LD10 and LD12-LD15, and adds a review record for F1-F23 plus post-amendment findings F24-F27.
+- `docs/ARCHITECTURE_PLAN.md`: inference section updated per LD11. The pre-existing duplicate "Optional inference architecture" section from `main` is merged into it, keeping its no-agent-framework statement.
+- `docs/planning/PLAN.md`: the review is marked complete; #164 is next.
+- `SECURITY.md`: excludes credentials and salts, and keeps provider error text out of logs.
+- `docs/GOVERNANCE_INDEX.md`: Phase 13 row, plus a registration for `docs/PROCESS_SHADOW_GENOME.md`.
+- `docs/PROCESS_SHADOW_GENOME.md`: new. It holds the severity-2 `orchestration_override` event recorded when planning continued after the cycle-count escalation and its `/qor-remediate` pass. The event is kept as governance evidence.
+
+**Post-implementation adversarial review (unplanned additions, documented)**: an independent `security-auditor` reviewed the amended text in two rounds. It found that every LD and every F1-F23 row was implemented, all twelve required benchmark categories were preserved, and the code claims were accurate. It also raised four material defects in the amended text, all fixed in this pass:
+- F24: completeness IDs did not exist in `OpportunityAssessment`. They are now derived in the inference layer.
+- F25: the acceptance check skipped the source statement, so a stale rewrite could overwrite a newer edit. A statement snapshot is now compared at acceptance.
+- F26: the manifest omitted the transmitted `context`.
+- F27: loopback resolve-and-pin is impossible in the PWA, where only IP-literal loopback now counts, and `in-process` was unverified. It now needs review plus a network-denied test.
+
+It also raised one second-round item: the `inferred-pending` review queue. Such candidates now go in a separate labeled list, and the deterministic filter is unchanged. Minor items were folded in. The second round confirmed F24-F27 closed.
+
+**Verification**: `npm test` passes (exit 0) on this branch. Documentation only; no code, dependency, provider, credential or network change.
+
+**Decision**: Implementation complete per the Entry #71 PASS plan, with the documented post-review additions.
+
+---
+
+### Entry #73: SESSION SEAL (Phase 13 Inference Contract Review)
+
+**Timestamp**: 2026-10-07T17:51:06Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase13-inference-contract-review.md
+
+**Verdict**: PASS
+
+**Content Hash**: `7613652417d96cd22d248a3c5e717be84762bb94e0156a708771fd7ff75964b7`
+
+**Previous Hash**: `73adc00b472de03696c7b78a539e777e3a1e84faa6d6fd8f62a85c06ae95507b`
+
+**Chain Hash**: `e065c7f268799d12e1d681fef12238b54b200a4712b27fb837568d2063ecd2b2`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #71); intent lock captured before implementation
+- [x] Every planned file is amended; no code changed. The post-review additions F24-F27 are documented in Entry #72 and in the contract's review record.
+- [x] D1: the contract states how inference text reaches the unchanged Truth Gate (bound evidence set, injected gate, edited-text path, text-only write, acceptance snapshot), and which factual tasks and prose surfaces cannot be enabled in v1
+- [x] D4.d waiver honored: independent adversarial review (four plan audits, two text reviews); `npm test` passes
+- [x] Feature Inventory unchanged
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #71 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1924,4 +2085,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 10 Public Demo Harness: SEALED (Entry #57)*
 *Phase 11 Public-Review README: SEALED (Entry #62)*
 *Phase 12 Demo Video: SEALED (Entry #66)*
-*Next required action: maintainer review and merge of the stacked PRs (#157 through #161, then #155)*
+*Phase 13 Inference Contract Review: SEALED (Entry #73)*
+*Next required action: merge PR #163, then plan Phase 14 (#164 Slice A)*

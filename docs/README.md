@@ -65,6 +65,7 @@ These describe implemented architecture or accepted long-lived contracts and sho
 - [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md)
 - [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md)
 - [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md)
+- [`design/INFERENCE_CONTRACT.md`](./design/INFERENCE_CONTRACT.md) — provider-neutral optional-inference boundary; proposal-only authority, transmission disclosure, schema validation, deterministic adjudication, fallback, provenance, and provider conformance.
 
 A design document may preserve detailed implementation rationale even after its issue closes. Its status must not be used to infer whether a feature is shipped; use `SYSTEM_STATE.md` and the release record for that.
 
