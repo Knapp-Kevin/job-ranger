@@ -198,8 +198,9 @@ Current slice:
 - [x] define local-versus-remote and Electron-versus-PWA credential/runtime constraints;
 - [x] define provider conformance and benchmark requirements;
 - [ ] complete adversarial architecture/security review;
-- [ ] decide whether the first implementation slice is contract types + broker + synthetic fake provider;
-- [ ] only after that review, evaluate a local provider against measured semantic-lift benchmarks.
+- [x] define blocked implementation Slice A in #164: contract types + broker + synthetic fake provider, with no network or credentials;
+- [ ] only after the contract review, start #164;
+- [ ] only after Slice A is proven, evaluate a local provider against measured semantic-lift benchmarks.
 
 Remote provider adoption is **not** implied by this work. It remains deferred until a separate provider/security decision is made.
 
