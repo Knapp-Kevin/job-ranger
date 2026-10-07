@@ -287,12 +287,20 @@ textarea {
   border-radius: 1rem;
   background: color-mix(in srgb, var(--color-panel-strong) 98%, transparent);
   color: var(--color-text-primary);
-  padding: 0.78rem 0.95rem;
   box-shadow: 0 10px 20px -20px var(--color-shadow);
   transition:
     border-color 160ms ease,
     box-shadow 160ms ease,
     transform 160ms ease;
+}
+
+/* Padding sits in the components layer so per-use padding utilities (pl-11, py-3, ...) can override it. */
+@layer components {
+  .input-shell,
+  .select-shell,
+  .textarea-shell {
+    padding: 0.78rem 0.95rem;
+  }
 }
 
 .input-shell:focus,

@@ -327,4 +327,52 @@ Reproduce, read the trace, amend the plan, and resubmit to /qor-audit.
 
 ---
 
+## Failure Entry #10
+
+**Date**: 2026-10-07T14:30:00Z
+**Verdict ID**: Entry #47 (GATE TRIBUNAL Phase 9 Form-Control Shell Layer)
+**Failure Mode**: SPECIFICATION_DRIFT
+
+### What Failed
+
+Phase 9 plan to fix icon/text overlap in form controls.
+
+### Why It Failed
+
+The plan moved an entire unlayered rule into a cascade layer to free one overridden utility (`pl-11`), and checked only the two pages where the bug was seen. Every other utility on those classes that the unlayered rule had been suppressing (`w-auto` on six selects, `py-3` on 19 textareas) would also have started applying, on screens the plan never looked at.
+
+### Pattern to Avoid
+
+When changing cascade precedence, enumerate every utility used alongside the affected class across the codebase and declare what changes; move only the declarations the fix needs.
+
+### Remediation Required
+
+Layer only the padding declaration, declare the padding utilities that newly apply, and resubmit to /qor-audit.
+
+---
+
+## Failure Entry #11
+
+**Date**: 2026-10-07T15:10:00Z
+**Verdict ID**: Entry #48 (GATE TRIBUNAL Phase 9 Form-Control Shell Layer, Iteration 2)
+**Failure Mode**: SPECIFICATION_DRIFT
+
+### What Failed
+
+Iteration-2 amendment of the Phase 9 plan.
+
+### Why It Failed
+
+The design changed (whole rule -> padding only) but only the Locked Decision was rewritten; the Definition of Done and a supporting justification kept the old design's wording, so the plan contradicted itself.
+
+### Pattern to Avoid
+
+After changing a plan's design, re-read every section (Locked Decisions, Affected Files, tests, Definition of Done) for statements that describe the old design.
+
+### Remediation Required
+
+Amend D2 and LD3, re-read the whole plan, and resubmit to /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

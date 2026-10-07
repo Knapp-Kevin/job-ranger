@@ -10,6 +10,7 @@ Release-candidate preparation for v1.3.0 is active. Changes after the candidate 
 
 - **Web app built on Windows**: every action failed with `No handler registered for '<channel>'`. The build plugin handed the bundler backslash module ids, so the web runtime worker contained two copies of its IPC handler registry. Adapter imports now resolve through the bundler's own resolver, and a check on the built bundle guards against a second copy. Builds made on Linux, including the production web build, were not affected.
 - **Web app layout**: the web app shipped without Tailwind layout styles on every platform (colors and fonts loaded, but the sidebar, cards, and grids were unstyled). Tailwind scanned only the web build's `web/` folder, not the components in `src/`. The shared stylesheet now names the repository root as Tailwind's source, and a check on the built stylesheet guards the app shell's layout classes. The desktop app was not affected.
+- **Form-control icons overlapped text** (desktop and web): the search and filter icons on Find Jobs, and the icon, `$` prefix and `miles` suffix on three Career Profile fields, sat on top of placeholder and typed text. The controls' shared padding rule was outside Tailwind's cascade layers and silently overrode the per-control padding utilities. The padding now sits in the components layer, and layout checks guard it in both runtimes.
 - **Release upgrade verification on Windows**: `npm run test:release-upgrade` failed with `no such table` because Windows `sqlite3.exe` output ends lines with CRLF.
 
 ### Changed

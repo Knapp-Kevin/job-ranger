@@ -1409,6 +1409,158 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #46: PLAN (Phase 9 Form-Control Shell Layer)
+
+**Timestamp**: 2026-10-07T14:00:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Content Hash**: `02c256a784c91fef19fb65213b6a2201bb753e4fc131d0c25688760e2cc3ebbc`
+
+**Previous Hash**: `33fee5f2cde3ee2a02e6075ce982e9f4f9513531a0e71ff70043b2bf31d6ae03`
+
+**Chain Hash**: `7f11e886c1e1b594ce3926405890bf1427e7ee438f7018b84bae82ce74122891`
+
+**Decision**: Phase 9 plan created for BACKLOG G8. Unlayered `.input-shell/.select-shell` padding overrides Tailwind's layered `pl-11`, `pr-16` and `pl-8`, so icons and affixes overlap text in the Find Jobs filters and three Career Profile fields, in both runtimes. Move the shell rules into `@layer components`; guard with layout assertions in Electron and the web build. Awaiting GATE tribunal.
+
+---
+
+### Entry #47: GATE TRIBUNAL (Phase 9 Form-Control Shell Layer)
+
+**Timestamp**: 2026-10-07T14:30:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Verdict**: VETO
+
+**Content Hash**: `ecbef489286b7ab3d41d348971f231ecf078d1176b36ef982dcc1305600ca4a9`
+
+**Previous Hash**: `7f11e886c1e1b594ce3926405890bf1427e7ee438f7018b84bae82ce74122891`
+
+**Chain Hash**: `47385d1cc9187580e5114a542883702d946a6473539787c18e49a40d3706a7e0`
+
+**Decision**: VETO issued for the Phase 9 plan. Layering the entire shell rule would also let `w-auto` override `width: 100%` on six selects (Onboarding, Target Tracks, Career Profile) and `py-3` apply on about 19 textareas, none of it declared or verified; one affix was misnamed. Governor must amend and resubmit.
+
+---
+
+### Entry #48: GATE TRIBUNAL (Phase 9 Form-Control Shell Layer, Iteration 2)
+
+**Timestamp**: 2026-10-07T15:10:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Verdict**: VETO
+
+**Content Hash**: `ea3db7f4b1b54bb0e12f66d2d0c27fc558999652c4c9e066e5dd182734597cb0`
+
+**Previous Hash**: `47385d1cc9187580e5114a542883702d946a6473539787c18e49a40d3706a7e0`
+
+**Chain Hash**: `5787f2110a04c923c90d1089d4737808b031fa7cda6a2c175e16e29f710e1d85`
+
+**Decision**: VETO issued on iteration 2. The padding-only design, inventory, cascade analysis and tests were confirmed correct, but D2 and LD3 still described the whole-rule layering rejected in iteration 1, so the plan contradicted itself. Governor must amend the text and resubmit.
+
+---
+
+### Entry #49: GATE TRIBUNAL (Phase 9 Form-Control Shell Layer, Iteration 3)
+
+**Timestamp**: 2026-10-07T15:50:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Verdict**: VETO
+
+**Content Hash**: `02219dfcae2020fd136a017537dd06085f2f1d7ba13857369608fd0975aa26fd`
+
+**Previous Hash**: `5787f2110a04c923c90d1089d4737808b031fa7cda6a2c175e16e29f710e1d85`
+
+**Chain Hash**: `d76ce0ed10709d628674825aece093380e5ff365b9618c5421f0e1fd88a7beee`
+
+**Decision**: VETO issued on iteration 3. Full re-walk confirmed the design, inventory, cascade analysis, evidence and tests; the only finding is a stale plan header (iteration number and VETO entry). Third consecutive specification-drift VETO on this plan.
+
+---
+
+### Entry #50: GATE TRIBUNAL (Phase 9 Form-Control Shell Layer, Iteration 4)
+
+**Timestamp**: 2026-10-07T16:20:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Verdict**: PASS
+
+**Content Hash**: `bc410bbb0bedbfad32018b46434bf6dccce61de663eb55577ade79e691943d25`
+
+**Previous Hash**: `d76ce0ed10709d628674825aece093380e5ff365b9618c5421f0e1fd88a7beee`
+
+**Chain Hash**: `64180179adfe2a9c62586ae1b17167cb9a586c0e2d8cde31df4ee4055ec419d6`
+
+**Decision**: PASS issued for the Phase 9 plan (SHA256 6d1cc403fe37bcc5e91a01479a60bb410955a860ec684141a4af0a8592a1d619) on iteration 4. Padding-only layering, a complete inventory of the padding utilities that newly apply, and fail-before/pass-after layout assertions in Electron and the web build. Gate cleared for implementation.
+
+---
+
+### Entry #51: IMPLEMENTATION (Phase 9 Form-Control Shell Layer)
+
+**Timestamp**: 2026-10-07T17:20:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Content Hash**: `dbb9ce1f71333de1e7bed56afd487b8b40097da351fab21cc1e3f320444407a7`
+
+**Previous Hash**: `64180179adfe2a9c62586ae1b17167cb9a586c0e2d8cde31df4ee4055ec419d6`
+
+**Chain Hash**: `0450285776a7118704595642a83863bd6fa50c90328837802f149b247e042d11`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- `src/index.css`: `padding` removed from the unlayered `.input-shell, .select-shell, .textarea-shell` rule and declared in `@layer components`; the rest of the rule and the `:focus` rule are unchanged and unlayered
+- NEW `tests/e2e/filter-controls.spec.ts` (Electron) and `tests/pwa/filter-controls.spec.ts` (web build): decoration-to-text clearance on the four Find Jobs filters and three Career Profile fields; Tab from search to location with the focus ring; `py-3` textarea padding 12 px at full width. Both failed before the change (icons overlapped text by 15.8 px) and pass after
+- `docs/BACKLOG.md`: G8 complete; G7 extended (onboarding resume-first spec failed once, then 3/3)
+- `CHANGELOG.md`, `docs/GOVERNANCE_INDEX.md`: Unreleased fix entry; Phase 9 plan row
+
+**Verification (Windows 10 dev host)**: `npm run test:pwa:e2e` 13/13 (CSS and bundle checks pass); `npm run test:e2e` 31/33, the failures being BACKLOG G7 specs (`resume-tailoring` 2/3 failing on rerun as on `main`; `onboarding:219` 3/3 on rerun); `npm run typecheck` pass. Select widths on Find Jobs, Career Profile, Target Tracks and Onboarding at 1280, 1440 and 1600 px are identical before and after the change (12 page and width combinations, measured against a temporary pre-fix build). Screenshots of Find Jobs and Career Profile in Electron and the web app at 1280, 1440 and 1600 px show clear icon and affix spacing and the location field's focus ring.
+
+**Decision**: Implementation complete per the Entry #50 PASS plan.
+
+---
+
+### Entry #52: SESSION SEAL (Phase 9 Form-Control Shell Layer)
+
+**Timestamp**: 2026-10-07T17:30:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `f3c3938dabc0`
+**Plan**: docs/plan-qor-phase9-input-shell-layer.md
+
+**Verdict**: PASS
+
+**Content Hash**: `6d1cc403fe37bcc5e91a01479a60bb410955a860ec684141a4af0a8592a1d619`
+
+**Previous Hash**: `0450285776a7118704595642a83863bd6fa50c90328837802f149b247e042d11`
+
+**Chain Hash**: `cb4cd3ea9d7c402af9703d2d73a8d5859d0517a30617728b371709e84c74f2c4`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #50); intent lock captured before implementation
+- [x] Only the shell padding declaration moved into `@layer components`; no markup, label or handler changes
+- [x] D4: both new specs failed before and pass after; suites pass apart from BACKLOG G7 intermittent specs; screenshots and the select-width comparison confirm no undeclared layout change
+- [x] Feature Inventory unchanged (FX009, FX022 n/a-justified)
+- [x] BACKLOG G8 complete; CHANGELOG and governance index updated
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #50 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1419,4 +1571,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 6 Windows Runtime Fixes: SEALED (Entry #36)*
 *Phase 8 PWA Reload Test Race: SEALED (Entry #41); hosted verification on PR #158*
 *Phase 7 Web Runtime Tailwind Source: SEALED (Entry #45); rebased onto Phase 8 (originally Entries #37-#40)*
-*Next required action: PR #158 hosted CI (three pwa-windows runs); Phase 7 PR stacked on #158; then the Find Jobs control fix (BACKLOG G8)*
+*Phase 9 Form-Control Shell Layer: SEALED (Entry #52)*
+*Next required action: Phase 9 PR stacked on #159; then the public demo harness*
