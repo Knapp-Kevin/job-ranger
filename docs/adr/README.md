@@ -14,7 +14,7 @@ Architecture Decision Records capture durable product and technical decisions th
 
 | ADR | Decision | Status |
 | --- | --- | --- |
-| [ADR-0001](0001-personal-brand-publishing-and-analytics.md) | Personal-brand publishing and analytics are a bounded Career Ops capability; provider overlap with Viable does not merge product authority | Proposed |
+| [ADR-0001](0001-personal-brand-publishing-and-analytics.md) | Personal-brand publishing and analytics are a bounded Career Ops capability; provider overlap with Viable does not merge product authority | Accepted |
 
 ## Relationship to other Job Ranger documentation
 
