@@ -256,6 +256,7 @@ These can change only through an explicit evidence-backed governance decision, n
 13. Browser delivery does not make personal career data server-authoritative.
 14. Runtime adapters do not become product/domain authorities.
 15. Public code-signing certificates are optional tools, not foundational release dependencies.
+16. Inference-specific governance is additive: inference-disabled workflows preserve the deterministic baseline, and inference may not replace, weaken, or make deterministic gates provider-dependent.
 
 ## Historical plans
 
