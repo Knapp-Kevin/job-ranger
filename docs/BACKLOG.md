@@ -10,6 +10,7 @@ identified concretely enough to plan. Items close only through a sealed governan
 
 - [x] [D1] (Phase 6 - Complete) PWA build on Windows registers IPC handlers into a duplicate adapter module. `vite.pwa.config.ts` `runtimeAdapterPlugin.resolveId` returns backslash paths, so the worker bundle contains two copies of `src/pwa/adapters/electron-worker.ts`; every web-runtime call fails with `No handler registered for '<channel>'` and all `tests/pwa` specs fail on Windows hosts (CI runs Ubuntu and does not see it).
 - [x] [D2] (Phase 6 - Complete) `npm run test:release-upgrade` fails on Windows. `scripts/upgrade-check/check-current-release.cjs` splits `sqlite3` output on `\n`; Windows `sqlite3.exe` emits `\r\n`, leaving `\r` on every table name.
+- [x] [D3] (Phase 7 - Complete) Every web build shipped without Tailwind layout utilities: the web build's Vite root is `web/` while components live in `src/`, and Tailwind scanned from the Vite root. The built app showed colors and fonts but no layout; no web test asserted layout.
 - [x] [D4] (Phase 8 - Complete) `tests/pwa/update-and-storage.spec.ts` reloaded after step 1 while the test server still served the broken deployment; the browser's navigation-triggered service-worker update check could then install the broken build from a mix of its shell and the next root's original manifest, and "Reload to update" activated it (local failure 1 in 15; trace-confirmed). The test now withdraws the broken root before reloading and waits for a settled registration before step 2.
 
 ## Backlog (Planned Work)
@@ -28,6 +29,7 @@ identified concretely enough to plan. Items close only through a sealed governan
 - [ ] [G5] Notification checkboxes save only through "Save runtime settings" in a different section, with no on-screen cue.
 - [ ] [G6] No in-app Help entry point in the renderer; the web runtime has no help link.
 - [ ] [G7] Flaky Electron specs on Windows: `tests/e2e/resume-tailoring.spec.ts` "user previews, discards, and accepts a deterministic tailoring plan" fails intermittently ("Requirements Job Ranger will not claim" not visible; 1 of 2 runs on 2026-10-06, 3 of 4 on 2026-10-07); `tests/e2e/app.spec.ts:68` "career profile is occupation agnostic and supports annual pay" failed once on 2026-10-07 and passed 3 reruns.
+- [ ] [G8] Icons overlap placeholder text in the Find Jobs filter bar (desktop and web): unlayered `.input-shell`/`.select-shell` padding in `src/index.css` overrides Tailwind's layered `pl-11` utility on those inputs.
 - [ ] [G9] `pwa-windows` on PR #158 (run 37572804981) timed out after 120 s waiting for `load` after "Repair app shell" (`tests/pwa/update-and-storage.spec.ts`). Not reproduced locally; the local reproduction of this spec was a different race (D4). Both PWA CI jobs now upload `test-results/` on failure so a recurrence carries a trace.
 - [ ] [G10] `tests/pwa/runtime.spec.ts` "only one tab can write the local workspace at a time" failed once in a full `test:pwa:e2e` run on the Windows dev host (2026-10-07; second tab's lock message not visible) and then passed 12/12 on repeat.
 

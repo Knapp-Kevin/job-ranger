@@ -1311,6 +1311,104 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #42: PLAN (Phase 7 Web Runtime Tailwind Source)
+
+**Timestamp**: 2026-10-07T08:00:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase7-pwa-tailwind-source.md
+
+**Content Hash**: `721e7ee0992dfbf45b1effbf6eaf798b4adea9e47474d0ac13929c76e72f22b1`
+
+**Previous Hash**: `669ec6c6eb76da5b3f5808bbf6feea045f36753361e61ed4149027cf1dd1cbe3`
+
+**Chain Hash**: `0bea6fb63f12d6e9eed29c8dbab0ea3f344c1858728ce06fa5fc3053fe11b5dc`
+
+**Decision**: Phase 7 plan created (rebased onto Phase 8: originally Entries #37-#40, renumbered #42-#45 with Previous and Chain hashes recomputed; content hashes recomputed from the same sources). Every web build ships without Tailwind layout utilities because the web build's Vite root is `web/` while components live in `src/`, and Tailwind scans from the Vite root. Fix: `@import "tailwindcss" source("..");` in the shared stylesheet so both builds scan the repository root; guard with a test on the built web stylesheet. Awaiting GATE tribunal.
+
+---
+
+### Entry #43: GATE TRIBUNAL (Phase 7 Web Runtime Tailwind Source)
+
+**Timestamp**: 2026-10-07T08:20:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase7-pwa-tailwind-source.md
+
+**Verdict**: PASS
+
+**Content Hash**: `67d82e9e9ec6dc54e9ca57c99079e8f841ce4a215d76ad2ea1cf09aae0017f3b`
+
+**Previous Hash**: `0bea6fb63f12d6e9eed29c8dbab0ea3f344c1858728ce06fa5fc3053fe11b5dc`
+
+**Chain Hash**: `5f65f9b61f7c5bef9cfbbdc5d8854fef7e28da5f878070d032d14ef21d2d2e35`
+
+**Decision**: PASS issued for the Phase 7 plan on the first iteration. Independent review confirmed the scan-base root cause against the installed Tailwind 4.3.3 sources and that `source("..")` resolves relative to the stylesheet, giving both builds the repository root as scan base. Gate cleared for implementation.
+
+---
+
+### Entry #44: IMPLEMENTATION (Phase 7 Web Runtime Tailwind Source)
+
+**Timestamp**: 2026-10-07T08:50:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase7-pwa-tailwind-source.md
+
+**Content Hash**: `cad40d8087ae169b9862724af90329a96a4807605189a32d848c6a3c29f4f810`
+
+**Previous Hash**: `5f65f9b61f7c5bef9cfbbdc5d8854fef7e28da5f878070d032d14ef21d2d2e35`
+
+**Chain Hash**: `bfe14d4a2627b5f5f2f1520bf22dd38f02fa62d3afc48e0ee0b4e5ffad641696`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- `src/index.css`: line 1 is `@import "tailwindcss" source("..");`
+- NEW `tests/pwa-css-utilities.test.mjs`: failed on the pre-fix build ("no rule for: flex, items-center, gap-3, rounded-2xl, grid"), passes after
+- `package.json`: CSS check in `test:pwa:e2e`
+- `.github/workflows/pwa.yml`: CSS check in `pwa` and `pwa-windows`
+- `docs/BACKLOG.md`: D3 added and complete; G8 added (Find Jobs filter-bar icons overlap placeholders in both builds; unlayered `.input-shell` padding overrides `pl-11`; pre-existing, out of scope)
+- `CHANGELOG.md`: Unreleased fix entry
+- `docs/GOVERNANCE_INDEX.md`: Phase 7 plan row
+
+**Verification (Windows 10 host)**: web stylesheet 17,109 -> 53,828 bytes with all five shell utilities; desktop stylesheet unchanged at 51,398 bytes with the same utilities; `npm run test:pwa:e2e` 12/12 with bundle and CSS checks; `npm run typecheck` pass; screenshots of the built web app (Home, Find Jobs, Applications) show the sidebar, card, and grid layout.
+
+**Decision**: Implementation complete per the Entry #43 PASS plan.
+
+---
+
+### Entry #45: SESSION SEAL (Phase 7 Web Runtime Tailwind Source)
+
+**Timestamp**: 2026-10-07T09:00:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `68571ab16048`
+**Plan**: docs/plan-qor-phase7-pwa-tailwind-source.md
+
+**Verdict**: PASS
+
+**Content Hash**: `721e7ee0992dfbf45b1effbf6eaf798b4adea9e47474d0ac13929c76e72f22b1`
+
+**Previous Hash**: `bfe14d4a2627b5f5f2f1520bf22dd38f02fa62d3afc48e0ee0b4e5ffad641696`
+
+**Chain Hash**: `33fee5f2cde3ee2a02e6075ce982e9f4f9513531a0e71ff70043b2bf31d6ae03`
+
+**SSDF Practices**: PS.2.1, RV.2.1
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #43); intent lock captured before implementation
+- [x] Planned changes exist: `src/index.css` source, `tests/pwa-css-utilities.test.mjs`, `package.json`, both PWA CI jobs; no unplanned source files
+- [x] New test inspects the real built stylesheet and failed before the fix
+- [x] D4: web CSS contains all five shell utilities; desktop CSS unchanged; `test:pwa:e2e` 12/12; screenshots confirm layout
+- [x] Feature Inventory: Total: 50 / verified: 23 / unverified: 27 / n/a: 0; no regression (FX046 n/a-justified)
+- [x] BACKLOG D3 complete; CHANGELOG Unreleased updated; no version bump (v1.3.0 is an unpublished candidate)
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #43 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1320,4 +1418,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Governance-Health Remediation: SEALED (Entry #31)*
 *Phase 6 Windows Runtime Fixes: SEALED (Entry #36)*
 *Phase 8 PWA Reload Test Race: SEALED (Entry #41); hosted verification on PR #158*
-*Next required action: PR #158 hosted CI (three pwa-windows runs); then Phase 7 rebased onto Phase 8*
+*Phase 7 Web Runtime Tailwind Source: SEALED (Entry #45); rebased onto Phase 8 (originally Entries #37-#40)*
+*Next required action: PR #158 hosted CI (three pwa-windows runs); Phase 7 PR stacked on #158; then the Find Jobs control fix (BACKLOG G8)*
