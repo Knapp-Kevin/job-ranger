@@ -1,18 +1,22 @@
 {
   "phase": "substantiate",
   "session_id": "2026-10-07T0440-434a63",
-  "ts": "2026-10-07T04:52:11Z",
+  "ts": "2026-10-07T06:02:21Z",
   "verdict": "PASS",
-  "merkle_seal": "29177bef62778b4a3ce9a0a3c60061319eedb3b3dd7862fb4f7f45904cc37758",
+  "merkle_seal": "cad40d8087ae169b9862724af90329a96a4807605189a32d848c6a3c29f4f810",
   "content_hash": "721e7ee0992dfbf45b1effbf6eaf798b4adea9e47474d0ac13929c76e72f22b1",
-  "chain_hash": "8619db12a360b4cc446efc97a1699334da3960d95ed4dcd052239bdb38521742",
-  "ledger_entry": 40,
+  "chain_hash": "33fee5f2cde3ee2a02e6075ce982e9f4f9513531a0e71ff70043b2bf31d6ae03",
+  "ledger_entry": 45,
+  "rebased_from": {
+    "ledger_entry": 40,
+    "chain_hash": "8619db12a360b4cc446efc97a1699334da3960d95ed4dcd052239bdb38521742"
+  },
   "ai_provenance": {
     "system": "Qor-logic",
     "version": "unknown",
     "host": "unknown",
     "model_family": "opus",
     "human_oversight": "pass",
-    "ts": "2026-10-07T04:52:11Z"
+    "ts": "2026-10-07T06:02:21Z"
   }
 }
