@@ -1,0 +1,28 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T1834-49e326",
+  "ts": "2026-10-07T20:07:29Z",
+  "plan_path": "docs/plan-qor-phase15-mapper-negation.md",
+  "phases": [
+    "Phase 1: Negation-aware evidence text"
+  ],
+  "ci_commands": [
+    "npm test",
+    "npm run typecheck",
+    "node tests/evidence-negation.test.cjs"
+  ],
+  "open_questions": [],
+  "doc_tier": "standard",
+  "high_risk_target": false,
+  "pr_target": "main",
+  "originating_remediation": "issue #167",
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T20:07:29Z"
+  }
+}

@@ -2226,6 +2226,192 @@ Mutation testing confirmed the suite catches a disabled subset check, a disabled
 
 ---
 
+### Entry #79: PLAN (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:07:28Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Content Hash**: `8b34d11e5518f9472629cb7a5db78e4f60918fd9963293f986348e01520478fd`
+
+**Previous Hash**: `b4cdf7a8bb9e056006fd5aebdfc2d5fc55b70b400acb8c8457bebff4ec04db0d`
+
+**Chain Hash**: `91f3a17fcf746a084257552cc3076151540472c17d03d03624755b5f4edb2228`
+
+**Decision**: Phase 15 plan created for G12 (#167). A new pure module `evidence-negation.cts` removes clause-scoped negated spans from free-text evidence fields before scoring. Labels (skills, tools, metrics, organization, title, credentials) and requirement text are untouched, and thresholds and all other mapper logic are unchanged. Explanations note when negation reduced support. This is a deterministic correctness fix, justified independently of inference. Awaiting GATE tribunal.
+
+---
+
+### Entry #80: GATE TRIBUNAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:10:56Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: VETO
+
+**Content Hash**: `ddda920f0f48a0120ce753cba7c3e664a0d4d24106b0f54bbb4d38a1212818aa`
+
+**Previous Hash**: `91f3a17fcf746a084257552cc3076151540472c17d03d03624755b5f4edb2228`
+
+**Chain Hash**: `67a717ab57c965c0a15096dee822353dafc9e9de13d5e3648a950beaf4b99d1f`
+
+**Decision**: VETO for plan iteration 1. LD4 would add negation notes where no negation exists, comma splits re-affirm negated lists, `except` (and `rather than` / `instead of`) are not treated as exclusion cues, and verbatim preservation of affirmed text is not required. Governor must amend and resubmit.
+
+---
+
+### Entry #81: GATE TRIBUNAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:14:40Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: VETO
+
+**Content Hash**: `28fb26491fa6cddb8729e172e9c21f4815dc81b790ebd27e9aa04cac32356250`
+
+**Previous Hash**: `67a717ab57c965c0a15096dee822353dafc9e9de13d5e3648a950beaf4b99d1f`
+
+**Chain Hash**: `7fa5873484b7c6a83267220c1ef5f48c73ff4da4fdc6e2f88a8d75b22c0a4687`
+
+**Decision**: VETO for plan iteration 2. The iteration-1 findings are closed. New gaps: comma-spanning scope erases common result phrases with an untrue note, idioms are read as negation, and "not yet" escapes. Governor must amend and resubmit.
+
+---
+
+### Entry #82: GATE TRIBUNAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:18:18Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: VETO
+
+**Content Hash**: `aecb735cf07b1aacc587a6b63f147273e1b6bc3bc64057df5a8c1262131a3724`
+
+**Previous Hash**: `7fa5873484b7c6a83267220c1ef5f48c73ff4da4fdc6e2f88a8d75b22c0a4687`
+
+**Chain Hash**: `b37eb750643f04a8d32c95a0fcda2b1f9f010a6453bf9aefd5a124229c6ed416`
+
+**Decision**: VETO for plan iteration 3. Earlier findings are closed. Noun/exclusion cue scope still erases a result clause joined by "and" plus a past-tense verb. Governor must amend and resubmit.
+
+---
+
+### Entry #83: GATE TRIBUNAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:24:38Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: VETO
+
+**Content Hash**: `6c8e945f452f2fa7ed09eaec47aa1176e07b3c316e1e1861119ff6fc85c2204b`
+
+**Previous Hash**: `b37eb750643f04a8d32c95a0fcda2b1f9f010a6453bf9aefd5a124229c6ed416`
+
+**Chain Hash**: `6f537fd08b502646940d838b16ace1e61f6bb25d586c3c6632fcd4baab17f095`
+
+**Decision**: VETO for plan iteration 4. Earlier findings are closed and the corpus is sound. A noun-cue comma list still re-affirms denied items ("No experience with SQL, Python, or Tableau."). Governor must amend and resubmit.
+
+---
+
+### Entry #84: GATE TRIBUNAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:37:52Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: PASS
+
+**Content Hash**: `24dc03ab7cbf89e8806615825f2475261f6fbc7a9981a6499a58401b5b6c1fee`
+
+**Previous Hash**: `6f537fd08b502646940d838b16ace1e61f6bb25d586c3c6632fcd4baab17f095`
+
+**Chain Hash**: `230c77a8bb291891f42c617e44a50fe013b99250aac5046a0b587bd6b26f61c3`
+
+**Decision**: PASS for plan iteration 5, after VETOs #80-#83, one `/qor-remediate` pass, and a second escalation override that the user approved in chat. Acceptance is the versioned phrasing corpus: 30 affirmative, 12 negated and 8 limitation items. Non-blocking observations 1-6 are carried into implementation as limitations and test refinements, with no rule change. Implementation unlocked.
+
+---
+
+### Entry #85: IMPLEMENTATION (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:53:32Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Content Hash**: `b356b8e69ecadb1d88102d5d1bcb4c9fc899dfdd289af82d46e9b978f2e49ffc`
+
+**Previous Hash**: `230c77a8bb291891f42c617e44a50fe013b99250aac5046a0b587bd6b26f61c3`
+
+**Chain Hash**: `b860a8eae92dcdce9750bed1d8dd3b9a7b33b15abe8426c05ea1f1e71b8b8218`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `electron/src/evidence-negation.cts` (147 lines): `affirmedText`, `negationChangedOutcome`, `NEGATION_NOTE`. It has no imports and is pure, so it is shared by Electron and PWA.
+- `electron/src/requirement-mapper.cts`, wiring only:
+  - `evidenceSearchText` and `overlapScore` take an `affirm` flag, and prose fields are negation-aware per field;
+  - `rankedEvidence` passes the flag through;
+  - `mapRequirementToEvidence` runs the unchanged classifier on affirmed text, then on raw text as a counterfactual, and appends the note only when the raw result was stronger.
+  - Thresholds, credential standing, confirmation logic, extraction and mapping IDs are unchanged.
+- NEW `tests/evidence-negation.test.cjs`: the LD1 exact-string table, a verbatim check, unchanged inputs (including accented names), the note rule, and the full corpus through the real mapper.
+- NEW `tests/fixtures/negation-corpus.v1.json`, hash-pinned: 30 affirmative, 12 negated and 10 limitation items.
+- `tests/requirement-mapper.test.cjs`: 20 G12 mapper cases.
+- `package.json`: the pure test runs in `test` and `test:unit`.
+- Docs: BACKLOG G12 complete, G13 linked to #168; CHANGELOG Fixed; governance index row.
+
+**Deviations from the plan (documented)**:
+- LD4 mechanism: the per-candidate formula was replaced by a counterfactual. The mapper runs the same classifier on raw text, and the note is added only when that raw result is strictly stronger than the final result. This implements LD4's stated intent ("only when negation itself changed the outcome") exactly. The code review showed the formula could miss the note when negation changed which record ranks first, or add it when the outcome was unchanged. Both cases are now mapper tests.
+- Note wording: "states this requirement in a negated form …" instead of the plan's quoted sentence. The plan audit's observation 3 asked for wording that reads cleanly in the gap case, and the code review asked to avoid overstating ("only").
+- The tokenizer is Unicode-aware, so accented names such as "Noël" and "Notário" never yield a cue. `—`, `…`, `•` and lone `\r` are clause boundaries, and U+2011 counts as a hyphen. All are covered by the code review and tests.
+- The corpus has 10 limitations, not 8. The two extra items, the present-tense tail and the noun-cue gerund list, came from plan audit observations 1-2.
+
+**Independent code review** (`code-reviewer`): two material findings, the accented-letter false cues and LD4 note accuracy under ranking changes, plus minor notes. All were fixed in this pass. Mutation checks confirmed the tests catch disabled negation wiring and a disabled counterfactual.
+
+**Verification (Windows 10 dev host)**: `npm test` exit 0, `npm run typecheck` exit 0. The inference adversarial baseline now prints `negation-and-exclusion: deterministic=transferable`, as LD5 predicted. Existing deterministic suites are unchanged in expectation.
+
+**Decision**: Implementation complete per the Entry #84 PASS plan, with documented deviations.
+
+---
+
+### Entry #86: SESSION SEAL (Phase 15 Mapper Negation)
+
+**Timestamp**: 2026-10-07T20:53:32Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase15-mapper-negation.md
+
+**Verdict**: PASS
+
+**Content Hash**: `f414021a48bf27fe911da60d10d25887c17bee99d606ddd80902230334baee57`
+
+**Previous Hash**: `b860a8eae92dcdce9750bed1d8dd3b9a7b33b15abe8426c05ea1f1e71b8b8218`
+
+**Chain Hash**: `d93822d06eaaaffdb02f6388f0acee00b6c5b0d2c445ada3e380c5e6edc90fca`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #84); intent lock captured before implementation
+- [x] Every planned file exists, and the mapper changes only by wiring. Deviations are documented in Entry #85. There is no inference import (the static boundary test still passes).
+- [x] D4: the evidence-negation and requirement-mapper tests pass, including the full phrasing corpus; `npm test` and `npm run typecheck` pass; the adversarial baseline prints `transferable` for the negation fixture
+- [x] Tests are functional (mutation-verified); the independent code review findings were fixed
+- [x] Feature Inventory unchanged (n/a-justified: FX023 surface unchanged)
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #84 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2241,5 +2427,6 @@ Mutation testing confirmed the suite catches a disabled subset check, a disabled
 *Phase 11 Public-Review README: SEALED (Entry #62)*
 *Phase 12 Demo Video: SEALED (Entry #66)*
 *Phase 13 Inference Contract Review: SEALED (Entry #73); PR #163 merged*
-*Phase 14 Inference Slice A: SEALED (Entry #78)*
-*Next required action: merge the Slice A PR (#164); Slice B (local provider) needs a separate issue and measured semantic-lift benchmarks*
+*Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
+*Phase 15 Mapper Negation (G12): SEALED (Entry #86)*
+*Next required action: merge the G12 PR (#167); G13 (#168) next*

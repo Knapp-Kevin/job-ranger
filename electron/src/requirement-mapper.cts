@@ -9,6 +9,7 @@ import type {
   RequirementEvidenceClassification,
 } from "../../src/shared/contracts.js";
 import type { JobEvidenceCoverage } from "../../src/shared/requirement-coverage.js";
+import { affirmedText, NEGATION_NOTE, negationChangedOutcome } from "./evidence-negation.cjs";
 
 const STOP_WORDS = new Set([
   "and", "the", "for", "with", "that", "this", "from", "your", "you", "our",
@@ -138,17 +139,20 @@ export function extractJobRequirements(
   return requirements;
 }
 
-function evidenceSearchText(evidence: CandidateEvidence): string {
+// Prose fields are negation-aware (G12); labels such as skills, tools,
+// metrics, organization and title are taken as written.
+function evidenceSearchText(evidence: CandidateEvidence, affirm = true): string {
+  const prose = (value: string | null): string | null => (value && affirm ? affirmedText(value) : value);
   return [
-    evidence.statement,
+    prose(evidence.statement),
     evidence.organization,
     evidence.titleOrName,
-    evidence.action,
-    evidence.context,
+    prose(evidence.action),
+    prose(evidence.context),
     ...evidence.skills,
     ...evidence.methodsOrTools,
-    ...evidence.scope,
-    ...evidence.outcomes,
+    ...evidence.scope.map(prose),
+    ...evidence.outcomes.map(prose),
     ...evidence.metrics,
     evidence.credential?.issuer,
     evidence.credential?.jurisdiction,
@@ -159,10 +163,10 @@ function evidenceSearchText(evidence: CandidateEvidence): string {
     .join(" ");
 }
 
-function overlapScore(requirement: JobRequirement, evidence: CandidateEvidence): number {
+function overlapScore(requirement: JobRequirement, evidence: CandidateEvidence, affirm = true): number {
   const requirementTokens = significantTokens(requirement.text);
   if (requirementTokens.length === 0) return 0;
-  const evidenceTokens = significantTokens(evidenceSearchText(evidence));
+  const evidenceTokens = significantTokens(evidenceSearchText(evidence, affirm));
   const matched = requirementTokens.filter((token) =>
     evidenceTokens.some((candidate) => tokenEquivalent(token, candidate)),
   );
@@ -231,20 +235,38 @@ function makeMapping(
 function rankedEvidence(
   requirement: JobRequirement,
   evidence: readonly CandidateEvidence[],
+  affirm = true,
 ): Array<{ evidence: CandidateEvidence; score: number }> {
   return evidence
     .filter((item) => item.verificationState !== "rejected")
-    .map((item) => ({ evidence: item, score: overlapScore(requirement, item) }))
+    .map((item) => ({ evidence: item, score: overlapScore(requirement, item, affirm) }))
     .filter((item) => item.score > 0)
     .sort((a, b) => b.score - a.score);
 }
 
+/**
+ * Maps a requirement to its best supporting Career Evidence. Evidence prose is
+ * scored on affirmed text (G12); when the same classification on raw text would
+ * have been stronger, the explanation says that negated text was not counted.
+ */
 export function mapRequirementToEvidence(
   requirement: JobRequirement,
   evidence: readonly CandidateEvidence[],
   now = new Date().toISOString(),
 ): { mapping: RequirementEvidenceMap; evidence: CandidateEvidence | null } {
-  const ranked = rankedEvidence(requirement, evidence);
+  const result = classifyRequirementEvidence(requirement, evidence, now, true);
+  const raw = classifyRequirementEvidence(requirement, evidence, now, false);
+  if (!negationChangedOutcome(raw.mapping.classification, result.mapping.classification)) return result;
+  return { ...result, mapping: { ...result.mapping, explanation: `${result.mapping.explanation} ${NEGATION_NOTE}` } };
+}
+
+function classifyRequirementEvidence(
+  requirement: JobRequirement,
+  evidence: readonly CandidateEvidence[],
+  now: string,
+  affirm: boolean,
+): { mapping: RequirementEvidenceMap; evidence: CandidateEvidence | null } {
+  const ranked = rankedEvidence(requirement, evidence, affirm);
   const best =
     requirement.kind === "credential"
       ? ranked.find((item) => credentialStanding(item.evidence, now).usable) ?? ranked[0] ?? null

@@ -1,0 +1,8 @@
+{
+  "pattern": "audit-convergence on a long-tail heuristic (cycle-count escalation, signature 31501b86b1c1c0a3)",
+  "proposal_kind": "doctrine",
+  "proposal_text": "Phase 15 VETOs #80-#82 each found a different common resume phrasing that the negation rules mishandle (comma lists; STAR result phrases after a comma; idioms; 'not yet'; result clauses joined by 'and'). The findings are distinct and successively narrower; the shared root cause is that the plan enumerated cases instead of defining acceptance against a phrasing corpus. Process change: plans for heuristic text rules must include a versioned phrasing corpus with (1) common affirmative evidence phrasings that must keep their pre-change classification (no false downgrade) and (2) negated phrasings that must lose support. Acceptance is defined against the corpus plus documented limitations. Iteration 4 adds that corpus.",
+  "addressed_event_ids": [],
+  "closure_enforcer": "/qor-audit Step 3",
+  "ts": "2026-10-07T20:18:35Z"
+}

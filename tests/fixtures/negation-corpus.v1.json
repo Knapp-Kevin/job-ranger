@@ -1,0 +1,274 @@
+{
+  "version": 1,
+  "note": "Synthetic resume-phrasing corpus for deterministic negation handling (G12, #167). Affirmative items must keep their pre-change classification (no false downgrade); negated items must lose support; limitations document accepted known misses. Expected classifications were authored from the existing mapper's behavior before this change.",
+  "affirmative": [
+    {
+      "evidence": "Coordinated scheduling for regional field teams.",
+      "requirement": "Coordinate scheduling for field teams.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Migrated ERP with no downtime, reducing operational costs by 20%.",
+      "requirement": "Reduce operational costs.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Migrated 40 servers to AWS with no downtime and reduced hosting costs 30%.",
+      "requirement": "Reduce hosting costs.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Completed SAP cutover with no data loss and trained 120 end users.",
+      "requirement": "Train end users.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Resolved escalations without overtime and documented root causes.",
+      "requirement": "Document root causes.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Reduced turnover without raising salaries, improving retention 20%.",
+      "requirement": "Improve retention.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Delivered all releases on time with no critical defects.",
+      "requirement": "Deliver releases on time.",
+      "expected": "transferable",
+      "note": "pre-change classification is transferable because of G11 (trailing period on the requirement's last token)"
+    },
+    {
+      "evidence": "Cut onboarding time in half without adding headcount.",
+      "requirement": "Onboarding time.",
+      "expected": "transferable",
+      "note": "pre-change classification is transferable because of G11 (trailing period on the requirement's last token)"
+    },
+    {
+      "evidence": "Operated forklifts with no safety incidents across 3 years.",
+      "requirement": "Operate forklifts.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Never missed a filing deadline in 6 years of payroll processing.",
+      "requirement": "Payroll processing.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Never missed a deadline, and reduced cycle time 15%.",
+      "requirement": "Reduce cycle time.",
+      "expected": "transferable",
+      "note": "pre-change classification is transferable because of G11 (trailing period on the requirement's last token)"
+    },
+    {
+      "evidence": "Managed no fewer than 12 engineers.",
+      "requirement": "Manage engineers.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Managed operations including but not limited to payroll, budgets, and vendor contracts.",
+      "requirement": "Manage vendor contracts.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Not only led the team but also hired staff.",
+      "requirement": "Hired staff.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Built no-code automation tools for finance.",
+      "requirement": "Automation tools.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Led a not-for-profit fundraising program.",
+      "requirement": "Fundraising program.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Notably reduced claim processing time by 30%.",
+      "requirement": "Reduce claim processing time.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Noted recurring defects and redesigned the inspection checklist.",
+      "requirement": "Redesign inspection checklist.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Expanded Nordic distribution partnerships.",
+      "requirement": "Nordic distribution partnerships.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Handled incident response without escalation.",
+      "requirement": "Incident response.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Approved vendor budgets; did not manage payroll.",
+      "requirement": "Approved vendor budgets.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Approved vendor budgets, not invoices.",
+      "requirement": "Approved vendor budgets.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "No prior SQL experience, taught myself SQL and built dashboards.",
+      "requirement": "Built dashboards.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Built pipelines instead of manual reports, cutting reporting time 50%.",
+      "requirement": "Reporting time.",
+      "expected": "transferable",
+      "note": "pre-change classification is transferable because of G11 (trailing period on the requirement's last token)"
+    },
+    {
+      "evidence": "Supported the lead analyst on supplier audits.",
+      "requirement": "Supplier audits.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Never approved the vendor budget; reviewed vendor budget drafts.",
+      "requirement": "Reviewed vendor budget drafts.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Did not manage payroll and approved budgets.",
+      "requirement": "Approved budgets.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Ranked No. 1 in regional sales.",
+      "requirement": "Regional sales.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Supported 2,000 users with no outages.",
+      "requirement": "Support users.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Never lost a key account in 5 years.",
+      "requirement": "Key account management.",
+      "expected": "transferable"
+    }
+  ],
+  "negated": [
+    {
+      "evidence": "Never approved the vendor budget; reviewed vendor budget drafts.",
+      "requirement": "Approved vendor budgets.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Did not handle budgets, payroll, or invoices.",
+      "requirement": "Payroll and invoices.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "Handled all HR functions except payroll.",
+      "requirement": "Handled payroll.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Reviewed vendor budgets rather than approving them.",
+      "requirement": "Approved vendor budgets.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Not yet PMP certified; exam scheduled for March.",
+      "requirement": "PMP certification.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "No experience with Python.",
+      "requirement": "Python experience.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "Didn't manage payroll.",
+      "requirement": "Manage payroll.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "No supervisory experience; supported shift leads.",
+      "requirement": "Supervisory experience.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "Did not manage payroll and approved budgets.",
+      "requirement": "Manage payroll.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "Never approved vendor budgets.",
+      "requirement": "Approved vendor budgets.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "No experience with SQL, Python, or Tableau.",
+      "requirement": "Python.",
+      "expected": "gap"
+    },
+    {
+      "evidence": "No direct reports, budget authority, or hiring responsibility.",
+      "requirement": "Budget authority.",
+      "expected": "gap"
+    }
+  ],
+  "limitations": [
+    {
+      "evidence": "Vendor budgets were never approved by me.",
+      "affirmed": "Vendor budgets were .",
+      "reason": "postposed/passive negation keeps the text before the cue"
+    },
+    {
+      "evidence": "Did not handle recruiting, onboarding, or training.",
+      "affirmed": "Did , onboarding, or training.",
+      "reason": "gerund list items after a verb cue end scope at the comma"
+    },
+    {
+      "evidence": "Did not lead large, distributed teams.",
+      "affirmed": "Did , distributed teams.",
+      "reason": "comma-separated -ed adjectives after a verb cue end scope"
+    },
+    {
+      "evidence": "Raised $50K for No Kid Hungry, organizing drives.",
+      "affirmed": "Raised $50K for , organizing drives.",
+      "reason": "a proper noun in prose that starts with a cue word is negated (organization field is protected)"
+    },
+    {
+      "evidence": "Did not, however, approve budgets.",
+      "affirmed": "Did however, approve budgets.",
+      "reason": "a contrast word set off by commas right after the cue ends scope early"
+    },
+    {
+      "evidence": "Never shipped to the U.S. market directly.",
+      "affirmed": ".S. market directly.",
+      "reason": "'.' in abbreviations ends a scope early"
+    },
+    {
+      "evidence": "Has not used Python or advanced Excel.",
+      "affirmed": "Has or advanced Excel.",
+      "reason": "and/or followed by an -ed adjective ends scope like a past-tense verb"
+    },
+    {
+      "evidence": "Delivered the rollout with no defects, on schedule.",
+      "affirmed": "Delivered the rollout with .",
+      "reason": "a trailing adjunct after a cue and comma is erased (honest direction)"
+    },
+    {
+      "evidence": "Process 500 claims weekly with no backlog and maintain 99% accuracy.",
+      "affirmed": "Process 500 claims weekly with .",
+      "reason": "present-tense verbs after a cue and and/comma do not end scope; the tail clause is erased (honest direction)"
+    },
+    {
+      "evidence": "No experience in budgeting, forecasting, or auditing.",
+      "affirmed": ", forecasting, or auditing.",
+      "reason": "gerund list items after a noun cue end scope at the comma (dishonest direction)"
+    }
+  ]
+}
