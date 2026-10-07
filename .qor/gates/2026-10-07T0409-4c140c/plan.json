@@ -1,0 +1,51 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0409-4c140c",
+  "ts": "2026-10-07T04:15:04Z",
+  "plan_path": "docs/plan-qor-phase6-windows-runtime-fixes.md",
+  "phases": [
+    "Phase 1: PWA adapter resolution (D1)",
+    "Phase 2: Upgrade-check line splitting (D2)",
+    "Phase 3: Windows CI coverage"
+  ],
+  "ci_commands": [
+    "npm run typecheck",
+    "npm test",
+    "npm run test:pwa:e2e",
+    "npm run test:release-upgrade",
+    "npm run test:e2e"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "governance/restore-health",
+  "originating_remediation": "docs/BACKLOG.md D1, D2",
+  "feature_inventory_touches": [
+    {
+      "entry_id": "FX046",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/runtime.spec.ts",
+      "test_descriptor": "build-config fix only; existing runtime assertions become runnable on Windows"
+    },
+    {
+      "entry_id": "FX047",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/update-and-storage.spec.ts",
+      "test_descriptor": "build-config fix only; existing update/storage assertions become runnable on Windows"
+    },
+    {
+      "entry_id": "FX048",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/unicode-resume.spec.ts",
+      "test_descriptor": "build-config fix only; existing unicode PDF assertions become runnable on Windows"
+    }
+  ],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T04:15:04Z"
+  }
+}

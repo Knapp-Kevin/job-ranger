@@ -96,8 +96,7 @@ test("Electron → PWA: a desktop .jobranger archive restores into the web runti
 
   await chooseRestoreFile(page, { name: "desktop-export.jobranger", buffer: await readFile(archivePath) });
   await expect(page.getByTestId("restore-producer")).toContainText("Job Ranger desktop app");
-  await page.getByRole("button", { name: "Restore and restart" }).click();
-  await page.waitForEvent("load");
+  await Promise.all([page.waitForEvent("load"), page.getByRole("button", { name: "Restore and restart" }).click()]);
   await waitForRuntime(page);
 
   expect((await page.evaluate(() => window.electronAPI.career.getProfile()))?.fullName).toBe("Desktop Morgan");

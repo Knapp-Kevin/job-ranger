@@ -64,17 +64,27 @@ test("service worker updates are verified, user-confirmed, recoverable, and neve
   await expect(page.getByTestId("pwa-update-error")).toBeVisible();
   await expect(page.getByTestId("pwa-update-ready")).toHaveCount(0);
   expect((await page.evaluate(() => window.electronAPI.career.getProfile()))?.fullName).toBe("Morgan Rivera");
+  // Withdraw the broken deployment before reloading: the reload triggers the
+  // browser's own service-worker update check, which must not see it.
+  server.setRoot(roots.current);
   await page.reload();
   await waitForRuntime(page);
   expect(await buildMeta(page)).toBe(currentBuild);
+  await expect
+    .poll(() =>
+      page.evaluate(async () => {
+        const registration = await navigator.serviceWorker.getRegistration();
+        return Boolean(registration?.installing || registration?.waiting);
+      }),
+    )
+    .toBe(false);
 
   // 2. A valid new version installs in the background and waits for the user.
   server.setRoot(roots.next);
   await page.evaluate(async () => (await navigator.serviceWorker.getRegistration())!.update());
   await expect(page.getByTestId("pwa-update-ready")).toBeVisible();
   expect(await buildMeta(page)).toBe(currentBuild);
-  await page.getByRole("button", { name: "Reload to update" }).click();
-  await page.waitForEvent("load");
+  await Promise.all([page.waitForEvent("load"), page.getByRole("button", { name: "Reload to update" }).click()]);
   await waitForRuntime(page);
   expect(await buildMeta(page)).toBe(nextBuild);
   expect((await page.evaluate(() => window.electronAPI.career.getProfile()))?.fullName).toBe("Morgan Rivera");
@@ -83,8 +93,7 @@ test("service worker updates are verified, user-confirmed, recoverable, and neve
 
   // 3. Shell repair clears only the shell and keeps career data.
   await page.goto(`${server.url}#/settings`);
-  await page.getByTestId("repair-app-shell").click();
-  await page.waitForEvent("load");
+  await Promise.all([page.waitForEvent("load"), page.getByTestId("repair-app-shell").click()]);
   await waitForRuntime(page);
   expect((await page.evaluate(() => window.electronAPI.career.getProfile()))?.fullName).toBe("Morgan Rivera");
 });

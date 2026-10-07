@@ -6,6 +6,16 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 Release-candidate preparation for v1.3.0 is active. Changes after the candidate freeze belong here until they are deliberately admitted to the release.
 
+### Fixed
+
+- **Web app built on Windows**: every action failed with `No handler registered for '<channel>'`. The build plugin handed the bundler backslash module ids, so the web runtime worker contained two copies of its IPC handler registry. Adapter imports now resolve through the bundler's own resolver, and a check on the built bundle guards against a second copy. Builds made on Linux, including the production web build, were not affected.
+- **Release upgrade verification on Windows**: `npm run test:release-upgrade` failed with `no such table` because Windows `sqlite3.exe` output ends lines with CRLF.
+
+### Changed
+
+- CI runs the web browser suite and the release upgrade verification on Windows as well as Ubuntu.
+- Both web browser-suite CI jobs upload Playwright traces and screenshots when a test fails. The service-worker update test no longer races the browser's own update check.
+
 ## v1.3.0 - Release candidate
 
 Not yet published. Candidate evidence: [`docs/validation/RELEASE_CANDIDATE_V1.3.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.3.0.md).
