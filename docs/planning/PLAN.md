@@ -1,6 +1,6 @@
 # Job Ranger Roadmap
 
-**Current as of:** 2026-10-05
+**Current as of:** 2026-10-07
 
 This is the active roadmap. Historical phase/remediation plans remain implementation provenance only.
 
@@ -203,6 +203,27 @@ Current slice:
 - [ ] only after Slice A is proven, evaluate a local provider against measured semantic-lift benchmarks.
 
 Remote provider adoption is **not** implied by this work. It remains deferred until a separate provider/security decision is made.
+
+### Personal Brand / Professional Presence / #171
+
+**Status:** architecture accepted; implementation not started. ADR: [ADR-0001](../adr/0001-personal-brand-publishing-and-analytics.md). Design: [Personal Brand Publishing and Analytics](../design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md).
+
+The capability extends Career Ops into professional presence without turning Job Ranger into a general marketing platform.
+
+Baseline requirements:
+
+- [ ] implement Presence Brief, user-authored drafts, hook/theme/tone metadata, and experiment hypotheses;
+- [ ] link factual professional claims to current Career Evidence where applicable;
+- [ ] implement deterministic composition findings and separate readiness facets;
+- [ ] require exact-content approval before connected publication;
+- [ ] support a complete manual PWA path: copy/export, manual publication receipt, manual analytics snapshots, demographic observations, and career outcomes;
+- [ ] implement deterministic derived metrics, objective-aware interpretation, comparable-post cohorts, and conservative evidence tiers;
+- [ ] add provider-neutral capability contracts without assuming publishing implies analytics access;
+- [ ] prove LinkedIn exact-text publishing separately from LinkedIn analytics entitlement;
+- [ ] keep recommendations advisory and refuse "best time" or content conclusions when comparable evidence is insufficient;
+- [ ] preserve the Viable boundary: Job Ranger optimizes the professional presence of a person, not the market presence of a product.
+
+**Recommended first slice:** Slice A from the design contract. It produces a useful composition/guidance workflow without waiting on OAuth, provider review, background execution, or inference.
 
 ## Deferred
 
