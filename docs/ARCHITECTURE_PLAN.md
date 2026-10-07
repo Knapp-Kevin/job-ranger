@@ -258,7 +258,7 @@ Core rules:
 - Inference failures fall back to deterministic behavior rather than turning into empty evidence, negative assessment, or partial state mutation.
 - Provider adapters are replaceable and runtime-gated. Job Ranger classifies provider location itself (`in-process`, `loopback`, or `remote`), and loopback endpoints need the same consent as remote ones for private data. A PWA must not claim remote-provider support until its credential/transport boundary is independently approved.
 - Deterministic modules never import inference modules; the inference layer receives deterministic gates by injection and never modifies them.
-- The first implementation slice (#164) is contract types + broker + adjudication hooks + a test-only synthetic fake provider + conformance tests, with no network, credentials, IPC, UI, or persistence.
+- The first implementation slice (#164) is contract types + broker + adjudication hooks + a test-only synthetic fake provider + conformance tests, with no network, credentials, IPC, UI, or persistence. It lives in `electron/src/inference/`. The modules ship inert in desktop builds: no entry point loads them, the production registry is empty, and both runtimes report inference as `not-configured`. `tests/inference-baseline.test.cjs` enforces the one-way import boundary.
 
 The contract received its adversarial architecture/security review in Phase 13 (Draft 0.2). Remote provider implementation remains deferred until a separate provider/security decision is made.
 

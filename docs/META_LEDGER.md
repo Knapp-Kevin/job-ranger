@@ -2071,6 +2071,161 @@ It also raised one second-round item: the `inferred-pending` review queue. Such 
 
 ---
 
+### Entry #74: PLAN (Phase 14 Inference Slice A)
+
+**Timestamp**: 2026-10-07T17:57:33Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase14-inference-slice-a.md
+
+**Content Hash**: `d666b6ed45ac1b3ad18d6fe7fab5ae0bd72d78bb6e95a83fb79c2208e1df92c1`
+
+**Previous Hash**: `e065c7f268799d12e1d681fef12238b54b200a4712b27fb837568d2063ecd2b2`
+
+**Chain Hash**: `bc3987e6f9e29a08a619730e5d22f608c9810456b2566f36cd83a50ef9f98354`
+
+**Decision**: Phase 14 plan created for #164, Inference Slice A per contract Draft 0.2. It adds provider-free shared-core modules under `electron/src/inference/` (contract types, closed validators, manifest computation, adjudicator, acceptance re-check, broker, provenance) and a test-only deterministic synthetic fake provider. It also adds a conformance harness, adversarial fixtures shared by the deterministic and inference paths, and baseline regression with inference absent. No deterministic module changes; no network, SDK, credentials, IPC, UI or persistence. Awaiting GATE tribunal.
+
+---
+
+### Entry #75: GATE TRIBUNAL (Phase 14 Inference Slice A)
+
+**Timestamp**: 2026-10-07T18:00:39Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase14-inference-slice-a.md
+
+**Verdict**: VETO
+
+**Content Hash**: `38184e3c9153fac358b37796278b44baa424eaba33cdbfc0e79d529ca792a701`
+
+**Previous Hash**: `bc3987e6f9e29a08a619730e5d22f608c9810456b2566f36cd83a50ef9f98354`
+
+**Chain Hash**: `27949d2027d1661061c7729786bf62e471d91b8c5511189bf28190f67af56d1c`
+
+**Decision**: VETO for plan iteration 1. Six Draft 0.2 rules or infrastructure facts that apply to Slice A are missing:
+- the semantic-support evidence checks;
+- broker location classification with fail-closed consent;
+- the in-process network-denial conformance check;
+- a SQLite test in the SQLite-free `test:unit` lane;
+- adjudication-time staleness and request snapshot capture;
+- a caller-cancellation test.
+
+Governor must amend and resubmit.
+
+---
+
+### Entry #76: GATE TRIBUNAL (Phase 14 Inference Slice A)
+
+**Timestamp**: 2026-10-07T18:05:38Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase14-inference-slice-a.md
+
+**Verdict**: PASS
+
+**Content Hash**: `8569768cfa946646fda6afdf4ba57c98566f6249d3e2746f7d1d2ee5e5955e82`
+
+**Previous Hash**: `27949d2027d1661061c7729786bf62e471d91b8c5511189bf28190f67af56d1c`
+
+**Chain Hash**: `8661ded21b9fa6837bfd358a95b4d9bf279709f62279a55f16ce017320870b6f`
+
+**Decision**: PASS for plan iteration 2. The iteration-1 findings are closed. Non-blocking observations 1-7 are carried into implementation. Implementation unlocked.
+
+---
+
+### Entry #77: IMPLEMENTATION (Phase 14 Inference Slice A)
+
+**Timestamp**: 2026-10-07T18:34:06Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase14-inference-slice-a.md
+
+**Content Hash**: `efc99f9836b490e1580d0ad86768ab515ba3d5c90ee469379b1b32b9ee082c02`
+
+**Previous Hash**: `8661ded21b9fa6837bfd358a95b4d9bf279709f62279a55f16ce017320870b6f`
+
+**Chain Hash**: `1b7a026f2ecf6b5845b1e07439a114e9c5663d11f072a5f54f02f22c0a4a2207`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `electron/src/inference/` (14 modules, 1,497 lines; every file 250 lines or fewer, every function 40 lines or fewer):
+  - `contract`: Draft 0.2 types;
+  - `schemas-envelope` and `schemas-tasks`: closed hand-written validators;
+  - `manifest`: computed over payload and context;
+  - `task-spec`, `task-semantic` and `task-rewrite`: request builders with local snapshots, scope and task checks;
+  - `text-policy`: narrow URL/contact/path detection;
+  - `adjudicator`;
+  - `broker`, `invoke` and `registry`: assigned-location policy, timeout and cancellation, no retry or fallback, empty production registry, capability report;
+  - `provenance`: in-memory, injected HMAC;
+  - `acceptance`: review-token binding, statement and evidence re-check, injected gate, existing-path write.
+- NEW tests:
+  - `inference-conformance.test.cjs`: 49 harness cases plus manifest, text-policy, capability and acceptance checks;
+  - `inference-adversarial.test.cjs`: 10 hashed categories, run on the same fixtures for the deterministic and inference paths;
+  - `inference-baseline.test.cjs`: static and child-process import boundary, golden Truth Gate, coverage and assessment equivalence;
+  - `inference-baseline-sqlite-smoke-test.cjs`: real SQLite, network denied.
+- NEW support files: `tests/support/inference-*` (the test-only fake provider, the conformance harness, network denial, fixtures) and `tests/fixtures/inference/`.
+- `package.json`: the pure tests run in `test` and `test:unit`; the SQLite smoke test runs in `test` only.
+- Docs: the contract Slice A implementation status, PLAN, ARCHITECTURE_PLAN, CHANGELOG, governance index row, and BACKLOG G12/G13.
+
+**Deviations from the plan (documented, no change to acceptance)**:
+- Razor split: the request builders and task checks moved into `task-spec`, `task-semantic` and `task-rewrite` (audit observation 7); call execution moved into `invoke`; text policy moved into `text-policy`.
+- Timeout is set per registry entry rather than as a broker option.
+- A caller signal already aborted before the call fails with phase `pre-transmission`, since nothing was sent. Cancellation during a call uses phase `provider`, as LD8 specifies.
+- Acceptance is additionally bound by a broker-issued HMAC `reviewToken` and an `outputContentHash` check.
+- Rewrite requests are confirmed-evidence-only, like semantic requests.
+- The URL allowlist is evidence plus source-statement text from the private snapshot, not job text.
+- BACKLOG G12/G13 record two deterministic-baseline limitations found by the shared fixtures. The requirement mapper maps a negated statement and a high-lexical-overlap, different-meaning statement as `direct`. Fixing them would be independent deterministic improvements; they are not changed here.
+
+**Independent code review** (`code-reviewer`, two rounds): ten material findings in the first round, all fixed and verified PASS in the second.
+- An adapter could mutate the live request object; it now gets `structuredClone`, and the allowlist comes from the private snapshot.
+- Object responses bypassed the size bound or were held as live objects; responses are now serialized once and only the parsed copy is validated.
+- Deep nesting was unbounded; there is now a depth bound and `safeAdjudicate`.
+- The resolved model was unrestricted; it must now be a declared model.
+- A contact-data redaction was claimed but never applied.
+- Acceptance was not bound to the adjudicated proposal.
+- A failed domain write left no provenance record.
+- One adversarial assertion was tautological.
+- Five other gaps had no test.
+
+Mutation testing confirmed the suite catches a disabled subset check, a disabled abort, a disabled Truth Gate call, and a missing clone.
+
+**Verification (Windows 10 dev host)**: `npm test` exit 0, with all four inference tests passing (49 conformance cases). `npm run typecheck` exit 0. `git diff --stat origin/main` shows no deterministic module changed.
+
+**Decision**: Implementation complete per the Entry #76 PASS plan, with documented deviations.
+
+---
+
+### Entry #78: SESSION SEAL (Phase 14 Inference Slice A)
+
+**Timestamp**: 2026-10-07T18:34:07Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase14-inference-slice-a.md
+
+**Verdict**: PASS
+
+**Content Hash**: `1da0c24309cac1d1fa67d2c1ab38a17f9bcb200a100ce533e04d4460e983cc72`
+
+**Previous Hash**: `1b7a026f2ecf6b5845b1e07439a114e9c5663d11f072a5f54f02f22c0a4a2207`
+
+**Chain Hash**: `b4cdf7a8bb9e056006fd5aebdfc2d5fc55b70b400acb8c8457bebff4ec04db0d`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #76); intent lock captured before implementation
+- [x] Every planned module and test exists, plus documented Razor splits. No deterministic module is modified, and no dependency, network, SDK, credential, IPC, UI or persistence is added.
+- [x] D4: the four inference tests pass; `npm test` and `npm run typecheck` pass; the diff is limited to inference, tests, `package.json` and docs
+- [x] Tests are functional, not presence-only (mutation-verified); the independent code review passed after fixes
+- [x] Feature Inventory unchanged: no user-touchable surface (n/a-justified)
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #76 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2085,5 +2240,6 @@ It also raised one second-round item: the `inferred-pending` review queue. Such 
 *Phase 10 Public Demo Harness: SEALED (Entry #57)*
 *Phase 11 Public-Review README: SEALED (Entry #62)*
 *Phase 12 Demo Video: SEALED (Entry #66)*
-*Phase 13 Inference Contract Review: SEALED (Entry #73)*
-*Next required action: merge PR #163, then plan Phase 14 (#164 Slice A)*
+*Phase 13 Inference Contract Review: SEALED (Entry #73); PR #163 merged*
+*Phase 14 Inference Slice A: SEALED (Entry #78)*
+*Next required action: merge the Slice A PR (#164); Slice B (local provider) needs a separate issue and measured semantic-lift benchmarks*

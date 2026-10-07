@@ -871,6 +871,12 @@ This contract intentionally separates architecture from provider adoption.
 
 ### Slice A — contract types, broker, adjudication hooks, fake provider (#164)
 
+**Implementation status:** implemented in Phase 14 (#164).
+- Modules: `electron/src/inference/`. No deterministic module or production entry point imports them, and the production registry is empty.
+- Tests: `tests/inference-conformance.test.cjs`, `tests/inference-adversarial.test.cjs`, `tests/inference-baseline.test.cjs` and `tests/inference-baseline-sqlite-smoke-test.cjs`.
+- Test-only fake provider and conformance harness: `tests/support/`.
+- The in-process network-denial check patches Node networking APIs. That is enough for the synthetic fake; an in-process real adapter (Slice B) needs process- or OS-level isolation.
+
 Implement only:
 
 - shared request/response/failure/provenance/capability types;
