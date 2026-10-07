@@ -75,6 +75,7 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 11 public-review README | `docs/plan-qor-phase11-public-review-readme.md` | PLAN #58, VETO #59, PASS #60, implemented #61, sealed #62 |
 | Phase 12 demo video | `docs/plan-qor-phase12-demo-video.md` | PLAN #63, PASS #64, implemented #65, sealed #66 |
 | Phase 13 inference contract review | `docs/plan-qor-phase13-inference-contract-review.md` | PLAN #67, VETO #68-#70, remediate, PASS #71, implemented #72, sealed #73 |
+| Phase 14 inference Slice A | `docs/plan-qor-phase14-inference-slice-a.md` | PLAN #74, VETO #75, PASS #76, implemented #77, sealed #78 |
 
 ## Tier 5 — Reference Material
 

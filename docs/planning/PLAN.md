@@ -187,7 +187,7 @@ Deterministic grounded prep already exists. Conversational practice/feedback is 
 
 ### Provider-neutral inference contract / #162
 
-**Status:** Contract Draft 0.2, adversarially reviewed (Phase 13, findings F1-F23). Slice A (#164) is authorized; provider implementation remains deferred.
+**Status:** Contract Draft 0.2, adversarially reviewed (Phase 13). Slice A (#164) is implemented: provider-free broker, adjudication hooks, test-only fake provider, and conformance (Phase 14). Provider implementation remains deferred.
 
 Current slice:
 
@@ -199,7 +199,7 @@ Current slice:
 - [x] define provider conformance and benchmark requirements;
 - [x] complete adversarial architecture/security review (Phase 13; review record in the contract);
 - [x] define blocked implementation Slice A in #164: contract types + broker + synthetic fake provider, with no network or credentials;
-- [ ] implement #164 (Slice A) after #163 merges;
+- [x] implement #164 (Slice A): `electron/src/inference/`, conformance and baseline regression tests (Phase 14);
 - [ ] only after Slice A is proven, evaluate a local provider against measured semantic-lift benchmarks.
 
 Remote provider adoption is **not** implied by this work. It remains deferred until a separate provider/security decision is made.
