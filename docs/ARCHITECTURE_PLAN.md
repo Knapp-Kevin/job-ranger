@@ -248,6 +248,7 @@ The normative contract is [design/INFERENCE_CONTRACT.md](./design/INFERENCE_CONT
 Core rules:
 
 - Job Ranger remains fully useful without inference.
+- The inference-disabled product is the reference baseline. Inference-specific governance is additive and may not replace or weaken existing deterministic gates or make those gates provider-dependent.
 - Inference tasks are explicit and schema-bounded; there is no generic autonomous-agent capability.
 - The shared core constructs the minimum task payload, records a transmission manifest, and validates every response.
 - Remote providers require explicit disclosure/consent for the data classes leaving the device.
