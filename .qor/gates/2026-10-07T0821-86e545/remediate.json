@@ -1,0 +1,8 @@
+{
+  "pattern": "audit-convergence (cycle-count escalation, signature 31501b86b1c1c0a3)",
+  "proposal_kind": "doctrine",
+  "proposal_text": "Three consecutive specification-drift VETOs on the Phase 13 plan were distinct, successively narrower findings: loopback/evidence-set/non-resume gates; explanation prose; the Slice A schemas' free-text fields. They do not repeat. No gate_override, regression or capability-shortfall events are unaddressed. Process lesson: when a plan introduces a class-wide rule (here, structured-only prose), the Governor applies it to every schema in scope in the same iteration rather than to the instance the auditor named. Iteration 4 applies LD13 to all v1 task schemas.",
+  "addressed_event_ids": [],
+  "closure_enforcer": "/qor-audit Step 3",
+  "ts": "2026-10-07T17:35:23Z"
+}

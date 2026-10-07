@@ -30,6 +30,7 @@ Stable; changes are explicit doctrine events. Drift signal: rules contradict eac
 | Artifact | Path |
 |----------|------|
 | Shadow Genome | `docs/SHADOW_GENOME.md` |
+| Process Shadow Genome | `docs/PROCESS_SHADOW_GENOME.md` |
 | Project governance | `GOVERNANCE.md` |
 | Security policy | `SECURITY.md` |
 | Contributing | `CONTRIBUTING.md` |
@@ -73,6 +74,7 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 10 public demo harness | `docs/plan-qor-phase10-public-demo-harness.md` | PLAN #53, VETO #54, PASS #55, implemented #56, sealed #57 |
 | Phase 11 public-review README | `docs/plan-qor-phase11-public-review-readme.md` | PLAN #58, VETO #59, PASS #60, implemented #61, sealed #62 |
 | Phase 12 demo video | `docs/plan-qor-phase12-demo-video.md` | PLAN #63, PASS #64, implemented #65, sealed #66 |
+| Phase 13 inference contract review | `docs/plan-qor-phase13-inference-contract-review.md` | PLAN #67, VETO #68-#70, remediate, PASS #71, implemented #72, sealed #73 |
 
 ## Tier 5 — Reference Material
 

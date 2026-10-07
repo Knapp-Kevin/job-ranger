@@ -55,7 +55,7 @@ Managed source/resume artifacts live under Job Ranger's local data/artifact dire
 
 Backup/restore is local and versioned. Cloud sync is not part of the current product.
 
-Do not add telemetry, hosted account sync, external inference transmission, or other remote personal-data flows without explicit product governance, user disclosure, and security/privacy review. Any future inference implementation must also conform to the provider-neutral [docs/design/INFERENCE_CONTRACT.md](./docs/design/INFERENCE_CONTRACT.md), including data minimization, pre-transmission manifests, schema-bounded proposals, deterministic adjudication, and runtime-specific credential constraints.
+Do not add telemetry, hosted account sync, external inference transmission, or other remote personal-data flows without explicit product governance, user disclosure, and security/privacy review. Any future inference implementation must also conform to the provider-neutral [docs/design/INFERENCE_CONTRACT.md](./docs/design/INFERENCE_CONTRACT.md), including data minimization, pre-transmission manifests, schema-bounded proposals, deterministic adjudication, and runtime-specific credential constraints. Provider credentials and hashing salts never enter prompts, logs, provenance, or backup/portable archives, and provider-supplied error text is never logged or persisted verbatim.
 
 ## Imported career documents
 
