@@ -1,6 +1,6 @@
 # ADR-0001: Personal-brand publishing and analytics authority
 
-- Status: Proposed
+- Status: Accepted
 - Date: 2026-10-08
 - Supersedes: None
 - Superseded by: None
