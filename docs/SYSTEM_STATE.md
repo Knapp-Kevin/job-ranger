@@ -468,5 +468,8 @@ Stable v1.2.0 publication is complete. The certificate-first follow-up (Azure Ar
 - `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` — clean-machine signed-artifact verification procedure;
 - `docs/TESTER_INSTALLATION.md` — bounded prerelease installation guidance;
 - `docs/PRODUCT_GAP_REVIEW.md` — candidate/deferred/non-goal dispositions;
+- `docs/BACKLOG.md` — governed engineering work identified concretely enough to plan;
+- `docs/FEATURE_INDEX.md` — user-touchable features mapped to the tests that verify them;
+- `docs/GOVERNANCE_INDEX.md` — tiered map of governance artifacts and their freshness contracts;
 - `docs/validation/RELEASE_CANDIDATE_V1.2.0.md` — candidate-specific evidence;
 - `GOVERNANCE.md`, `SECURITY.md`, `THIRD_PARTY_NOTICES.md` — governance/security/attribution.

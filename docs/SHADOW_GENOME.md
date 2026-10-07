@@ -215,4 +215,66 @@ These are implementation-affecting decisions that cannot remain open when submit
 
 ---
 
+## Failure Entry #6
+
+**Date**: 2026-10-06T21:10:00Z
+**Verdict ID**: Entry #28 (GATE TRIBUNAL Governance-Health Remediation)
+**Failure Mode**: HALLUCINATION
+
+### What Failed
+
+First draft of the governance-health remediation (docs/BACKLOG.md, docs/FEATURE_INDEX.md, docs/GOVERNANCE_INDEX.md).
+
+### Why It Failed
+
+Status labels and coverage claims were inferred instead of read from evidence:
+1. FX011 marked `verified` from a test of a sibling control (the Onboarding import).
+2. FX019 marked untested although `tests/e2e/app.spec.ts` removes a source through the UI; BACKLOG B1 repeated the overstatement ("destructive deletes").
+3. A template freshness marker ("every feature has a test") was kept although the index contradicts it.
+4. Plan files were labelled "sealed" without SEAL entries in the ledger.
+5. `plan-remediation.md` was labelled "superseded" without any ledger record.
+6. `docs/planning/PLAN.md` and `docs/README.md` were left out of an index that claims to list every governance artifact.
+7. Doctrine paths were cited as if they lived in this repo.
+
+### Pattern to Avoid
+
+Every status word in a governance index (verified, sealed, superseded, every-X-has-Y) must be traced to the specific test, ledger entry, or file that proves it. Absence of contrary evidence is not evidence. Template text inherited from `seed` must be re-checked against the actual artifact.
+
+### Remediation Required
+
+Amend the three files per AUDIT_REPORT iteration-1 findings 1-7 and resubmit to /qor-audit. Done; see Failure Entry #7 for the iteration-2 outcome.
+
+---
+
+## Failure Entry #7
+
+**Date**: 2026-10-06T21:40:00Z
+**Verdict ID**: Entry #29 (GATE TRIBUNAL Governance-Health Remediation, Iteration 2)
+**Failure Mode**: HALLUCINATION + SPECIFICATION_DRIFT
+
+### What Failed
+
+Iteration-2 resubmission of the governance-health remediation.
+
+### Why It Failed
+
+The fixes for iteration 1 were scoped to the reported rows only, so neighbouring claims stayed unverified:
+1. FX011 was corrected to `unverified` but dropped the web spec that does drive it, breaking the index's own convention.
+2. BACKLOG B1 then claimed that control had no UI test at all.
+3. BACKLOG B3 said per-row buttons lack accessible names; their names exist but are not unique per row.
+4. Ledger Entry #28 used a different chain formula and layout from Entries #2-#27.
+5. The ledger footer still declared "None - implementation complete" under an open VETO.
+6. Failure Entry #6 was incomplete and off-format.
+7. GOVERNANCE_INDEX did not list itself.
+
+### Pattern to Avoid
+
+When correcting an audit finding, re-verify every sibling claim that shares its evidence (same test, same control family, same ledger section), and match the surrounding file's existing conventions (formula, layout, footer) instead of a tool default.
+
+### Remediation Required
+
+Amend per iteration-2 findings 1-7 and resubmit to /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*
