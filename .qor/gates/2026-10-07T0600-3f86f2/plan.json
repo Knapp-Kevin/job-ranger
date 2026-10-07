@@ -1,0 +1,43 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0600-3f86f2",
+  "ts": "2026-10-07T06:09:02Z",
+  "plan_path": "docs/plan-qor-phase9-input-shell-layer.md",
+  "phases": [
+    "Phase 1: Layer the control shells"
+  ],
+  "ci_commands": [
+    "npx playwright test tests/e2e/filter-controls.spec.ts",
+    "npx playwright test --config playwright.pwa.config.ts tests/pwa/filter-controls.spec.ts",
+    "npm run test:e2e",
+    "npm run test:pwa:e2e",
+    "npm run typecheck"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/7-pwa-tailwind-source",
+  "originating_remediation": "docs/BACKLOG.md G8",
+  "feature_inventory_touches": [
+    {
+      "entry_id": "FX022",
+      "operation": "n/a-justified",
+      "test_path": "tests/e2e/filter-controls.spec.ts",
+      "test_descriptor": "control text clears icons; filtering unchanged"
+    },
+    {
+      "entry_id": "FX009",
+      "operation": "n/a-justified",
+      "test_path": "tests/e2e/filter-controls.spec.ts",
+      "test_descriptor": "affix/icon spacing on three Career Profile fields; saving unchanged"
+    }
+  ],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T06:09:02Z"
+  }
+}
