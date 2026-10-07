@@ -8,6 +8,7 @@ Job Ranger is an independent project. Some career-search workflow concepts in Jo
 - License: MIT
 - Relationship: independent project; no endorsement, sponsorship, certification, or official affiliation is implied.
 - Branding: Job Ranger does not use the career-ops name as a product name, logo, or "powered by" claim.
+- Provenance register: [`docs/legal/CAREER_OPS_PROVENANCE.md`](./docs/legal/CAREER_OPS_PROVENANCE.md) records the mechanism-level lineage classification, current license verification, and the required donor-record rule for future direct reuse.
 
 Where Job Ranger incorporates or adapts code from career-ops, the following MIT notice applies to those portions:
 
