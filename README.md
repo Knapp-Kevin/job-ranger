@@ -168,7 +168,7 @@ Job Ranger is designed to make the workflow coherent while preserving user autho
 7. learn from recurring gaps and observed results without pretending correlation is destiny or application count is progress;
 8. keep the core workflow local and useful without an AI provider.
 
-Broader Career Ops company-targeting and relationship-path behavior has a completed bounded design contract under #121, but it is **not claimed as implemented in v1.2.0**.
+Broader Career Ops company-targeting and relationship-path behavior has a completed bounded design contract under #121, but it is **not implemented on the current development line**.
 
 Job Ranger does **not** autonomously mass-apply, invent qualifications or relationships, silently transmit career data to an inference provider, optimize for raw application volume, or treat one opaque score as hiring truth.
 
