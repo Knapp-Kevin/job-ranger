@@ -1815,6 +1815,101 @@ Kevin Knapp's two PR #155 commits (`README.md`, `docs/SELF_HOSTING.md`) are carr
 
 ---
 
+### Entry #63: PLAN (Phase 12 Demo Video)
+
+**Timestamp**: 2026-10-08T00:10:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase12-demo-video.md
+
+**Content Hash**: `21100b3b4318447a7cfcca66e215be9c7028fa28fe57db82d114e3146f051bc7`
+
+**Previous Hash**: `80c7f97b2982acd69aa1b2626fa120f766257732f59f73e5b91e2173d5eed928`
+
+**Chain Hash**: `e05e580991913a0172b865dce5bf04880b35ec1c43f8ffc6098fefff93291377`
+
+**Decision**: Phase 12 plan created at the maintainer's request. It commits the accepted, frame-reviewed demo take 11 unchanged as `docs/assets/demo/job-ranger-demo.webm` (plain Git, 8.9 MB) and links it from the README. This supersedes Phase 10 LD7's "no media committed" for that one take; `build/demo/` stays ignored. Awaiting GATE tribunal.
+
+---
+
+### Entry #64: GATE TRIBUNAL (Phase 12 Demo Video)
+
+**Timestamp**: 2026-10-08T00:20:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase12-demo-video.md
+
+**Verdict**: PASS
+
+**Content Hash**: `20334809872b392965654e576809fa7669719a854fccd21d98cd5757dc09bd19`
+
+**Previous Hash**: `e05e580991913a0172b865dce5bf04880b35ec1c43f8ffc6098fefff93291377`
+
+**Chain Hash**: `242bc6b5773a3ead963e9b7300b3b704716eb1238473106cb0a690b2f0c787a7`
+
+**Decision**: PASS. All checkable evidence holds. The source hash is to be verified at implementation (LD1, D4). Non-blocking: keep the link wording neutral, extend the README intro to cover the video, and state the permanent history growth as a limit. Implementation unlocked.
+
+---
+
+### Entry #65: IMPLEMENTATION (Phase 12 Demo Video)
+
+**Timestamp**: 2026-10-08T00:35:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase12-demo-video.md
+
+**Content Hash**: `4c342109fafa6889791425327474318b561951560e135688858f29ecd300fdf8`
+
+**Previous Hash**: `242bc6b5773a3ead963e9b7300b3b704716eb1238473106cb0a690b2f0c787a7`
+
+**Chain Hash**: `c3751ea77755b03e605c57bd7c9f2ef424a248e75f69ab5bb2717f5bd1492f0d`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `docs/assets/demo/job-ranger-demo.webm`: take 11, copied byte for byte (8,930,679 bytes)
+- `README.md`: the "See it in action" intro now covers the video; a neutral "Watch or download" link to it; closing sentence kept with `npm run demo:record`
+- `CHANGELOG.md`: Unreleased entry names the committed video
+- `docs/GOVERNANCE_INDEX.md`: Phase 12 row
+
+**Verification (Windows 10 dev host)**:
+- SHA-256 of both the source and the committed copy is `00202f983e48453d04d900c1de4c14d59484da2d723aed883ea9be7b1c32571f`.
+- `node scripts/demo/frames.mjs docs/assets/demo/job-ranger-demo.webm <tmp> 10` reports duration 85 s, 1600x900, and no near-blank frame.
+- The README link target exists. `npm test` passes.
+
+**Limit (audit observation)**: the 8.9 MB file stays in Git history permanently, and each deliberate refresh adds another copy.
+
+**Decision**: Implementation complete per the Entry #64 PASS plan.
+
+---
+
+### Entry #66: SESSION SEAL (Phase 12 Demo Video)
+
+**Timestamp**: 2026-10-08T00:40:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase12-demo-video.md
+
+**Verdict**: PASS
+
+**Content Hash**: `21100b3b4318447a7cfcca66e215be9c7028fa28fe57db82d114e3146f051bc7`
+
+**Previous Hash**: `c3751ea77755b03e605c57bd7c9f2ef424a248e75f69ab5bb2717f5bd1492f0d`
+
+**Chain Hash**: `e0eec9981121bba93b92423b9cba400dc8b7888c08748737884b4ee970eea78b`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #64); intent lock captured before implementation
+- [x] Every planned file exists; the committed video is byte-identical to the frame-reviewed take 11
+- [x] D4: hash match; decodes at 1600x900, 85 s, with no near-blank frame; README link resolves; `npm test` passes
+- [x] No hosted-service claim; `build/demo/` remains ignored; Feature Inventory unchanged
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #64 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1828,4 +1923,5 @@ Kevin Knapp's two PR #155 commits (`README.md`, `docs/SELF_HOSTING.md`) are carr
 *Phase 9 Form-Control Shell Layer: SEALED (Entry #52)*
 *Phase 10 Public Demo Harness: SEALED (Entry #57)*
 *Phase 11 Public-Review README: SEALED (Entry #62)*
+*Phase 12 Demo Video: SEALED (Entry #66)*
 *Next required action: maintainer review and merge of the stacked PRs (#157 through #161, then #155)*

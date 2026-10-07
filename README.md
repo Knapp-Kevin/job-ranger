@@ -48,7 +48,9 @@ You can enter anywhere in that flow. A resume is evidence about work you have do
 
 ### See it in action
 
-These screenshots come from the production web build with fictional sample data (Morgan Rivera, Harbor Health). No real person's career data is shown.
+These screenshots and the walkthrough video come from the production web build with fictional sample data (Morgan Rivera, Harbor Health). No real person's career data is shown.
+
+**[Watch or download the 85-second walkthrough (WebM)](./docs/assets/demo/job-ranger-demo.webm)**: choosing a direction, assessing a listing, checking Career Evidence, preparing a truthful resume, and tracking the application.
 
 **Choose a direction.** Target tracks keep your current path and the one you are moving toward separate, each with its own roles and constraints.
 
@@ -62,7 +64,7 @@ These screenshots come from the production web build with fictional sample data 
 
 ![Applications showing the job marked Applied with the submitted PDF listed under Submitted files](./docs/assets/screenshots/deliberate-application.png)
 
-To record the full walkthrough locally, run `npm run demo:record`; regenerate these screenshots with `npm run demo:screenshots`.
+To record the walkthrough again locally, run `npm run demo:record`; regenerate these screenshots with `npm run demo:screenshots`.
 
 ## Start here
 
