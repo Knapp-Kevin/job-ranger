@@ -14,7 +14,7 @@ Consequences:
 
 - a parser may extract evidence but cannot establish truth;
 - a discovery provider may find opportunities but cannot silently create trusted monitored sources;
-- an inference provider may someday propose language or mappings but cannot establish truth;
+- an inference provider may propose bounded, schema-validated language or mappings but cannot establish truth; the normative boundary is [design/INFERENCE_CONTRACT.md](./design/INFERENCE_CONTRACT.md);
 - a renderer formats an artifact but does not own canonical state;
 - a browser retrieves pages but does not silently submit consequential actions;
 - a calendar or notification integration may mirror lifecycle state but does not own it;
@@ -238,6 +238,27 @@ Application Lifecycle / Interview Prep / Search Insights
 ```
 
 The canonical product asset is Career Evidence, not a resume file, JSON Resume record, parser output, generated paragraph, or model response.
+
+## Optional inference architecture
+
+Optional inference is a proposal layer around the deterministic core, not a replacement for it.
+
+The normative contract is [design/INFERENCE_CONTRACT.md](./design/INFERENCE_CONTRACT.md) (#162).
+
+Core rules:
+
+- Job Ranger remains fully useful without inference.
+- Inference tasks are explicit and schema-bounded; there is no generic autonomous-agent capability.
+- The shared core constructs the minimum task payload, records a transmission manifest, and validates every response.
+- Remote providers require explicit disclosure/consent for the data classes leaving the device.
+- Provider output cannot directly write Career Evidence, Target Tracks, applications, sources, resumes, or settings.
+- Career Evidence authority, deterministic requirement/evidence state, Truth Gate, Parseability Gate, source approval, and consequential user actions remain authoritative.
+- Generated factual language must remain evidence-linked and pass deterministic validation before use.
+- Inference failures fall back to deterministic behavior rather than turning into empty evidence, negative assessment, or partial state mutation.
+- Provider adapters are replaceable and runtime-gated. A PWA must not claim remote-provider support until its credential/transport boundary is independently approved.
+- The first implementation slice, if approved after review, is contract types + broker + synthetic fake provider + conformance tests with no network and no credentials.
+
+Remote provider implementation remains deferred until the contract receives adversarial architecture/security review and a separate implementation slice is approved.
 
 ## Resume import architecture
 
