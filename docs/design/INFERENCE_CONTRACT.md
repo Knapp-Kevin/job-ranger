@@ -328,6 +328,16 @@ No inference task may allow untrusted content to:
 
 If a provider response requests another action or more data, the broker ignores that request unless the product has an independently defined task contract for it.
 
+### Untrusted output
+
+Model output is untrusted content even after schema validation.
+
+- Narrative output is treated as text, not executable Markdown/HTML.
+- URLs returned by a provider are not fetched or opened automatically.
+- Provider text cannot introduce UI actions, IPC calls, filesystem paths, shell commands, or network destinations.
+- Rendering must escape or sanitize provider-controlled text through the same boundaries used for other untrusted content.
+- Schema validation proves shape, not truth. Domain validation and user authority still apply.
+
 ## Response envelope
 
 A provider returns a typed envelope, not free-form product state.
@@ -435,6 +445,8 @@ Rules:
 
 - supporting evidence IDs must be a subset of the request;
 - the rewrite must pass the existing Truth Gate before it can replace draft text;
+- the Truth Gate is necessary but **not sufficient** for inference-generated prose: its current deterministic checks cannot prove semantic equivalence merely because all factual tokens are supported;
+- user review is therefore mandatory for inference-generated factual wording in contract v1;
 - acceptance is explicit;
 - deterministic fallback is the canonical evidence statement;
 - the provider may improve phrasing but may not manufacture metrics, ownership, tools, titles, dates, credentials, employers, scope, or outcomes.
@@ -508,7 +520,8 @@ At minimum:
 7. output size/resource bounds pass;
 8. task-specific provenance requirements pass;
 9. factual language is evaluated against supporting evidence where applicable;
-10. current canonical records have not been invalidated/superseded since request creation.
+10. inference-generated factual wording passes the existing Truth Gate **and** remains blocked on explicit user review in contract v1; Truth Gate success alone must not be presented as semantic proof;
+11. current canonical records have not been invalidated/superseded since request creation.
 
 A response that fails adjudication is rejected as `invalid-response` or `validation-failed`. Partial silent salvage is prohibited unless the task schema explicitly defines item-level validation and exposes rejected items.
 
@@ -595,10 +608,14 @@ interface InferenceProvenance {
   requestId: string;
   task: InferenceTask;
   contractVersion: string;
+  taskSchemaVersion: string;
+  instructionTemplateId: string;
+  instructionTemplateVersion: string;
   providerId: string;
   modelId: string;
   providerLocation: InferenceLocation;
   adapterVersion: string;
+  providerSettingsHash: string;
   inputRecordIds: string[];
   inputContentHash: string;
   outputContentHash: string;
@@ -736,6 +753,21 @@ Each task candidate needs a benchmark that compares:
 - latency;
 - provider failures;
 - cost where applicable.
+
+The benchmark must not consist only of fixtures whose wording was authored to align cleanly with the expected result. It must include adversarial and counterfactual cases such as:
+
+- semantically relevant evidence with little lexical overlap;
+- high lexical overlap with materially different meaning;
+- explicit negation and exclusion;
+- adjacent/transferable experience that must not become direct experience;
+- unsupported metrics, tools, credentials, dates, titles, employers, or ownership;
+- conflicting evidence records;
+- stale/superseded evidence;
+- sparse job text where unknown must remain unknown;
+- source text containing prompt-injection instructions;
+- job/evidence pairs designed to expose flattering but unsupported explanations.
+
+The deterministic baseline and inference-assisted path must run over the **same input fixtures**. Demo fixtures may illustrate behavior, but they are not benchmark evidence by themselves.
 
 A more fluent sentence is not sufficient evidence if factual reliability or explainability regresses.
 
