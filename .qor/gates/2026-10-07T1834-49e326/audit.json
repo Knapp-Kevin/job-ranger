@@ -1,0 +1,19 @@
+{
+  "phase": "audit",
+  "session_id": "2026-10-07T1834-49e326",
+  "ts": "2026-10-07T20:37:53Z",
+  "target": "docs/plan-qor-phase15-mapper-negation.md",
+  "verdict": "PASS",
+  "report_path": ".agent/staging/AUDIT_REPORT.md",
+  "risk_grade": "L1",
+  "findings_categories": [],
+  "target_content_hash": "f414021a48bf27fe911da60d10d25887c17bee99d606ddd80902230334baee57",
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "pass",
+    "ts": "2026-10-07T20:37:53Z"
+  }
+}

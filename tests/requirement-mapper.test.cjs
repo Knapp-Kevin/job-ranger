@@ -2,7 +2,9 @@ const assert = require('node:assert/strict');
 const {
   buildJobEvidenceCoverage,
   extractJobRequirements,
+  mapRequirementToEvidence,
 } = require('../electron-runtime/electron/src/requirement-mapper.cjs');
+const { NEGATION_NOTE } = require('../electron-runtime/electron/src/evidence-negation.cjs');
 
 function evidence(id, statement, options = {}) {
   return {
@@ -183,6 +185,7 @@ for (const status of ['expired', 'inactive', 'pending']) {
   assert.equal(credentialItem.mapping.classification, 'gap', `${status}: credential standing must not establish current eligibility`);
   assert.equal(credentialItem.evidence?.id, saved.id, `${status}: invalid matching credential should remain visible as evidence for the gap`);
   assert.match(credentialItem.mapping.explanation, new RegExp(status), `${status}: mapping should explain why standing does not qualify`);
+  assert.ok(!credentialItem.mapping.explanation.includes(NEGATION_NOTE), `${status}: a standing gap without negation carries no negation note`);
 }
 
 {
@@ -232,6 +235,90 @@ for (const status of ['expired', 'inactive', 'pending']) {
   const credentialItem = coverage.items.find((item) => item.requirement.kind === 'credential');
   assert.notEqual(credentialItem.mapping.classification, 'gap', 'valid current credential should be preferred over an expired textual match');
   assert.equal(credentialItem.evidence?.id, active.id);
+}
+
+// G12 (#167): negation in evidence prose. Requirements are built directly so
+// short requirement text does not depend on extractJobRequirements.
+function req(id, text, kind = 'must-have') {
+  return { id, jobId: 'job-neg', kind, text, normalizedTerm: null, importance: 1, sourceText: text, createdAt: now };
+}
+
+function mapOne(requirementText, records, kind) {
+  return mapRequirementToEvidence(req(`req-${requirementText}`, requirementText, kind), records, now);
+}
+
+{
+  const result = mapOne('Approved vendor budgets.', [evidence('e-neg-1', 'Never approved the vendor budget; reviewed vendor budget drafts.')]);
+  assert.equal(result.mapping.classification, 'transferable', 'negated span drops, adjacent affirmed experience stays');
+  assert.ok(result.mapping.explanation.includes(NEGATION_NOTE));
+
+  const denied = mapOne('Approved vendor budgets.', [evidence('e-neg-2', 'Never approved vendor budgets.')]);
+  assert.equal(denied.mapping.classification, 'gap');
+  assert.ok(denied.mapping.explanation.includes(NEGATION_NOTE), 'gap explanation says negation reduced support');
+
+  for (const statement of ['Approved vendor budgets; did not manage payroll.', 'Approved vendor budgets, not invoices.']) {
+    const kept = mapOne('Approved vendor budgets.', [evidence('e-neg-3', statement)]);
+    assert.equal(kept.mapping.classification, 'direct', `negation elsewhere must not downgrade: ${statement}`);
+    assert.ok(!kept.mapping.explanation.includes(NEGATION_NOTE));
+  }
+
+  const label = mapOne('Budget approval.', [evidence('e-neg-4', 'Never approved budget requests.', { skills: ['Budget approval'] })]);
+  assert.equal(label.mapping.classification, 'direct', 'confirmed skill labels are not negated by statement prose');
+
+  const unconfirmed = mapOne('Approved vendor budgets.', [evidence('e-neg-5', 'Never approved vendor budgets.', { verificationState: 'imported' })]);
+  assert.equal(unconfirmed.mapping.classification, 'gap', 'a negated-only match never becomes ambiguous');
+
+  const plainUnconfirmed = mapOne('Approved vendor budgets.', [evidence('e-neg-6', 'Approved vendor budgets.', { verificationState: 'imported' })]);
+  assert.equal(plainUnconfirmed.mapping.classification, 'ambiguous');
+  assert.ok(!plainUnconfirmed.mapping.explanation.includes(NEGATION_NOTE), 'no note without negation');
+
+  const negatedA = evidence('e-neg-a', 'Never approved vendor budgets.');
+  const affirmedB = evidence('e-neg-b', 'Reviewed vendor budget drafts.');
+  const swap = mapOne('Approved vendor budgets.', [negatedA, affirmedB]);
+  assert.equal(swap.mapping.classification, 'transferable');
+  assert.equal(swap.mapping.evidenceId, affirmedB.id, 'affirmed evidence outranks negated evidence');
+  assert.ok(swap.mapping.explanation.includes(NEGATION_NOTE));
+
+  assert.equal(mapOne('Payroll and invoices.', [evidence('e-neg-7', 'Did not handle budgets, payroll, or invoices.')]).mapping.classification, 'gap');
+  assert.notEqual(mapOne('Handled payroll.', [evidence('e-neg-8', 'Handled all HR functions except payroll.')]).mapping.classification, 'direct');
+  assert.equal(mapOne('Python.', [evidence('e-neg-9', 'No experience with SQL, Python, or Tableau.')]).mapping.classification, 'gap');
+
+  for (const [requirementText, statement] of [
+    ['Reduce operational costs.', 'Migrated ERP with no downtime, reducing operational costs by 20%.'],
+    ['Reduce hosting costs.', 'Migrated 40 servers to AWS with no downtime and reduced hosting costs 30%.'],
+    ['Manage vendor contracts.', 'Managed operations including but not limited to payroll, budgets, and vendor contracts.'],
+    ['Manage engineers.', 'Managed no fewer than 12 engineers.'],
+  ]) {
+    const kept = mapOne(requirementText, [evidence('e-neg-10', statement)]);
+    assert.equal(kept.mapping.classification, 'direct', `must stay direct: ${statement}`);
+    assert.ok(!kept.mapping.explanation.includes(NEGATION_NOTE), `no note: ${statement}`);
+  }
+
+  // Negation changes which record wins: confirmed R ties unconfirmed S after negation, so the outcome drops.
+  const tie = mapOne('Approved vendor budget payments.', [
+    evidence('e-neg-s', 'Approved vendor budget reviews.', { verificationState: 'imported' }),
+    evidence('e-neg-r', 'Approved vendor budgets, not payments.'),
+  ]);
+  assert.equal(tie.mapping.classification, 'ambiguous');
+  assert.ok(tie.mapping.explanation.includes(NEGATION_NOTE), 'the note appears when negation changed the outcome via ranking');
+
+  const same = mapOne('Approved vendor budgets.', [
+    evidence('e-neg-c', 'Approved vendor budgets.', { verificationState: 'imported' }),
+    evidence('e-neg-d', 'Never approved vendor budgets.'),
+  ]);
+  assert.equal(same.mapping.classification, 'ambiguous', 'unconfirmed C wins with or without negation handling');
+  assert.ok(!same.mapping.explanation.includes(NEGATION_NOTE), 'no note when the outcome is the same either way');
+
+  const unusable = mapOne('Active Maryland RN license required.', [evidence('e-neg-cred', 'Never held an active Maryland Registered Nurse license.', {
+    subjectType: 'credential',
+    credential: { issuer: 'Maryland Board of Nursing', jurisdiction: 'Maryland', status: 'expired', expirationDate: null, credentialId: null },
+  })], 'credential');
+  assert.equal(unusable.mapping.classification, 'gap');
+  assert.ok(!unusable.mapping.explanation.includes(NEGATION_NOTE), 'an unusable credential is a gap either way: no note');
+
+  const pmp = mapOne('PMP certification.', [evidence('e-neg-11', 'Not yet PMP certified; exam scheduled for March.')], 'credential');
+  assert.equal(pmp.mapping.classification, 'gap', 'not yet certified is not support');
+  assert.ok(pmp.mapping.explanation.includes(NEGATION_NOTE));
 }
 
 console.log('requirement mapper tests passed');
