@@ -65,6 +65,9 @@ jobs:
       - name: Worker bundles the IPC adapter exactly once
         run: node tests/pwa-worker-bundle.test.mjs
 
+      - name: Web stylesheet includes the app shell layout utilities
+        run: node tests/pwa-css-utilities.test.mjs
+
       - name: Web document parser benchmark (shared corpus)
         run: |
           python3 -m pip install --quiet -r tests/fixtures/career-evidence/parser-benchmark/requirements.txt
@@ -149,6 +152,9 @@ jobs:
 
       - name: Worker bundles the IPC adapter exactly once
         run: node tests/pwa-worker-bundle.test.mjs
+
+      - name: Web stylesheet includes the app shell layout utilities
+        run: node tests/pwa-css-utilities.test.mjs
 
       - name: Install Playwright Chromium
         run: npx playwright install chromium

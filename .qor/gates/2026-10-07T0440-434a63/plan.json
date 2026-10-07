@@ -1,0 +1,35 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0440-434a63",
+  "ts": "2026-10-07T04:44:49Z",
+  "plan_path": "docs/plan-qor-phase7-pwa-tailwind-source.md",
+  "phases": [
+    "Phase 1: Tailwind source for the web build"
+  ],
+  "ci_commands": [
+    "npm run build",
+    "npm run test:pwa:e2e",
+    "npm run typecheck"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/6-windows-pwa-adapter-upgrade-crlf",
+  "originating_remediation": "demo capture 2026-10-07: web build missing Tailwind utilities",
+  "feature_inventory_touches": [
+    {
+      "entry_id": "FX046",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/runtime.spec.ts",
+      "test_descriptor": "stylesheet-scope fix only; layout guarded by tests/pwa-css-utilities.test.mjs"
+    }
+  ],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T04:44:49Z"
+  }
+}

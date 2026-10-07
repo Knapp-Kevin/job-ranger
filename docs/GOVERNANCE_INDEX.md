@@ -68,6 +68,7 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 5 notifications & tray | `docs/planning/plan-phase5-notifications-tray.md`, `docs/planning/plan-phase5-notifications-tray-v2.md` | sealed (ledger #24–#27) |
 | Phase 6 Windows runtime fixes | `docs/plan-qor-phase6-windows-runtime-fixes.md` | PLAN #32, VETO #33, PASS #34, implemented #35, sealed #36 |
 | Phase 8 PWA reload test race | `docs/plan-qor-phase8-pwa-reload-test-race.md` | PLAN #37, VETO #38, PASS #39, implemented #40, sealed #41 |
+| Phase 7 web runtime Tailwind source | `docs/plan-qor-phase7-pwa-tailwind-source.md` | PLAN #42, PASS #43, implemented #44, sealed #45 (rebased onto Phase 8; originally #37-#40) |
 
 ## Tier 5 — Reference Material
 
