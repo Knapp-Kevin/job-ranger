@@ -1,0 +1,30 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0645-e90d3c",
+  "ts": "2026-10-07T06:47:23Z",
+  "plan_path": "docs/plan-qor-phase10-public-demo-harness.md",
+  "phases": [
+    "Phase 1: Demo harness"
+  ],
+  "ci_commands": [
+    "npm run demo:record",
+    "npm run demo:frames",
+    "node tests/demo-frames.test.mjs",
+    "npm test",
+    "npm run typecheck"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/9-input-shell-layer",
+  "originating_remediation": null,
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T06:47:23Z"
+  }
+}

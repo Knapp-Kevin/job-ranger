@@ -1561,6 +1561,135 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #53: PLAN (Phase 10 Public Demo Harness)
+
+**Timestamp**: 2026-10-07T18:00:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase10-public-demo-harness.md
+
+**Content Hash**: `da1e82d6c54b5eb038191610cd60a495c665bce9d7cae3fbfa13b4d9ea99a53a`
+
+**Previous Hash**: `cb4cd3ea9d7c402af9703d2d73a8d5859d0517a30617728b371709e84c74f2c4`
+
+**Chain Hash**: `0cfd619990f88d4e58725a392a40381d810a2ed9239196f8aee0d49c561630fe`
+
+**Decision**: Phase 10 plan created: a reproducible `npm run demo:record` workflow for a six-beat, Canopy-themed, 60-90 s story demo from the production web build with deterministic fictional data, capture-safety assertions, playback-based frame review, and outputs in the ignored `build/demo/`. Awaiting GATE tribunal.
+
+---
+
+### Entry #54: GATE TRIBUNAL (Phase 10 Public Demo Harness)
+
+**Timestamp**: 2026-10-07T18:40:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase10-public-demo-harness.md
+
+**Verdict**: VETO
+
+**Content Hash**: `f08339b2aec986cae948947d0aa974ce7cdfca42dbd8d27ca4e0752ead2e43cd`
+
+**Previous Hash**: `0cfd619990f88d4e58725a392a40381d810a2ed9239196f8aee0d49c561630fe`
+
+**Chain Hash**: `5cfbbc6a9ef903755c0a01c0e422774c55e10b531462231dc41cd508f2c7de4d`
+
+**Decision**: VETO issued for the Phase 10 plan. The browser-launching extractor test was added to the unit scripts that CI and release builds run without a browser, and the 60-90 s duration check had no defined measurement. Governor must amend and resubmit.
+
+---
+
+### Entry #55: GATE TRIBUNAL (Phase 10 Public Demo Harness, Iteration 2)
+
+**Timestamp**: 2026-10-07T19:20:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase10-public-demo-harness.md
+
+**Verdict**: PASS
+
+**Content Hash**: `38ecaf1c3d668b62d364104f372146e07723bd766d5e06ddb40642deae325bf9`
+
+**Previous Hash**: `5cfbbc6a9ef903755c0a01c0e422774c55e10b531462231dc41cd508f2c7de4d`
+
+**Chain Hash**: `334fd8b945f11d608692fc45a84eac6b063a9deb61188af91e214b38fde60c82`
+
+**Decision**: PASS issued for the amended Phase 10 plan (SHA256 1a41e69de19cfc47cf93d3242aed22ea493bf01e8d23a4979ff73c69ace2def5). The extractor test is confined to a demo-only script and the duration check has a defined measurement. Gate cleared for implementation.
+
+---
+
+### Entry #56: IMPLEMENTATION (Phase 10 Public Demo Harness)
+
+**Timestamp**: 2026-10-07T21:20:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase10-public-demo-harness.md
+
+**Content Hash**: `da9573d75c7ae33c317cda30ec4ce7992ea448349edf7c17cf871239c889473f`
+
+**Previous Hash**: `334fd8b945f11d608692fc45a84eac6b063a9deb61188af91e214b38fde60c82`
+
+**Chain Hash**: `f8dad4b338310695ea09f1a056ade4845cec19f915d2778da47919a6d4aa5275`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `scripts/demo/` (`playwright.demo.config.ts`, `fixture.ts`, `ready.ts`, `story.spec.ts`, `frames.mjs`), all files under 250 lines and all functions 40 lines or fewer
+- NEW `tests/demo-frames.test.mjs` (failed before `scripts/demo/frames.mjs` existed; passes: luminance 0 < 128 < 255, duration 2.98 s)
+- `package.json`: `test:demo`, `demo:record`, `demo:frames`; `test` and `test:unit` unchanged
+- `.gitignore`: `/build/demo/`
+- `docs/BACKLOG.md` G11; `CHANGELOG.md`; `docs/GOVERNANCE_INDEX.md`
+
+**Deviations from the plan text (no change to behavior or acceptance)**:
+- LD6 named `video.saveAs`. That call fails after a persistent context closes ("Target page, context or browser has been closed"), so the recorder copies the finished file from `video.path()` to `build/demo/video.webm`.
+- LD8's `JOB_RANGER_PW_CHROMIUM` support is applied at every direct browser launch (both persistent contexts and `frames.mjs`), as well as in the config.
+
+**Capture refinements found by frame review** (each found by inspecting the exported video, each followed by a re-recording):
+- A blank main region at a route change. Route changes now cross-fade from the last ready frame, behind a still of that frame, after `waitForDemoReady` passes.
+- Footer text peeking above and through the caption. The caption is now opaque and covers the sidebar footer.
+- A kept scroll position on the resume page. Scroll is reset under the frozen frame.
+- Abrupt jumps to the draft and export buttons. These are now smooth scrolls.
+- A duplicate profile-derived Target Track. It is now configured as the target track, which promotes it to a user track.
+- Listing wording adjusted to the "Required: ...;" style (BACKLOG G11).
+
+**Verification (Windows 10 dev host)**:
+- `npm run test:demo`: pass. `npm test`: pass. `npm run typecheck`: pass.
+- `npm run demo:record`: two consecutive passes with identical beats (takes 10 and 11, 83.64 s and 85.00 s).
+- The accepted take (11) is 1600x900, 85 s, Canopy, with no page or console errors and no near-blank frame.
+- It was reviewed frame by frame: per-second frames, frames at and after each beat start, and 0.25 s-spaced frames across every route transition and the resume step.
+
+**Decision**: Implementation complete per the Entry #55 PASS plan.
+
+---
+
+### Entry #57: SESSION SEAL (Phase 10 Public Demo Harness)
+
+**Timestamp**: 2026-10-07T21:30:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `5fb6181b6082`
+**Plan**: docs/plan-qor-phase10-public-demo-harness.md
+
+**Verdict**: PASS
+
+**Content Hash**: `1a41e69de19cfc47cf93d3242aed22ea493bf01e8d23a4979ff73c69ace2def5`
+
+**Previous Hash**: `f8dad4b338310695ea09f1a056ade4845cec19f915d2778da47919a6d4aa5275`
+
+**Chain Hash**: `80faf48f3a14e7da625ca4b4ce9fc4c65889cc6ca4dfce008702c6166e47c5ed`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #55); intent lock captured before implementation
+- [x] Every planned file exists; no product code changed; the two documented deviations do not change acceptance
+- [x] D4: `test:demo` passes; two consecutive passing recordings; the accepted video was inspected frame by frame, and four takes were rejected and re-recorded after inspection
+- [x] Feature Inventory unchanged (no user-touchable feature)
+- [x] BACKLOG G11, CHANGELOG and governance index updated; `/build/demo/` ignored; generated media not committed
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #55 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1572,4 +1701,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 8 PWA Reload Test Race: SEALED (Entry #41); hosted verification on PR #158*
 *Phase 7 Web Runtime Tailwind Source: SEALED (Entry #45); rebased onto Phase 8 (originally Entries #37-#40)*
 *Phase 9 Form-Control Shell Layer: SEALED (Entry #52)*
-*Next required action: Phase 9 PR stacked on #159; then the public demo harness*
+*Phase 10 Public Demo Harness: SEALED (Entry #57)*
+*Next required action: Phase 10 PR stacked on #160; then reconcile #155 with curated screenshots*

@@ -16,6 +16,7 @@ Release-candidate preparation for v1.3.0 is active. Changes after the candidate 
 ### Changed
 
 - CI runs the web browser suite and the release upgrade verification on Windows as well as Ubuntu.
+- `npm run demo:record` records the public demo from the production web build: a six-beat, Canopy-themed, deterministic story with fictional data, capture-safety checks, and frame review (`npm run demo:frames`). Outputs go to the ignored `build/demo/`.
 - Both web browser-suite CI jobs upload Playwright traces and screenshots when a test fails. The service-worker update test no longer races the browser's own update check.
 
 ## v1.3.0 - Release candidate

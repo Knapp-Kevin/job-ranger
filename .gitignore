@@ -76,6 +76,7 @@ tests/fixtures/career-evidence/parser-benchmark/generated/
 
 # Generated release/test evidence (never commit)
 /build/trust/
+/build/demo/
 playwright-report/
 # qor:seed -- do not edit between markers
 .qor/session/

@@ -32,6 +32,7 @@ identified concretely enough to plan. Items close only through a sealed governan
 - [x] [G8] (Phase 9 - Complete) Icons overlap placeholder text in the Find Jobs filter bar (desktop and web): unlayered `.input-shell`/`.select-shell` padding in `src/index.css` overrides Tailwind's layered `pl-11` utility on those inputs.
 - [ ] [G9] `pwa-windows` on PR #158 (run 37572804981) timed out after 120 s waiting for `load` after "Repair app shell" (`tests/pwa/update-and-storage.spec.ts`). Not reproduced locally; the local reproduction of this spec was a different race (D4). Both PWA CI jobs now upload `test-results/` on failure so a recurrence carries a trace.
 - [ ] [G10] `tests/pwa/runtime.spec.ts` "only one tab can write the local workspace at a time" failed once in a full `test:pwa:e2e` run on the Windows dev host (2026-10-07; second tab's lock message not visible) and then passed 12/12 on repeat.
+- [ ] [G11] Requirement matching keeps trailing sentence punctuation on the last token (`electron/src/requirement-mapper.cts:22` keeps `.`), so a requirement written "... is required." carries an unmatched `required.` token and scores lower (for example "Experience with insurance verification is required." maps as transferable against identical evidence).
 
 ## Housekeeping
 
