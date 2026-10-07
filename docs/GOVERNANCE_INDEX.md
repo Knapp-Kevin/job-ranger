@@ -39,6 +39,7 @@ Stable; changes are explicit doctrine events. Drift signal: rules contradict eac
 | Branding | `docs/BRANDING.md` |
 | Trademarks | `TRADEMARKS.md` |
 | License history | `LICENSE_HISTORY.md` |
+| Architecture decision records | `docs/adr/README.md`, `docs/adr/*.md` |
 
 ## Tier 3 — Active Initiative
 
