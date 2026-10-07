@@ -70,6 +70,7 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 8 PWA reload test race | `docs/plan-qor-phase8-pwa-reload-test-race.md` | PLAN #37, VETO #38, PASS #39, implemented #40, sealed #41 |
 | Phase 7 web runtime Tailwind source | `docs/plan-qor-phase7-pwa-tailwind-source.md` | PLAN #42, PASS #43, implemented #44, sealed #45 (rebased onto Phase 8; originally #37-#40) |
 | Phase 9 form-control shell layer | `docs/plan-qor-phase9-input-shell-layer.md` | PLAN #46, VETO #47-#49, PASS #50, implemented #51, sealed #52 |
+| Phase 10 public demo harness | `docs/plan-qor-phase10-public-demo-harness.md` | PLAN #53, VETO #54, PASS #55, implemented #56, sealed #57 |
 
 ## Tier 5 — Reference Material
 

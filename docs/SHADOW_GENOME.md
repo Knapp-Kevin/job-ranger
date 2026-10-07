@@ -375,4 +375,28 @@ Amend D2 and LD3, re-read the whole plan, and resubmit to /qor-audit.
 
 ---
 
+## Failure Entry #12
+
+**Date**: 2026-10-07T18:40:00Z
+**Verdict ID**: Entry #54 (GATE TRIBUNAL Phase 10 Public Demo Harness)
+**Failure Mode**: INFRASTRUCTURE_MISMATCH
+
+### What Failed
+
+Phase 10 plan for the demo-recording harness.
+
+### Why It Failed
+
+A browser-launching test was wired into the unit scripts without checking which CI lanes run them and whether those lanes install a browser; and an acceptance threshold (video duration) was declared without saying how it is measured.
+
+### Pattern to Avoid
+
+Before adding a test to a shared script, list every workflow that runs the script and confirm each one provides the test's runtime prerequisites. Every acceptance threshold names its measurement method.
+
+### Remediation Required
+
+Move the extractor test to a demo-only script; define duration measurement; resubmit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*
