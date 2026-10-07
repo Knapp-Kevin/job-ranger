@@ -20,7 +20,7 @@ Consequences:
 - a calendar or notification integration may mirror lifecycle state but does not own it;
 - JSON Resume is an interoperability format, not Job Ranger's canonical career model.
 
-A proposed extension to this authority model is [ADR-0001: Personal-brand publishing and analytics authority](./adr/0001-personal-brand-publishing-and-analytics.md). It keeps personal professional presence inside Career Ops while explicitly rejecting a general product-marketing role and any runtime dependency on Viable. Until accepted, it is a proposal rather than current implemented product truth.
+An accepted extension to this authority model is [ADR-0001: Personal-brand publishing and analytics authority](./adr/0001-personal-brand-publishing-and-analytics.md), implemented through the design contract in [Personal Brand Publishing and Analytics](./design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md). It keeps personal professional presence inside Career Ops while explicitly rejecting a general product-marketing role and any runtime dependency on Viable. The decision is authoritative for new implementation; the feature remains unimplemented until source and tests prove otherwise.
 
 ## Current runtime architecture
 
