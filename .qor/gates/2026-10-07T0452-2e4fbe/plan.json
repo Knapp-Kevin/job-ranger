@@ -1,0 +1,41 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0452-2e4fbe",
+  "ts": "2026-10-07T05:26:25Z",
+  "plan_path": "docs/plan-qor-phase8-pwa-reload-test-race.md",
+  "phases": [
+    "Phase 1: Atomic reload waits"
+  ],
+  "ci_commands": [
+    "npx playwright test --config playwright.pwa.config.ts tests/pwa/update-and-storage.spec.ts tests/pwa/portability.spec.ts --repeat-each=10",
+    "npm run test:pwa:e2e",
+    "npm run typecheck"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/6-windows-pwa-adapter-upgrade-crlf",
+  "originating_remediation": "PR #158 pwa-windows failure, run 37572804981",
+  "feature_inventory_touches": [
+    {
+      "entry_id": "FX047",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/update-and-storage.spec.ts",
+      "test_descriptor": "test-ordering fix; assertions unchanged"
+    },
+    {
+      "entry_id": "FX042",
+      "operation": "n/a-justified",
+      "test_path": "tests/pwa/portability.spec.ts",
+      "test_descriptor": "test-ordering fix; assertions unchanged"
+    }
+  ],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T05:26:25Z"
+  }
+}

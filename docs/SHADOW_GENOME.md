@@ -303,4 +303,28 @@ Amend the plan per AUDIT_REPORT findings 1-3 and resubmit to /qor-audit.
 
 ---
 
+## Failure Entry #9
+
+**Date**: 2026-10-07T10:30:00Z
+**Verdict ID**: Entry #38 (GATE TRIBUNAL Phase 8 PWA Reload Test Race)
+**Failure Mode**: HALLUCINATION
+
+### What Failed
+
+Phase 8 plan for the PR #158 `pwa-windows` failure.
+
+### Why It Failed
+
+The plan named a root cause (event listener registered after the reload-triggering click) by pattern-matching the failing line, without a trace and without checking Playwright's navigation semantics. Its verification could only pass, because it repeated the test on a host where it had never failed.
+
+### Pattern to Avoid
+
+Do not diagnose a flaky test from the line it timed out on. Reproduce it (repeat runs until it fails), read the retained trace, and design a verification that fails on the unfixed code.
+
+### Remediation Required
+
+Reproduce, read the trace, amend the plan, and resubmit to /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

@@ -1197,6 +1197,120 @@ This entry uses the Qor-logic-plus SESSION SEAL format required by `seal_entry_c
 
 ---
 
+### Entry #37: PLAN (Phase 8 PWA Reload Test Race)
+
+**Timestamp**: 2026-10-07T10:00:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase8-pwa-reload-test-race.md
+
+**Content Hash**: `ab96efa6c040e7c4bf6fbab71c062a6b9255af0828497e41c156cfeac22598f2`
+
+**Previous Hash**: `e28fd8fe284ce78724778ac523409deb224d25f55b20b55fa8f78713da47a02b`
+
+**Chain Hash**: `0b679f713de5dfabbcddddc44beda6db3435a9bdc39394abe5e7019052024d83`
+
+**Decision**: Phase 8 plan created for the PR #158 `pwa-windows` failure. Three PWA test steps click a reload-triggering control and only then wait for `load`; against the local server the reload can finish first. Register the wait before the action with `Promise.all`. No timeout changes. Awaiting GATE tribunal.
+
+---
+
+### Entry #38: GATE TRIBUNAL (Phase 8 PWA Reload Test Race)
+
+**Timestamp**: 2026-10-07T10:30:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase8-pwa-reload-test-race.md
+
+**Verdict**: VETO
+
+**Content Hash**: `48f3cb4840ac32006ae1709a83649c3aa69246e653891dbff3be2c6205120d0f`
+
+**Previous Hash**: `0b679f713de5dfabbcddddc44beda6db3435a9bdc39394abe5e7019052024d83`
+
+**Chain Hash**: `a5743230016b7ef40c0efb9c74db998bfc78284f25290df3d7f7716fda4c0efe`
+
+**Decision**: VETO issued for the Phase 8 plan. The listener-ordering root cause was asserted without evidence and conflicts with Playwright 1.63 navigation semantics and with where the failure occurred; the planned verification (local repeats on a host that never failed, one hosted run) could not distinguish fixed from unfixed. Governor must establish the cause with evidence and a falsifiable verification.
+
+---
+
+### Entry #39: GATE TRIBUNAL (Phase 8 PWA Reload Test Race, Iteration 2)
+
+**Timestamp**: 2026-10-07T11:10:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase8-pwa-reload-test-race.md
+
+**Verdict**: PASS
+
+**Content Hash**: `7ea9fb09d6ca6d54614aa58db40a1ab9512cf1e417c5cd3dc79b96e1218de343`
+
+**Previous Hash**: `a5743230016b7ef40c0efb9c74db998bfc78284f25290df3d7f7716fda4c0efe`
+
+**Chain Hash**: `b02582564b1872e76c4d781ad12ee98fa299ecdef79ad11b34e7c2bda4bed94a`
+
+**Decision**: PASS issued for the amended Phase 8 plan (SHA256 ff471c292a80f98ec76b5d91e77584e6865083102c8848d784cc80c628de1de0). The root cause is established from a reproduced local failure and its trace: the browser's navigation-triggered service-worker update check installed a deployment the test had not withdrawn. The verification can fail on unfixed code. The unexplained hosted repair-step timeout stays open with failure artifacts. Gate cleared for implementation.
+
+---
+
+### Entry #40: IMPLEMENTATION (Phase 8 PWA Reload Test Race)
+
+**Timestamp**: 2026-10-07T12:20:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase8-pwa-reload-test-race.md
+
+**Content Hash**: `96db74103ee671ce6daef224f1079979cd20908aa45d30166b64476175e70706`
+
+**Previous Hash**: `b02582564b1872e76c4d781ad12ee98fa299ecdef79ad11b34e7c2bda4bed94a`
+
+**Chain Hash**: `b23b35e023ace5ecd70d02c6d1f715ac08d17397482b09dff26baf0e294139ca`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- `tests/pwa/update-and-storage.spec.ts`: step 1 sets the server back to the current root before reloading (LD1); polls until the registration has no installing or waiting worker before step 2 (LD2); "Reload to update" and "Repair app shell" waits use `Promise.all` (LD3)
+- `tests/pwa/portability.spec.ts`: "Restore and restart" wait uses `Promise.all` (LD3)
+- `.github/workflows/pwa.yml`: `pwa` and `pwa-windows` upload `test-results/` on failure (`pwa-test-results-linux`, `pwa-test-results-windows`, 14 days) (LD4)
+- `docs/BACKLOG.md`: D4 complete; G9 open (unexplained hosted repair-step timeout); G10 open (single-tab lock spec failed once in a full run on the dev host, then 12/12 on repeat; observed during this verification, not touched by this phase)
+- `CHANGELOG.md`, `docs/GOVERNANCE_INDEX.md`: Unreleased note; Phase 8 plan row
+
+**Verification (Windows 10 dev host)**: before the change the spec failed 1 in 15 runs (trace-confirmed race). After it: 45/45 consecutive passes of the update test (two chunks, 22 + 23, two workers each; an earlier five-worker attempt was discarded because 39 worker processes crashed with Windows status 0xC0000142, not assertion failures). `npm run test:pwa:e2e`: 11/12, the failure being G10 (unrelated spec; 12/12 on repeat). `npm run typecheck`: pass. Hosted D4 (three green `pwa-windows` runs) is verified after push.
+
+**Decision**: Implementation complete per the Entry #39 PASS plan.
+
+---
+
+### Entry #41: SESSION SEAL (Phase 8 PWA Reload Test Race)
+
+**Timestamp**: 2026-10-07T12:30:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `a0fe8fff65f2`
+**Plan**: docs/plan-qor-phase8-pwa-reload-test-race.md
+
+**Verdict**: PASS
+
+**Content Hash**: `ff471c292a80f98ec76b5d91e77584e6865083102c8848d784cc80c628de1de0`
+
+**Previous Hash**: `b23b35e023ace5ecd70d02c6d1f715ac08d17397482b09dff26baf0e294139ca`
+
+**Chain Hash**: `669ec6c6eb76da5b3f5808bbf6feea045f36753361e61ed4149027cf1dd1cbe3`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #39); intent lock captured before implementation
+- [x] LD1-LD4 applied at the cited lines; no product code changed
+- [x] Local D4: 45/45 after the change versus 1/15 failing before
+- [x] Feature Inventory unchanged (FX042, FX047 n/a-justified)
+- [x] BACKLOG D4 complete, G9 and G10 open; CHANGELOG and governance index updated
+- PENDING hosted D4: three green `pwa-windows` runs on PR #158 with the other checks green
+
+**Decision**: Session sealed for the local evidence; hosted verification follows on PR #158.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1205,4 +1319,5 @@ This entry uses the Qor-logic-plus SESSION SEAL format required by `seal_entry_c
 *Phase 5 Notifications & System Tray: SEALED*
 *Governance-Health Remediation: SEALED (Entry #31)*
 *Phase 6 Windows Runtime Fixes: SEALED (Entry #36)*
-*Next required action: Phase 6 PR CI (Windows jobs); then user-story end-to-end work (BACKLOG B1-B4)*
+*Phase 8 PWA Reload Test Race: SEALED (Entry #41); hosted verification on PR #158*
+*Next required action: PR #158 hosted CI (three pwa-windows runs); then Phase 7 rebased onto Phase 8*

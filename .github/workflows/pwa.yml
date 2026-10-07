@@ -81,6 +81,15 @@ jobs:
           mkdir -p build/trust
           npx playwright test --config playwright.pwa.config.ts --reporter=list,json
 
+      - name: Upload browser test failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-test-results-linux
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14
+
       - name: Package web release archive
         run: npm run package:pwa
 
@@ -146,3 +155,12 @@ jobs:
 
       - name: Browser test suite
         run: npx playwright test --config playwright.pwa.config.ts --reporter=list
+
+      - name: Upload browser test failure artifacts
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pwa-test-results-windows
+          path: test-results/
+          if-no-files-found: ignore
+          retention-days: 14

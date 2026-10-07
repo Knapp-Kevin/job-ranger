@@ -14,6 +14,7 @@ Release-candidate preparation for v1.3.0 is active. Changes after the candidate 
 ### Changed
 
 - CI runs the web browser suite and the release upgrade verification on Windows as well as Ubuntu.
+- Both web browser-suite CI jobs upload Playwright traces and screenshots when a test fails. The service-worker update test no longer races the browser's own update check.
 
 ## v1.3.0 - Release candidate
 
