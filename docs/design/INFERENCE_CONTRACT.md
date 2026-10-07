@@ -33,6 +33,49 @@ The inference boundary must:
 9. preserve enough local provenance to explain how inference-assisted output was produced;
 10. allow future providers to be tested through one conformance contract.
 
+## Deterministic baseline invariant
+
+The deterministic product is the baseline implementation and takes precedence over inference enhancements.
+
+Inference integration must be **additive**:
+
+- disabling or removing every inference provider must return Job Ranger to the same deterministic product behavior, authority model, and safety guarantees;
+- inference must not become a prerequisite for Career Evidence, requirement mapping, opportunity assessment, resume generation, Truth Gate, Parseability Gate, application materials, interview preparation, Search Insights, backup/restore, or normal application lifecycle;
+- provider availability, model quality, rate limits, cost, or consent state must not reduce the correctness of the non-inference path;
+- an inference-specific safeguard may add restrictions to inference-assisted output, but it must not weaken or bypass the deterministic controls;
+- a generic deterministic improvement may strengthen the baseline Truth Gate for everyone, but it must be justified independently of inference and preserve existing supported non-inference workflows;
+- an inference-only semantic validator must not be inserted into the baseline Truth Gate in a way that makes deterministic use depend on a model.
+
+The preferred layering is:
+
+```text
+deterministic workflow
+      |
+      v
+existing deterministic Truth / domain gates
+      |
+      +------------------------------> accepted deterministic path
+      |
+      +--> inference requested
+              |
+              v
+      inference proposal
+              |
+              v
+      inference-specific adjudication
+      schema / provenance / scope / policy / semantic-risk checks
+              |
+              v
+      existing deterministic Truth / domain gates
+              |
+              v
+      explicit user review where required
+```
+
+The deterministic gate is shared. The inference path has **additional** governance; it does not redefine the baseline gate around model behavior.
+
+Any implementation that refactors an existing deterministic gate must prove behavioral equivalence for inference-disabled workflows through regression tests before the inference feature is considered.
+
 ## Non-goals
 
 This contract does not:
@@ -43,7 +86,7 @@ This contract does not:
 - make inference required for Job Ranger;
 - permit autonomous application submission;
 - permit inference to establish factual Career Evidence;
-- permit inference to override the Truth Gate, Parseability Gate, source approval, network policy, or user confirmation;
+- permit inference to override, replace, or weaken the deterministic Truth Gate, Parseability Gate, source approval, network policy, or user confirmation;
 - permit an opaque hiring-probability score;
 - authorize remote inference implementation merely because this document exists.
 
@@ -507,7 +550,9 @@ It may not silently mutate search strategy, filters, Target Tracks, monitored so
 
 ## Deterministic adjudication
 
-Every inference response passes through deterministic checks before the calling feature can display it as an actionable proposal.
+Inference-specific adjudication is an **additional gate around inference output**. It is not a replacement implementation of the existing Truth Gate or other deterministic domain gates.
+
+Every inference response passes through deterministic checks before the calling feature can display it as an actionable proposal. The non-inference path does not pass through the inference broker and must remain independently functional.
 
 At minimum:
 
@@ -520,7 +565,7 @@ At minimum:
 7. output size/resource bounds pass;
 8. task-specific provenance requirements pass;
 9. factual language is evaluated against supporting evidence where applicable;
-10. inference-generated factual wording passes the existing Truth Gate **and** remains blocked on explicit user review in contract v1; Truth Gate success alone must not be presented as semantic proof;
+10. inference-generated factual wording passes the unchanged deterministic Truth Gate **plus** inference-specific adjudication and remains blocked on explicit user review in contract v1; Truth Gate success alone must not be presented as semantic proof;
 11. current canonical records have not been invalidated/superseded since request creation.
 
 A response that fails adjudication is rejected as `invalid-response` or `validation-failed`. Partial silent salvage is prohibited unless the task schema explicitly defines item-level validation and exposes rejected items.
@@ -671,6 +716,7 @@ Minimum conformance cases:
 - remote consent enforcement;
 - transmission manifest correctness;
 - deterministic fallback availability;
+- baseline-regression coverage proving inference-disabled behavior is unchanged;
 - prompt-injection fixture where job/resume text attempts to override instructions;
 - factual rewrite fixture that introduces an unsupported metric and is blocked;
 - stale/superseded evidence between request and acceptance;
@@ -708,6 +754,8 @@ Implement only:
 - shared request/response/failure/provenance types;
 - `InferenceBroker` policy shell;
 - schema validators;
+- inference-specific adjudication hooks that wrap, rather than replace, existing deterministic gates;
+- regression tests proving the inference-disabled Truth Gate and core workflows preserve baseline behavior;
 - synthetic fake provider;
 - conformance tests;
 - no network;
