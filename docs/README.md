@@ -30,6 +30,7 @@ A stale plan does not outrank merged code merely because it contains more checkb
 | [`CONCEPT.md`](./CONCEPT.md) | Product purpose, Career Ops quality-over-quantity principles, boundaries, and success standard. |
 | [`SYSTEM_STATE.md`](./SYSTEM_STATE.md) | Factual current repository/product snapshot. |
 | [`ARCHITECTURE_PLAN.md`](./ARCHITECTURE_PLAN.md) | Current architecture, authority model, trust boundaries, and accepted evolution. |
+| [`adr/README.md`](./adr/README.md) | Architecture decision log. Proposed ADRs remain proposals until accepted and reconciled into current architecture. |
 | [`design/DISTRIBUTION_ARCHITECTURE.md`](./design/DISTRIBUTION_ARCHITECTURE.md) | Accepted post-v1.2 dual-channel distribution architecture: cross-platform PWA plus Microsoft Store Windows native app. |
 | [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md) | Web/PWA runtime implementation: shared core and adapters, persistence, security, service worker, capability parity, deployment. |
 | [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md) | Microsoft Store (AppX) packaging, Store runtime behavior, NSIS coexistence/migration, validation, external steps. |
@@ -66,6 +67,7 @@ These describe implemented architecture or accepted long-lived contracts and sho
 - [`design/PWA_RUNTIME.md`](./design/PWA_RUNTIME.md)
 - [`design/MICROSOFT_STORE_PACKAGING.md`](./design/MICROSOFT_STORE_PACKAGING.md)
 - [`design/INFERENCE_CONTRACT.md`](./design/INFERENCE_CONTRACT.md) — provider-neutral optional-inference boundary; proposal-only authority, transmission disclosure, schema validation, deterministic adjudication, fallback, provenance, and provider conformance.
+- [`adr/0001-personal-brand-publishing-and-analytics.md`](./adr/0001-personal-brand-publishing-and-analytics.md) — proposed boundary for personal-brand publishing, analytics, and career-outcome learning; not authoritative until accepted.
 
 A design document may preserve detailed implementation rationale even after its issue closes. Its status must not be used to infer whether a feature is shipped; use `SYSTEM_STATE.md` and the release record for that.
 
