@@ -912,10 +912,135 @@ SHA256(content_hash + previous_hash)
 
 ---
 
+### Entry #28: GATE TRIBUNAL (Governance-Health Remediation)
+
+**Timestamp**: 2026-10-06T21:10:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+
+**Verdict**: VETO
+
+**Content Hash**:
+```
+SHA256(AUDIT_REPORT.md, iteration 1)
+= a698c8b6f97aec7bcf28c5bac27b3e8733f6083b465b0a1e1d016935dd02412b
+```
+
+**Previous Hash**: a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 776fc9d0b83f63f4957367ad12d4525b42ef0948743e22c6aa2ba52ce020d2d2
+```
+
+**Decision**: VETO issued for the remediation that adds docs/BACKLOG.md, docs/FEATURE_INDEX.md, and docs/GOVERNANCE_INDEX.md (session 2026-10-06T2041-3ff839). Independent review found 7 claim-vs-repo mismatches: misstated feature verification statuses (FX011 overstated; FX019 understated, with BACKLOG B1 overstating untested deletes), a false Tier 1 freshness marker, unsupported "sealed"/"superseded" plan labels, two unindexed governance artifacts (docs/planning/PLAN.md, docs/README.md), and doctrine citations that resolve outside the repo. Governor must amend and resubmit.
+
+---
+
+### Entry #29: GATE TRIBUNAL (Governance-Health Remediation, Iteration 2)
+
+**Timestamp**: 2026-10-06T21:40:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+
+**Verdict**: VETO
+
+**Content Hash**:
+```
+SHA256(AUDIT_REPORT.md, iteration 2)
+= a2946271ba4f09c989a94a5f5f7933f491da3ccd35dcfb1bfecf400cdb61a0d3
+```
+
+**Previous Hash**: 776fc9d0b83f63f4957367ad12d4525b42ef0948743e22c6aa2ba52ce020d2d2
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 65563d286f5765282456b456cfdb085d93f7e8c7bcf0b71182b0fe8cf399df95
+```
+
+**Decision**: VETO issued on iteration 2. All seven iteration-1 findings confirmed fixed. Full re-walk found 7 further mismatches: FX011 omitted its web spec, BACKLOG B1 and B3 misstated test and accessible-name gaps, Entry #28 departed from this ledger's chain formula and layout, the ledger footer contradicted the open VETO, Shadow Genome Failure Entry #6 was incomplete, and GOVERNANCE_INDEX did not list itself. Governor must amend and resubmit.
+
+---
+
+### Entry #30: GATE TRIBUNAL (Governance-Health Remediation, Iteration 3)
+
+**Timestamp**: 2026-10-06T22:05:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+
+**Verdict**: PASS
+
+**Content Hash**:
+```
+SHA256(AUDIT_REPORT.md, iteration 3)
+= b07075cda1d31265f3f90ec3eecaa86c660f709341f7391332d6ff867ee4c45e
+```
+
+**Previous Hash**: 65563d286f5765282456b456cfdb085d93f7e8c7bcf0b71182b0fe8cf399df95
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 463990259af870dc73a1914392c3784273d20524b598c4cd7c63fb157e0cc4c6
+```
+
+**Decision**: PASS issued on iteration 3. All iteration-2 findings fixed; full re-walk of docs/BACKLOG.md, docs/FEATURE_INDEX.md (50 features: 23 verified, 27 unverified), and docs/GOVERNANCE_INDEX.md found every claim consistent with the repository and ledger. Governance health is 8/8 OK. Remediation reviewed; work proceeds to /qor-plan for BACKLOG D1 and D2.
+
+---
+
+### Entry #31: SEAL (Governance-Health Remediation)
+
+**Timestamp**: 2026-10-06T22:30:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `c0de74f40a9c`
+
+**Verdict**: PASS
+
+**Content Hash**:
+```
+Merkle(sorted path:SHA256 of .gitignore, docs/BACKLOG.md, docs/FEATURE_INDEX.md, docs/GOVERNANCE_INDEX.md, docs/SHADOW_GENOME.md, docs/SYSTEM_STATE.md)
+= 2e5fad2bc355e18d27e01a299839b173a212eda65458bdb0ab32d3a7c3f53cd2
+```
+
+**Previous Hash**: 463990259af870dc73a1914392c3784273d20524b598c4cd7c63fb157e0cc4c6
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 2f17695a423989acb0b26d474f11650821d9959dfa8ade94c3961c7dbd96fb5c
+```
+
+**SSDF Practices**: PS.2.1, RV.2.1
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #30)
+- [x] docs/BACKLOG.md, docs/FEATURE_INDEX.md, docs/GOVERNANCE_INDEX.md exist; governance-health 8/8 OK
+- [x] Feature Inventory: Total: 50 / verified: 23 / unverified: 27 / n/a: 0 (first index; no prior snapshot, so no regression baseline)
+- [x] Surface-tag lint: all non-n/a rows tagged
+- [x] Secret scanner, instruction-hygiene lint, gate-skill matrix: clean
+- [x] Governance-index enforce: clean after registering CODE_OF_CONDUCT.md and THIRD_PARTY_NOTICES.md in Tier 2 (post-audit addition; two index rows only)
+- [x] docs/SYSTEM_STATE.md "Current sources of truth" lists the three new artifacts
+- [x] Merge velocity: strained (21 PRs in 7 days), action narrow_scope; non-blocking
+- SKIP data-API ACL lint: no SQL migrations (disclosed-skip)
+- SKIP version bump and CHANGELOG stamp: documentation-only governance remediation during the v1.3.0 release-candidate line; bumping package.json would misstate the product version
+- SKIP intent lock, plan/implement gate artifacts: remediation cycle (remediate -> audit -> seal) has no plan or implement phase
+
+**Decision**: Session sealed. Governance-health remediation verified; Reality matches Promise from the Entry #30 audit. Next governed work: /qor-plan for BACKLOG D1 and D2.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
 *Phase 3 Salary Extraction: SEALED*
 *Phase 4 Caching & Circuit Breaker: SEALED*
 *Phase 5 Notifications & System Tray: SEALED*
-*Next required action: None - implementation complete*
+*Governance-Health Remediation: SEALED (Entry #31)*
+*Next required action: /qor-plan for BACKLOG D1 and D2*
