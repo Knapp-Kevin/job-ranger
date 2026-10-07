@@ -183,6 +183,26 @@ Job Ranger remains authoritative. A future calendar adapter may mirror selected 
 
 Deterministic grounded prep already exists. Conversational practice/feedback is a candidate enhancement, with remote inference/audio privacy reviewed separately.
 
+## Architecture in progress
+
+### Provider-neutral inference contract / #162
+
+**Status:** Draft architecture contract in review; provider implementation remains deferred.
+
+Current slice:
+
+- [x] open a new inference-specific architecture issue rather than reopening completed R4;
+- [x] define a provider-neutral request/response/provenance/failure contract;
+- [x] define explicit task capability and data-class/transmission boundaries;
+- [x] preserve proposal-only inference authority, deterministic adjudication, Truth Gate, and user review;
+- [x] define local-versus-remote and Electron-versus-PWA credential/runtime constraints;
+- [x] define provider conformance and benchmark requirements;
+- [ ] complete adversarial architecture/security review;
+- [ ] decide whether the first implementation slice is contract types + broker + synthetic fake provider;
+- [ ] only after that review, evaluate a local provider against measured semantic-lift benchmarks.
+
+Remote provider adoption is **not** implied by this work. It remains deferred until a separate provider/security decision is made.
+
 ## Deferred
 
 Do not schedule these without new evidence:
