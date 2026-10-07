@@ -399,4 +399,28 @@ Move the extractor test to a demo-only script; define duration measurement; resu
 
 ---
 
+## Failure Entry #13
+
+**Date**: 2026-10-07T22:30:00Z
+**Verdict ID**: Entry #59 (GATE TRIBUNAL Phase 11 Public-Review README)
+**Failure Mode**: HALLUCINATION
+
+### What Failed
+
+Phase 11 plan for the public-review README.
+
+### Why It Failed
+
+To justify leaving the old repository owner in attestation commands, the plan asserted that the v1.2.0 artifacts had been attested before the transfer. The repository's own CHANGELOG shows attestations start with v1.3.0. The inventory of old-owner references also searched only `docs/`, missing a build-config fallback.
+
+### Pattern to Avoid
+
+A reason given for not changing something is a factual claim and needs the same evidence as a reason for changing it. Inventory references across the whole repository, not only the directory the work is about.
+
+### Remediation Required
+
+Correct the attestation commands and the build-config fallback; resubmit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

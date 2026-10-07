@@ -1,10 +1,11 @@
 import { defineConfig } from "@playwright/test";
 
-// Public demo recording (npm run demo:record). The story launches its own
-// persistent browser contexts, so it reads JOB_RANGER_PW_CHROMIUM itself.
+// Public demo recording (npm run demo:record) and curated screenshots
+// (npm run demo:screenshots). Both specs launch their own
+// persistent browser contexts, so they read JOB_RANGER_PW_CHROMIUM themselves.
 export default defineConfig({
   testDir: ".",
-  testMatch: "story.spec.ts",
+  testMatch: ["story.spec.ts", "screenshots.spec.ts"],
   timeout: 300_000,
   outputDir: "../../test-results/demo",
   workers: 1,

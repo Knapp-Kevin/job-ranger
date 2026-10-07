@@ -46,6 +46,24 @@ Job Ranger deliberately does **not** mass-apply, fabricate qualifications or rel
 
 You can enter anywhere in that flow. A resume is evidence about work you have done, not an instruction to keep doing the same thing forever.
 
+### See it in action
+
+These screenshots come from the production web build with fictional sample data (Morgan Rivera, Harbor Health). No real person's career data is shown.
+
+**Choose a direction.** Target tracks keep your current path and the one you are moving toward separate, each with its own roles and constraints.
+
+![Target Tracks with the Practice operations target track open beside a paused current track](./docs/assets/screenshots/career-direction.png)
+
+**Judge a listing on the evidence.** The opportunity assessment reports eligibility, evidence, career alignment, and preferences separately, and names the blockers and unknowns instead of hiding them in one score.
+
+![Opportunity assessment showing eligibility unclear, evidence partial, career aligned, and preferences mixed, with an Epic EHR blocker](./docs/assets/screenshots/opportunity-assessment.png)
+
+**Apply deliberately.** A resume drafted from confirmed evidence passes the Truth Gate, and the exact exported PDF stays attached to the application you track.
+
+![Applications showing the job marked Applied with the submitted PDF listed under Submitted files](./docs/assets/screenshots/deliberate-application.png)
+
+To record the full walkthrough locally, run `npm run demo:record`; regenerate these screenshots with `npm run demo:screenshots`.
+
 ## Start here
 
 | How you want to use Job Ranger | Best current path | What to expect |
@@ -297,7 +315,8 @@ Examples still suitable for future evidence-backed consideration include:
 - implementation of the already-bounded Career Ops company/relationship-path design;
 - mock-interview practice and feedback;
 - calendar mirroring;
-Native Linux and macOS packaging are not planned. Those platforms are served by the web app.
+
+A native Linux installer is deferred until there is demand, and native macOS packages are built only on manual dispatch. Linux and macOS users are served by the web app.
 
 ## Development
 

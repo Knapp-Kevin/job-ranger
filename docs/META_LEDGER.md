@@ -1690,6 +1690,131 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #58: PLAN (Phase 11 Public-Review README)
+
+**Timestamp**: 2026-10-07T22:00:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase11-public-review-readme.md
+
+**Content Hash**: `c0eb172f4360d44a73878926cafe7172fda20c7cfc6c8a21a4e58a1ae1da9c87`
+
+**Previous Hash**: `80faf48f3a14e7da625ca4b4ce9fc4c65889cc6ca4dfce008702c6166e47c5ed`
+
+**Chain Hash**: `c5a6d23e9ec1fd060baef47dbede30320707f6fee337eeb5a842084b7260ad37`
+
+**Decision**: Phase 11 plan created. It completes PR #155 on top of the functional stack: Kevin Knapp's two README and self-hosting commits are cherry-picked unchanged. The phase adds a "See it in action" section with three curated, overlay-free Canopy screenshots captured by a new unrecorded harness pass. It corrects the CONCEPT issue link, keeps the attestation `--repo` commands for pre-transfer artifacts (maintainer check recorded), and registers SELF_HOSTING in the governance index. Awaiting GATE tribunal.
+
+---
+
+### Entry #59: GATE TRIBUNAL (Phase 11 Public-Review README)
+
+**Timestamp**: 2026-10-07T22:30:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase11-public-review-readme.md
+
+**Verdict**: VETO
+
+**Content Hash**: `b515b34c36a1a0475922c5b5bdd8c2845cd0a9b6d4e63b120b810d50c7ec5629`
+
+**Previous Hash**: `c5a6d23e9ec1fd060baef47dbede30320707f6fee337eeb5a842084b7260ad37`
+
+**Chain Hash**: `9ba42fa98587c5dca641dedf2008665264d11c223b842b40f1c5df168443f4ac`
+
+**Decision**: VETO issued for the Phase 11 plan. It kept the old repository owner in three attestation commands on the false premise that v1.2.0 artifacts had been attested before the transfer (attestations begin with v1.3.0), and its transfer-era inventory missed the `sourceRepository` fallback in `vite.pwa.config.ts`. Governor must amend and resubmit.
+
+---
+
+### Entry #60: GATE TRIBUNAL (Phase 11 Public-Review README)
+
+**Timestamp**: 2026-10-07T23:00:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase11-public-review-readme.md
+
+**Verdict**: PASS
+
+**Content Hash**: `fbb69259ff401e60b39f2e5bf42505280d58e097279fddb8fbf660222ebdc055`
+
+**Previous Hash**: `9ba42fa98587c5dca641dedf2008665264d11c223b842b40f1c5df168443f4ac`
+
+**Chain Hash**: `4d0246d6e2e9c70e3dabcbb2c16d962307d606298c786ecee98238d0fa050934`
+
+**Decision**: PASS for plan iteration 2. Both iteration-1 findings are resolved: all five live old-owner sites, including the `sourceRepository` fallback, move to `MythologIQ-Labs-LLC/job-ranger`. Non-blocking: `demo:record` wipes `build/demo/curated/`; README Linux wording at line 205 predates this plan; line 300 needs its list marker. Implementation unlocked.
+
+---
+
+### Entry #61: IMPLEMENTATION (Phase 11 Public-Review README)
+
+**Timestamp**: 2026-10-07T23:40:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase11-public-review-readme.md
+
+**Content Hash**: `e26eae1d3307895a70ad72f8ff2418e8a56ef3b5719cb7562c802f9866a3b57d`
+
+**Previous Hash**: `4d0246d6e2e9c70e3dabcbb2c16d962307d606298c786ecee98238d0fa050934`
+
+**Chain Hash**: `e50998f43bc4e7bd55af8319e6004eedd6b921bdca8e6abaa9d8794c87c4bec0`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `scripts/demo/screenshots.spec.ts`; `scripts/demo/fixture.ts` gains `prepareDemoContext`, and `story.spec.ts` uses it in place of its local `prepare`; `playwright.demo.config.ts` matches both specs
+- `package.json`: `demo:record` names `scripts/demo/story.spec.ts`; new `demo:screenshots`
+- NEW `docs/assets/screenshots/career-direction.png`, `opportunity-assessment.png`, `deliberate-application.png`
+- `README.md`: "See it in action" section; platform packaging line
+- `docs/CONCEPT.md`, `docs/DISTRIBUTION_TRUST.md`, `docs/RELEASE_READINESS.md`, `docs/TESTER_INSTALLATION.md`, `vite.pwa.config.ts`: `MythologIQ-Labs-LLC/job-ranger`
+- `docs/GOVERNANCE_INDEX.md` (SELF_HOSTING in Tier 5, Phase 11 row); `CHANGELOG.md`
+
+Kevin Knapp's two PR #155 commits (`README.md`, `docs/SELF_HOSTING.md`) are carried unchanged beneath this work.
+
+**Deviations from the plan text (no change to acceptance)**:
+- LD1: the opportunity-assessment shot is cropped to the content column (`x 320, y 12, 1248x888`). Full-size inspection of the uncropped viewport showed the scrolled-away sidebar's empty lower half and a clipped line of listing text at the top edge. The other two shots are full 1600x900 viewports.
+- LD6: the README line reads "A native Linux installer is deferred until there is demand, and native macOS packages are built only on manual dispatch." It now matches both `CHANGELOG.md:59` and the capability table at `README.md:205` (the audit's non-blocking Linux-wording observation), and sits in its own paragraph instead of continuing the preceding list.
+
+**Verification (Windows 10 dev host)**:
+- `npm run demo:screenshots`: pass. Each image was inspected at full size: correct state, Canopy, no overlay, no clipped primary content.
+- `npm run demo:record`: pass (85.68 s, 1600x900, no near-blank frame; the contact sheet matches the accepted take's beat structure).
+- `npm test`: pass. `npm run typecheck`: pass.
+- `build-info.json` `sourceRepository` is `MythologIQ-Labs-LLC/job-ranger` with `GITHUB_REPOSITORY` unset.
+- The Evidence old-owner grep returns no live reference. All three README image paths resolve.
+- `demo:record` clears `build/demo/`, including `curated/` (audit observation); the committed copies are the inspected images.
+
+**Decision**: Implementation complete per the Entry #60 PASS plan.
+
+---
+
+### Entry #62: SESSION SEAL (Phase 11 Public-Review README)
+
+**Timestamp**: 2026-10-07T23:50:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase11-public-review-readme.md
+
+**Verdict**: PASS
+
+**Content Hash**: `88ee0b7520579441090ffa2e5b7b5903c06a8964c05731030f7844ef6894baf3`
+
+**Previous Hash**: `e50998f43bc4e7bd55af8319e6004eedd6b921bdca8e6abaa9d8794c87c4bec0`
+
+**Chain Hash**: `80c7f97b2982acd69aa1b2626fa120f766257732f59f73e5b91e2173d5eed928`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #60); intent lock captured before implementation
+- [x] Every planned file exists; no product code changed beyond the `sourceRepository` fallback string; the two documented deviations do not change acceptance
+- [x] D4: `demo:screenshots` and `demo:record` pass; images inspected at full size; image paths resolve; old-owner grep clean; `build-info.json` shows the new owner; `npm test` and `typecheck` pass
+- [x] Feature Inventory unchanged (no user-touchable feature)
+- [x] CHANGELOG and governance index updated; no hosted-service claim; no video media committed
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #60 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1702,4 +1827,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 7 Web Runtime Tailwind Source: SEALED (Entry #45); rebased onto Phase 8 (originally Entries #37-#40)*
 *Phase 9 Form-Control Shell Layer: SEALED (Entry #52)*
 *Phase 10 Public Demo Harness: SEALED (Entry #57)*
-*Next required action: Phase 10 PR stacked on #160; then reconcile #155 with curated screenshots*
+*Phase 11 Public-Review README: SEALED (Entry #62)*
+*Next required action: maintainer review and merge of the stacked PRs (#157 through #161, then #155)*
