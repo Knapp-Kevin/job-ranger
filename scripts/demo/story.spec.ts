@@ -1,7 +1,7 @@
 // Job Ranger public demo: one story, Canopy theme, deterministic fictional data,
 // recorded from the production web build. Outputs land in build/demo/.
 // Run with `npm run demo:record`.
-import { chromium, expect, test, type BrowserContext, type Page } from "@playwright/test";
+import { chromium, expect, test, type Page } from "@playwright/test";
 import { execFileSync } from "node:child_process";
 import { copyFileSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
 import os from "node:os";
@@ -9,7 +9,7 @@ import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { startPwaServer, type PwaServer } from "../../tests/pwa/support/server";
 import { distPwa, waitForRuntime } from "../../tests/pwa/support/fixtures";
-import { DEMO_EMPLOYER, DEMO_JOB_TITLE, TARGET_TRACK, greenhouseListing, seedDemo } from "./fixture";
+import { DEMO_EMPLOYER, DEMO_JOB_TITLE, TARGET_TRACK, prepareDemoContext, seedDemo } from "./fixture";
 import { caption, freezeFrame, glideClick, glideTo, installCursor, installTitleCard, releaseFrame, removeTitleCard, scrollToElement, scrollToTop, waitForDemoReady, waitForLayoutStable, type DemoReadyExpectations } from "./ready";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -20,16 +20,6 @@ const VIEWPORT = { width: 1600, height: 900 };
 const FIND_JOBS = "Spend your time on the jobs that look worth it.";
 
 type Mark = (beat: string) => void;
-
-async function prepare(context: BrowserContext): Promise<void> {
-  await context.route("https://boards-api.greenhouse.io/**", (route) =>
-    route.fulfill({ status: 200, contentType: "application/json", headers: { "Access-Control-Allow-Origin": "*" }, body: JSON.stringify(greenhouseListing) }),
-  );
-  await context.addInitScript(() => {
-    localStorage.setItem("theme", "canopy");
-    localStorage.setItem("job-ranger.onboarding.dismissed.v1", "true");
-  });
-}
 
 function watchProblems(page: Page, problems: string[]): void {
   page.on("pageerror", (error) => problems.push(`pageerror: ${error.message}`));
@@ -60,7 +50,7 @@ async function shot(page: Page, name: string): Promise<void> {
 
 async function seedOffCamera(server: PwaServer, profile: string, problems: string[]): Promise<void> {
   const seeding = await chromium.launchPersistentContext(profile, { viewport: VIEWPORT, executablePath });
-  await prepare(seeding);
+  await prepareDemoContext(seeding);
   const page = seeding.pages()[0] ?? (await seeding.newPage());
   watchProblems(page, problems);
   await page.goto(server.url);
@@ -188,7 +178,7 @@ async function recordStory(server: PwaServer, profile: string, problems: string[
   const context = await chromium.launchPersistentContext(profile, { viewport: VIEWPORT, executablePath, recordVideo: { dir: videoDir, size: VIEWPORT } });
   const started = Date.now();
   const mark: Mark = (beat) => (beats[beat] = (Date.now() - started) / 1000);
-  await prepare(context);
+  await prepareDemoContext(context);
   await installTitleCard(context, "Find the opportunities actually worth pursuing.", "Job Ranger · local-first Career Ops");
   await installCursor(context);
   const page = context.pages()[0] ?? (await context.newPage());

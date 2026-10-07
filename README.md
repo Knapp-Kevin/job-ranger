@@ -9,87 +9,141 @@
 </p>
 
 <p align="center">
-  <a href="https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/stable%20release-v1.2.0-0f172a.svg" alt="Stable release v1.2.0" /></a>
-  <img src="https://img.shields.io/badge/stable%20platforms-Windows%20%7C%20macOS-2563eb.svg" alt="Stable release platforms: Windows and macOS" />
+  <a href="https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/tag/v1.2.0"><img src="https://img.shields.io/badge/published%20release-v1.2.0-0f172a.svg" alt="Published release v1.2.0" /></a>
+  <img src="https://img.shields.io/badge/forward%20distribution-PWA%20%7C%20Microsoft%20Store-2563eb.svg" alt="Forward distribution: PWA and Microsoft Store" />
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-AGPL--3.0--only-15803d.svg" alt="AGPL-3.0-only License" /></a>
 </p>
 
+<p align="center">
+  <strong>Open source · local first · no account required · no mass auto-apply</strong>
+</p>
+
+<p align="center">
+  Maintained by <strong>MythologIQ Labs, LLC</strong>.
+</p>
+
+## What Job Ranger can do for you
+
+Job Ranger is for people who want help making a **better job-search decision**, not merely sending more applications.
+
+It can help you:
+
+- define the roles, environments, locations, compensation, schedules, and constraints that actually fit what you want next;
+- turn a resume, pasted history, or direct entry into a factual **Career Evidence** record you can review and correct;
+- discover opportunities and keep the original job evidence that Job Ranger used;
+- evaluate a role using separate signals for eligibility, evidence coverage, career-track alignment, preferences, blockers, and unknowns;
+- build evidence-backed resumes and application materials without inventing qualifications;
+- track applications, contacts, milestones, reminders, interviews, offers, and the exact materials you submitted;
+- prepare for interviews using your real experience and the actual requirements of the role;
+- learn from recurring gaps and search outcomes without treating application count as progress;
+- keep the core workflow on your own machine and useful without an AI subscription or Job Ranger account.
+
+Job Ranger deliberately does **not** mass-apply, fabricate qualifications or relationships, silently upload your career history, or turn one opaque score into hiring truth.
+
+### A typical workflow
+
+> **Person → Career Direction → Companies → People → Opportunities → Applications**
+
+You can enter anywhere in that flow. A resume is evidence about work you have done, not an instruction to keep doing the same thing forever.
+
+### See it in action
+
+These screenshots and the walkthrough video come from the production web build with fictional sample data (Morgan Rivera, Harbor Health). No real person's career data is shown.
+
+**[Watch or download the 85-second walkthrough (WebM)](./docs/assets/demo/job-ranger-demo.webm)**: choosing a direction, assessing a listing, checking Career Evidence, preparing a truthful resume, and tracking the application.
+
+**Choose a direction.** Target tracks keep your current path and the one you are moving toward separate, each with its own roles and constraints.
+
+![Target Tracks with the Practice operations target track open beside a paused current track](./docs/assets/screenshots/career-direction.png)
+
+**Judge a listing on the evidence.** The opportunity assessment reports eligibility, evidence, career alignment, and preferences separately, and names the blockers and unknowns instead of hiding them in one score.
+
+![Opportunity assessment showing eligibility unclear, evidence partial, career aligned, and preferences mixed, with an Epic EHR blocker](./docs/assets/screenshots/opportunity-assessment.png)
+
+**Apply deliberately.** A resume drafted from confirmed evidence passes the Truth Gate, and the exact exported PDF stays attached to the application you track.
+
+![Applications showing the job marked Applied with the submitted PDF listed under Submitted files](./docs/assets/screenshots/deliberate-application.png)
+
+To record the walkthrough again locally, run `npm run demo:record`; regenerate these screenshots with `npm run demo:screenshots`.
+
+## Start here
+
+Job Ranger's **forward distribution model is the PWA plus the Microsoft Store**. The native installers published with v1.2.0 remain immutable historical release artifacts; they are not the product's long-term ordinary-user installation strategy.
+
+| What you want to do | Best current path | Status |
+| --- | --- | --- |
+| **Evaluate the current product today** | Run the current PWA locally | Implemented and tested in Chromium. Self-hosting currently requires Node.js/npm and a few terminal commands. |
+| **Use Job Ranger as an ordinary Windows user** | Microsoft Store package | Implemented and validated in CI; Partner Center submission/certification is still pending. |
+| **Use Job Ranger cross-platform without developer setup** | Production PWA/web origin | Implemented; public deployment and broader browser/device validation are still pending. |
+| **Inspect the last published desktop release** | v1.2.0 GitHub Release | Historical Windows/macOS binaries remain available and immutable, but they are unsigned/unnotarized and are not the forward mainstream channel. |
+
+For current local evaluation, use the [Self-hosting guide](./docs/SELF_HOSTING.md). For exact distribution architecture and trust boundaries, see [Distribution Architecture](./docs/design/DISTRIBUTION_ARCHITECTURE.md) and [Distribution Trust](./docs/DISTRIBUTION_TRUST.md).
+
 ## Release status
 
-**v1.2.0 is the current stable public release.** It was published on October 5, 2026 from immutable commit `71f9b790a1f456321aee2c783f39f4a6784b83a9`, promoted byte-for-byte from the validated rc.5 artifacts. Windows x64 and macOS x64/arm64 packages, packaged healthcare-operations smoke reports, trust-state evidence, SHA-256 files, and schema-v2 release manifests are published with the release.
+The latest published GitHub release is **v1.2.0**, published October 5, 2026. It is preserved as immutable release history.
 
-**Distribution trust limitation:** v1.2.0 is intentionally unsigned/unnotarized under an explicit owner-approved exception. Windows SmartScreen / Smart App Control or macOS Gatekeeper may warn or block execution depending on system policy. Do not disable platform security globally.
+The active development line is **v1.3.0 candidate preparation**. It contains the current PWA runtime, Microsoft Store packaging, portable Job Ranger archives between runtimes, Windows portability fixes, the corrected web layout, and the public demo/readme work. Those capabilities are implemented in the repository but are not a stable public release until the release gates are satisfied.
 
-### Where Job Ranger distribution is going
+### Forward distribution
 
-| Channel | Status | Notes |
+| Channel | Current state | Intended role |
 | --- | --- | --- |
-| **Microsoft Store** (Windows native) | Implemented; package validated in CI; **certification pending** (#125) | Not yet listed in the Store |
-| **Web app / PWA** (Windows, macOS, Linux browsers) | Implemented and tested; **not deployed** (#130) | Local-first: your data stays in your browser; nothing is uploaded |
-| Direct-download installers | Advanced/test artifacts going forward | v1.2.0 below remains the current stable release |
+| **PWA / web runtime** | Implemented; Chromium-tested; local self-host path available; production origin not yet promoted | Primary cross-platform distribution |
+| **Microsoft Store** | AppX packaging implemented and validated in CI; certification/listing pending | Primary native Windows distribution |
+| **Direct native GitHub binaries** | Historical v1.2.0 release plus advanced/test artifacts where useful | Not the preferred ordinary-user path |
+| **Native macOS package** | Historical v1.2.0 artifacts only; future native distribution not planned | macOS served by the PWA |
+| **Native Linux package** | Not implemented as a supported product channel | Linux served by the PWA unless demand later justifies a separate package |
 
-Neither new channel is yet a supported **public** distribution channel. The PWA is available now for local dogfooding through the self-host path below; a public URL will be added only when a production web origin is intentionally promoted. Architecture: [`docs/design/DISTRIBUTION_ARCHITECTURE.md`](./docs/design/DISTRIBUTION_ARCHITECTURE.md).
+A future production PWA may be delivered from a normal HTTPS website. That does not change the local-first authority model: browser delivery is not permission to make the server authoritative for Career Evidence or other personal career data.
 
-Job Ranger uses these status terms deliberately:
+Job Ranger uses status terms deliberately:
 
 | Status | Meaning |
 | --- | --- |
-| **Shipped / stable** | Present in a stable GitHub Release intended for normal users. |
-| **Packaged candidate** | Built from an immutable prerelease tag and validated as release artifacts, but not promoted as stable. |
-| **Implemented** | Present in repository/release lineage but not necessarily in the latest stable installer. |
+| **Published / stable** | Present in a stable GitHub Release or promoted normal-user distribution channel. |
+| **Packaged candidate** | Built and validated as a release artifact, but not yet promoted as stable. |
+| **Implemented** | Present in the repository/current development line, but not necessarily publicly distributed. |
 | **Candidate / next** | Evidence-backed possible future work, not a commitment. |
 | **Deferred** | Intentionally inactive. |
-| **Historical** | Retained for provenance. |
+| **Historical** | Retained for provenance, compatibility, or release history. |
 
-For exact current state, see [`docs/SYSTEM_STATE.md`](./docs/SYSTEM_STATE.md) and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
+For the reconciled factual state, see [System State](./docs/SYSTEM_STATE.md), [Changelog](./CHANGELOG.md), and [v1.3.0 candidate evidence](./docs/validation/RELEASE_CANDIDATE_V1.3.0.md).
 
-## Try the current PWA locally
+## Run the current PWA locally
 
-The post-v1.2 development line is ready for persistent local dogfooding in a Chromium desktop browser. This does **not** require a public host, a Job Ranger account, or the unsigned desktop installer.
+The current development line can run as a persistent local PWA in a Chromium desktop browser. This is the best way to evaluate the current product before a production web origin or Microsoft Store listing is promoted.
 
-Prerequisites for the PWA path are Node.js `>=22.12.0` and npm.
+It does **not** require a Job Ranger account, a separate database server, Docker, an AI subscription, or the historical unsigned desktop installer. Local self-hosting does currently require Node.js 22.12.0 or newer, npm, and either Git or a downloaded source archive.
 
-```bash
+The complete beginner-friendly steps are in [SELF_HOSTING.md](./docs/SELF_HOSTING.md).
+
+~~~bash
 git clone https://github.com/MythologIQ-Labs-LLC/job-ranger.git
 cd job-ranger
 npm ci
 npm run selfhost:pwa
-```
+~~~
 
 Then open **http://localhost:4174** and install the PWA from Chrome or Edge if desired.
 
 Important persistence rules:
 
-- Keep using the exact `http://localhost:4174` origin. Job Ranger deliberately refuses silent port fallback because browser storage is origin-bound.
+- Keep using the exact http://localhost:4174 origin. Job Ranger deliberately refuses silent port fallback because browser storage is origin-bound.
 - Application updates replace the application shell, not your Career Ops data. The PWA stores its SQLite database and managed artifacts in browser-local OPFS.
-- Before meaningful upgrades or experiments, export a `.jobranger` portable backup from Job Ranger. The archive is the supported recovery and later localhost → public-origin migration path.
+- Before meaningful upgrades or experiments, export a portable .jobranger backup from Job Ranger. The archive is the supported recovery and later localhost-to-production-origin migration path.
 - Do not clear this site's browser storage unless you intend to remove the local Job Ranger profile.
-- Firefox/Safari and real-device installability are still validation work under #130; Chrome/Edge Chromium is the current evidence-backed dogfood path.
+- Firefox, Safari, and broader real-device installability remain validation work before the PWA is promoted as the mainstream public channel.
 
-The implementation and persistence guarantees are documented in [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md).
+The implementation and persistence guarantees are documented in [PWA_RUNTIME.md](./docs/design/PWA_RUNTIME.md).
 
-## Install the current stable release
+### Historical v1.2.0 desktop release
 
-Normal users do not need Git, Node.js, npm, SQLite, a terminal, or an AI account.
+The [v1.2.0 GitHub Release](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/tag/v1.2.0) remains available as immutable release history. It contains Windows x64 and macOS x64/arm64 desktop packages promoted byte-for-byte from the validated rc.5 artifacts.
 
-### Windows
+Those binaries are **unsigned/unnotarized** and are no longer the forward ordinary-user distribution strategy. They should not be confused with the pending Microsoft Store channel or the current PWA work. Job Ranger does not recommend disabling Smart App Control, SmartScreen, Defender, Gatekeeper, or equivalent platform protections globally.
 
-**[Download Job Ranger v1.2.0 for Windows x64 (.exe)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-windows-x64.exe)**
-
-The Windows installer includes the SQLite runtime Job Ranger needs.
-
-### macOS
-
-- **[Apple Silicon / M-series Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-arm64.dmg)**
-- **[Intel Mac (.dmg)](https://github.com/MythologIQ-Labs-LLC/job-ranger/releases/download/v1.2.0/Job.Ranger-v1.2.0-macos-x64.dmg)**
-
-Linux does not currently have a supported packaged release.
-
-### v1.2.0 distribution trust note
-
-v1.2.0 uses the exact rc.5 binaries that passed packaged-runtime smoke and native trust-verifier execution. The release remains unsigned/unnotarized. Verify the platform SHA-256 file and release manifest before use. See [`docs/TESTER_INSTALLATION.md`](./docs/TESTER_INSTALLATION.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), and [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md).
-
-Job Ranger does not recommend disabling Smart App Control, SmartScreen, Defender, Gatekeeper, or other platform security globally. Use only bounded OS-provided per-app/per-file exceptions when available.
+Historical package evidence and bounded tester guidance remain in [TESTER_INSTALLATION.md](./docs/TESTER_INSTALLATION.md), [DISTRIBUTION_TRUST.md](./docs/DISTRIBUTION_TRUST.md), and [CLEAN_MACHINE_TRUST_VALIDATION.md](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md).
 
 ## What Job Ranger is
 
@@ -114,49 +168,34 @@ Job Ranger is designed to make the workflow coherent while preserving user autho
 7. learn from recurring gaps and observed results without pretending correlation is destiny or application count is progress;
 8. keep the core workflow local and useful without an AI provider.
 
-Broader Career Ops company-targeting and relationship-path behavior has a completed bounded design contract under #121, but it is **not claimed as implemented in v1.2.0**.
+Broader Career Ops company-targeting and relationship-path behavior has a completed bounded design contract under #121, but it is **not implemented on the current development line**.
 
 Job Ranger does **not** autonomously mass-apply, invent qualifications or relationships, silently transmit career data to an inference provider, optimize for raw application volume, or treat one opaque score as hiring truth.
 
-## Capability map
+## Current capabilities
 
-| Capability | v1.1.2 | v1.2.0 stable |
-| --- | --- | --- |
-| Electron desktop app / local job-source state | **Shipped** | **Shipped** |
-| Greenhouse, Lever, SmartRecruiters, Ashby adapters | **Shipped** | **Hardened** |
-| Recognized dynamic/browser provider acquisition | Best effort | Governed connection-pinned transport |
-| Arbitrary generic career-page automation | Best effort | Manual review / non-runnable |
-| Canonical source snapshots + source diagnostics | Not shipped | **Implemented** |
-| Career Profile | **Shipped** | Durable SQLite authority |
-| Applications status/notes | **Shipped** | Durable lifecycle authority |
-| Progressive onboarding | Not shipped | **Implemented** |
-| Multiple Target Tracks | Not shipped | **Implemented** |
-| Career Evidence / provenance / correction | Not shipped | **Implemented** |
-| DOCX/text-PDF/plain/pasted resume import | Not shipped | **Implemented** |
-| Structured credentials and schedule constraints | Not shipped | **Implemented** |
-| Consumer source discovery + explicit approval | Not shipped | **Implemented, partial provider coverage** |
-| Explainable opportunity assessment | Basic fit score | Eligibility/evidence/track/preferences/blockers/unknowns |
-| Deterministic resume PDF + Truth/Parseability Gates | Not shipped | **Implemented** |
-| Target-specific deterministic tailoring | Not shipped | **Implemented** |
-| Exact submitted resume history | Not shipped | **Implemented** |
-| Contacts, milestones, reminders, follow-ups | Not shipped | **Implemented** |
-| Career Stories | Not shipped | **Implemented** |
-| Evidence-grounded interview preparation | Not shipped | **Implemented** |
-| Evidence-grounded application materials | Not shipped | **Implemented** |
-| Offer / negotiation state | Not shipped | **Implemented** |
-| Search Insights / recurring-gap analysis | Not shipped | **Implemented** |
-| Verified backup / staged restore | Not shipped | **Implemented** |
-| JSON Resume interoperability | Not shipped | **Implemented** |
-| Connection-level DNS-rebinding protection | Not shipped | **Implemented** |
-| Packaged-binary release smoke | Not shipped | **Implemented and passed on rc.5** |
-| Stable Windows/macOS trust fail-closed pipeline | Not shipped | **Implemented; real credentials/evidence pending** |
-| Clean-machine trust evidence tooling | Not shipped | **Implemented and native-runner compatible** |
-| Remote inference provider | Not shipped | Deferred |
-| OCR for scanned/image-only resumes | Not shipped | Deferred |
-| DOCX resume export | Not shipped | Deferred |
-| Career Ops relationship-path implementation | Not shipped | Future candidate; design complete |
-| Autonomous mass auto-apply | Not shipped | Explicit non-goal |
-| Linux installer | Not shipped | Deferred until demand |
+This is the current product line, not a comparison against obsolete releases.
+
+| Area | Current capability |
+| --- | --- |
+| **Career direction** | Multiple Target Tracks keep current, adjacent, stretch, and target directions separate with explicit role and constraint semantics. |
+| **Career Evidence** | Resume import and direct authoring feed a factual, reviewable evidence record with provenance, correction, merge/reject/supersede lineage, credentials, projects, achievements, and other supported experience. |
+| **Opportunity discovery** | Structured support for Greenhouse, Lever, SmartRecruiters, and Ashby, plus governed detected/browser-backed paths for recognized providers and explicit approval before monitoring discovered sources. |
+| **Opportunity assessment** | Eligibility, evidence coverage, career alignment, preference alignment, blockers, and unknowns remain separate instead of collapsing into one opaque score. |
+| **Resume preparation** | Deterministic ATS-oriented PDF generation, target-specific tailoring, Truth Gate, Parseability Gate, evidence provenance, versioning, and exact submitted-artifact history. |
+| **Application materials** | Evidence-grounded preparation with stale-state detection when supporting Career Evidence changes. |
+| **Applications** | Status, notes, contacts, milestones, reminders, follow-ups, submitted files, interview state, offers, and negotiation state. |
+| **Interview preparation** | Grounded in the tracked job, confirmed Career Evidence, requirement mappings, and the exact submitted resume. |
+| **Career Stories & Search Insights** | Evidence-linked stories plus recurring-gap and observed-outcome analysis without treating correlation as destiny. |
+| **Backup & portability** | Verified backup/staged restore, JSON Resume interoperability, and a portable .jobranger archive for moving between supported desktop/PWA runtimes. |
+| **Local-first PWA** | Shared application core in a browser runtime using SQLite WASM + OPFS, browser document parsing, deterministic PDF output, service-worker integrity checks, and explicit update handling. |
+| **Windows Store package** | AppX packaging, isolated Store data root, historical desktop-data import, manifest validation, install, and packaged smoke are implemented; Store certification/listing remains external. |
+| **Remote inference** | Deferred. Core product decisions and document generation do not require an AI subscription. |
+| **OCR for scanned/image-only resumes** | Deferred rather than silently uploading documents to a hosted OCR service. |
+| **Native macOS / Linux distribution** | Not part of the forward mainstream architecture. Cross-platform delivery is through the PWA. |
+| **Autonomous mass auto-apply** | Explicit non-goal. Consequential external actions remain with the user. |
+
+For release-by-release history, use [CHANGELOG.md](./CHANGELOG.md).
 
 ## Core product principles
 
@@ -176,7 +215,7 @@ Remote preference, compensation target, commute, schedule, employment arrangemen
 
 ### Explain uncertainty instead of scoring around it
 
-v1.2.0 separates eligibility, evidence coverage, career-track alignment, preference alignment, blockers, and unknowns. Missing job data stays missing instead of becoming fake precision.
+Job Ranger separates eligibility, evidence coverage, career-track alignment, preference alignment, blockers, and unknowns. Missing job data stays missing instead of becoming fake precision.
 
 ### Local first, useful before AI
 
@@ -199,63 +238,75 @@ Job Ranger does not pretend every careers site is equally automatable.
 
 Current structured adapters are Greenhouse, Lever, SmartRecruiters, and Ashby. Recognized Workday, iCIMS, BambooHR, Taleo, Oracle Careers, Microsoft Careers, and known browser portals use detected or browser-backed paths where applicable.
 
-v1.2.0 keeps arbitrary generic career-site hostnames manual-review/non-runnable. Governed acquisition uses connection-level address pinning: policy resolves the approved public address set, direct sockets connect only to approved addresses while TLS continues to verify the original hostname, redirects are independently pinned, and isolated browser HTTP/HTTPS traffic is routed through the governed transport. See [`SECURITY.md`](./SECURITY.md).
+Arbitrary generic career-site hostnames remain manual-review/non-runnable. In the desktop runtime, governed acquisition uses connection-level address pinning: policy resolves the approved public address set, direct sockets connect only to approved addresses while TLS continues to verify the original hostname, redirects are independently pinned, and isolated browser HTTP/HTTPS traffic is routed through the governed transport. See [SECURITY.md](./SECURITY.md).
 
 Source discovery remains separate from source acquisition. A discovered opportunity or employer is not silently converted into a monitored trusted source; the user approves monitoring explicitly.
 
 ## Current architecture
 
-```text
-React renderer
-  onboarding / jobs / applications / search insights
-  Career Profile / Career Evidence / Career Stories
-  Target Tracks / Resume
-  Companies / Filters / Settings
-          │
-          ▼ typed preload / IPC
-Electron main process
-  acquisition + pinned network transport
-  canonical job-source snapshots + diagnostics
-  Career Profile / Career Evidence / provenance
-  Target Tracks / requirements / assessment
-  Resume projection + Truth/Parseability Gates
-  application lifecycle / interview prep / materials
-  Career Stories / Search Insights / offers
-  backup + staged restore / JSON Resume adapter
-          │
-          ▼
-        SQLite + managed local artifacts
-```
+Job Ranger now has one Career Ops product core with two runtime surfaces rather than two independent products.
 
-`electron/src/**` is the only checked-in privileged implementation authority. `electron-runtime/**` is generated for development, tests, packaging, and execution.
+~~~text
+React product UI
+  onboarding / targeting / jobs / applications / evidence
+  resume / interview prep / stories / insights / settings
+                         |
+                         v
+              typed runtime boundary
+                         |
+                         v
+               shared Career Ops core
+  repositories / migrations / domain services / validators
+  requirements / assessment / Truth Gate / Parseability Gate
+  application lifecycle / backup / interoperability
+                 |                    |
+                 v                    v
+        Electron adapters        PWA adapters
+        native SQLite            SQLite WASM + OPFS
+        managed files            browser-local artifacts
+        OS integration           browser document/PDF paths
+        governed acquisition     service worker + web security
+~~~
 
-On the post-v1.2.0 development line, the same shared core also runs in a **web/PWA runtime**: a browser runtime worker with SQLite WASM on the origin-private file system, browser document parsing, and deterministic PDF output, behind strict CSP and Trusted Types. Runtime-specific mechanics come from explicit adapters, so there is one product truth across runtimes. See [`docs/design/PWA_RUNTIME.md`](./docs/design/PWA_RUNTIME.md) and [`docs/ARCHITECTURE_PLAN.md`](./docs/ARCHITECTURE_PLAN.md).
+The runtime adapters own platform mechanics; the shared core owns product truth. This avoids letting the Windows app and PWA quietly become different applications with different career logic.
+
+electron/src/** remains the checked-in privileged desktop implementation authority; electron-runtime/** is generated for development, tests, packaging, and execution. The PWA implementation and parity boundary are documented in [PWA_RUNTIME.md](./docs/design/PWA_RUNTIME.md), with the overall architecture in [ARCHITECTURE_PLAN.md](./docs/ARCHITECTURE_PLAN.md).
 
 ## Privacy and security posture
 
-v1.2.0 keeps structured career/search state local and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. Main/browser/render surfaces retain sandboxing and appropriate web-security controls. Automated acquisition uses a connection-pinned private-network boundary rather than preflight-only hostname checking.
+Job Ranger is local-first across both runtimes.
 
-v1.2.0 is the documented owner-approved unsigned exception: its rc.5 binaries were immutable, byte-verified, package-smoke validated, and accompanied by trust/checksum manifests. Going forward, ordinary-user trust comes from Microsoft Store certification (Windows) and the HTTPS origin plus its security policy (web). Every released artifact also carries SHA-256 evidence, a release manifest, and a GitHub artifact attestation. Azure Artifact Signing is optional. See [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md).
+The Windows desktop runtime keeps structured career/search state in local SQLite and uses typed IPC boundaries rather than exposing Node.js directly to the renderer. The PWA keeps its database and managed artifacts in browser-local storage using SQLite WASM + OPFS. Delivering the PWA from an HTTPS origin does not make that server authoritative for personal career data.
 
-Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure.
+Security boundaries include sandboxed renderer/browser surfaces, explicit runtime adapters, validated imports, governed acquisition rules, deterministic backup/export integrity, strict web CSP/Trusted Types, service-worker asset verification, and evidence-grounded factual claims.
+
+For ordinary-user distribution going forward:
+
+- **Windows:** trust comes from Microsoft Store certification and Microsoft-managed package signing.
+- **Cross-platform web/PWA:** trust comes from the controlled HTTPS origin, browser security boundary, deployment provenance, and service-worker/update integrity.
+- **Historical/direct native binaries:** hashes and provenance remain useful evidence, but an unsigned GitHub binary is not equivalent to a Store-certified package.
+
+Remote inference, telemetry, cloud account sync, or credential-bearing external services require explicit future governance and disclosure. See [DISTRIBUTION_TRUST.md](./docs/DISTRIBUTION_TRUST.md) and [SECURITY.md](./SECURITY.md).
 
 ## Product gaps and evaluated candidates
 
-Current dispositions live in [`docs/PRODUCT_GAP_REVIEW.md`](./docs/PRODUCT_GAP_REVIEW.md).
+Current dispositions live in [PRODUCT_GAP_REVIEW.md](./docs/PRODUCT_GAP_REVIEW.md).
 
 Examples still suitable for future evidence-backed consideration include:
 
-- broader discovery providers, especially government/niche sources;
-- easier capture of jobs encountered in a normal browser;
+- broader discovery providers, especially government and niche sources;
+- easier capture of jobs encountered during normal browsing;
 - reusable application-question answers and bounded user-controlled form assistance;
 - implementation of the already-bounded Career Ops company/relationship-path design;
 - mock-interview practice and feedback;
 - calendar mirroring;
-Native Linux and macOS packaging are not planned. Those platforms are served by the web app.
+- native Linux packaging only if real demand justifies a separate packaging, update, QA, and support surface.
+
+Native macOS distribution is not part of the forward architecture. macOS and Linux are expected to use the cross-platform PWA rather than requiring Job Ranger to maintain separate native installers merely because packaging is technically possible.
 
 ## Development
 
-Normal users should use stable published installers. The following is for repository development.
+This section is for contributors, maintainers, and people intentionally self-hosting the current development line. It is not the intended long-term ordinary-user installation flow.
 
 ### Prerequisites
 
@@ -288,15 +339,21 @@ npm run test:pwa:engine      # shared-core suites on the SQLite WASM engine
 
 ## Release engineering
 
-Stable GitHub Releases are the authority for normal user-installable builds.
+GitHub Releases remain the immutable source of release/tag and artifact provenance. They are not, by themselves, the forward ordinary-user distribution strategy.
 
-`v1.2.0` is the current stable release and is byte-identical to the validated rc.5 package artifacts at `71f9b790a1f456321aee2c783f39f4a6784b83a9`. The outstanding distribution work is external:
-- Microsoft Store: Partner Center identity, submission, and certification;
-- web app: real-browser validation (Firefox, Safari, real devices), and a production HTTPS origin once external distribution is justified. Until then, localhost self-hosting is the supported dogfood path.
+The current release line distinguishes:
 
-No v1.2.0 artifact is ever mutated.
+- **published history:** v1.2.0 remains immutable;
+- **current candidate:** v1.3.0 is in release-candidate preparation;
+- **Windows ordinary-user channel:** Microsoft Store after Partner Center submission/certification and clean acceptance;
+- **cross-platform ordinary-user channel:** the PWA after production-origin and browser/device validation;
+- **direct GitHub native binaries:** development, testing, archival, or informed advanced-user artifacts unless they independently satisfy the applicable public trust requirements.
 
-See [`docs/RELEASE_READINESS.md`](./docs/RELEASE_READINESS.md), [`docs/DISTRIBUTION_TRUST.md`](./docs/DISTRIBUTION_TRUST.md), [`docs/CLEAN_MACHINE_TRUST_VALIDATION.md`](./docs/CLEAN_MACHINE_TRUST_VALIDATION.md), and [`docs/validation/RELEASE_CANDIDATE_V1.2.0.md`](./docs/validation/RELEASE_CANDIDATE_V1.2.0.md).
+The outstanding external distribution work is Store certification/listing and production PWA promotion/validation, not reviving native macOS as a required release target.
+
+Every promoted release/channel must preserve exact source/build identity, checksums/manifests where applicable, runtime validation, upgrade/backup evidence, and honest status language. No v1.2.0 artifact is ever mutated.
+
+See [RELEASE_READINESS.md](./docs/RELEASE_READINESS.md), [DISTRIBUTION_TRUST.md](./docs/DISTRIBUTION_TRUST.md), and [v1.3.0 candidate evidence](./docs/validation/RELEASE_CANDIDATE_V1.3.0.md).
 
 ## Documentation hierarchy
 

@@ -1,6 +1,6 @@
 # Governance Index
 
-**Last Reviewed**: 2026-10-07
+**Last Reviewed**: 2026-10-08
 
 A single authoritative map of every governance artifact in this project, organized
 into six freshness tiers with explicit drift contracts. A stale entry here is
@@ -71,6 +71,8 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 7 web runtime Tailwind source | `docs/plan-qor-phase7-pwa-tailwind-source.md` | PLAN #42, PASS #43, implemented #44, sealed #45 (rebased onto Phase 8; originally #37-#40) |
 | Phase 9 form-control shell layer | `docs/plan-qor-phase9-input-shell-layer.md` | PLAN #46, VETO #47-#49, PASS #50, implemented #51, sealed #52 |
 | Phase 10 public demo harness | `docs/plan-qor-phase10-public-demo-harness.md` | PLAN #53, VETO #54, PASS #55, implemented #56, sealed #57 |
+| Phase 11 public-review README | `docs/plan-qor-phase11-public-review-readme.md` | PLAN #58, VETO #59, PASS #60, implemented #61, sealed #62 |
+| Phase 12 demo video | `docs/plan-qor-phase12-demo-video.md` | PLAN #63, PASS #64, implemented #65, sealed #66 |
 
 ## Tier 5 — Reference Material
 
@@ -86,6 +88,7 @@ Informational, slow-drift. Drift signal: factual claims diverge from current cod
 | Distribution trust | `docs/DISTRIBUTION_TRUST.md` |
 | Clean-machine trust validation | `docs/CLEAN_MACHINE_TRUST_VALIDATION.md` |
 | Tester installation | `docs/TESTER_INSTALLATION.md` |
+| Self-hosting guide | `docs/SELF_HOSTING.md` |
 | Windows package validation | `docs/windows-package-validation.md` |
 | User help | `HELP.md` |
 

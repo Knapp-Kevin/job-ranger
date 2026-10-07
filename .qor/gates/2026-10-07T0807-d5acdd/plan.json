@@ -1,0 +1,27 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0807-d5acdd",
+  "ts": "2026-10-07T08:16:11Z",
+  "plan_path": "docs/plan-qor-phase12-demo-video.md",
+  "phases": [
+    "Phase 1: Commit the video and link it"
+  ],
+  "ci_commands": [
+    "node scripts/demo/frames.mjs docs/assets/demo/job-ranger-demo.webm <tmp> 10",
+    "npm test"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/10-public-demo-harness",
+  "originating_remediation": "maintainer request",
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T08:16:11Z"
+  }
+}

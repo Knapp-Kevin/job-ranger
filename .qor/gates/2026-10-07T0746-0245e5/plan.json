@@ -1,0 +1,27 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T0746-0245e5",
+  "ts": "2026-10-07T07:49:22Z",
+  "plan_path": "docs/plan-qor-phase11-public-review-readme.md",
+  "phases": [
+    "Phase 1: Curated screenshots and README"
+  ],
+  "ci_commands": [
+    "npm run demo:screenshots",
+    "npm test"
+  ],
+  "open_questions": [],
+  "doc_tier": "minimal",
+  "high_risk_target": false,
+  "pr_target": "phase/10-public-demo-harness",
+  "originating_remediation": "PR #155",
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T07:49:22Z"
+  }
+}
