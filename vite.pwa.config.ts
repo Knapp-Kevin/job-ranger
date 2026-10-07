@@ -17,10 +17,9 @@ import { defineConfig, type Plugin } from "vite";
 import { buildContentSecurityPolicy, buildSecurityHeaders } from "./src/pwa/security/policy.ts";
 import { NODE_BUILTIN_ADAPTERS, SHARED_CORE_ADAPTERS } from "./src/pwa/adapter-map.ts";
 import { buildPdfFonts } from "./scripts/pdf-fonts.mjs";
+import { createRuntimeAdapterPlugin, type RuntimeTarget } from "./src/pwa/build/runtime-adapter-plugin.ts";
 
 const root = path.dirname(fileURLToPath(import.meta.url));
-const electronSource = path.join(root, "electron", "src");
-const adapters = path.join(root, "src", "pwa", "adapters");
 const outDir = path.join(root, "dist-pwa");
 const packageJson = JSON.parse(readFileSync(path.join(root, "package.json"), "utf8")) as { version: string };
 
@@ -36,31 +35,14 @@ function gitCommit(): string {
 const commit = gitCommit();
 const buildId = process.env.JOB_RANGER_BUILD_ID?.trim() || `${packageJson.version}+${commit.slice(0, 12)}`;
 
-function runtimeAdapterPlugin(target: "page" | "worker"): Plugin {
-  return {
-    name: `job-ranger-runtime-adapters:${target}`,
-    enforce: "pre",
-    async resolveId(source, importer, options) {
-      if (source === "electron") {
-        return path.join(adapters, target === "worker" ? "electron-worker.ts" : "electron-page.ts");
-      }
-      const builtin = source.startsWith("node:") ? source.slice(5) : source;
-      if (NODE_BUILTIN_ADAPTERS[builtin] && (source.startsWith("node:") || importer?.includes(`${path.sep}electron${path.sep}src${path.sep}`))) {
-        return path.join(adapters, NODE_BUILTIN_ADAPTERS[builtin]);
-      }
-      if (source.startsWith("node:")) {
-        this.error(`${source} has no web runtime adapter (imported by ${importer ?? "unknown"})`);
-      }
-      if (!importer || !source.startsWith(".") || !source.endsWith(".cjs")) return null;
-      const candidate = path.resolve(path.dirname(importer), source.replace(/\.cjs$/, ".cts"));
-      if (!existsSync(candidate)) return null;
-      if (path.dirname(candidate) === electronSource && SHARED_CORE_ADAPTERS[path.basename(candidate)]) {
-        return path.join(adapters, SHARED_CORE_ADAPTERS[path.basename(candidate)]);
-      }
-      void options;
-      return candidate;
-    },
-  };
+function runtimeAdapterPlugin(target: RuntimeTarget): Plugin {
+  return createRuntimeAdapterPlugin(target, {
+    root,
+    pathApi: path,
+    exists: existsSync,
+    nodeBuiltinAdapters: NODE_BUILTIN_ADAPTERS,
+    sharedCoreAdapters: SHARED_CORE_ADAPTERS,
+  });
 }
 
 const PDF_FONTS_MODULE = "virtual:job-ranger-pdf-fonts";

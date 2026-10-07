@@ -277,4 +277,30 @@ Amend per iteration-2 findings 1-7 and resubmit to /qor-audit.
 
 ---
 
+## Failure Entry #8
+
+**Date**: 2026-10-07T04:50:00Z
+**Verdict ID**: Entry #33 (GATE TRIBUNAL Phase 6 Windows Runtime Fixes)
+**Failure Mode**: HALLUCINATION + INCOMPLETE_PLAN
+
+### What Failed
+
+Phase 6 plan for the Windows PWA adapter-resolution and upgrade-check CRLF fixes.
+
+### Why It Failed
+
+1. The new Windows CI job copied the PWA job's steps without checking which specs reach native dependencies; the portability specs need a sqlite3 binary that Windows runners do not have.
+2. A resolver test case was written from memory of the adapter map (`node:crypto` unmapped) instead of from `src/pwa/adapter-map.ts`.
+3. The fix re-implemented Vite's module-id format in a local helper and then tested the helper against itself, leaving casing and realpath divergence uncovered.
+
+### Pattern to Avoid
+
+When a bug comes from two code paths disagreeing about an identifier, make one path delegate to the other (here: let Vite's resolver produce the id) rather than imitating its format; and verify the invariant on the real artifact (the built bundle), not on a re-implementation. When cloning a CI job to a new OS, trace each test's native prerequisites.
+
+### Remediation Required
+
+Amend the plan per AUDIT_REPORT findings 1-3 and resubmit to /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

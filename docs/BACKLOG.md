@@ -8,8 +8,8 @@ identified concretely enough to plan. Items close only through a sealed governan
 
 ### Development Blockers
 
-- [ ] [D1] PWA build on Windows registers IPC handlers into a duplicate adapter module. `vite.pwa.config.ts` `runtimeAdapterPlugin.resolveId` returns backslash paths, so the worker bundle contains two copies of `src/pwa/adapters/electron-worker.ts`; every web-runtime call fails with `No handler registered for '<channel>'` and all `tests/pwa` specs fail on Windows hosts (CI runs Ubuntu and does not see it).
-- [ ] [D2] `npm run test:release-upgrade` fails on Windows. `scripts/upgrade-check/check-current-release.cjs` splits `sqlite3` output on `\n`; Windows `sqlite3.exe` emits `\r\n`, leaving `\r` on every table name.
+- [x] [D1] (Phase 6 - Complete) PWA build on Windows registers IPC handlers into a duplicate adapter module. `vite.pwa.config.ts` `runtimeAdapterPlugin.resolveId` returns backslash paths, so the worker bundle contains two copies of `src/pwa/adapters/electron-worker.ts`; every web-runtime call fails with `No handler registered for '<channel>'` and all `tests/pwa` specs fail on Windows hosts (CI runs Ubuntu and does not see it).
+- [x] [D2] (Phase 6 - Complete) `npm run test:release-upgrade` fails on Windows. `scripts/upgrade-check/check-current-release.cjs` splits `sqlite3` output on `\n`; Windows `sqlite3.exe` emits `\r\n`, leaving `\r` on every table name.
 
 ## Backlog (Planned Work)
 
@@ -26,7 +26,7 @@ identified concretely enough to plan. Items close only through a sealed governan
 - [ ] [G4] Destructive actions run without confirmation (company, filter, application, story, contact, event, cover letter, target track, offer details); `ConfirmDialog` is unused.
 - [ ] [G5] Notification checkboxes save only through "Save runtime settings" in a different section, with no on-screen cue.
 - [ ] [G6] No in-app Help entry point in the renderer; the web runtime has no help link.
-- [ ] [G7] Flaky Electron spec: `tests/e2e/resume-tailoring.spec.ts` "user previews, discards, and accepts a deterministic tailoring plan" timed out once on Windows and passed on rerun.
+- [ ] [G7] Flaky Electron specs on Windows: `tests/e2e/resume-tailoring.spec.ts` "user previews, discards, and accepts a deterministic tailoring plan" fails intermittently ("Requirements Job Ranger will not claim" not visible; 1 of 2 runs on 2026-10-06, 3 of 4 on 2026-10-07); `tests/e2e/app.spec.ts:68` "career profile is occupation agnostic and supports annual pay" failed once on 2026-10-07 and passed 3 reruns.
 
 ## Housekeeping
 

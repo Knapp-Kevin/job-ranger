@@ -1036,6 +1036,167 @@ SHA256(content_hash + previous_hash)
 
 ---
 
+### Entry #32: PLAN (Phase 6 Windows Runtime Fixes)
+
+**Timestamp**: 2026-10-07T04:30:00Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+
+**Content Hash**:
+```
+SHA256(plan-qor-phase6-windows-runtime-fixes.md)
+= 7c24d389c5f6204a44f27c499aaed7d58cd966177c68d9bcbbf604875c656d75
+```
+
+**Previous Hash**: 2f17695a423989acb0b26d474f11650821d9959dfa8ade94c3961c7dbd96fb5c
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 0c6cf8841eacf0352a47158e53a39d1ed54da27e47e01b53a3ce2fdd06c294bd
+```
+
+**Decision**: Phase 6 plan created for BACKLOG D1 (PWA build on Windows bundles a duplicate IPC adapter module because the Vite resolver returns backslash ids) and D2 (release-upgrade check mis-splits Windows sqlite CRLF output). Extracts adapter resolution into a pure, path-API-parameterized module with Windows-path unit tests; adds a shared sqlite output line helper with tests; adds windows-latest CI jobs for the web browser suite and the release-upgrade check. No new dependencies. Awaiting GATE tribunal.
+
+---
+
+### Entry #33: GATE TRIBUNAL (Phase 6 Windows Runtime Fixes)
+
+**Timestamp**: 2026-10-07T04:50:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+
+**Verdict**: VETO
+
+**Content Hash**:
+```
+SHA256(AUDIT_REPORT.md)
+= 5e596f976745990999b414aae4e135d844cc37954f31e25a5b733d922f3099e0
+```
+
+**Previous Hash**: 0c6cf8841eacf0352a47158e53a39d1ed54da27e47e01b53a3ce2fdd06c294bd
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 4f3cdc9eb8a69841c2e790882195e2fccf9fb9815bea6fa1cb72ae39abd58ee3
+```
+
+**Decision**: VETO issued for the Phase 6 plan. Independent review found: the planned Windows browser-suite CI job lacks the sqlite3 binary the portability specs require; one planned resolver test asserts that node:crypto has no adapter although adapter-map.ts maps it; and the D1 invariant test compares against the plan's own id helper, so slash normalization alone does not exclude duplicate module ids arising from drive-letter casing or realpath differences. Governor must amend and resubmit.
+
+---
+
+### Entry #34: GATE TRIBUNAL (Phase 6 Windows Runtime Fixes, Iteration 2)
+
+**Timestamp**: 2026-10-07T05:20:00Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+
+**Verdict**: PASS
+
+**Content Hash**:
+```
+SHA256(AUDIT_REPORT.md)
+= 2737e10a6cb3deb04dd2fef8e5db48e0f036b237732f83f926d8505f61c3d510
+```
+
+**Previous Hash**: 4f3cdc9eb8a69841c2e790882195e2fccf9fb9815bea6fa1cb72ae39abd58ee3
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= f2d210cda7e475317c33a8fcef2419c0c699131dd1d0ff62b0a5fa634de65ee5
+```
+
+**Decision**: PASS issued for the amended Phase 6 plan (SHA256 bcd0eb701c1d7f03157929cbadf6d074ab0e9b7c48234eb3f9acea16c85295af). All three iteration-1 findings resolved: sqlite provisioned for the Windows browser suite, resolver test aligned with the adapter map, and module ids delegated to the bundler's resolver with the one-module invariant verified on the built worker bundle. Gate cleared for implementation.
+
+---
+
+### Entry #35: IMPLEMENT (Phase 6 Windows Runtime Fixes)
+
+**Timestamp**: 2026-10-07T06:40:00Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+
+**Content Hash**:
+```
+Merkle(sorted path:SHA256 of the 11 files touched, listed below)
+= d5af91109aef142b2a0ef8d9591c6792deb78962ab04d7351672343e4c7258f2
+```
+
+**Previous Hash**: f2d210cda7e475317c33a8fcef2419c0c699131dd1d0ff62b0a5fa634de65ee5
+
+**Chain Hash**:
+```
+SHA256(content_hash + previous_hash)
+= 387f47d3007af9bc03605bffc775a27061f24e67254985bd8cfe0547f270a49a
+```
+
+**Files Touched**:
+- NEW `src/pwa/build/runtime-adapter-plugin.ts` (83 lines): `selectRuntimeAdapterTarget`, `createRuntimeAdapterPlugin`; adapter targets reach the bundler via `this.resolve(target, importer, { skipSelf: true })`; an unresolvable adapter fails the build (audit observation 1)
+- `vite.pwa.config.ts`: instantiates the plugin; removed `electronSource`/`adapters` locals
+- NEW `scripts/upgrade-check/sqlite-output.cjs`: `outputLines` (`/\r?\n/`)
+- `scripts/upgrade-check/check-current-release.cjs`: both split sites use `outputLines`
+- NEW tests: `tests/pwa-runtime-adapter-plugin.test.mjs`, `tests/pwa-worker-bundle.test.mjs`, `tests/upgrade-check-sqlite-output.test.cjs` (all red before implementation; the bundle test failed on the real pre-fix build with 2 copies)
+- `package.json`: new tests in `test`/`test:unit`; bundle check in `test:pwa:e2e`
+- `.github/workflows/pwa.yml`: bundle-check step in `pwa`; new `pwa-windows` job with sqlite provisioning
+- `.github/workflows/ci.yml`: new `release-upgrade-windows` job (timeout 30, audit observation 3)
+- `docs/BACKLOG.md`: D1, D2 complete; G7 updated with this run's flake observations
+
+**Verification (Windows 10 host)**:
+- `npm run typecheck`: pass
+- `npm test`: pass (includes both new unit tests)
+- `npm run test:pwa:e2e`: 12/12 passed (was 0/12); bundle check passed
+- `npm run test:release-upgrade`: passed v1.2.0 -> current (was failing); 9 baseline directories checked, 6 backed up and restored
+- `npm run test:e2e`: 29/31 on the full run. `app.spec.ts:68` then passed 3/3 reruns; `resume-tailoring.spec.ts:51` failed 2/3 reruns, the same intermittent failure seen on unchanged `main` on 2026-10-06 (BACKLOG G7). Neither the desktop build (`vite build`, `tsconfig.electron.json`) nor the Electron runtime imports any file touched here.
+
+**Decision**: Implementation complete per the Entry #34 PASS plan. Reality ready for substantiation.
+
+---
+
+### Entry #36: SESSION SEAL (Phase 6 Windows Runtime Fixes)
+
+**Timestamp**: 2026-10-07T07:00:00Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Entry ID**: `795d07c4729f`
+**Plan**: docs/plan-qor-phase6-windows-runtime-fixes.md
+
+**Verdict**: PASS
+
+This entry uses the Qor-logic-plus SESSION SEAL format required by `seal_entry_check` (content hash bound to the plan bytes; chain hash `SHA256(content_hash + "|" + previous_hash)`). Earlier entries keep this ledger's original layout.
+
+**Content Hash**: `bcd0eb701c1d7f03157929cbadf6d074ab0e9b7c48234eb3f9acea16c85295af`
+
+**Previous Hash**: `387f47d3007af9bc03605bffc775a27061f24e67254985bd8cfe0547f270a49a`
+
+**Chain Hash**: `e28fd8fe284ce78724778ac523409deb224d25f55b20b55fa8f78713da47a02b`
+
+**Merkle Seal** (sorted path:SHA256 of 14 files: the 11 implementation files of Entry #35, plus CHANGELOG.md, docs/GOVERNANCE_INDEX.md, docs/plan-qor-phase6-windows-runtime-fixes.md): `141dde0a67e3854b9a1ee0b3f7b70f8ed815c48d040f51a059ec392998390c1d`
+
+**SSDF Practices**: PS.2.1, RV.2.1
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #34); intent lock VERIFIED against plan, audit, and HEAD
+- [x] Every planned file exists: `src/pwa/build/runtime-adapter-plugin.ts`, `scripts/upgrade-check/sqlite-output.cjs`, three planned tests; `vite.pwa.config.ts`, `check-current-release.cjs`, `package.json`, `pwa.yml`, `ci.yml` changed as planned. No unplanned source files
+- [x] New tests invoke their units and fail on regression (plugin test drives `path.win32` and a fake bundler context; bundle test failed on the real pre-fix Windows build; sqlite-output test fails on a bare `"\n"` split)
+- [x] Windows host: typecheck pass; `npm test` pass; `test:pwa:e2e` 12/12; `test:release-upgrade` pass; `test:e2e` failures limited to the pre-existing intermittent specs recorded in BACKLOG G7
+- [x] Razor: largest new file 83 lines; all functions under 40 lines; no nested ternaries; no console.log in source
+- [x] Gates: skill admission, gate-skill matrix, secret scanner, instruction hygiene, governance-index enforce all clean; data-API ACL SKIP (no SQL migrations); merge velocity strained (non-blocking)
+- [x] Feature Inventory: Total: 50 / verified: 23 / unverified: 27 / n/a: 0; no regression (FX046-FX048 declared n/a-justified; they stay unverified until the Windows CI job reports green)
+- [x] BACKLOG D1, D2 marked complete; CHANGELOG Unreleased records both fixes and the Windows CI coverage
+- SKIP version bump: v1.3.0 is an unpublished release candidate; the fixes land under Unreleased for admission to that release
+- PENDING D4 (CI): `pwa-windows` and `release-upgrade-windows` run for the first time on the Phase 6 PR
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #34 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -1043,4 +1204,5 @@ SHA256(content_hash + previous_hash)
 *Phase 4 Caching & Circuit Breaker: SEALED*
 *Phase 5 Notifications & System Tray: SEALED*
 *Governance-Health Remediation: SEALED (Entry #31)*
-*Next required action: /qor-plan for BACKLOG D1 and D2*
+*Phase 6 Windows Runtime Fixes: SEALED (Entry #36)*
+*Next required action: Phase 6 PR CI (Windows jobs); then user-story end-to-end work (BACKLOG B1-B4)*

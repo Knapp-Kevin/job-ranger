@@ -18,6 +18,7 @@ const { createHash } = require("node:crypto");
 const { execFileSync } = require("node:child_process");
 const fs = require("node:fs/promises");
 const path = require("node:path");
+const { outputLines } = require("./sqlite-output.cjs");
 
 const runtimeDir = path.join(__dirname, "..", "..", "electron-runtime", "electron", "src");
 const load = (file) => require(path.join(runtimeDir, file));
@@ -40,13 +41,9 @@ function sqliteQuery(sqliteBinaryPath, databasePath, query) {
 }
 
 function fingerprint(sqliteBinaryPath, databasePath) {
-  const tables = sqliteQuery(
-    sqliteBinaryPath,
-    databasePath,
-    "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;",
-  )
-    .split("\n")
-    .filter(Boolean);
+  const tables = outputLines(
+    sqliteQuery(sqliteBinaryPath, databasePath, "SELECT name FROM sqlite_master WHERE type = 'table' ORDER BY name;"),
+  );
   const result = {};
   for (const table of tables) {
     const columns = table === "settings" ? "key, value_json" : "*";
@@ -106,9 +103,7 @@ async function openCurrent(dataDirectory) {
 async function verifyFixture(fixture, sqliteBinaryPath) {
   const databasePath = path.join(fixture.dataDirectory, "jobscout.sqlite3");
   const appliedVersions = () =>
-    sqliteQuery(sqliteBinaryPath, databasePath, "SELECT version FROM schema_migrations;")
-      .split("\n")
-      .filter(Boolean)
+    outputLines(sqliteQuery(sqliteBinaryPath, databasePath, "SELECT version FROM schema_migrations;"))
       .map(Number)
       .sort((a, b) => a - b);
   const baselineMigrations = appliedVersions();
