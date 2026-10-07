@@ -21,6 +21,8 @@ The same provider APIs may therefore be appropriate in both products. Architectu
 
 Job Ranger will treat personal-brand publishing and analytics as a bounded Career Ops domain.
 
+The required baseline is deterministic and inference-free. Job Ranger must not require an LLM or other model to create a Presence Brief, guide the user's composition, check evidence/readiness, approve exact content, publish it, collect analytics, calculate metrics, compare cohorts, or produce threshold-based advisory learning. A future optional language-assistance feature may be added only as a proposal layer under the existing inference contract and may not replace or weaken this deterministic path.
+
 Its purpose is to help a person make evidence-backed professional communication decisions and learn which content improves professional discovery and career outcomes.
 
 Job Ranger does not become a general marketing platform, company-page campaign manager, product-launch operating system, or multi-brand social suite.
