@@ -55,7 +55,9 @@ Application count is not a success metric by itself. A smaller set of well-under
 
 The product should reduce the cost of good judgment rather than remove judgment from the process. Discovery, monitoring, analysis, preparation, reminders, and path-finding can be highly automated. Consequential external actions remain intentional and user-controlled.
 
-When future Career Ops capabilities expand beyond specific openings, they should help the user identify promising companies, relationships, introductions, communities, recruiters, hiring managers, or other legitimate paths to employment without encouraging indiscriminate or automated outreach.
+When future Career Ops capabilities expand beyond specific openings, they should help the user identify promising companies, relationships, introductions, communities, recruiters, hiring managers, professional-presence opportunities, or other legitimate paths to employment without encouraging indiscriminate or automated outreach.
+
+Professional presence is part of Career Ops when the objective is the person's career rather than marketing a product. Job Ranger may guide evidence-backed personal content, exact user-approved publication, and analytics-based learning about professional discovery and career outcomes. That capability must remain useful without inference and must not become a general company-brand or product-marketing system. The accepted boundary is [ADR-0001](./adr/0001-personal-brand-publishing-and-analytics.md).
 
 ### Person before resume
 
@@ -168,6 +170,8 @@ The strongest current **needed** gaps are:
 3. publishing a new release containing the product already implemented on `main`.
 
 Current **candidate** ideas include broader discovery providers, faster arbitrary-job capture, reusable application-question answers, bounded user-controlled form assistance, broader Career Ops relationship/networking paths, company targeting before a specific opening exists, calendar mirroring, and mock-interview practice.
+
+Personal Brand / Professional Presence is no longer merely a candidate product idea: its architecture is accepted under ADR-0001, while implementation remains pending under issue #171. The first planned slice is deterministic composition guidance and exact-content approval, followed by manual analytics/learning before connected provider work.
 
 Issue [#121](https://github.com/MythologIQ-Labs-LLC/job-ranger/issues/121) governs the next design pass for relationship-path discovery and intentional pursuit. It is a candidate direction, not a claim that those capabilities are already implemented.
 
