@@ -101,6 +101,9 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     listPublications: () => ipcRenderer.invoke("personal-brand:list-publications"),
     appendSnapshot: (postId, input) => ipcRenderer.invoke("personal-brand:append-snapshot", postId, input),
     listSnapshots: (postId) => ipcRenderer.invoke("personal-brand:list-snapshots", postId),
+    listCareerOutcomes: () => ipcRenderer.invoke("personal-brand:list-career-outcomes"),
+    recordCareerOutcome: (input) => ipcRenderer.invoke("personal-brand:record-career-outcome", input),
+    deleteCareerOutcome: (id, confirmed) => ipcRenderer.invoke("personal-brand:delete-career-outcome", id, confirmed),
   },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),

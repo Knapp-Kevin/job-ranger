@@ -201,3 +201,68 @@ test("comparison screen uses since-publication ages and shows non-causal suggest
   await expect(page.getByRole("heading", { name: "4. Compare equivalent post ages" })).toBeVisible();
   await expect(page.getByText("2 comparable of 2 recorded LinkedIn posts")).toBeVisible();
 });
+
+test("career outcomes require manual confirmation and retain only user-attested post context", async ({ page }) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  const publication = await page.evaluate(async () => {
+    const api = window.electronAPI.personalBrand;
+    const draft = await api.createDraft({
+      body: "An example of my professional work.", objective: "career_narrative",
+      audiences: ["recruiters"], destination: "linkedin", format: "text",
+      hookArchetype: "lesson", hypothesis: "Professional context can lead to conversations.",
+      claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+    });
+    await api.prepareDraft(draft.id, draft.revision, true);
+    return api.confirmPublication({
+      draftId: draft.id, revision: draft.revision,
+      publishedAt: new Date(Date.now() - 3 * 86400_000).toISOString(),
+      publishedUrl: "https://www.linkedin.com/feed/update/urn:li:activity:outcomes-1",
+      userConfirmed: true,
+    });
+  });
+  await page.goto(`${server.url}#/personal-brand`);
+  await expect(page.getByRole("heading", { name: "5. Record real career outcomes" })).toBeVisible();
+  await expect(page.getByText("No confirmed events recorded.")).toBeVisible();
+  await page.getByLabel("Type of career outcome").selectOption("meaningful_conversation");
+  const localTime = await page.evaluate(() => {
+    const time = new Date(Date.now() - 60000);
+    return new Date(time.getTime() - time.getTimezoneOffset() * 60000).toISOString().slice(0, 16);
+  });
+  await page.getByLabel("Local date and time of event").fill(localTime);
+  await page.getByLabel("Related published post (optional)").selectOption(publication.postId);
+  const save = page.getByRole("button", { name: "Save confirmed career outcome" });
+  await expect(save).toBeDisabled();
+  await page.getByLabel("Observed post relationship").selectOption("post_mentioned");
+  await page.getByRole("checkbox", { name: /I confirm the event actually happened/i }).check();
+  await save.click();
+  await expect(page.getByText("Career outcome recorded as user-attested, not attributed to a post.")).toBeVisible();
+
+  let outcomes = await page.evaluate(() => window.electronAPI.personalBrand.listCareerOutcomes());
+  expect(outcomes).toHaveLength(1);
+  expect(outcomes[0].association).toBe("post_mentioned");
+  expect(outcomes[0].relatedPostId).toBe(publication.postId);
+  await expect(page.getByText(/1 confirmed events/)).toBeVisible();
+  await expect(page.getByText(/not conversions attributable to a post/i)).toBeVisible();
+  await page.reload();
+  await waitForRuntime(page);
+  await expect(page.getByRole("heading", { name: "5. Record real career outcomes" })).toBeVisible();
+  await expect(page.getByRole("article").filter({ hasText: "Meaningful professional conversation" })).toBeVisible();
+
+  const rejected = await page.evaluate(async (postId) => {
+    const api = window.electronAPI.personalBrand;
+    return api.recordCareerOutcome({
+      kind: "offer", occurredAt: "2020-01-01T00:00:00.000Z",
+      sourceLabel: "Personal journal", note: "",
+      relatedPostId: postId, association: "post_mentioned", userConfirmed: true,
+    }).then(() => "incorrectly allowed", (error: Error) => error.message);
+  }, publication.postId);
+  expect(rejected).toMatch(/post published later/);
+
+  await page.getByRole("button", { name: "Remove outcome" }).click();
+  await expect(page.getByRole("button", { name: "Confirm removal" })).toBeVisible();
+  await page.getByRole("button", { name: "Confirm removal" }).click();
+  outcomes = await page.evaluate(() => window.electronAPI.personalBrand.listCareerOutcomes());
+  expect(outcomes).toHaveLength(0);
+  await expect(page.getByText("No confirmed events recorded.")).toBeVisible();
+});

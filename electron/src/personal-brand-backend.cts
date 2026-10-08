@@ -8,6 +8,7 @@ import {
 import type { AnalyticsSnapshotInput, PersonalBrandDraftInput } from "../../src/shared/personal-brand-api.js";
 import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
 import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
+import { validateCareerOutcomeInput, type CareerOutcomeRecord } from "../../src/shared/personal-brand-outcomes.js";
 
 const schema = `
 CREATE TABLE IF NOT EXISTS personal_brand_drafts (
@@ -41,6 +42,18 @@ CREATE TABLE IF NOT EXISTS personal_brand_snapshots (
 );
 CREATE INDEX IF NOT EXISTS idx_personal_brand_snapshots_post
   ON personal_brand_snapshots(post_id, captured_at);
+`;
+
+const outcomeSchema = `
+CREATE TABLE IF NOT EXISTS personal_brand_career_outcomes (
+  id TEXT PRIMARY KEY,
+  occurred_at TEXT NOT NULL,
+  related_post_id TEXT REFERENCES personal_brand_publications(post_id) ON DELETE RESTRICT,
+  payload_json TEXT NOT NULL,
+  recorded_at TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_personal_brand_career_outcomes_at
+  ON personal_brand_career_outcomes(occurred_at, id);
 `;
 
 type JsonRow = { payload_json: string };
@@ -128,12 +141,24 @@ export class PersonalBrandBackend {
     const exists = await this.db.queryOne<{ version: number }>(sql`
       SELECT version FROM schema_migrations WHERE version = ${migration.version} LIMIT 1;
     `);
-    if (exists) return;
-    await this.db.transaction([
-      schema,
-      sql`INSERT INTO schema_migrations (version, name, applied_at)
-          VALUES (${migration.version}, ${migration.name}, ${new Date().toISOString()});`,
-    ]);
+    if (!exists) {
+      await this.db.transaction([
+        schema,
+        sql`INSERT INTO schema_migrations (version, name, applied_at)
+            VALUES (${migration.version}, ${migration.name}, ${new Date().toISOString()});`,
+      ]);
+    }
+    const outcomeMigration = FEATURE_MIGRATIONS.personalBrandOutcomes;
+    const outcomesExist = await this.db.queryOne<{ version: number }>(sql`
+      SELECT version FROM schema_migrations WHERE version = ${outcomeMigration.version} LIMIT 1;
+    `);
+    if (!outcomesExist) {
+      await this.db.transaction([
+        outcomeSchema,
+        sql`INSERT INTO schema_migrations (version, name, applied_at)
+            VALUES (${outcomeMigration.version}, ${outcomeMigration.name}, ${new Date().toISOString()});`,
+      ]);
+    }
   }
 
   private async getDraft(id: string): Promise<PersonalBrandDraft> {
@@ -278,5 +303,42 @@ export class PersonalBrandBackend {
       (id, post_id, captured_at, payload_json)
       VALUES (${snapshot.id}, ${postId}, ${snapshot.capturedAt}, ${JSON.stringify(snapshot)});`);
     return snapshot;
+  }
+
+  async listCareerOutcomes(): Promise<CareerOutcomeRecord[]> {
+    const rows = await this.db.queryAll<JsonRow>(
+      "SELECT payload_json FROM personal_brand_career_outcomes ORDER BY occurred_at DESC, id ASC;",
+    );
+    return rows.map((row) => rowJson<CareerOutcomeRecord>(row));
+  }
+
+  async recordCareerOutcome(raw: unknown): Promise<CareerOutcomeRecord> {
+    const now = new Date().toISOString();
+    const input = validateCareerOutcomeInput(raw, await this.listPublications(), now);
+    const record: CareerOutcomeRecord = {
+      ...input,
+      id: `career-outcome-${randomUUID()}`,
+      recordedAt: now,
+      source: "user_attested",
+      userConfirmed: true,
+    };
+    await this.db.exec(sql`
+      INSERT INTO personal_brand_career_outcomes
+        (id, occurred_at, related_post_id, payload_json, recorded_at)
+      VALUES (${record.id}, ${record.occurredAt}, ${record.relatedPostId},
+              ${JSON.stringify(record)}, ${record.recordedAt});
+    `);
+    return record;
+  }
+
+  async deleteCareerOutcome(id: string, userConfirmed: boolean): Promise<void> {
+    if (!userConfirmed) throw new Error("Deleting a career outcome requires explicit user confirmation.");
+    if (typeof id !== "string" || id.length > 150 || !id.startsWith("career-outcome-"))
+      throw new Error("Invalid career outcome identifier.");
+    const existing = await this.db.queryOne<{ id: string }>(sql`
+      SELECT id FROM personal_brand_career_outcomes WHERE id = ${id} LIMIT 1;
+    `);
+    if (!existing) throw new Error("Career outcome record not found.");
+    await this.db.exec(sql`DELETE FROM personal_brand_career_outcomes WHERE id = ${id};`);
   }
 }

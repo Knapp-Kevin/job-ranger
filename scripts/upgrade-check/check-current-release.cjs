@@ -99,6 +99,7 @@ async function openCurrent(dataDirectory) {
     careerStories: (await stories.listStories()).length,
     personalBrandDrafts: (await personalBrand.listDrafts()).length,
     personalBrandPublications: (await personalBrand.listPublications()).length,
+    personalBrandCareerOutcomes: (await personalBrand.listCareerOutcomes()).length,
     resumeProjections: projections.length,
     companies: (await backend.listCompanies()).length,
   };

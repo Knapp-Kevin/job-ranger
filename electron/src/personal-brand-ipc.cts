@@ -43,4 +43,16 @@ export function initializePersonalBrandIpc(options: {
     await ready;
     return backend.listSnapshots(postId);
   });
+  ipcMain.handle("personal-brand:list-career-outcomes", async () => {
+    await ready;
+    return backend.listCareerOutcomes();
+  });
+  ipcMain.handle("personal-brand:record-career-outcome", async (_event, input: unknown) => {
+    await ready;
+    return backend.recordCareerOutcome(input);
+  });
+  ipcMain.handle("personal-brand:delete-career-outcome", async (_event, id: string, userConfirmed: boolean) => {
+    await ready;
+    return backend.deleteCareerOutcome(id, userConfirmed);
+  });
 }

@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClipboardCopy, Save, BarChart3, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Layout } from "../components/Layout";
+import { CareerOutcomeJournal } from "../components/CareerOutcomeJournal";
 import { getDesktopApi } from "../services/api";
 import {
   assessPersonalBrandDraft, derivedPostMetrics,
@@ -638,6 +639,7 @@ export function PersonalBrand() {
               </>
             )}
           </section>
+          <CareerOutcomeJournal publications={publications} />
         </div>
       )}
     </Layout>

@@ -2,6 +2,7 @@ import type {
   AnalyticsSnapshot, ManualPostPackage, ManualPublicationReceipt,
   PersonalBrandDraft,
 } from "./personal-brand.js";
+import type { CareerOutcomeInput, CareerOutcomeRecord } from "./personal-brand-outcomes.js";
 
 export type PersonalBrandDraftInput = Omit<PersonalBrandDraft, "id" | "revision">;
 
@@ -25,5 +26,8 @@ export interface PersonalBrandDesktopApi {
     listPublications(): Promise<ManualPublicationReceipt[]>;
     appendSnapshot(postId: string, input: AnalyticsSnapshotInput): Promise<AnalyticsSnapshot>;
     listSnapshots(postId: string): Promise<AnalyticsSnapshot[]>;
+    listCareerOutcomes(): Promise<CareerOutcomeRecord[]>;
+    recordCareerOutcome(input: CareerOutcomeInput): Promise<CareerOutcomeRecord>;
+    deleteCareerOutcome(id: string, userConfirmed: boolean): Promise<void>;
   };
 }

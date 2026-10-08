@@ -75,6 +75,25 @@ const base = {
     observations: [{ name: "reached", value: -3, state: "manual" }],
   }), /nonnegative/);
 
+  const careerEvent = await db.recordCareerOutcome({
+    kind: "meaningful_conversation",
+    occurredAt: "2026-10-08T15:00:00.000Z",
+    sourceLabel: "Personal journal", note: "Post was mentioned explicitly.",
+    relatedPostId: receipt.postId, association: "post_mentioned", userConfirmed: true,
+  });
+  assert.equal(careerEvent.source, "user_attested");
+  assert.equal((await db.listCareerOutcomes()).length, 1);
+  await assert.rejects(() => db.recordCareerOutcome({
+    ...careerEvent, userConfirmed: false,
+  }), /explicitly confirm/);
+  await assert.rejects(() => db.recordCareerOutcome({
+    ...careerEvent, relatedPostId: "invented",
+  }), /does not exist/);
+  await assert.rejects(() => db.recordCareerOutcome({
+    ...careerEvent, occurredAt: "2026-10-08T13:00:00.000Z",
+  }), /published later/);
+  await assert.rejects(() => db.deleteCareerOutcome(careerEvent.id, false), /explicit user confirmation/);
+
   const copyPath = path.join(dir, "backup-copy.sqlite3");
   cpSync(databasePath, copyPath);
   const restored = new PersonalBrandBackend({ databasePath: copyPath, sqliteBinaryPath });
@@ -82,9 +101,15 @@ const base = {
   assert.equal((await restored.listDrafts())[0].revision, 2);
   assert.equal((await restored.listPublications())[0].publishedUrl, receipt.publishedUrl);
   assert.equal((await restored.listSnapshots(receipt.postId))[0].id, first.id);
+  assert.equal((await restored.listCareerOutcomes())[0].id, careerEvent.id);
+  await db.deleteCareerOutcome(careerEvent.id, true);
+  assert.equal((await db.listCareerOutcomes()).length, 0);
+  assert.equal((await restored.listCareerOutcomes()).length, 1);
 
   const migration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne("SELECT version FROM schema_migrations WHERE version = 1005");
   assert.equal(migration.version, 1005);
+  const outcomeMigration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne("SELECT version FROM schema_migrations WHERE version = 1006");
+  assert.equal(outcomeMigration.version, 1006);
   console.log("Personal Brand SQLite + restart/backup persistence integration tests passed");
 })().catch((error) => {
   console.error(error);
