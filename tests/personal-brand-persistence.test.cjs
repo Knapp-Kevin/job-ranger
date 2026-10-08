@@ -3,11 +3,10 @@ const { mkdtempSync, cpSync, rmSync } = require("node:fs");
 const path = require("node:path");
 const os = require("node:os");
 const { PersonalBrandBackend } = require("../electron-runtime/electron/src/personal-brand-backend.cjs");
-const { SqliteClient } = require("../electron-runtime/electron/src/sqlite.cjs");
+const { SqliteClient, resolveSqliteBinary } = require("../electron-runtime/electron/src/sqlite.cjs");
 
 const dir = mkdtempSync(path.join(os.tmpdir(), "jr-personal-brand-"));
 const databasePath = path.join(dir, "career.sqlite3");
-const db = new PersonalBrandBackend({ databasePath, sqliteBinaryPath: "sqlite3" });
 const base = {
   body: "I built a real working application. Here is what I learned.",
   objective: "expertise_proof",
@@ -22,6 +21,8 @@ const base = {
 };
 
 (async () => {
+  const sqliteBinaryPath = await resolveSqliteBinary();
+  const db = new PersonalBrandBackend({ databasePath, sqliteBinaryPath });
   await db.initialize();
   await db.initialize();
   const draft = await db.createDraft(base);
@@ -76,13 +77,13 @@ const base = {
 
   const copyPath = path.join(dir, "backup-copy.sqlite3");
   cpSync(databasePath, copyPath);
-  const restored = new PersonalBrandBackend({ databasePath: copyPath, sqliteBinaryPath: "sqlite3" });
+  const restored = new PersonalBrandBackend({ databasePath: copyPath, sqliteBinaryPath });
   await restored.initialize();
   assert.equal((await restored.listDrafts())[0].revision, 2);
   assert.equal((await restored.listPublications())[0].publishedUrl, receipt.publishedUrl);
   assert.equal((await restored.listSnapshots(receipt.postId))[0].id, first.id);
 
-  const migration = await new SqliteClient(databasePath, "sqlite3").queryOne("SELECT version FROM schema_migrations WHERE version = 1005");
+  const migration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne("SELECT version FROM schema_migrations WHERE version = 1005");
   assert.equal(migration.version, 1005);
   console.log("Personal Brand SQLite + restart/backup persistence integration tests passed");
 })().catch((error) => {
