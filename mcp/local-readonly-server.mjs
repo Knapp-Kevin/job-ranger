@@ -33,9 +33,13 @@ function options(argv) {
   }
   const dataDir = values.get("data-dir");
   const scopeList = values.get("scopes");
-  if (!dataDir || !path.isAbsolute(dataDir) || !scopeList)
-    throw new Error("An absolute --data-dir and explicit --scopes are mandatory. Nothing is enabled by default.");
+  if (!scopeList)
+    throw new Error("Explicit --scopes is mandatory. Nothing is enabled by default.");
   const scopes = scopeList === "none" ? [] : scopeList.split(",").map((s) => s.trim());
+  if (scopes.length > 0 && (!dataDir || !path.isAbsolute(dataDir)))
+    throw new Error("Data-reading scopes require an explicit absolute --data-dir.");
+  if (dataDir && !path.isAbsolute(dataDir))
+    throw new Error("A supplied --data-dir must be an absolute path.");
   if (scopes.some((scope) => !READ_SCOPES.includes(scope)) ||
       new Set(scopes).size !== scopes.length)
     throw new Error("Only unique supported read scopes may be granted.");
@@ -140,6 +144,14 @@ function transport(adapter, capturedAt) {
 }
 async function main() {
   const { dataDir, scopes } = options(process.argv.slice(2));
+  if (scopes.length === 0) {
+    // Zero-data introspection must not open, copy, initialize, or even locate
+    // the canonical database. Only the tool manifest is available.
+    const adapter = createReadOnlyAdapter({ career: {}, jobs: {}, personalBrand: {} }, []);
+    transport(adapter, null);
+    await new Promise((resolve) => process.stdin.once("end", resolve));
+    return;
+  }
   const { JobScoutBackend } = load("backend.cjs");
   const { CareerBackend } = load("career-backend.cjs");
   const { PersonalBrandBackend } = load("personal-brand-backend.cjs");
