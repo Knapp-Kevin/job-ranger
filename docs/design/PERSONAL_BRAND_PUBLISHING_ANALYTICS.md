@@ -32,6 +32,16 @@ The capability is a **Career Ops** surface. It is not a general social scheduler
 
 **Follow-on work:** complete proper Career Evidence selection and exact claim-to-source binding in the UI, richer qualitative outcome tracking and comparable-age learning, accessibility/manual acceptance, plugin proof and tool-level authorization, and real provider capabilities only when they provide demonstrated value. Do not equate task completion with public distribution readiness.
 
+## Per-claim Career Evidence editing (third implementation slice, 2026-10-08)
+
+**User-facing behavior:** The Personal Brand composer now lets the user enumerate individual factual claims, select one or more current Career Evidence records, inspect each supporting statement and its verification state, explicitly attest that the evidence supports the specific claim, and separately approve its privacy disclosure. Changing a claim, its links, or the actual post body clears previous attestations. Empty or unconfirmed claim entries remain blocking under the existing deterministic readiness contract. The editor also reports links whose evidence has been deleted, rejected, or superseded and provides a refresh control.
+
+**Authority boundary:** The candidate evidence list comes from the existing `career.listEvidence()` read service, not a new competing store. The backend remains authoritative: on every `prepareDraft` call it rechecks all linked Career Evidence IDs against the canonical SQLite verification states. Reusing an old prepared post through the **Recheck evidence and copy** action calls that same backend validation again; it cannot silently copy a stale package. The exact copy hash remains bound to the approved draft revision, with versioned claim associations in the saved draft. The published-post receipt records a historical user action; it is not a claim that the provider or an AI fact-checked the text.
+
+**Important limitation:** Linking is an explicit user assertion, not automated semantic entailment. No machine can infer from a selected record alone whether a factual sentence has been fully supported or whether confidential information may be disclosed. Posts containing unenumerated claims are still human review only (the core emits a warning, not fabricated verification). Full source lineage suggestions, semantic Truth Gate extension, post-age comparison UI and experiment recommendations are separate work.
+
+**Regression coverage:** The PWA browser workflow tests creating current user-authored Career Evidence, editing and approving a linked claim, persisting the association, superseding the evidence, disabling reuse, rejecting the attempted backend prepare with stale evidence, and re-linking to the successor with new human attestations. This test runs through the existing shared Electron/PWA API in CI. No schema migration or additional provider permissions are required.
+
 ## Core principle
 
 > **Job Ranger helps the user decide what professional story to tell, verify that it is grounded in their real evidence, publish exactly what they approved, and learn whether that communication improves professional discovery and career outcomes.**
