@@ -91,6 +91,11 @@ test("Electron → PWA: a desktop .jobranger archive restores into the web runti
     claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
   });
   await presence.prepareDraft(presenceDraft.id, 1, true);
+  const desktopOutcome = await presence.recordCareerOutcome({
+    kind: "recruiter_outreach", occurredAt: "2026-10-08T15:00:00.000Z",
+    sourceLabel: "Personal journal", note: "Independent recruiter conversation.",
+    relatedPostId: null, association: "none", userConfirmed: true,
+  });
   const archivePath = path.join(workRoot, "desktop-export.jobranger");
   await desktop.backups.createArchive(archivePath, {
     runtime: "electron",
@@ -113,6 +118,8 @@ test("Electron → PWA: a desktop .jobranger archive restores into the web runti
   const presenceRestored = await page.evaluate(() => window.electronAPI.personalBrand.listDrafts());
   expect(presenceRestored.map((draft) => draft.id)).toContain(presenceDraft.id);
   expect((await page.evaluate(() => window.electronAPI.personalBrand.listPrepared())).length).toBe(1);
+  expect((await page.evaluate(() => window.electronAPI.personalBrand.listCareerOutcomes()))
+    .map((entry) => entry.id)).toContain(desktopOutcome.id);
   const evidence = await page.evaluate(() => window.electronAPI.career.listEvidence());
   expect(evidence.map((item) => item.evidence.id)).toContain(authored.id);
   const artifacts = await page.evaluate(() => window.electronAPI.career.listSourceArtifacts());
@@ -133,6 +140,11 @@ test("PWA → Electron: a web archive validates and restores in the desktop runt
     audiences: ["peers"], destination: "linkedin", format: "text",
     hookArchetype: "lesson", hypothesis: "Project context may lead to meaningful discussions.",
     claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+  }));
+  const webOutcome = await page.evaluate(() => window.electronAPI.personalBrand.recordCareerOutcome({
+    kind: "interview_invitation", occurredAt: "2026-10-08T16:00:00.000Z",
+    sourceLabel: "Personal journal", note: "",
+    relatedPostId: null, association: "none", userConfirmed: true,
   }));
   const imported = await page.evaluate(() =>
     window.electronAPI.career.importPastedText({
@@ -165,6 +177,7 @@ test("PWA → Electron: a web archive validates and restores in the desktop runt
   const restoredPresence = new PersonalBrandBackend({ databasePath: restored.status.databasePath, sqliteBinaryPath: restored.status.sqliteBinaryPath });
   await restoredPresence.initialize();
   expect((await restoredPresence.listDrafts()).map((draft: { id: string }) => draft.id)).toContain(webPresenceDraft.id);
+  expect((await restoredPresence.listCareerOutcomes()).map((event: { id: string }) => event.id)).toContain(webOutcome.id);
   const artifacts = await restored.career.listSourceArtifacts();
   const artifact = artifacts.find((item: { id: string }) => item.id === imported.artifact.id);
   expect(artifact.contentHash).toBe(imported.artifact.contentHash);
