@@ -177,10 +177,12 @@ export function PersonalBrand() {
     setInput((before) => ({
       ...before,
       [key]: value,
-      // Editing the post invalidates prior claim-by-claim factual and privacy attestations.
-      claimChecks: key === "body"
-        ? before.claimChecks.map((claim) => ({ ...claim, verified: false, privacyCleared: false }))
-        : before.claimChecks,
+      // Only a BODY edit resets existing claim attestations. Other updates,
+      // especially claimChecks itself, must retain the caller's next value.
+      ...(key === "body" ? {
+        claimChecks: before.claimChecks.map((claim) =>
+          ({ ...claim, verified: false, privacyCleared: false })),
+      } : {}),
     }));
     setDirty(true);
     setReviewed(false);
