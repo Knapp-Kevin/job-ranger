@@ -8,6 +8,14 @@ This design gives Job Ranger a concrete starting point for personal-brand publis
 
 The capability is a **Career Ops** surface. It is not a general social scheduler and it is not a product-marketing subsystem.
 
+## Implementation checkpoint (2026-10-08)
+
+**Implemented in the initial bounded core slice:** `src/shared/personal-brand.ts` provides a deterministic, inference-free and network-free Personal Brand foundation. It includes typed drafting fields, per-destination conservative character limits, explicit evidence/privacy findings, unchanged-copy SHA-256 preparation, human-attested manual publication receipts with platform permalink validation and duplicate prevention, append-only analytics snapshots with per-metric provenance and missing-versus-zero protection, derived rates, and comparisons gated by platform and post age. `tests/personal-brand.test.mjs` contains focused positive, negative and boundary fixtures and is included in the normal unit test command.
+
+**Not implemented by this checkpoint:** no persisted Personal Brand workspace, UI routing/composer, social provider authorization, automatic publication, API analytics retrieval, ChatGPT MCP server, or full Career Evidence integration. The `verified` claim flag is an explicit caller-supplied review attestation; this core cannot infer claim truth from arbitrary text. `prepareManualPost` only prepares a copy package after human editorial review; it does not publish or establish authority on behalf of the user. Canonical persistence, existing Truth Gate bindings, end-to-end PWA/native UI, backup/restore, and plugin transport remain separate implementation slices before release. No public release capability is claimed for this core.
+
+**Next executable slice:** bind these functions to the existing career services and canonical local persistence (including versioned migration, backup/restore and failure-safe saves); surface the complete human-operated draft → readiness → copy → confirmed permalink → timestamped metrics → learning workflow in the app. Reuse the same typed services through a permissioned future ChatGPT MCP adapter, without bypassing user approval or weakening the deterministic standalone path. Direct multi-provider publishing stays outside the initial critical path.
+
 ## Core principle
 
 > **Job Ranger helps the user decide what professional story to tell, verify that it is grounded in their real evidence, publish exactly what they approved, and learn whether that communication improves professional discovery and career outcomes.**
