@@ -10,6 +10,7 @@ export const FEATURE_MIGRATIONS = {
   applicationMaterials: { version: 1003, name: "application_material_projections" },
   applicationInsights: { version: 1004, name: "application_insights_and_offers" },
   personalBrand: { version: 1005, name: "personal_brand_manual_publishing" },
+  personalBrandOutcomes: { version: 1006, name: "personal_brand_user_attested_career_outcomes" },
 } as const;
 
 export const FEATURE_MIGRATION_VERSIONS: ReadonlySet<number> = new Set(
