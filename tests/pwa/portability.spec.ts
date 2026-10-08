@@ -12,6 +12,7 @@ const require = createRequire(import.meta.url);
 const electronCore = (name: string) => require(path.join(projectRoot, "electron-runtime", "electron", "src", name));
 const { JobScoutBackend } = electronCore("backend.cjs");
 const { CareerBackend } = electronCore("career-backend.cjs");
+const { PersonalBrandBackend } = electronCore("personal-brand-backend.cjs");
 const { BackupService, applyPendingRestore } = electronCore("backup-service.cjs");
 const { SqliteClient } = electronCore("sqlite.cjs");
 const archive = electronCore("portable-archive.cjs");
@@ -81,6 +82,15 @@ test("Electron → PWA: a desktop .jobranger archive restores into the web runti
     label: "Clinic background",
     text: "Experience\nPatient Services Coordinator, Harbor Family Clinic\n- Maintained HIPAA-aware front-desk workflows.",
   });
+  const presence = new PersonalBrandBackend({ databasePath: desktop.status.databasePath, sqliteBinaryPath: desktop.status.sqliteBinaryPath });
+  await presence.initialize();
+  const presenceDraft = await presence.createDraft({
+    body: "My professional work is a process of learning.", objective: "career_narrative",
+    audiences: ["recruiters"], destination: "linkedin", format: "text",
+    hookArchetype: "lesson", hypothesis: "See whether experience-led posts create connections.",
+    claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+  });
+  await presence.prepareDraft(presenceDraft.id, 1, true);
   const archivePath = path.join(workRoot, "desktop-export.jobranger");
   await desktop.backups.createArchive(archivePath, {
     runtime: "electron",
@@ -100,6 +110,9 @@ test("Electron → PWA: a desktop .jobranger archive restores into the web runti
   await waitForRuntime(page);
 
   expect((await page.evaluate(() => window.electronAPI.career.getProfile()))?.fullName).toBe("Desktop Morgan");
+  const presenceRestored = await page.evaluate(() => window.electronAPI.personalBrand.listDrafts());
+  expect(presenceRestored.map((draft) => draft.id)).toContain(presenceDraft.id);
+  expect((await page.evaluate(() => window.electronAPI.personalBrand.listPrepared())).length).toBe(1);
   const evidence = await page.evaluate(() => window.electronAPI.career.listEvidence());
   expect(evidence.map((item) => item.evidence.id)).toContain(authored.id);
   const artifacts = await page.evaluate(() => window.electronAPI.career.listSourceArtifacts());
@@ -115,6 +128,12 @@ test("PWA → Electron: a web archive validates and restores in the desktop runt
   await page.goto(server.url);
   await waitForRuntime(page);
   await page.evaluate((profile) => window.electronAPI.career.saveProfile(profile), { ...healthcareProfile, fullName: "Web Morgan" });
+  const webPresenceDraft = await page.evaluate(() => window.electronAPI.personalBrand.createDraft({
+    body: "One meaningful lesson from a software project.", objective: "project_visibility",
+    audiences: ["peers"], destination: "linkedin", format: "text",
+    hookArchetype: "lesson", hypothesis: "Project context may lead to meaningful discussions.",
+    claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+  }));
   const imported = await page.evaluate(() =>
     window.electronAPI.career.importPastedText({
       label: "Web background",
@@ -143,6 +162,9 @@ test("PWA → Electron: a web archive validates and restores in the desktop runt
 
   const restored = await openElectronInstall(desktopUserData);
   expect((await restored.career.getProfile()).fullName).toBe("Web Morgan");
+  const restoredPresence = new PersonalBrandBackend({ databasePath: restored.status.databasePath, sqliteBinaryPath: restored.status.sqliteBinaryPath });
+  await restoredPresence.initialize();
+  expect((await restoredPresence.listDrafts()).map((draft: { id: string }) => draft.id)).toContain(webPresenceDraft.id);
   const artifacts = await restored.career.listSourceArtifacts();
   const artifact = artifacts.find((item: { id: string }) => item.id === imported.artifact.id);
   expect(artifact.contentHash).toBe(imported.artifact.contentHash);

@@ -4,6 +4,7 @@ import type { ApplicationLifecycleDesktopApi } from "../shared/application-lifec
 import type { ApplicationMaterialsDesktopApi } from "../shared/application-materials";
 import type { BackupDesktopApi } from "../shared/backup";
 import type { CareerStoriesDesktopApi } from "../shared/career-stories";
+import type { PersonalBrandDesktopApi } from "../shared/personal-brand-api";
 import type { EvidenceExtensionDesktopApi } from "../shared/evidence-extensions";
 import type { InterviewPrepDesktopApi } from "../shared/interview-prep";
 import type { JsonResumeDesktopApi } from "../shared/json-resume";
@@ -19,6 +20,7 @@ export type JobRangerDesktopApi = DesktopApi &
   ApplicationLifecycleDesktopApi &
   InterviewPrepDesktopApi &
   CareerStoriesDesktopApi &
+  PersonalBrandDesktopApi &
   ApplicationMaterialsDesktopApi &
   BackupDesktopApi &
   ApplicationInsightsDesktopApi &

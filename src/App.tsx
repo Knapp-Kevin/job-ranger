@@ -8,6 +8,7 @@ import { Filters } from "./pages/Filters";
 import { Settings } from "./pages/Settings";
 import { Applications } from "./pages/Applications";
 import { SearchInsights } from "./pages/SearchInsights";
+import { PersonalBrand } from "./pages/PersonalBrand";
 import { CareerProfile } from "./pages/CareerProfile";
 import { CareerStories } from "./pages/CareerStories";
 import { EvidenceEntry } from "./pages/EvidenceEntry";
@@ -55,6 +56,7 @@ function AppRoutes() {
         <Route path="/jobs" element={<Jobs />} />
         <Route path="/applications" element={<Applications />} />
         <Route path="/search-insights" element={<SearchInsights />} />
+        <Route path="/personal-brand" element={<PersonalBrand />} />
         <Route path="/career-profile" element={<CareerProfile />} />
         <Route path="/target-tracks" element={<TargetTracks />} />
         <Route path="/resume" element={<Resume />} />

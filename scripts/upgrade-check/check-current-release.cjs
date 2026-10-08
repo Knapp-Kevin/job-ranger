@@ -26,6 +26,7 @@ const { JobScoutBackend } = load("backend.cjs");
 const { CareerBackend } = load("career-backend.cjs");
 const { ApplicationLifecycleBackend } = load("application-lifecycle-backend.cjs");
 const { CareerStoryBackend } = load("career-story-backend.cjs");
+const { PersonalBrandBackend } = load("personal-brand-backend.cjs");
 const { ApplicationMaterialsBackend } = load("application-materials-backend.cjs");
 const { ApplicationInsightsBackend } = load("application-insights-backend.cjs");
 const { ResumeService } = load("resume-service.cjs");
@@ -70,6 +71,8 @@ async function openCurrent(dataDirectory) {
   await lifecycle.initialize();
   const stories = new CareerStoryBackend(options);
   await stories.initialize();
+  const personalBrand = new PersonalBrandBackend(options);
+  await personalBrand.initialize();
   const materials = new ApplicationMaterialsBackend(options);
   await materials.initialize();
   const insights = new ApplicationInsightsBackend(options.databasePath, options.sqliteBinaryPath);
@@ -94,6 +97,8 @@ async function openCurrent(dataDirectory) {
     sourceArtifacts: (await career.listSourceArtifacts()).length,
     applications: applications.length,
     careerStories: (await stories.listStories()).length,
+    personalBrandDrafts: (await personalBrand.listDrafts()).length,
+    personalBrandPublications: (await personalBrand.listPublications()).length,
     resumeProjections: projections.length,
     companies: (await backend.listCompanies()).length,
   };
