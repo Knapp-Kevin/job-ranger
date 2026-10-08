@@ -66,6 +66,12 @@ These screenshots and the walkthrough video come from the production web build w
 
 To record the walkthrough again locally, run `npm run demo:record`; regenerate these screenshots with `npm run demo:screenshots`.
 
+## Optional local MCP read-only prototype (development)
+
+Job Ranger now has a **development-only, opt-in local MCP stdio adapter** for a human-authorized local agent client. It can query bounded Career Evidence, active professional objectives, opportunities, publication receipts, deterministic post readiness and same-age analytics through Job Ranger's **existing services**. It starts with **zero data scopes**, requires explicit local workspace path and scopes, and cannot edit records, approve posts, publish externally or send messages.
+
+This **is not yet a working ChatGPT Web plugin**. The local transport does not expose HTTPS, an OAuth resource server, or a cloud-accessible account connection. The app remains standalone and needs none of those services. See the [precise setup and security limits](./docs/integrations/JOB_RANGER_MCP_READONLY.md), [ADR-0002](./docs/adr/0002-local-readonly-mcp-boundary.md), and [tracking issue #173](https://github.com/MythologIQ-Labs-LLC/job-ranger/issues/173). Do not share a live database or enable a public tunnel to work around the missing authenticated transport.
+
 ## Start here
 
 Job Ranger's **forward distribution model is the PWA plus the Microsoft Store**. The native installers published with v1.2.0 remain immutable historical release artifacts; they are not the product's long-term ordinary-user installation strategy.
