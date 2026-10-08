@@ -110,7 +110,7 @@ export function buildPersonalBrandLearningReport(
     throw new Error("Unsupported comparison window or metric.");
   const tolerance = WINDOWS[targetAgeHours];
   const rows: LearningRow[] = posts.filter((post) => post.receipt.destination === destination)
-    .map(({ receipt, snapshots, draft }) => {
+    .map(({ receipt, snapshots, draft }): LearningRow => {
       const metadataCurrent = Boolean(draft && draft.id === receipt.draftId &&
         draft.revision === receipt.approvedRevision);
       const base: LearningRow = {
