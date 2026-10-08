@@ -121,6 +121,18 @@ try {
   assert.equal(exit, 0, cli.getStderr());
   assert.equal(await fingerprint(), before, "Source SQLite database must remain unchanged by MCP.");
 
+  const noData = protocolClient([`--data-dir=${dir}`, "--scopes=none"]);
+  await noData.call("initialize", { protocolVersion: "2025-06-18" });
+  const onlyCapabilities = await noData.call("tools/list");
+  assert.deepEqual(onlyCapabilities.result.tools.map((tool) => tool.name), ["get_capabilities"]);
+  const deniedEvidence = await noData.call("tools/call", {
+    name: "get_confirmed_career_evidence", arguments: {},
+  });
+  assert.equal(deniedEvidence.result.isError, true);
+  noData.child.stdin.end();
+  assert.equal(await new Promise((resolve) => noData.child.once("close", resolve)), 0);
+  assert.equal(await fingerprint(), before);
+
   const noConsent = protocolClient([`--data-dir=${dir}`]);
   const deniedStartup = await new Promise((resolve) => noConsent.child.once("close", resolve));
   assert.notEqual(deniedStartup, 0);
