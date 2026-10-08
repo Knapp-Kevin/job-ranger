@@ -49,8 +49,8 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   expect(publications).toHaveLength(1);
 
   await page.getByRole("spinbutton", { name: "Impressions", exact: true }).fill("300");
-  await page.getByLabel("Members reached").fill("200");
-  await page.getByLabel("Profile views from post").fill("7");
+  await page.getByRole("spinbutton", { name: "Members reached", exact: true }).fill("200");
+  await page.getByRole("spinbutton", { name: "Profile views from post", exact: true }).fill("7");
   await page.getByRole("button", { name: "Save timestamped analytics" }).click();
   await expect(page.getByText("Profile visits/reached:")).toBeVisible();
   await expect(page.getByText("3.50%")).toBeVisible();
