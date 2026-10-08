@@ -5,6 +5,7 @@ const {
   mapRequirementToEvidence,
 } = require('../electron-runtime/electron/src/requirement-mapper.cjs');
 const { NEGATION_NOTE } = require('../electron-runtime/electron/src/evidence-negation.cjs');
+const { CLAIM_ACTION_NOTE_PREFIX } = require('../electron-runtime/electron/src/claim-action.cjs');
 
 function evidence(id, statement, options = {}) {
   return {
@@ -319,6 +320,44 @@ function mapOne(requirementText, records, kind) {
   const pmp = mapOne('PMP certification.', [evidence('e-neg-11', 'Not yet PMP certified; exam scheduled for March.')], 'credential');
   assert.equal(pmp.mapping.classification, 'gap', 'not yet certified is not support');
   assert.ok(pmp.mapping.explanation.includes(NEGATION_NOTE));
+}
+
+// G13 (#168): evidence showing a recipient role without the claim action is not direct support.
+{
+  const passive = evidence('e-g13-passive', 'Was trained on safety procedures with new hires.');
+  const active = evidence('e-g13-active', 'Trained new hires on safety procedures.');
+  const passiveAlone = mapOne('Train new hires on safety procedures.', [passive]);
+  assert.equal(passiveAlone.mapping.classification, 'transferable', 'guard: the passive record alone is capped');
+  const chosen = mapOne('Train new hires on safety procedures.', [passive, active]);
+  assert.equal(chosen.mapping.classification, 'direct', 'an uncapped direct record is preferred over a capped one');
+  assert.equal(chosen.mapping.evidenceId, active.id);
+  assert.ok(!chosen.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX));
+
+  const capped = mapOne('Managed payroll for a large workforce.', [evidence('e-g13-paid', 'Was paid through payroll as part of a large workforce.')]);
+  assert.equal(capped.mapping.classification, 'transferable');
+  assert.equal(capped.mapping.evidenceId, 'e-g13-paid', 'the capped record stays visible as transferable evidence');
+  assert.ok(capped.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX) && capped.mapping.explanation.includes('("managed")'));
+
+  const nounOnly = mapOne('Payroll processing for a large workforce.', [evidence('e-g13-noun', 'Was paid through payroll processing for a large workforce.')]);
+  assert.equal(nounOnly.mapping.classification, 'direct', 'no claim verb: never capped');
+  assert.ok(!nounOnly.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX));
+
+  const noMarker = mapOne('Develop production TypeScript services and APIs.', [evidence('e-g13-wrote', 'Wrote production TypeScript services and APIs.')]);
+  assert.equal(noMarker.mapping.classification, 'direct', 'no recipient marker: out-of-family synonyms keep direct');
+
+  const unconfirmed = mapOne('Train new hires on safety procedures.', [evidence('e-g13-unc', 'Was trained on safety procedures with new hires.', { verificationState: 'imported' })]);
+  assert.equal(unconfirmed.mapping.classification, 'ambiguous', 'unconfirmed path untouched');
+  assert.ok(!unconfirmed.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX));
+
+  const both = mapOne('Train new hires on safety procedures.', [evidence('e-g13-g12', 'Never trained new hires on safety procedures; was trained on safety procedures.')]);
+  assert.equal(both.mapping.classification, 'transferable', 'negated action plus recipient role is not direct');
+  assert.ok(both.mapping.explanation.includes(NEGATION_NOTE), 'raw text (the negated active verb) would have been direct');
+  assert.ok(!both.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX), 'affirmed score is below the direct threshold, so the cap does not apply');
+
+  // Cap and negation together: the recipient record is capped in the affirmed pass; raw keeps the negated active verb.
+  const capAndNegation = mapOne('Managed payroll for a large workforce.', [evidence('e-g13-g12b', 'Was paid through payroll as part of a large workforce; never managed payroll.')]);
+  assert.equal(capAndNegation.mapping.classification, 'transferable');
+  assert.ok(capAndNegation.mapping.explanation.includes(CLAIM_ACTION_NOTE_PREFIX));
 }
 
 console.log('requirement mapper tests passed');

@@ -2412,6 +2412,210 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #87: PLAN (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-07T22:01:36Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Content Hash**: `8ae9695d40c103ad240c07fe9c818f58fc6590e94c1f43b87e7a0cc3c1f74183`
+
+**Previous Hash**: `d93822d06eaaaffdb02f6388f0acee00b6c5b0d2c445ada3e380c5e6edc90fca`
+
+**Chain Hash**: `a5983913f4a09e78692f7b4a4c02f75088a77eca7525e3bbc6bdcb1e9dae143d`
+
+**Decision**: Phase 16 plan created for G13 (#168). A new pure module, `claim-action.cts`, caps a confirmed `direct` result at `transferable` when the requirement's claim verb (from five curated families) has no active-voice counterpart in the evidence, preferring another active-voice direct record when one exists. Acceptance is a versioned phrasing corpus (20 affirmative, 7 capped, 2 limitation items) that was validated against a prototype on the real compiled mapper before planning. Awaiting GATE tribunal.
+
+---
+
+### Entry #88: GATE TRIBUNAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-07T22:07:11Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: VETO
+
+**Content Hash**: `0d2927ffb7ce3f37be72821110890fcd2cb33b0f2b1269bcbc77b8dc7ca8b580`
+
+**Previous Hash**: `a5983913f4a09e78692f7b4a4c02f75088a77eca7525e3bbc6bdcb1e9dae143d`
+
+**Chain Hash**: `95e7b919630a1c723d6fd329d6bfe492a6f509243dc700fe13e6372287291e6f`
+
+**Decision**: VETO for plan iteration 1. A cap based on a missing claim verb over-corrects out-of-family synonyms, agent nouns and the progressive tense, and misses evidence-side `-ing` attendee nouns and "Experience <verb>ing" requirements. Governor must amend and resubmit.
+
+---
+
+### Entry #89: GATE TRIBUNAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-07T22:11:51Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: VETO
+
+**Content Hash**: `089b4dccbf20ad073913971dcdbbb7390b90d88c0778b25f63b039431ba70cef`
+
+**Previous Hash**: `95e7b919630a1c723d6fd329d6bfe492a6f509243dc700fe13e6372287291e6f`
+
+**Chain Hash**: `e44349bb33fd3da1407dd084cf69143575c7a414db7e38eeb498297ddb90e91b`
+
+**Decision**: VETO for plan iteration 2. The iteration-1 findings are closed. New gaps: credentials capped backwards, assignment participles and comma- or `with`-led `-ing` phrases falsely capped, and plan and prototype checking different text. Governor must amend and resubmit.
+
+---
+
+### Entry #90: GATE TRIBUNAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-07T22:16:22Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: VETO
+
+**Content Hash**: `a1dc03a5c06b18adbad9c315c452c56ce03aceed43a58b6e5e09a48553dba1cb`
+
+**Previous Hash**: `e44349bb33fd3da1407dd084cf69143575c7a414db7e38eeb498297ddb90e91b`
+
+**Chain Hash**: `e0c9c4e122034796bbdf99faeade261f47bc015033717af0c5ec0cd8639d0efe`
+
+**Decision**: VETO for plan iteration 3. Earlier findings are closed. A passive or recipient verb in an unrelated clause or outcome can still cap out-of-family synonyms. Governor must amend and resubmit.
+
+---
+
+### Entry #91: GATE TRIBUNAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-07T22:23:33Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: VETO
+
+**Content Hash**: `ef1bb108241b068b11a196baef0c9c53e24df2fd85f32efde3b2d6b21960b445`
+
+**Previous Hash**: `e0c9c4e122034796bbdf99faeade261f47bc015033717af0c5ec0cd8639d0efe`
+
+**Chain Hash**: `456d999652a72759d9f33ab1314caf0dc3d0c8d70d9f525a20a9bbe424b869b4`
+
+**Decision**: VETO for plan iteration 4, judged under LD6. Findings: "Received" used as an active verb is a common class missing from the corpus, and the `hasRecipientMarker` signature conflicts with its clause gate. Both remedies are mechanical. Per the condition the user set when approving this iteration, the Governor stops and returns to the user before resubmitting.
+
+---
+
+### Entry #92: GATE TRIBUNAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-08T13:50:51Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: PASS
+
+**Content Hash**: `7517f615740ebf7185e1c54d85dff5e675594613b17d7a0b09785bcc585a0879`
+
+**Previous Hash**: `456d999652a72759d9f33ab1314caf0dc3d0c8d70d9f525a20a9bbe424b869b4`
+
+**Chain Hash**: `6c96da03a771bbac130bb075881995fed3c6609824afac38d06bfbf9690c97d6`
+
+**Decision**: PASS for plan iteration 6 under LD6, after VETOs #88-#91, a gate-loop `/qor-remediate` proposal, and user-approved overrides for iterations 4 and 5. Non-blocking observations are carried into implementation. Implementation unlocked.
+
+---
+
+### Entry #93: IMPLEMENTATION (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-08T14:03:53Z
+**Phase**: IMPLEMENT
+**Author**: Specialist
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Content Hash**: `5530cb4e0957af336a681ed6264bc52a1a9918d4e6ecebb9ca71f72cc5851b46`
+
+**Previous Hash**: `6c96da03a771bbac130bb075881995fed3c6609824afac38d06bfbf9690c97d6`
+
+**Chain Hash**: `9d5f3ff260802cf62b25b6bbba25b6e3dc1f438036e5224f06593d281d1e1204`
+
+Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
+- NEW `electron/src/claim-action.cts` (about 185 lines): the lexicon, `claimVerb`, `hasRecipientMarker`, `activelySatisfies`, `claimActionText`, `claimActionNote`, `CLAIM_ACTION_NOTE_PREFIX`, `isCapped` and `selectUncapped`. It is pure and imports nothing from inference. It is shared by Electron and PWA through the mapper.
+- `electron/src/requirement-mapper.cts`: wiring only, in the confirmed `direct` branch of `classifyRequirementEvidence` (+21/-2).
+  - A capped best record yields to the first uncapped direct-level confirmed record. Otherwise the result is `transferable` with `claimActionNote`.
+  - Credential requirements are never capped. Thresholds, extraction and other branches are unchanged.
+- NEW `tests/claim-action.test.cjs`:
+  - unit checks per the plan;
+  - the full corpus through the real mapper;
+  - the G12 negation corpus asserted unchanged in classification and in negation-note presence.
+- NEW `tests/fixtures/action-corpus.v1.json`, hash-pinned: 51 affirmative, 15 capped and 13 limitation items.
+- `tests/requirement-mapper.test.cjs`: G13 cases:
+  - selection, guarded by a capped-alone check;
+  - the cap with no alternative;
+  - no claim verb (classification asserted);
+  - no recipient marker;
+  - the unconfirmed path;
+  - G12 interaction, asserted exactly: `transferable`, negation note present, claim note absent;
+  - a combined cap-plus-negation case.
+- `package.json`: the pure test runs in `test` and `test:unit`.
+- Docs: BACKLOG G13 complete; CHANGELOG Fixed; governance index row.
+
+**Deviations from the plan (documented)**:
+- The corpus has **13** limitations, where LD4/LD6/D4 say 9. The four additions came from the iteration-6 audit's suggested limitations, with observed results computed by the real implementation:
+  - "completed … program" in a non-course sense;
+  - state participles ("Was stationed at … managing"), which is honest because a comma-less participle phrase is not an active position;
+  - "Received <object>" as the only work verb ("Received inbound freight…"), a common warehouse phrasing now capped and recorded as accepted residual risk under LD6;
+  - the one-word "-ly" skip.
+
+  LD6 explicitly allows recording later phrasings as limitations. Affirmative (51) and capped (15) match the plan.
+- The agent-noun window counts the 3 preceding words with commas excluded, following the iteration-6 observation. The prototype counted commas as tokens; no corpus item depends on the difference.
+- `markerAt` treats "completed" without a course noun as not a marker without falling through to the participle check, which is more conservative than the prototype.
+- TDD order: the module was written from the validated prototype before the test file. Red/green was then established by mutation testing, not test-first. Disabling the cap, the verb-series rule, the clause gate or the clause-leading auxiliary rule each fails the suite.
+
+**Independent code review** (`code-reviewer`): PASS with no code defects. Its consistency notes are fixed in this pass:
+- the corpus count is recorded here;
+- the "weekly" limitation reason was corrected and the hash re-pinned;
+- three tests were strengthened;
+- the lexicon build was flattened and the non-null assertion removed.
+
+**Verification (Windows 10 dev host)**: `npm test` exit 0 and `npm run typecheck` exit 0, including the military-transition and universal-career fixtures. The G12 corpus is unchanged. The inference adversarial baseline prints `high-lexical-overlap-different-meaning: deterministic=transferable`.
+
+**Decision**: Implementation complete per the Entry #92 PASS plan, with documented deviations.
+
+---
+
+### Entry #94: SESSION SEAL (Phase 16 Mapper Claim Action)
+
+**Timestamp**: 2026-10-08T14:03:53Z
+**Phase**: SUBSTANTIATE
+**Author**: Judge
+**Risk Grade**: L1
+**Plan**: docs/plan-qor-phase16-mapper-claim-action.md
+
+**Verdict**: PASS
+
+**Content Hash**: `dc4c92bd450b5cd4f29ca74e6e23361ecd7d4109ac98e43cd533ee768038f9e2`
+
+**Previous Hash**: `9d5f3ff260802cf62b25b6bbba25b6e3dc1f438036e5224f06593d281d1e1204`
+
+**Chain Hash**: `7dad088975401fe8bece329424688cd1b690f4147e37dabaaa45b432ad647d8c`
+
+**Reality = Promise Verification**:
+- [x] PASS verdict exists (Entry #92); intent lock captured before implementation
+- [x] Every planned file exists, and the mapper changes only in the `direct` branch wiring. There is no inference import (the static boundary test still passes), and the cap can never strengthen a result. Deviations, including the 51/15/13 corpus, are documented in Entry #93.
+- [x] D4: claim-action and requirement-mapper tests pass with the full corpus; `npm test` and `npm run typecheck` pass; the G12 corpus is unchanged
+- [x] Tests are functional (mutation-verified across four rules), and the independent code review passed
+- [x] Feature Inventory unchanged (n/a-justified: FX023 surface unchanged)
+
+**Decision**: Session sealed. Reality matches Promise for the Entry #92 plan.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2428,5 +2632,6 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 12 Demo Video: SEALED (Entry #66)*
 *Phase 13 Inference Contract Review: SEALED (Entry #73); PR #163 merged*
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
-*Phase 15 Mapper Negation (G12): SEALED (Entry #86)*
-*Next required action: merge the G12 PR (#167); G13 (#168) next*
+*Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
+*Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
+*Next required action: merge the G13 PR (#168)*
