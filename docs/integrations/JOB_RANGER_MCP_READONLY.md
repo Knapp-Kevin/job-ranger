@@ -35,7 +35,7 @@ node mcp/local-readonly-server.mjs \
   --scopes="tracks:read,evidence:read,opportunities:read,posts:read,analytics:read"
 ```
 
-No scope is implicit. To inspect only the adapter capabilities with **no data access**, start with \`--scopes=none\`. To grant exact post text or readiness access, the user must separately add `post-content:read`. **Never add more scopes merely because the model requests it.**
+No scope is implicit. To inspect only the adapter capabilities with **no data access**, start with `--scopes=none` **without `--data-dir`**. This no-data mode does not locate, open or snapshot a workspace. To grant exact post text or readiness access, the user must separately add `post-content:read`. **Never add more scopes merely because the model requests it.**
 
 The process speaks newline-delimited JSON-RPC 2.0/MCP on **stdin/stdout**; it intentionally prints no interactive menu or career information to stdout. Configure an authorized local MCP client to launch this exact command and supply the arguments. The client must support a stdio MCP host. This is not a ChatGPT Web connection recipe.
 
