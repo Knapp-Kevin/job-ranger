@@ -64,6 +64,9 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   await expect(page.getByLabel("Post text (LinkedIn, text only)")).toHaveValue(text);
   await expect(page.getByText("3.50%")).toBeVisible();
   await expect(page.getByRole("button", { name: "Publication recorded" })).toBeDisabled();
+  // Restoring cached approval history must not auto-display selectable text
+  // without another current-evidence check and editorial confirmation.
+  await expect(page.getByLabel("Exact prepared post text")).toHaveCount(0);
   expect(outbound).toEqual([]);
 });
 
@@ -112,6 +115,7 @@ test("linked factual claims fail closed after Career Evidence is superseded", as
       statement: "Coordinated scheduling and referral tracking for a community clinic.",
     }), { id: evidence.id });
   await page.getByRole("button", { name: "Refresh Career Evidence" }).click();
+  await expect(page.getByLabel("Exact prepared post text")).toHaveCount(0);
   await expect(page.getByText(/1 linked evidence record\(s\) are missing, rejected, or superseded/)).toBeVisible();
   await expect(page.getByRole("button", { name: "Recheck evidence and copy" })).toBeDisabled();
   await expect(page.getByRole("button", { name: "Prepare and copy" })).toBeDisabled();
