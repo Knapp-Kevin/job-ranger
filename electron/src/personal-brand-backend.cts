@@ -1,0 +1,282 @@
+import { randomUUID } from "node:crypto";
+import type {
+  AnalyticsSnapshot, ManualPostPackage, ManualPublicationReceipt, PersonalBrandDraft, MetricObservation,
+} from "../../src/shared/personal-brand.js";
+import {
+  appendAnalyticsSnapshot, confirmManualPublication, prepareManualPost,
+} from "../../src/shared/personal-brand.js";
+import type { AnalyticsSnapshotInput, PersonalBrandDraftInput } from "../../src/shared/personal-brand-api.js";
+import { sql, SqliteClient, toSqlLiteral } from "./sqlite.cjs";
+import { FEATURE_MIGRATIONS } from "./feature-migrations.cjs";
+
+const schema = `
+CREATE TABLE IF NOT EXISTS personal_brand_drafts (
+  id TEXT PRIMARY KEY,
+  revision INTEGER NOT NULL CHECK(revision >= 1),
+  payload_json TEXT NOT NULL,
+  created_at TEXT NOT NULL,
+  updated_at TEXT NOT NULL
+);
+CREATE TABLE IF NOT EXISTS personal_brand_prepared (
+  draft_id TEXT NOT NULL REFERENCES personal_brand_drafts(id) ON DELETE RESTRICT,
+  revision INTEGER NOT NULL,
+  payload_json TEXT NOT NULL,
+  prepared_at TEXT NOT NULL,
+  PRIMARY KEY (draft_id, revision)
+);
+CREATE TABLE IF NOT EXISTS personal_brand_publications (
+  post_id TEXT PRIMARY KEY,
+  draft_id TEXT NOT NULL REFERENCES personal_brand_drafts(id) ON DELETE RESTRICT,
+  approved_revision INTEGER NOT NULL,
+  published_url TEXT NOT NULL UNIQUE,
+  payload_json TEXT NOT NULL,
+  UNIQUE (draft_id, approved_revision),
+  FOREIGN KEY (draft_id, approved_revision) REFERENCES personal_brand_prepared(draft_id, revision)
+);
+CREATE TABLE IF NOT EXISTS personal_brand_snapshots (
+  id TEXT PRIMARY KEY,
+  post_id TEXT NOT NULL REFERENCES personal_brand_publications(post_id) ON DELETE RESTRICT,
+  captured_at TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_personal_brand_snapshots_post
+  ON personal_brand_snapshots(post_id, captured_at);
+`;
+
+type JsonRow = { payload_json: string };
+type EvidenceRow = { id: string; verification_state: string };
+
+function asRecord(value: unknown): Record<string, unknown> {
+  if (!value || typeof value !== "object" || Array.isArray(value)) throw new Error("Invalid Personal Brand input.");
+  return value as Record<string, unknown>;
+}
+function safeString(v: unknown, label: string, limit: number): string {
+  if (typeof v !== "string" || v.length > limit) throw new Error(`Invalid ${label}.`);
+  return v;
+}
+function fieldList(v: unknown, label: string, max = 20): string[] {
+  if (!Array.isArray(v) || v.length > max ||
+      v.some((x) => typeof x !== "string" || x.length > 300))
+    throw new Error(`Invalid ${label}.`);
+  return v.map((x: string) => x.trim()).filter(Boolean);
+}
+function optionalEnum<T extends string>(v: unknown, choices: readonly T[], label: string): T | null {
+  if (v === null) return null;
+  if (typeof v !== "string" || !choices.includes(v as T)) throw new Error(`Invalid ${label}.`);
+  return v as T;
+}
+const objectives = [
+  "recruiter_discovery", "expertise_proof", "project_visibility", "career_narrative",
+  "network_growth", "community_contribution", "job_search_learning", "other",
+] as const;
+const destinations = ["linkedin", "facebook_page", "instagram_professional", "x"] as const;
+const formats = ["text", "image", "video", "document", "link"] as const;
+const hooks = [
+  "concrete_experience", "contradiction", "build_proof", "lesson",
+  "counterintuitive", "before_after", "question", "other",
+] as const;
+
+function validateDraftInput(raw: unknown): PersonalBrandDraftInput {
+  const x = asRecord(raw);
+  if (!Array.isArray(x.claimChecks) || x.claimChecks.length > 30)
+    throw new Error("Invalid claim review entries.");
+  const checks = x.claimChecks.map((item: unknown) => {
+    const c = asRecord(item);
+    if (typeof c.verified !== "boolean" || typeof c.privacyCleared !== "boolean")
+      throw new Error("Claim review must include explicit truth and privacy states.");
+    return {
+      claim: safeString(c.claim, "claim", 1000).trim(),
+      evidenceIds: fieldList(c.evidenceIds, "linked evidence", 20),
+      verified: c.verified,
+      privacyCleared: c.privacyCleared,
+    };
+  });
+  const mediaCount = x.mediaCount;
+  if (!Number.isSafeInteger(mediaCount) || (mediaCount as number) < 0 || (mediaCount as number) > 20)
+    throw new Error("Invalid media count.");
+  if (typeof x.mediaAccessibilityReviewed !== "boolean") throw new Error("Invalid media review.");
+  return {
+    body: safeString(x.body, "post body", 20000),
+    objective: optionalEnum(x.objective, objectives, "objective"),
+    audiences: fieldList(x.audiences, "intended audience"),
+    destination: optionalEnum(x.destination, destinations, "destination"),
+    format: optionalEnum(x.format, formats, "format") ?? "text",
+    hookArchetype: optionalEnum(x.hookArchetype, hooks, "hook archetype"),
+    hypothesis: safeString(x.hypothesis, "experiment hypothesis", 2500),
+    claimChecks: checks,
+    mediaCount: mediaCount as number,
+    mediaAccessibilityReviewed: x.mediaAccessibilityReviewed as boolean,
+  };
+}
+function rowJson<T>(row: JsonRow): T {
+  return JSON.parse(row.payload_json) as T;
+}
+function assertRevision(actual: PersonalBrandDraft, expectedRevision: number): void {
+  if (!Number.isSafeInteger(expectedRevision) || expectedRevision < 1 ||
+      actual.revision !== expectedRevision)
+    throw new Error("Stale draft revision. Reload before editing, preparing, or recording publication.");
+}
+
+export class PersonalBrandBackend {
+  private readonly db: SqliteClient;
+  constructor(options: { databasePath: string; sqliteBinaryPath: string }) {
+    this.db = new SqliteClient(options.databasePath, options.sqliteBinaryPath);
+  }
+  async initialize(): Promise<void> {
+    await this.db.exec("CREATE TABLE IF NOT EXISTS schema_migrations (version INTEGER PRIMARY KEY, name TEXT NOT NULL, applied_at TEXT NOT NULL);");
+    const migration = FEATURE_MIGRATIONS.personalBrand;
+    const exists = await this.db.queryOne<{ version: number }>(sql`
+      SELECT version FROM schema_migrations WHERE version = ${migration.version} LIMIT 1;
+    `);
+    if (exists) return;
+    await this.db.transaction([
+      schema,
+      sql`INSERT INTO schema_migrations (version, name, applied_at)
+          VALUES (${migration.version}, ${migration.name}, ${new Date().toISOString()});`,
+    ]);
+  }
+
+  private async getDraft(id: string): Promise<PersonalBrandDraft> {
+    const row = await this.db.queryOne<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_drafts WHERE id = ${id} LIMIT 1;
+    `);
+    if (!row) throw new Error("Personal Brand draft not found.");
+    return rowJson<PersonalBrandDraft>(row);
+  }
+  async listDrafts(): Promise<PersonalBrandDraft[]> {
+    const rows = await this.db.queryAll<JsonRow>(
+      "SELECT payload_json FROM personal_brand_drafts ORDER BY updated_at DESC, id ASC;",
+    );
+    return rows.map((row) => rowJson<PersonalBrandDraft>(row));
+  }
+  async createDraft(raw: unknown): Promise<PersonalBrandDraft> {
+    const input = validateDraftInput(raw);
+    const draft: PersonalBrandDraft = { ...input, id: `presence-${randomUUID()}`, revision: 1 };
+    const now = new Date().toISOString();
+    await this.db.exec(sql`INSERT INTO personal_brand_drafts
+      (id, revision, payload_json, created_at, updated_at)
+      VALUES (${draft.id}, ${draft.revision}, ${JSON.stringify(draft)}, ${now}, ${now});`);
+    return draft;
+  }
+  async updateDraft(id: string, revision: number, raw: unknown): Promise<PersonalBrandDraft> {
+    const current = await this.getDraft(id);
+    assertRevision(current, revision);
+    const input = validateDraftInput(raw);
+    const next: PersonalBrandDraft = { ...input, id: current.id, revision: revision + 1 };
+    // Prevent a lost update even if multiple native windows race on the same draft.
+    // Fail the transaction if the conditional update did not change exactly one row.
+    await this.db.transaction([
+      "CREATE TEMP TABLE _presence_revision_guard (ok INTEGER NOT NULL);",
+      sql`UPDATE personal_brand_drafts SET revision = ${next.revision},
+        payload_json = ${JSON.stringify(next)}, updated_at = ${new Date().toISOString()}
+        WHERE id = ${id} AND revision = ${revision};`,
+      "INSERT INTO _presence_revision_guard (ok) SELECT NULL WHERE changes() != 1;",
+    ]);
+    return next;
+  }
+
+  private async assertClaimsCurrent(draft: PersonalBrandDraft): Promise<void> {
+    const ids = Array.from(new Set(draft.claimChecks.flatMap((claim) => claim.evidenceIds)));
+    if (ids.length === 0) return;
+    const rows = await this.db.queryAll<EvidenceRow>(`
+      SELECT id, verification_state FROM candidate_evidence
+      WHERE id IN (${ids.map(toSqlLiteral).join(",")});
+    `);
+    if (rows.length !== ids.length || rows.some((row) =>
+      row.verification_state !== "user-authored" && row.verification_state !== "user-confirmed"))
+      throw new Error("One or more linked Career Evidence items are missing or no longer current.");
+  }
+  async prepareDraft(id: string, revision: number, humanReviewConfirmed: boolean): Promise<ManualPostPackage> {
+    const draft = await this.getDraft(id);
+    assertRevision(draft, revision);
+    await this.assertClaimsCurrent(draft);
+    const pkg = await prepareManualPost(draft, humanReviewConfirmed);
+    await this.db.exec(sql`INSERT OR IGNORE INTO personal_brand_prepared
+      (draft_id, revision, payload_json, prepared_at)
+      SELECT ${id}, ${revision}, ${JSON.stringify(pkg)}, ${new Date().toISOString()}
+      WHERE EXISTS (SELECT 1 FROM personal_brand_drafts WHERE id = ${id} AND revision = ${revision});`);
+    const saved = await this.db.queryOne<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_prepared WHERE draft_id = ${id} AND revision = ${revision};
+    `);
+    if (!saved || rowJson<ManualPostPackage>(saved).sha256 !== pkg.sha256)
+      throw new Error("Draft changed before copy preparation completed.");
+    return pkg;
+  }
+  async listPrepared(): Promise<ManualPostPackage[]> {
+    const rows = await this.db.queryAll<JsonRow>("SELECT payload_json FROM personal_brand_prepared ORDER BY prepared_at DESC;");
+    return rows.map((row) => rowJson<ManualPostPackage>(row));
+  }
+  async listPublications(): Promise<ManualPublicationReceipt[]> {
+    const rows = await this.db.queryAll<JsonRow>("SELECT payload_json FROM personal_brand_publications ORDER BY post_id DESC;");
+    return rows.map((row) => rowJson<ManualPublicationReceipt>(row));
+  }
+  async confirmPublication(input: {
+    draftId: string; revision: number; publishedUrl: string; publishedAt: string; userConfirmed: boolean;
+  }): Promise<ManualPublicationReceipt> {
+    if (!input || typeof input.draftId !== "string" || input.draftId.length > 120 ||
+        !Number.isSafeInteger(input.revision) || typeof input.publishedUrl !== "string" ||
+        input.publishedUrl.length > 2048 || typeof input.publishedAt !== "string" ||
+        typeof input.userConfirmed !== "boolean") throw new Error("Invalid publication confirmation.");
+    const row = await this.db.queryOne<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_prepared
+      WHERE draft_id = ${input.draftId} AND revision = ${input.revision} LIMIT 1;
+    `);
+    if (!row) throw new Error("Prepare the exact post for copying before recording publication.");
+    const pkg = rowJson<ManualPostPackage>(row);
+    const receipt = await confirmManualPublication({
+      package: pkg,
+      publishedUrl: input.publishedUrl,
+      publishedAt: input.publishedAt,
+      confirmedAt: new Date().toISOString(),
+      userConfirmed: input.userConfirmed,
+      existing: await this.listPublications(),
+    });
+    await this.db.exec(sql`INSERT INTO personal_brand_publications
+      (post_id, draft_id, approved_revision, published_url, payload_json)
+      VALUES (${receipt.postId}, ${receipt.draftId}, ${receipt.approvedRevision},
+              ${receipt.publishedUrl}, ${JSON.stringify(receipt)});`);
+    return receipt;
+  }
+  async listSnapshots(postId: string): Promise<AnalyticsSnapshot[]> {
+    const rows = await this.db.queryAll<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_snapshots
+      WHERE post_id = ${postId} ORDER BY captured_at ASC, id ASC;
+    `);
+    return rows.map((row) => rowJson<AnalyticsSnapshot>(row));
+  }
+  async appendSnapshot(postId: string, input: AnalyticsSnapshotInput): Promise<AnalyticsSnapshot> {
+    if (typeof postId !== "string" || postId.length > 150) throw new Error("Invalid publication ID.");
+    const publication = (await this.listPublications()).find((row) => row.postId === postId);
+    if (!publication) throw new Error("Publication not found.");
+    if (!input || !Array.isArray(input.observations) || input.observations.length > 25 ||
+        typeof input.sourceLabel !== "string" || input.sourceLabel.length > 250)
+      throw new Error("Invalid analytics input.");
+    // Only declared canonical metric names/states may cross IPC. They are not arbitrary SQL field names.
+    const names = ["impressions", "reached", "reactions", "comments", "reposts", "saves", "sends",
+      "link_clicks", "profile_views", "followers_gained", "video_views", "watch_seconds"];
+    const states = ["manual", "estimated", "unavailable", "unknown"]; // Untrusted manual IPC cannot claim provider observation.
+    const observations = input.observations.map((raw) => {
+      const o = asRecord(raw);
+      if (!names.includes(String(o.name)) || !states.includes(String(o.state)) ||
+          (o.value !== undefined && typeof o.value !== "number") ||
+          (o.providerMetric !== undefined && typeof o.providerMetric !== "string") ||
+          (o.limitation !== undefined && typeof o.limitation !== "string"))
+        throw new Error("Invalid analytics observation.");
+      return { ...o } as unknown as MetricObservation;
+    });
+    const snapshot: AnalyticsSnapshot = {
+      id: `presence-snapshot-${randomUUID()}`,
+      postId,
+      capturedAt: safeString(input.capturedAt, "capture time", 40),
+      windowStart: safeString(input.windowStart, "window start", 40),
+      windowEnd: safeString(input.windowEnd, "window end", 40),
+      sourceLabel: input.sourceLabel,
+      observations,
+    };
+    appendAnalyticsSnapshot(publication, await this.listSnapshots(postId), snapshot);
+    await this.db.exec(sql`INSERT INTO personal_brand_snapshots
+      (id, post_id, captured_at, payload_json)
+      VALUES (${snapshot.id}, ${postId}, ${snapshot.capturedAt}, ${JSON.stringify(snapshot)});`);
+    return snapshot;
+  }
+}

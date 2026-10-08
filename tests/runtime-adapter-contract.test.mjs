@@ -52,6 +52,7 @@ const electronAllowed = new Set([
   "resume-ipc.cts",
   "evidence-extension-ipc.cts",
   "career-story-ipc.cts",
+  "personal-brand-ipc.cts",
   "application-lifecycle-ipc.cts",
   "application-materials-ipc.cts",
   "application-insights-ipc.cts",

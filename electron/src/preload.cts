@@ -5,6 +5,7 @@ import type { ApplicationLifecycleDesktopApi } from "../../src/shared/applicatio
 import type { ApplicationMaterialsDesktopApi } from "../../src/shared/application-materials.js";
 import type { BackupDesktopApi } from "../../src/shared/backup.js";
 import type { CareerStoriesDesktopApi } from "../../src/shared/career-stories.js";
+import type { PersonalBrandDesktopApi } from "../../src/shared/personal-brand-api.js";
 import type { EvidenceExtensionDesktopApi } from "../../src/shared/evidence-extensions.js";
 import type { InterviewPrepDesktopApi } from "../../src/shared/interview-prep.js";
 import type { JsonResumeDesktopApi } from "../../src/shared/json-resume.js";
@@ -13,7 +14,7 @@ import type { SourceDiscoveryDesktopApi } from "../../src/shared/source-discover
 import type { RuntimeDesktopApi } from "../../src/shared/runtime.js";
 import type { LegacyInstallDesktopApi } from "../../src/shared/legacy-install.js";
 
-const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi & JsonResumeDesktopApi & RuntimeDesktopApi & LegacyInstallDesktopApi = {
+const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & SourceDiscoveryDesktopApi & ApplicationLifecycleDesktopApi & InterviewPrepDesktopApi & CareerStoriesDesktopApi & PersonalBrandDesktopApi & ApplicationMaterialsDesktopApi & BackupDesktopApi & ApplicationInsightsDesktopApi & JsonResumeDesktopApi & RuntimeDesktopApi & LegacyInstallDesktopApi = {
   getAppVersion: () => ipcRenderer.invoke("app:get-version"),
   getPlatform: () => ipcRenderer.invoke("app:get-platform"),
   getRuntimeInfo: () => ipcRenderer.invoke("app:get-runtime-info"),
@@ -89,6 +90,17 @@ const desktopApi: DesktopApi & ResumeDesktopApi & EvidenceExtensionDesktopApi & 
     update: (storyId, input) =>
       ipcRenderer.invoke("career-stories:update", storyId, input),
     delete: (storyId) => ipcRenderer.invoke("career-stories:delete", storyId),
+  },
+  personalBrand: {
+    listDrafts: () => ipcRenderer.invoke("personal-brand:list-drafts"),
+    createDraft: (input) => ipcRenderer.invoke("personal-brand:create-draft", input),
+    updateDraft: (id, revision, input) => ipcRenderer.invoke("personal-brand:update-draft", id, revision, input),
+    prepareDraft: (id, revision, reviewed) => ipcRenderer.invoke("personal-brand:prepare-draft", id, revision, reviewed),
+    listPrepared: () => ipcRenderer.invoke("personal-brand:list-prepared"),
+    confirmPublication: (input) => ipcRenderer.invoke("personal-brand:confirm-publication", input),
+    listPublications: () => ipcRenderer.invoke("personal-brand:list-publications"),
+    appendSnapshot: (postId, input) => ipcRenderer.invoke("personal-brand:append-snapshot", postId, input),
+    listSnapshots: (postId) => ipcRenderer.invoke("personal-brand:list-snapshots", postId),
   },
   applications: {
     list: () => ipcRenderer.invoke("applications:list"),
