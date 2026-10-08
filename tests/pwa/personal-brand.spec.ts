@@ -117,7 +117,7 @@ test("linked factual claims fail closed after Career Evidence is superseded", as
   await page.getByRole("button", { name: "Refresh Career Evidence" }).click();
   await expect(page.getByLabel("Exact prepared post text")).toHaveCount(0);
   await expect(page.getByText(/1 linked evidence record\(s\) are missing, rejected, or superseded/)).toBeVisible();
-  await expect(page.getByRole("button", { name: "Recheck evidence and copy" })).toBeDisabled();
+  await expect(page.getByRole("button", { name: "Recheck evidence and copy" })).toHaveCount(0);
   await expect(page.getByRole("button", { name: "Prepare and copy" })).toBeDisabled();
 
   const attempt = await page.evaluate(async ({ id, revision }) =>
