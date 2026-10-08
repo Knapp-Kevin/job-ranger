@@ -1,0 +1,28 @@
+{
+  "phase": "plan",
+  "session_id": "2026-10-07T2054-978a4e",
+  "ts": "2026-10-07T22:01:37Z",
+  "plan_path": "docs/plan-qor-phase16-mapper-claim-action.md",
+  "phases": [
+    "Phase 1: Claim-action cap"
+  ],
+  "ci_commands": [
+    "npm test",
+    "npm run typecheck",
+    "node tests/claim-action.test.cjs"
+  ],
+  "open_questions": [],
+  "doc_tier": "standard",
+  "high_risk_target": false,
+  "pr_target": "main",
+  "originating_remediation": "issue #168",
+  "feature_inventory_touches": [],
+  "ai_provenance": {
+    "system": "Qor-logic",
+    "version": "unknown",
+    "host": "unknown",
+    "model_family": "opus",
+    "human_oversight": "absent",
+    "ts": "2026-10-07T22:01:37Z"
+  }
+}

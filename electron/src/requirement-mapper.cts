@@ -10,6 +10,7 @@ import type {
 } from "../../src/shared/contracts.js";
 import type { JobEvidenceCoverage } from "../../src/shared/requirement-coverage.js";
 import { affirmedText, NEGATION_NOTE, negationChangedOutcome } from "./evidence-negation.cjs";
+import { claimActionNote, claimVerb, isCapped, selectUncapped } from "./claim-action.cjs";
 
 const STOP_WORDS = new Set([
   "and", "the", "for", "with", "that", "this", "from", "your", "you", "our",
@@ -326,15 +327,33 @@ function classifyRequirementEvidence(
   }
 
   if (best.score >= 0.7) {
+    // G13: evidence showing a recipient role without the claim action is not direct support.
+    const verb = requirement.kind === "credential" ? null : claimVerb(requirement.text);
+    const capped = (item: CandidateEvidence) => verb !== null && isCapped(item, requirement.text, verb, affirm);
+    const supported = capped(best.evidence)
+      ? selectUncapped(ranked, (item) => isConfirmed(item.verificationState), capped)
+      : best;
+    if (!supported) {
+      return {
+        mapping: makeMapping(
+          requirement,
+          best.evidence,
+          "transferable",
+          `Confirmed Career Evidence overlaps with this requirement and may transfer to this context. ${claimActionNote(verb!.word)}`,
+          now,
+        ),
+        evidence: best.evidence,
+      };
+    }
     return {
       mapping: makeMapping(
         requirement,
-        best.evidence,
+        supported.evidence,
         "direct",
         "Confirmed Career Evidence closely matches the language of this requirement.",
         now,
       ),
-      evidence: best.evidence,
+      evidence: supported.evidence,
     };
   }
 

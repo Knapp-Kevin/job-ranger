@@ -1,0 +1,11 @@
+{
+  "pattern": "gate-loop",
+  "proposal_kind": "gate",
+  "proposal_text": "Gate-loop on qor-plan: Phases 15 (G12) and 16 (G13) each needed repeated plan iterations and escalation overrides. Every VETO was a valid, distinct long-tail phrasing defect; the rules are heuristic text classifiers whose defect space is open-ended, so adversarial plan audits do not converge on their own. Proposed process change: for heuristic text-rule phases, the plan names a frozen acceptance corpus plus a stated residual-risk budget up front; the audit may VETO only for (a) contract/consistency defects or (b) a counterexample class the auditor shows is common and that the Governor then adds to the corpus. Further long-tail cases are recorded as corpus limitations rather than iterating the plan. Operator decision required before further overrides.",
+  "addressed_event_ids": [
+    "9422b1e8e6df58a3204d76533c2e6110a776dcd59450441f4caa8386213087f1",
+    "4716b9899e0940c1d386b229fc0d479abc37e010c445c5563b391bb15de79459"
+  ],
+  "closure_enforcer": "/qor-audit Step 3",
+  "ts": "2026-10-07T22:16:47Z"
+}

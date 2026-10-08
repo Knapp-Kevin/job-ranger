@@ -1,0 +1,437 @@
+{
+  "version": 1,
+  "note": "Synthetic resume-phrasing corpus for the deterministic claim-action cap (G13, #168). Affirmative items must keep their pre-change classification with no claim-action note; capped items must go from direct to transferable with the note; limitations record accepted known behavior with its observed result. Optional titleOrName, skills, outcomes, kind and subjectType fields exercise other evidence fields and credential requirements.",
+  "affirmative": [
+    {
+      "evidence": "Managed payroll for a 2,000-person workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Led payroll operations for a large workforce.",
+      "requirement": "Managed payroll operations for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Oversaw payroll for a large regional workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Ran payroll and benefits for a large workforce.",
+      "requirement": "Managed payroll and benefits for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Spearheaded payroll consolidation for a large workforce.",
+      "requirement": "Managed payroll consolidation for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Supervised a team of 12 field technicians.",
+      "requirement": "Supervise a team of field technicians.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Built production TypeScript services and APIs.",
+      "requirement": "Develop production TypeScript services and APIs.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Designed and implemented the warehouse inventory system.",
+      "requirement": "Implement warehouse inventory systems.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Coordinated scheduling for regional field teams.",
+      "requirement": "Coordinate scheduling for regional field teams.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Organized shift schedules for regional field teams.",
+      "requirement": "Coordinate shift schedules for regional field teams.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Trained 30 new hires on safety procedures.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Taught Excel workshops to finance staff.",
+      "requirement": "Train finance staff on Excel.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Mentored junior analysts on financial reporting.",
+      "requirement": "Train junior analysts on financial reporting.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Approved vendor budgets for the regional office.",
+      "requirement": "Approve vendor budgets for the regional office.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Processed payroll for a large workforce.",
+      "requirement": "Payroll processing for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Maintained EPA Section 608 certification for refrigerant work.",
+      "requirement": "EPA Section 608 certification for refrigerant work.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Diagnosed and repaired commercial rooftop HVAC units.",
+      "requirement": "Troubleshoot commercial rooftop HVAC units.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Personally managed payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was responsible for and managed payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Owned payroll compliance for a large workforce.",
+      "requirement": "Managed payroll compliance for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Responsible for training new hires on safety procedures.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Shift supervisor for a team of 12 field technicians.",
+      "requirement": "Supervise a team of field technicians.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Ran month-end close for a large workforce.",
+      "titleOrName": "Payroll Manager",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Have been managing payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Am currently leading payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Responsible for payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Handled payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Wrote production TypeScript services and APIs.",
+      "requirement": "Develop production TypeScript services and APIs.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Organised regional field events.",
+      "requirement": "Organize regional field events.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was promoted and managed payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Facilitated safety procedures workshops for new hires.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was hired as Payroll Manager for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Completed payroll migration for a large workforce.",
+      "requirement": "Managed payroll migration for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Authorised vendor budgets for the regional office.",
+      "requirement": "Approve vendor budgets for the regional office.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Worked with the payroll manager on payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct",
+      "note": "no recipient marker, so never capped even though the agent noun is someone else's"
+    },
+    {
+      "evidence": "Was tasked with managing payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was entrusted with leading payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was promoted to senior analyst, managing payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was given ownership of payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was promoted to Payroll Lead for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Is experienced in payroll for a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Received an Engineering degree from Purdue University.",
+      "requirement": "Engineering degree.",
+      "kind": "credential",
+      "subjectType": "credential",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Completed an accredited engineering degree program.",
+      "requirement": "Engineering degree program.",
+      "kind": "credential",
+      "subjectType": "credential",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Was recognized for payroll accuracy across a large workforce.",
+      "skills": [
+        "Managing payroll"
+      ],
+      "requirement": "Managed payroll accuracy for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Coordinated scheduling for regional field teams",
+      "titleOrName": "Scheduling Coordinator",
+      "requirement": "Coordinate scheduling for regional field teams.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Handled payroll for a large workforce; payroll errors were reduced by 30%.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Handled payroll for a large workforce.",
+      "outcomes": [
+        "Payroll errors were reduced by 30%."
+      ],
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Handled payroll for a large workforce. Received a spot award for accuracy.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Payroll audits for a large workforce were led by me.",
+      "requirement": "Led payroll audits for a large workforce.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Received and processed customer orders for a regional distributor.",
+      "requirement": "Manage customer orders for a regional distributor.",
+      "expected": "direct"
+    },
+    {
+      "evidence": "Received, inspected and stocked inbound shipments for a regional distributor.",
+      "requirement": "Manage inbound shipments for a regional distributor.",
+      "expected": "direct"
+    }
+  ],
+  "capped": [
+    {
+      "evidence": "Was paid through payroll as part of a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was trained on safety procedures with new hires.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Attended payroll training for a large workforce.",
+      "requirement": "Managed payroll training for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was supervised by the operations manager during payroll audits.",
+      "requirement": "Supervise payroll audits for operations.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Received payroll reports for a large workforce.",
+      "requirement": "Managed payroll reports for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Participated in payroll audits for a large workforce.",
+      "requirement": "Led payroll audits for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Got trained on Excel with finance staff.",
+      "requirement": "Train finance staff on Excel.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Completed safety procedures training with new hires.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Attended safety procedures training with new hires.",
+      "requirement": "Train new hires on safety procedures.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was paid through payroll as part of a large workforce.",
+      "requirement": "Experience managing payroll for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was trained on safety procedures with new hires.",
+      "requirement": "Experience training new hires on safety procedures.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was paid through payroll via direct deposit as part of a large workforce.",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was coached by the payroll manager on payroll reports for a large workforce.",
+      "requirement": "Managed payroll reports for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Was paid through payroll as part of a large workforce",
+      "titleOrName": "Warehouse Associate",
+      "requirement": "Managed payroll for a large workforce.",
+      "expected": "transferable"
+    },
+    {
+      "evidence": "Attended payroll training for a large workforce.",
+      "skills": [
+        "Payroll basics"
+      ],
+      "requirement": "Managed payroll training for a large workforce.",
+      "expected": "transferable"
+    }
+  ],
+  "limitations": [
+    {
+      "evidence": "Received approved vendor budgets from regional finance.",
+      "requirement": "Approve vendor budgets for regional finance.",
+      "observed": "direct",
+      "reason": "a participial adjective ('approved budgets') reads as an active claim verb"
+    },
+    {
+      "evidence": "Benefited from payroll automation for a large workforce.",
+      "requirement": "Managed payroll automation for a large workforce.",
+      "observed": "transferable",
+      "reason": "recorded: 'benefited' is a recipient verb"
+    },
+    {
+      "evidence": "Gained exposure to payroll operations for a large workforce.",
+      "requirement": "Managed payroll operations for a large workforce.",
+      "observed": "direct",
+      "reason": "recipient phrasings outside the marker list ('gained exposure to') are not detected"
+    },
+    {
+      "evidence": "Was given payroll training for a large workforce.",
+      "requirement": "Managed payroll training for a large workforce.",
+      "observed": "direct",
+      "reason": "'given' is an assignment participle, so 'was given … training' is not a recipient marker"
+    },
+    {
+      "evidence": "Trained new hires on licensing procedures.",
+      "requirement": "Train new hires on licensing procedures.",
+      "kind": "credential",
+      "subjectType": "achievement",
+      "observed": "direct",
+      "reason": "requirements the mapper classifies as credentials (mentions licence, certification or degree) are never capped"
+    },
+    {
+      "evidence": "Processed payroll for 2,000 employees and received the Payroll Excellence Award.",
+      "requirement": "Managed payroll for 2,000 employees.",
+      "observed": "transferable",
+      "reason": "a recipient verb about something else in the same clause as a requirement word still caps"
+    },
+    {
+      "evidence": "Completed safety training sessions for 40 new hires.",
+      "requirement": "Train new hires on safety procedures.",
+      "observed": "transferable",
+      "reason": "\"completed … training\" is a marker even when the user delivered the sessions"
+    },
+    {
+      "evidence": "Managed audits and was trained on payroll compliance for a large workforce.",
+      "requirement": "Train staff on payroll compliance for a large workforce.",
+      "observed": "direct",
+      "reason": "a coordinated passive (auxiliary not leading the clause) is not a marker, so recipient support can stay direct"
+    },
+    {
+      "evidence": "Received a spot award, working with leadership on payroll for a large workforce.",
+      "requirement": "Work with leadership to manage payroll for a large workforce.",
+      "observed": "transferable",
+      "reason": "a recipient verb about something else, in a clause that also shares requirement words, still caps"
+    },
+    {
+      "evidence": "Completed the loyalty program rollout for regional stores.",
+      "requirement": "Lead loyalty program rollout for regional stores.",
+      "observed": "transferable",
+      "reason": "\"completed … program\" in a non-course sense is read as a completed course"
+    },
+    {
+      "evidence": "Was stationed at a regional depot managing inbound freight.",
+      "requirement": "Manage inbound freight at a regional depot.",
+      "observed": "transferable",
+      "reason": "state participles (stationed, deployed, based) after a leading auxiliary are markers, and a participle phrase joined without a comma (\"depot managing\") is not an active position, so it caps"
+    },
+    {
+      "evidence": "Received inbound freight for a regional distributor.",
+      "requirement": "Manage inbound freight for a regional distributor.",
+      "observed": "transferable",
+      "reason": "\"Received <object>\" as the only work verb is a recipient marker"
+    },
+    {
+      "evidence": "Was weekly trained on payroll compliance for a large workforce.",
+      "requirement": "Train staff on payroll compliance for a large workforce.",
+      "observed": "transferable",
+      "reason": "the one-word '-ly' skip finds the leading auxiliary ('was weekly trained' is a passive marker, as intended); the same skip would also pass over non-adverb '-ly' words such as 'supply' or 'family'"
+    }
+  ]
+}
