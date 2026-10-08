@@ -8,6 +8,7 @@ import {
   type PersonalBrandDraft, type MetricName,
 } from "../shared/personal-brand";
 import type { PersonalBrandDraftInput } from "../shared/personal-brand-api";
+import type { CandidateEvidence } from "../shared/contracts";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
@@ -75,11 +76,28 @@ export function PersonalBrand() {
   const [publishedUrl, setPublishedUrl] = useState("");
   const [publishedLocal, setPublishedLocal] = useState("");
   const [reviewed, setReviewed] = useState(false);
+  const [evidenceRecords, setEvidenceRecords] = useState<CandidateEvidence[]>([]);
+  const [evidenceLoading, setEvidenceLoading] = useState(true);
+  const [evidenceError, setEvidenceError] = useState<string | null>(null);
   const [publishedConfirmed, setPublishedConfirmed] = useState(false);
   const [busy, setBusy] = useState(false);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState("");
+
+  const reloadEvidence = useCallback(async (): Promise<void> => {
+    setEvidenceLoading(true);
+    try {
+      const records = await getDesktopApi().career.listEvidence();
+      setEvidenceRecords(records.map((item) => item.evidence));
+      setEvidenceError(null);
+    } catch (cause) {
+      setEvidenceError(cause instanceof Error ? cause.message : "Career Evidence is unavailable.");
+      throw cause;
+    } finally {
+      setEvidenceLoading(false);
+    }
+  }, []);
 
   const refresh = useCallback(async (preferredDraftId?: string) => {
     const api = getDesktopApi().personalBrand;
@@ -116,6 +134,10 @@ export function PersonalBrand() {
   }, [refresh]);
 
   useEffect(() => {
+    void reloadEvidence().catch(() => undefined);
+  }, [reloadEvidence]);
+
+  useEffect(() => {
     if (!postId) { setSnapshots([]); return; }
     let live = true;
     void getDesktopApi().personalBrand.listSnapshots(postId)
@@ -128,6 +150,19 @@ export function PersonalBrand() {
     ...input, id: selected?.id ?? "new-draft", revision: selected?.revision ?? 1,
   }), [input, selected]);
   const readiness = useMemo(() => assessPersonalBrandDraft(current), [current]);
+  const evidenceById = useMemo(
+    () => new Map(evidenceRecords.map((evidence) => [evidence.id, evidence])),
+    [evidenceRecords],
+  );
+  const eligibleEvidence = useMemo(
+    () => evidenceRecords.filter((item) =>
+      item.verificationState === "user-authored" || item.verificationState === "user-confirmed"),
+    [evidenceRecords],
+  );
+  const staleEvidenceIds = input.claimChecks.flatMap((claim) => claim.evidenceIds).filter((id) => {
+    const item = evidenceById.get(id);
+    return !item || (item.verificationState !== "user-authored" && item.verificationState !== "user-confirmed");
+  });
   const currentPackage = prepared.find((item) =>
     item.draftId === selected?.id && item.approvedRevision === selected?.revision);
   const currentReceipt = publications.find((item) =>
@@ -136,10 +171,30 @@ export function PersonalBrand() {
   const summary = lastSnapshot ? derivedPostMetrics(lastSnapshot) : null;
 
   const change = <K extends keyof PersonalBrandDraftInput>(key: K, value: PersonalBrandDraftInput[K]) => {
-    setInput((before) => ({ ...before, [key]: value }));
+    setInput((before) => ({
+      ...before,
+      [key]: value,
+      // Editing the post invalidates prior claim-by-claim factual and privacy attestations.
+      claimChecks: key === "body"
+        ? before.claimChecks.map((claim) => ({ ...claim, verified: false, privacyCleared: false }))
+        : before.claimChecks,
+    }));
     setDirty(true);
     setReviewed(false);
     setNotice("");
+  };
+  const updateClaim = (index: number, patch: Partial<PersonalBrandDraftInput["claimChecks"][number]>) => {
+    change("claimChecks", input.claimChecks.map((claim, position) =>
+      position === index
+        ? {
+            ...claim,
+            ...patch,
+            ...(patch.claim !== undefined || patch.evidenceIds !== undefined
+              ? { verified: false, privacyCleared: false }
+              : {}),
+          }
+        : claim,
+    ));
   };
   const run = async (fn: () => Promise<void>) => {
     setBusy(true); setError(null); setNotice("");
@@ -159,6 +214,9 @@ export function PersonalBrand() {
   };
   const copyPost = () => void run(async () => {
     const saved = !selected || dirty ? await save() : selected;
+    await reloadEvidence();
+    // The backend checks the CURRENT authority of every linked evidence ID, even
+    // for already prepared revisions. A cached copy is never a bypass.
     const pkg = await getDesktopApi().personalBrand.prepareDraft(saved.id, saved.revision, reviewed);
     await refresh(saved.id);
     try {
@@ -256,6 +314,104 @@ export function PersonalBrand() {
             <label className="block text-sm font-semibold">Hypothesis to evaluate
               <input className="input-shell mt-2 w-full" value={input.hypothesis} onChange={(e) => change("hypothesis", e.target.value)} placeholder="What should this post accomplish, and what will we observe?" />
             </label>
+            <section className="rounded-xl border border-[var(--color-border)] p-4 space-y-4">
+              <div className="flex flex-wrap items-center justify-between gap-3">
+                <div>
+                  <h3 className="font-semibold">Claim and Career Evidence review</h3>
+                  <p className="mt-1 text-sm text-[var(--color-text-secondary)]">
+                    Link each specific factual claim to evidence you have authored or confirmed.
+                    Evidence linking records your human review; it does not prove that the evidence entails the words.
+                  </p>
+                </div>
+                <button type="button" className="secondary-button" disabled={busy || evidenceLoading}
+                  onClick={() => void run(async () => { await reloadEvidence(); setNotice("Career Evidence refreshed."); })}>
+                  Refresh Career Evidence
+                </button>
+              </div>
+              {evidenceLoading && <p role="status" className="text-sm">Loading Career Evidence...</p>}
+              {evidenceError && <p role="alert" className="text-sm text-[var(--color-danger)]">Unable to refresh Career Evidence: {evidenceError}</p>}
+              {!evidenceLoading && !evidenceError && eligibleEvidence.length === 0 && (
+                <p className="text-sm text-[var(--color-text-secondary)]">
+                  No confirmed or user-authored Career Evidence is available yet.
+                  Add it in <a className="underline" href="#/career-profile">Career Profile</a> before linking claims.
+                </p>
+              )}
+              {input.claimChecks.map((claim, index) => (
+                <fieldset key={index} className="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+                  <legend className="px-2 font-semibold">Factual claim {index + 1}</legend>
+                  <label className="block text-sm font-semibold">
+                    Claim being checked
+                    <textarea className="input-shell mt-2 w-full min-h-[72px]" value={claim.claim}
+                      onChange={(event) => updateClaim(index, { claim: event.target.value })}
+                      placeholder="Exact factual claim this evidence supports" />
+                  </label>
+                  <label className="block text-sm font-semibold">
+                    Link Career Evidence for claim {index + 1}
+                    <select className="input-shell mt-2 w-full" value="" disabled={evidenceLoading || Boolean(evidenceError)}
+                      onChange={(event) => {
+                        const id = event.target.value;
+                        if (id && !claim.evidenceIds.includes(id))
+                          updateClaim(index, { evidenceIds: [...claim.evidenceIds, id] });
+                      }}>
+                      <option value="">Choose confirmed evidence to link</option>
+                      {eligibleEvidence.filter((item) => !claim.evidenceIds.includes(item.id)).map((item) =>
+                        <option key={item.id} value={item.id}>
+                          {item.titleOrName || item.organization || item.subjectType}: {item.statement.slice(0, 120)}
+                        </option>)}
+                    </select>
+                  </label>
+                  <ul className="space-y-2">
+                    {claim.evidenceIds.map((id) => {
+                      const item = evidenceById.get(id);
+                      const current = item && (item.verificationState === "user-authored" || item.verificationState === "user-confirmed");
+                      return (
+                        <li key={id} className="flex flex-wrap items-start justify-between gap-2 rounded-lg border border-[var(--color-border)] p-3 text-sm">
+                          <div className="min-w-0 flex-1">
+                            <p className="break-words">{item?.statement ?? "Linked evidence no longer exists."}</p>
+                            <p className={current ? "mt-1 text-[var(--color-text-secondary)]" : "mt-1 text-[var(--color-danger)]"}>
+                              {current ? `Current · ${item.verificationState}` : `Not current · ${item?.verificationState ?? "missing"}`}
+                            </p>
+                          </div>
+                          <button type="button" className="secondary-button" onClick={() =>
+                            updateClaim(index, { evidenceIds: claim.evidenceIds.filter((linked) => linked !== id) })}>
+                            Remove link
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={claim.verified}
+                      onChange={(event) => updateClaim(index, { verified: event.target.checked })} />
+                    <span>I personally checked this claim against the linked current evidence.</span>
+                  </label>
+                  <label className="flex items-start gap-3 text-sm">
+                    <input type="checkbox" checked={claim.privacyCleared}
+                      onChange={(event) => updateClaim(index, { privacyCleared: event.target.checked })} />
+                    <span>I checked this claim for private, confidential, or restricted information.</span>
+                  </label>
+                  <button type="button" className="secondary-button"
+                    onClick={() => change("claimChecks", input.claimChecks.filter((_, position) => position !== index))}>
+                    Remove claim
+                  </button>
+                </fieldset>
+              ))}
+              {staleEvidenceIds.length > 0 && (
+                <p role="alert" className="text-sm text-[var(--color-danger)]">
+                  {staleEvidenceIds.length} linked evidence record(s) are missing, rejected, or superseded.
+                  Replace those links and review the affected claims again before preparing a post.
+                </p>
+              )}
+              <button type="button" className="secondary-button" onClick={() =>
+                change("claimChecks", [...input.claimChecks, {
+                  claim: "", evidenceIds: [], verified: false, privacyCleared: false,
+                }])}>
+                Add factual claim
+              </button>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Claims not entered here are not automatically fact-checked. A final human review remains required.
+              </p>
+            </section>
             <section className="rounded-xl border border-[var(--color-border)] p-4">
               <h3 className="font-semibold">Deterministic readiness</h3>
               <p className="mt-1 text-sm text-[var(--color-text-secondary)]">These checks do not prove that prose is factual, emotionally effective, or safe to disclose. Those require editorial and Career Evidence review.</p>
@@ -274,20 +430,16 @@ export function PersonalBrand() {
             </label>
             <div className="flex flex-wrap gap-3">
               <button type="button" disabled={busy} className="secondary-button" onClick={() => void run(async () => { await save(); setNotice("Draft saved in the Job Ranger database."); })}><Save className="h-4 w-4" /> Save draft</button>
-              <button type="button" disabled={busy || !reviewed || readiness.status === "blocked"} className="primary-button" onClick={copyPost}><ClipboardCopy className="h-4 w-4" /> Prepare and copy</button>
+              <button type="button" disabled={busy || !reviewed || readiness.status === "blocked" ||
+                (input.claimChecks.length > 0 && (evidenceLoading || Boolean(evidenceError) || staleEvidenceIds.length > 0))}
+                className="primary-button" onClick={copyPost}><ClipboardCopy className="h-4 w-4" /> Prepare and copy</button>
             </div>
             {currentPackage && !dirty && (
               <div className="space-y-2">
-                <button type="button" className="secondary-button" onClick={() => {
-                  if (!navigator.clipboard) {
-                    setNotice("Clipboard access is unavailable. Select the exact prepared text below to copy manually.");
-                    return;
-                  }
-                  void navigator.clipboard.writeText(currentPackage.body)
-                    .then(() => setNotice("Exact approved text copied."))
-                    .catch(() => setNotice("Clipboard access was denied. Select the exact prepared text below to copy manually."));
-                }}>
-                  <ClipboardCopy className="h-4 w-4" /> Copy prepared text again
+                <button type="button" className="secondary-button" disabled={busy || !reviewed ||
+                  evidenceLoading || Boolean(evidenceError) || staleEvidenceIds.length > 0}
+                  onClick={copyPost}>
+                  <ClipboardCopy className="h-4 w-4" /> Recheck evidence and copy
                 </button>
                 <textarea readOnly aria-label="Exact prepared post text" className="input-shell w-full min-h-[100px] text-sm" value={currentPackage.body} />
               </div>
