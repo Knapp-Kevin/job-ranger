@@ -131,7 +131,7 @@ test("linked factual claims fail closed after Career Evidence is superseded", as
   await page.getByRole("checkbox", { name: /private, confidential, or restricted/i }).check();
   await page.getByRole("checkbox", { name: /personally reviewed the exact content/i }).check();
   await page.getByRole("button", { name: "Prepare and copy" }).click();
-  await expect(page.getByLabel("Exact prepared post text")).toContainText("I coordinated appointment scheduling");
+  await expect(page.getByLabel("Exact prepared post text")).toHaveValue("I coordinated appointment scheduling for a community clinic.");
   const [updated] = await page.evaluate(() => window.electronAPI.personalBrand.listDrafts());
   expect(updated.revision).toBeGreaterThan(draft.revision);
   expect(updated.claimChecks[0].evidenceIds).toEqual([successor.id]);
