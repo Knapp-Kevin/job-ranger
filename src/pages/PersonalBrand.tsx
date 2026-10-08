@@ -76,6 +76,7 @@ export function PersonalBrand() {
   const [publishedUrl, setPublishedUrl] = useState("");
   const [publishedLocal, setPublishedLocal] = useState("");
   const [reviewed, setReviewed] = useState(false);
+  const [freshPreparedRevision, setFreshPreparedRevision] = useState<string | null>(null);
   const [evidenceRecords, setEvidenceRecords] = useState<CandidateEvidence[]>([]);
   const [evidenceLoading, setEvidenceLoading] = useState(true);
   const [evidenceError, setEvidenceError] = useState<string | null>(null);
@@ -86,6 +87,8 @@ export function PersonalBrand() {
   const [notice, setNotice] = useState("");
 
   const reloadEvidence = useCallback(async (): Promise<void> => {
+    // Hide selectable cached copy until it has passed a new backend evidence check.
+    setFreshPreparedRevision(null);
     setEvidenceLoading(true);
     try {
       const records = await getDesktopApi().career.listEvidence();
@@ -181,6 +184,7 @@ export function PersonalBrand() {
     }));
     setDirty(true);
     setReviewed(false);
+    setFreshPreparedRevision(null);
     setNotice("");
   };
   const updateClaim = (index: number, patch: Partial<PersonalBrandDraftInput["claimChecks"][number]>) => {
@@ -219,6 +223,7 @@ export function PersonalBrand() {
     // for already prepared revisions. A cached copy is never a bypass.
     const pkg = await getDesktopApi().personalBrand.prepareDraft(saved.id, saved.revision, reviewed);
     await refresh(saved.id);
+    setFreshPreparedRevision(`${saved.id}:r${saved.revision}`);
     try {
       await navigator.clipboard.writeText(pkg.body);
       setNotice("Approved text copied. Paste it into LinkedIn, then return with the permalink.");
@@ -279,14 +284,14 @@ export function PersonalBrand() {
             <div className="flex flex-wrap items-center justify-between gap-3">
               <h2 className="text-xl font-semibold">1. Compose and validate</h2>
               <button type="button" className="secondary-button" onClick={() => {
-                setSelected(null); setInput({ ...baseInput }); setReviewed(false); setPublishedConfirmed(false); setDirty(false); setError(null); setNotice("");
+                setSelected(null); setInput({ ...baseInput }); setReviewed(false); setFreshPreparedRevision(null); setPublishedConfirmed(false); setDirty(false); setError(null); setNotice("");
               }}>New post</button>
             </div>
             <label className="block text-sm font-semibold">Saved drafts
               <select className="input-shell mt-2 w-full" value={selected?.id ?? ""} onChange={(e) => {
                 const next = drafts.find((draft) => draft.id === e.target.value) ?? null;
                 setSelected(next); setInput(next ? inputFromDraft(next) : { ...baseInput });
-                setDirty(false); setReviewed(false); setPublishedConfirmed(false);
+                setDirty(false); setReviewed(false); setFreshPreparedRevision(null); setPublishedConfirmed(false);
               }}>
                 <option value="">New draft</option>
                 {drafts.map((draft) => <option key={draft.id} value={draft.id}>{draft.body.slice(0, 75) || "(untitled)"} · v{draft.revision}</option>)}
@@ -434,7 +439,8 @@ export function PersonalBrand() {
                 (input.claimChecks.length > 0 && (evidenceLoading || Boolean(evidenceError) || staleEvidenceIds.length > 0))}
                 className="primary-button" onClick={copyPost}><ClipboardCopy className="h-4 w-4" /> Prepare and copy</button>
             </div>
-            {currentPackage && !dirty && (
+            {currentPackage && !dirty && !evidenceLoading && !evidenceError &&
+              staleEvidenceIds.length === 0 && freshPreparedRevision === `${selected?.id}:r${selected?.revision}` && (
               <div className="space-y-2">
                 <button type="button" className="secondary-button" disabled={busy || !reviewed ||
                   evidenceLoading || Boolean(evidenceError) || staleEvidenceIds.length > 0}
