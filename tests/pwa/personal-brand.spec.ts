@@ -48,7 +48,7 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   const publications = await page.evaluate(() => window.electronAPI.personalBrand.listPublications());
   expect(publications).toHaveLength(1);
 
-  await page.getByLabel("Impressions").fill("300");
+  await page.getByRole("spinbutton", { name: "Impressions", exact: true }).fill("300");
   await page.getByLabel("Members reached").fill("200");
   await page.getByLabel("Profile views from post").fill("7");
   await page.getByRole("button", { name: "Save timestamped analytics" }).click();
@@ -183,8 +183,8 @@ test("comparison screen uses since-publication ages and shows non-causal suggest
   await page.goto(`${server.url}#/personal-brand`);
   await expect(page.getByRole("heading", { name: "4. Compare equivalent post ages" })).toBeVisible();
   await expect(page.getByText("2 comparable of 2 recorded LinkedIn posts")).toBeVisible();
-  await expect(page.getByText("10.00%")).toBeVisible();
-  await expect(page.getByText("3.00%")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "10.00%" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "3.00%" })).toBeVisible();
   await expect(page.getByText(/test one hook variation/i)).toBeVisible();
   await expect(page.getByText(/not proof of a winning hook/i)).toBeVisible();
 
