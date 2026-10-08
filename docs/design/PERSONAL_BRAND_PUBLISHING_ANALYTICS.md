@@ -2,7 +2,7 @@
 
 ## Status
 
-Proposed implementation contract for ADR-0001.
+Implemented in successive bounded slices; this document records both delivered capabilities and proposed follow-ons for ADR-0001.
 
 This design gives Job Ranger a concrete starting point for personal-brand publishing, post composition guidance, analytics, and career-outcome learning without requiring model inference.
 
@@ -41,6 +41,20 @@ The capability is a **Career Ops** surface. It is not a general social scheduler
 **Important limitation:** Linking is an explicit user assertion, not automated semantic entailment. No machine can infer from a selected record alone whether a factual sentence has been fully supported or whether confidential information may be disclosed. Posts containing unenumerated claims are still human review only (the core emits a warning, not fabricated verification). Full source lineage suggestions, semantic Truth Gate extension, post-age comparison UI and experiment recommendations are separate work.
 
 **Regression coverage:** The PWA browser workflow tests creating current user-authored Career Evidence, editing and approving a linked claim, persisting the association, superseding the evidence, disabling reuse, rejecting the attempted backend prepare with stale evidence, and re-linking to the successor with new human attestations. This test runs through the existing shared Electron/PWA API in CI. No schema migration or additional provider permissions are required.
+
+## Comparable-age analytics and explainable experiments (fourth implementation slice, 2026-10-08)
+
+**Implemented:** `src/shared/personal-brand-learning.ts` is a pure deterministic read projection over existing Personal Brand receipts, current persisted drafts and append-only analytics snapshots. `src/pages/PersonalBrand.tsx` now displays a cohort comparison and descriptive next-experiment suggestion. It reads every publication's existing `listSnapshots(postId)` through the shared runtime API and refreshes after a newly entered snapshot. No schema migration, extra provider credentials, ChatGPT integration, automatic posting, or inference is introduced.
+
+**Comparable windows:** 24 hours ±3 hours, 48 hours ±6 hours, or 7 days ±12 hours. Cohort age is calculated from each snapshot's **`windowEnd - publishedAt`**, never from the later entry/capture time. Comparisons require a cumulative observation window starting within 15 minutes of actual publication, the selected platform, and the nearest eligible snapshot for each post. The nearest snapshot is chosen **before inspecting its metric values**, to avoid choosing a convenient number. User-selectable outcomes include impressions, unique reached, fully observed engagement components divided by reached, attributed profile views divided by reached, and attributed followers divided by reached. Blank, unknown, estimated, zero-denominator, and partial engagement inputs are excluded with specific reasons. A measured zero with a positive denominator remains an observed zero.
+
+**Honest provenance and versioning:** Rows display the metric's manual/provider observation state, source label, observation age, and exclusion reason. Different source labels and manually transcribed figures raise explicit caveats. If a post's current draft revision does not match its published revision, its historical objective, hook and format are marked unknown. The app does not fabricate metadata from the revised draft. Comparing content attributes is suppressed for such cases.
+
+**Learning output:** With two or more eligible observations, the engine describes a testable one-variable next experiment. Only when two posts have matching known objectives and formats, different known hooks, and comparable observations does it propose a hook variation. It **never** calls one hook a proven winner, predicts reach, asserts platform-label penalties, or attributes hiring outcomes to social posts. With insufficient compatible observations it asks for matching cumulative data instead of ranking posts. The renderer shows included and excluded rows rather than silently dropping weak data.
+
+**Validation:** `tests/personal-brand-learning.test.mjs` covers measurement-window vs capture-time discrepancies, exact/boundary age tolerances, absent/estimated metrics, zero-denominator behavior, complete engagement arithmetic, nearest-snapshot selection, stale draft metadata, different platforms, mixed sources and advisory language. Both normal and unit test commands run it. `tests/pwa/personal-brand.spec.ts` adds a browser end-to-end path for two real local publications, delayed capture of cumulative 24-hour metrics, measured rate comparisons, missing 48-hour windows, missing response components, and persistence across page reloads. Existing PWA/Electron portability and release-upgrade checks remain required.
+
+**Remaining:** Learning cannot control for algorithmic distribution, publication time, audience differences, topical sentiment, or actual interview invitations. The next improvements should include richer **user-verified career outcome attribution** and repeatable experiment planning. Provider integrations and the ChatGPT plugin (#173) are separate, optional tracks; standalone determinism remains the baseline.
 
 ## Core principle
 

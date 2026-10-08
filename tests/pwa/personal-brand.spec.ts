@@ -48,9 +48,9 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   const publications = await page.evaluate(() => window.electronAPI.personalBrand.listPublications());
   expect(publications).toHaveLength(1);
 
-  await page.getByLabel("Impressions").fill("300");
-  await page.getByLabel("Members reached").fill("200");
-  await page.getByLabel("Profile views from post").fill("7");
+  await page.getByRole("spinbutton", { name: "Impressions", exact: true }).fill("300");
+  await page.getByRole("spinbutton", { name: "Members reached", exact: true }).fill("200");
+  await page.getByRole("spinbutton", { name: "Profile views from post", exact: true }).fill("7");
   await page.getByRole("button", { name: "Save timestamped analytics" }).click();
   await expect(page.getByText("Profile visits/reached:")).toBeVisible();
   await expect(page.getByText("3.50%")).toBeVisible();
@@ -139,4 +139,65 @@ test("linked factual claims fail closed after Career Evidence is superseded", as
   const [updated] = await page.evaluate(() => window.electronAPI.personalBrand.listDrafts());
   expect(updated.revision).toBeGreaterThan(draft.revision);
   expect(updated.claimChecks[0].evidenceIds).toEqual([successor.id]);
+});
+
+test("comparison screen uses since-publication ages and shows non-causal suggestions", async ({ page }) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+
+  // Screenshots recorded days later should still compare at the time their
+  // cumulative analytics window ended. User-entered metrics remain manual.
+  await page.evaluate(async () => {
+    const api = window.electronAPI.personalBrand;
+    for (const [index, hook, views] of [
+      [0, "concrete_experience", 10],
+      [1, "contradiction", 3],
+    ] as const) {
+      const draft = await api.createDraft({
+        body: `A verifiable experience from my professional journey ${index}.`,
+        objective: "recruiter_discovery", audiences: ["hiring managers"],
+        destination: "linkedin", format: "text", hookArchetype: hook,
+        hypothesis: "Compare professional profile discovery.",
+        claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+      });
+      await api.prepareDraft(draft.id, draft.revision, true);
+      const publishedAt = new Date(Date.now() - (index + 5) * 86400000).toISOString();
+      const receipt = await api.confirmPublication({
+        draftId: draft.id, revision: draft.revision,
+        publishedUrl: `https://www.linkedin.com/feed/update/urn:li:activity:learning-${index}`,
+        publishedAt, userConfirmed: true,
+      });
+      await api.appendSnapshot(receipt.postId, {
+        capturedAt: new Date().toISOString(),
+        windowStart: publishedAt,
+        windowEnd: new Date(Date.parse(publishedAt) + 24 * 3600000).toISOString(),
+        sourceLabel: "Manually transcribed individual post metrics",
+        observations: [
+          { name: "profile_views", state: "manual", value: views },
+          { name: "reached", state: "manual", value: 100 },
+        ],
+      });
+    }
+  });
+
+  await page.goto(`${server.url}#/personal-brand`);
+  await expect(page.getByRole("heading", { name: "4. Compare equivalent post ages" })).toBeVisible();
+  await expect(page.getByText("2 comparable of 2 recorded LinkedIn posts")).toBeVisible();
+  await expect(page.getByRole("cell", { name: "10.00%" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "3.00%" })).toBeVisible();
+  await expect(page.getByText(/test one hook variation/i)).toBeVisible();
+  await expect(page.getByText(/not proof of a winning hook/i)).toBeVisible();
+
+  await page.getByLabel("Observation age").selectOption("48");
+  await expect(page.getByText("0 comparable of 2 recorded LinkedIn posts")).toBeVisible();
+  await expect(page.getByText(/Insufficient comparable data/)).toBeVisible();
+  await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
+  await page.getByLabel("Observation age").selectOption("24");
+  await page.getByLabel("Outcome measure").selectOption("engagements_per_reached");
+  await expect(page.getByText("0 comparable of 2 recorded LinkedIn posts")).toBeVisible();
+  await expect(page.getByText(/At least one required metric is unavailable/i).first()).toBeVisible();
+  await page.reload();
+  await waitForRuntime(page);
+  await expect(page.getByRole("heading", { name: "4. Compare equivalent post ages" })).toBeVisible();
+  await expect(page.getByText("2 comparable of 2 recorded LinkedIn posts")).toBeVisible();
 });
