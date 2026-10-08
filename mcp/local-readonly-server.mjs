@@ -35,8 +35,8 @@ function options(argv) {
   const scopeList = values.get("scopes");
   if (!dataDir || !path.isAbsolute(dataDir) || !scopeList)
     throw new Error("An absolute --data-dir and explicit --scopes are mandatory. Nothing is enabled by default.");
-  const scopes = scopeList.split(",").map((s) => s.trim());
-  if (!scopes.length || scopes.some((scope) => !READ_SCOPES.includes(scope)) ||
+  const scopes = scopeList === "none" ? [] : scopeList.split(",").map((s) => s.trim());
+  if (scopes.some((scope) => !READ_SCOPES.includes(scope)) ||
       new Set(scopes).size !== scopes.length)
     throw new Error("Only unique supported read scopes may be granted.");
   return { dataDir, scopes };
