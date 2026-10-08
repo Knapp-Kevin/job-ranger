@@ -8,6 +8,9 @@ import {
   type PersonalBrandDraft, type MetricName,
 } from "../shared/personal-brand";
 import type { PersonalBrandDraftInput } from "../shared/personal-brand-api";
+import {
+  buildPersonalBrandLearningReport, type LearningMetric, type LearningWindowHours,
+} from "../shared/personal-brand-learning";
 import type { CandidateEvidence } from "../shared/contracts";
 
 const baseInput: PersonalBrandDraftInput = {
@@ -71,6 +74,12 @@ export function PersonalBrand() {
   const [publications, setPublications] = useState<ManualPublicationReceipt[]>([]);
   const [postId, setPostId] = useState("");
   const [snapshots, setSnapshots] = useState<AnalyticsSnapshot[]>([]);
+  const [cohortSnapshots, setCohortSnapshots] = useState<Record<string, AnalyticsSnapshot[]>>({});
+  const [cohortRevision, setCohortRevision] = useState(0);
+  const [cohortLoading, setCohortLoading] = useState(false);
+  const [cohortError, setCohortError] = useState<string | null>(null);
+  const [cohortAge, setCohortAge] = useState<LearningWindowHours>(24);
+  const [cohortMetric, setCohortMetric] = useState<LearningMetric>("profile_views_per_reached");
   const [metrics, setMetrics] = useState<Partial<Record<MetricName, string>>>({});
   const [metricsSource, setMetricsSource] = useState("LinkedIn post analytics (manual entry)");
   const [publishedUrl, setPublishedUrl] = useState("");
@@ -148,6 +157,36 @@ export function PersonalBrand() {
       .catch((cause) => { if (live) setError(cause instanceof Error ? cause.message : String(cause)); });
     return () => { live = false; };
   }, [postId]);
+
+  useEffect(() => {
+    let live = true;
+    const load = async () => {
+      setCohortLoading(true);
+      setCohortError(null);
+      try {
+        const pairs = await Promise.all(publications.map(async (receipt) => [
+          receipt.postId, await getDesktopApi().personalBrand.listSnapshots(receipt.postId),
+        ] as const));
+        if (live) setCohortSnapshots(Object.fromEntries(pairs));
+      } catch (cause) {
+        if (live) {
+          setCohortError(cause instanceof Error ? cause.message : "Unable to load comparable post analytics.");
+          setCohortSnapshots({});
+        }
+      } finally { if (live) setCohortLoading(false); }
+    };
+    void load();
+    return () => { live = false; };
+  }, [publications, cohortRevision]);
+
+  const learning = useMemo(() => buildPersonalBrandLearningReport(
+    publications.map((receipt) => ({
+      receipt,
+      snapshots: cohortSnapshots[receipt.postId] ?? [],
+      draft: drafts.find((draft) => draft.id === receipt.draftId),
+    })),
+    cohortAge, cohortMetric,
+  ), [publications, cohortSnapshots, drafts, cohortAge, cohortMetric]);
 
   const current = useMemo<PersonalBrandDraft>(() => ({
     ...input, id: selected?.id ?? "new-draft", revision: selected?.revision ?? 1,
@@ -267,6 +306,7 @@ export function PersonalBrand() {
       observations,
     });
     setSnapshots(await getDesktopApi().personalBrand.listSnapshots(postId));
+    setCohortRevision((value) => value + 1);
     setMetrics({});
     setNotice("Timestamped analytics saved with manual provenance. Empty fields remain unavailable, not zero.");
   });
@@ -503,6 +543,99 @@ export function PersonalBrand() {
                 </div>
                 <p className="text-xs text-[var(--color-text-secondary)]">{summary.caveat} {snapshots.length} snapshot(s) saved.</p>
               </div>
+            )}
+          </section>
+          <section className="panel panel-strong p-6 space-y-4">
+            <h2 className="text-xl font-semibold">4. Compare equivalent post ages</h2>
+            <p className="text-sm text-[var(--color-text-secondary)]">
+              Compare observed cumulative totals at similar post ages, not screenshots
+              captured at different times. No prediction, invented values, or causal attribution.
+            </p>
+            <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+              <label className="block text-sm font-semibold">Observation age
+                <select className="input-shell mt-2 w-full" value={cohortAge}
+                  onChange={(event) => setCohortAge(Number(event.target.value) as LearningWindowHours)}>
+                  <option value={24}>About 24 hours (±3h)</option>
+                  <option value={48}>About 48 hours (±6h)</option>
+                  <option value={168}>About 7 days (±12h)</option>
+                </select>
+              </label>
+              <label className="block text-sm font-semibold">Outcome measure
+                <select className="input-shell mt-2 w-full" value={cohortMetric}
+                  onChange={(event) => setCohortMetric(event.target.value as LearningMetric)}>
+                  <option value="profile_views_per_reached">Attributed profile views / reached</option>
+                  <option value="engagements_per_reached">Engagements / reached</option>
+                  <option value="followers_per_reached">Attributed followers / reached</option>
+                  <option value="reached">Members reached</option>
+                  <option value="impressions">Impressions</option>
+                </select>
+              </label>
+            </div>
+            <div className="flex flex-wrap items-center gap-3">
+              <button type="button" className="secondary-button" disabled={cohortLoading}
+                onClick={() => setCohortRevision((value) => value + 1)}>Refresh observations</button>
+              <p role="status" className="text-sm text-[var(--color-text-secondary)]">
+                {cohortLoading ? "Loading post observations..." :
+                  `${learning.eligibleCount} comparable of ${learning.rows.length} recorded LinkedIn posts`}
+              </p>
+            </div>
+            {cohortError && <p role="alert" className="text-sm text-[var(--color-danger)]">{cohortError}</p>}
+            {!cohortLoading && !cohortError && (
+              <>
+                <div className="overflow-x-auto rounded-xl border border-[var(--color-border)]">
+                  <table className="w-full text-left text-sm">
+                    <thead><tr className="border-b border-[var(--color-border)]">
+                      <th scope="col" className="p-3">Post</th>
+                      <th scope="col" className="p-3">Observed age</th>
+                      <th scope="col" className="p-3">{learning.label}</th>
+                      <th scope="col" className="p-3">Evidence and limitations</th>
+                    </tr></thead>
+                    <tbody>
+                      {learning.rows.map((row) => (
+                        <tr key={row.postId} className="border-b border-[var(--color-border)] last:border-0">
+                          <td className="p-3 align-top">
+                            <a className="underline break-all" href={row.publishedUrl} target="_blank"
+                              rel="noopener noreferrer">{new Date(row.publishedAt).toLocaleDateString()}</a>
+                            <p className="text-xs text-[var(--color-text-secondary)]">
+                              {row.metadataCurrent ? `${row.objective ?? "No objective"} · ${row.hook ?? "No hook"}` :
+                                "Historical hook/objective not available"}
+                            </p>
+                          </td>
+                          <td className="p-3 align-top">{row.observedAgeHours === null ?
+                            "Unavailable" : `${row.observedAgeHours.toFixed(1)}h`}</td>
+                          <td className="p-3 align-top font-semibold tabular-nums">
+                            {row.value === null ? "Unavailable" : learning.units === "rate" ?
+                              `${(row.value * 100).toFixed(2)}%` : row.value.toLocaleString()}
+                          </td>
+                          <td className="p-3 align-top">
+                            <p>{row.reason}</p>
+                            {row.sourceLabel && <p className="mt-1 text-xs text-[var(--color-text-secondary)]">
+                              {row.sourceLabel} · {row.states.join(", ") || "required metric not recorded"}
+                            </p>}
+                          </td>
+                        </tr>
+                      ))}
+                      {learning.rows.length === 0 && (
+                        <tr><td colSpan={4} className="p-4 text-[var(--color-text-secondary)]">
+                          No manually recorded LinkedIn posts yet.
+                        </td></tr>
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+                <div className="rounded-xl border border-[var(--color-border)] p-4 space-y-3">
+                  <h3 className="font-semibold">Next experiment, based on available observations</h3>
+                  <p className="text-sm">{learning.recommendation}</p>
+                  <p className="text-xs text-[var(--color-text-secondary)]">
+                    {learning.comparisonPossible ?
+                      "This is a testable suggestion, not a prediction or proof of a winning format." :
+                      "Insufficient comparable data. No post is ranked as a winner."}
+                  </p>
+                  <ul className="list-disc pl-5 space-y-1 text-xs text-[var(--color-text-secondary)]">
+                    {learning.caveats.map((caveat) => <li key={caveat}>{caveat}</li>)}
+                  </ul>
+                </div>
+              </>
             )}
           </section>
         </div>
