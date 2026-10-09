@@ -43,6 +43,18 @@ export function initializePersonalBrandIpc(options: {
     await ready;
     return backend.listSnapshots(postId);
   });
+  ipcMain.handle("personal-brand:list-linkedin-imports", async () => {
+    await ready;
+    return backend.listLinkedInImports();
+  });
+  ipcMain.handle("personal-brand:save-linkedin-import", async (_event, preview: unknown, confirmed: boolean) => {
+    await ready;
+    return backend.saveLinkedInImport(preview, confirmed);
+  });
+  ipcMain.handle("personal-brand:delete-linkedin-import", async (_event, id: string, confirmed: boolean) => {
+    await ready;
+    return backend.deleteLinkedInImport(id, confirmed);
+  });
   ipcMain.handle("personal-brand:list-career-outcomes", async () => {
     await ready;
     return backend.listCareerOutcomes();
