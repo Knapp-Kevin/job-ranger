@@ -61,7 +61,7 @@ function readSheet(bytes: Uint8Array, shared: string[], name: string): unknown[]
       const raw = descendants(entry, "v")[0]?.textContent ?? "";
       let value: unknown = null;
       if (type === "s") {
-        if (!/^\d+$/.test(raw) || !shared[Number(raw)]) throw new Error("Invalid XLSX shared string index.");
+        if (!/^\d+$/.test(raw) || Number(raw) >= shared.length) throw new Error("Invalid XLSX shared string index.");
         value = shared[Number(raw)];
       } else if (type === "inlineStr") {
         value = descendants(entry, "t").map(t => t.textContent ?? "").join("");
