@@ -15,6 +15,7 @@ import {
 import type { CandidateEvidence } from "../shared/contracts";
 import { normalizeLinkedInAnalyticsExport, type LinkedInExportPreview } from "../shared/linkedin-analytics";
 import { readLinkedInXlsx } from "../browser/linkedin-xlsx";
+import type { SavedLinkedInExport } from "../shared/linkedin-import-ledger";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
@@ -88,6 +89,11 @@ export function PersonalBrand() {
   const [linkedinPreview, setLinkedinPreview] = useState<LinkedInExportPreview | null>(null);
   const [linkedinImportError, setLinkedinImportError] = useState<string | null>(null);
   const [linkedinImportBusy, setLinkedinImportBusy] = useState(false);
+  const [linkedinSaved, setLinkedinSaved] = useState<SavedLinkedInExport[]>([]);
+  const [linkedinReviewed, setLinkedinReviewed] = useState(false);
+  const [linkedinDeleteId, setLinkedinDeleteId] = useState("");
+  const [linkedinDeleteConfirmed, setLinkedinDeleteConfirmed] = useState(false);
+  const [linkedinImportMessage, setLinkedinImportMessage] = useState("");
   const [publishedUrl, setPublishedUrl] = useState("");
   const [publishedLocal, setPublishedLocal] = useState("");
   const [reviewed, setReviewed] = useState(false);
@@ -317,8 +323,55 @@ export function PersonalBrand() {
     setNotice("Timestamped analytics saved with manual provenance. Empty fields remain unavailable, not zero.");
   });
 
+  useEffect(() => {
+    let live = true;
+    void getDesktopApi().personalBrand.listLinkedInImports().then(items => {
+      if (live) setLinkedinSaved(items);
+    }).catch(cause => {
+      if (live) setLinkedinImportError(cause instanceof Error ? cause.message : "Could not load LinkedIn import history.");
+    });
+    return () => { live = false; };
+  }, []);
+
+  const saveLinkedInPreview = async (): Promise<void> => {
+    if (!linkedinPreview || !linkedinReviewed || linkedinImportBusy) return;
+    setLinkedinImportBusy(true);
+    setLinkedinImportError(null);
+    setLinkedinImportMessage("");
+    try {
+      const result = await getDesktopApi().personalBrand.saveLinkedInImport(linkedinPreview, true);
+      setLinkedinSaved(await getDesktopApi().personalBrand.listLinkedInImports());
+      setLinkedinImportMessage(result.alreadyPresent
+        ? "This exact normalized export was already saved. No duplicate records were created."
+        : "LinkedIn analytics saved in the local Job Ranger database and included in backups.");
+      setLinkedinReviewed(false);
+    } catch (cause) {
+      setLinkedinImportError(cause instanceof Error ? cause.message : "Could not save LinkedIn analytics.");
+    } finally {
+      setLinkedinImportBusy(false);
+    }
+  };
+  const deleteLinkedInSaved = async (): Promise<void> => {
+    if (!linkedinDeleteId || !linkedinDeleteConfirmed || linkedinImportBusy) return;
+    setLinkedinImportBusy(true);
+    setLinkedinImportError(null);
+    try {
+      await getDesktopApi().personalBrand.deleteLinkedInImport(linkedinDeleteId, true);
+      setLinkedinSaved(await getDesktopApi().personalBrand.listLinkedInImports());
+      setLinkedinDeleteId("");
+      setLinkedinDeleteConfirmed(false);
+      setLinkedinImportMessage("Selected LinkedIn export removed from this Job Ranger database.");
+    } catch (cause) {
+      setLinkedinImportError(cause instanceof Error ? cause.message : "Could not delete LinkedIn analytics.");
+    } finally {
+      setLinkedinImportBusy(false);
+    }
+  };
+
   const previewLinkedInWorkbook = async (file: File | null): Promise<void> => {
     setLinkedinPreview(null);
+    setLinkedinReviewed(false);
+    setLinkedinImportMessage("");
     setLinkedinImportError(null);
     if (!file) return;
     if (!/\.xlsx$/i.test(file.name) || file.size > 4 * 1024 * 1024) {
@@ -577,9 +630,10 @@ export function PersonalBrand() {
               </p>
               {linkedinImportBusy && <p role="status">Reading workbook locally...</p>}
               {linkedinImportError && <p role="alert" className="text-sm text-[var(--color-danger)]">{linkedinImportError}</p>}
+              {linkedinImportMessage && <p role="status" className="text-sm">{linkedinImportMessage}</p>}
               {linkedinPreview && (
                 <div className="space-y-3 text-sm" data-testid="linkedin-preview-results" role="region" aria-label="LinkedIn analytics workbook preview">
-                  <p className="font-semibold">Preview only, not saved: {linkedinPreview.period.start} through {linkedinPreview.period.end}</p>
+                  <p className="font-semibold">Export review: {linkedinPreview.period.start} through {linkedinPreview.period.end} (not saved unless confirmed)</p>
                   <dl className="grid grid-cols-2 gap-2 md:grid-cols-4">
                     <div><dt>Impressions</dt><dd className="font-semibold">{linkedinPreview.discovery.impressions.toLocaleString()}</dd></div>
                     <div><dt>Members reached</dt><dd className="font-semibold">{linkedinPreview.discovery.membersReached.toLocaleString()}</dd></div>
@@ -595,6 +649,12 @@ export function PersonalBrand() {
                       </ul>
                     </div>
                   )}
+                  <label className="flex items-center gap-3 text-sm">
+                    <input type="checkbox" checked={linkedinReviewed} onChange={event => setLinkedinReviewed(event.target.checked)} />
+                    <span>I reviewed the reporting period, metrics and warnings. Save this snapshot without merging overlapping exports or attributing outcomes.</span>
+                  </label>
+                  <button type="button" className="primary-button" disabled={!linkedinReviewed || linkedinImportBusy}
+                    onClick={() => { void saveLinkedInPreview(); }}>Review and save LinkedIn export</button>
                   <div className="max-h-72 overflow-auto" tabIndex={0} aria-label="Sample of ranked post observations">
                     <table className="w-full text-left text-xs">
                       <caption className="text-left font-semibold mb-2">Top posts (sample; missing values are unknown)</caption>
@@ -611,6 +671,36 @@ export function PersonalBrand() {
                   </div>
                 </div>
               )}
+              <div className="rounded-lg border border-[var(--color-border)] p-3 space-y-3" data-testid="linkedin-import-ledger">
+                <h4 className="font-semibold">Saved LinkedIn exports ({linkedinSaved.length})</h4>
+                <p className="text-xs text-[var(--color-text-secondary)]">Overlapping exports are separate observations, never summed together. Original .xlsx files are not stored; preserve your originals. Deleting an import does not modify career evidence or manually recorded post snapshots.</p>
+                {linkedinSaved.length > 0 && (
+                  <>
+                    <ul className="space-y-2 text-sm">
+                      {linkedinSaved.map(item => (
+                        <li key={item.id} className="break-words">
+                          {item.preview.period.start} to {item.preview.period.end} · imported {new Date(item.importedAt).toLocaleString()} · {item.preview.daily.length} daily rows · {item.contentSha256.slice(0, 12)}
+                        </li>
+                      ))}
+                    </ul>
+                    <label className="block text-sm font-medium">Select an import to delete
+                      <select className="input-shell mt-2 w-full" value={linkedinDeleteId}
+                        onChange={event => { setLinkedinDeleteId(event.target.value); setLinkedinDeleteConfirmed(false); }}>
+                        <option value="">No import selected</option>
+                        {linkedinSaved.map(item => <option key={item.id} value={item.id}>{item.preview.period.start} to {item.preview.period.end} · {item.contentSha256.slice(0, 12)}</option>)}
+                      </select>
+                    </label>
+                    <label className="flex items-center gap-2 text-sm">
+                      <input type="checkbox" checked={linkedinDeleteConfirmed}
+                        onChange={event => setLinkedinDeleteConfirmed(event.target.checked)} />
+                      <span>I confirm deletion of the selected imported snapshot.</span>
+                    </label>
+                    <button className="secondary-button" type="button"
+                      disabled={!linkedinDeleteId || !linkedinDeleteConfirmed || linkedinImportBusy}
+                      onClick={() => { void deleteLinkedInSaved(); }}>Delete selected export</button>
+                  </>
+                )}
+              </div>
             </div>
             <label className="block text-sm font-semibold">Published post
               <select className="input-shell mt-2 w-full" value={postId} onChange={(e) => setPostId(e.target.value)}>
