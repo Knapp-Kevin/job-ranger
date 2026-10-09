@@ -3,8 +3,7 @@
  * No network, inference, persistence, user profiling, ranking or authority transfer.
  * This is NOT a production claim-display or evidence review workflow.
  */
-import { assessStructuralContext, validateStructuralContext } from "./structural-signals.ts";
-import type { StructuralContextBundle, ScenarioOutcome } from "./structural-signals.ts";
+import type { StructuralContextBundle, StructuralContextAssessment, ScenarioOutcome } from "./structural-signals.js";
 
 const outcomes: Record<ScenarioOutcome, string> = {
   augmentation: "Work may be augmented",
@@ -44,14 +43,13 @@ export interface SyntheticScenarioBoard {
 
 /** Requires explicit fictional-fixture opt-in even for this inert calculation. */
 export function buildSyntheticScenarioBoard(
-  untrusted: unknown,
+  context: StructuralContextBundle,
+  assessed: StructuralContextAssessment,
   options: { fictionalFixture: true },
 ): SyntheticScenarioBoard {
   if (options?.fictionalFixture !== true) {
     throw new Error("Synthetic-only scenario board: explicit fixture opt-in required");
   }
-  const context: StructuralContextBundle = validateStructuralContext(untrusted);
-  const assessed = assessStructuralContext(context);
   const byId = new Map(assessed.signals.map(s => [s.signalId, s]));
   const signals = new Map(context.signals.map(s => [s.id, s]));
   return {
