@@ -86,6 +86,8 @@ export interface SignalAssessment {
   layer: SignalLayer;
   claimKind: ClaimKind;
   reviewState: ReviewState;
+  origin: CollectionOrigin;
+  citationRights: CitationRights;
   relevance: SignalRelevance;
   recency: SignalRecency;
   /** Cross-references are warnings, NOT adjudication of which claim is true. */
@@ -405,6 +407,7 @@ export function assessStructuralContext(input: unknown): StructuralContextAssess
     if (signal.methodologyLimits.length === 0) cautions.push("No methodological limitations supplied; this does not imply there are none.");
     return {
       signalId: signal.id, layer: signal.layer, claimKind: signal.claimKind, reviewState: signal.reviewState,
+      origin: signal.origin, citationRights: signal.citation.rights,
       relevance, recency, counterSignalIds, cautions,
     };
   });
@@ -412,14 +415,16 @@ export function assessStructuralContext(input: unknown): StructuralContextAssess
   const scenarios: ScenarioAssessment[] = context.scenarios.map(scenario => {
     const assessed = scenario.signalIds.map(id => byId.get(id)!);
     const contextualSignalIds = assessed.filter(s => (
-      s.relevance === "matching-scope" && s.recency === "recent" &&
+      s.layer === scenario.layer && s.relevance === "matching-scope" && s.recency === "recent" &&
       s.claimKind === "observation" && s.reviewState === "reviewed" &&
+      s.origin !== "inference-proposed" && s.citationRights !== "unclear" &&
       s.counterSignalIds.length === 0
     )).map(s => s.signalId);
     const counterScenarioIds = contradictoryScenarios.get(scenario.id)!;
     const cautions = ["Scenario remains a hypothesis; source metadata does not verify demand, employment or company viability."];
     if (assessed.length === 0) cautions.push("No external evidence records are linked.");
     if (assessed.length && contextualSignalIds.length === 0) cautions.push("No current, precisely in-scope, reviewed uncontested observation is linked.");
+    if (assessed.some(s => s.layer !== scenario.layer)) cautions.push("Task-level changes alone do not prove employer viability or industry-wide change; layer-specific observations are required.");
     if (assessed.some(s => s.relevance !== "matching-scope")) cautions.push("One or more sources have incomplete or mismatched sector, geographic, or business-model coverage.");
     if (assessed.some(s => s.recency !== "recent")) cautions.push("Some linked observations are stale or postdate the requested as-of date.");
     if (assessed.some(s => s.claimKind === "projection")) cautions.push("Forecast material is not evidence an outcome occurred.");
