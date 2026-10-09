@@ -515,6 +515,28 @@ export function PersonalBrand() {
 
           <section className="panel panel-strong p-6 space-y-4">
             <h2 className="text-xl font-semibold">3. Observe and learn</h2>
+            <details className="rounded-xl border border-[var(--color-border)] p-4 space-y-3" data-testid="linkedin-analytics-export-guide">
+              <summary className="cursor-pointer font-semibold">How to export your LinkedIn analytics (Excel)</summary>
+              <div className="pt-3 space-y-3 text-sm text-[var(--color-text-secondary)]">
+                <p>Use LinkedIn's own export. No LinkedIn developer API or account connection is needed.</p>
+                <ol className="list-decimal pl-6 space-y-1">
+                  <li>On LinkedIn desktop, open <strong>Me → View Profile</strong>.</li>
+                  <li>Scroll to <strong>Analytics</strong> and select <strong>Show all</strong> or <strong>Show all analytics</strong>.</li>
+                  <li>Select <strong>Post impressions</strong> to open combined post analytics.</li>
+                  <li>Choose a reporting period, such as <strong>Past 365 days</strong>, from the date-range menu.</li>
+                  <li>Select <strong>Export</strong> in the upper-right corner and save the <strong>.XLSX</strong> file.</li>
+                </ol>
+                <p>For audience and follower trends, open <strong>Total followers</strong> in Analytics, select the date range, and export separately.</p>
+                <p>
+                  <a className="underline underline-offset-2" href="https://www.linkedin.com/help/linkedin/answer/a703268"
+                    target="_blank" rel="noopener noreferrer">
+                    LinkedIn Help: View your creator analytics (official instructions)
+                  </a>
+                </p>
+                <p>LinkedIn can change its labels or navigation. Follow the linked official help article if the steps differ.</p>
+                <p><strong>Current limitation:</strong> Job Ranger does not yet import the exported workbook. Keep the original .XLSX unchanged for the planned importer. The fields below are manual, per-post observations, not an upload destination for aggregated statistics. Do not copy account-wide totals into a single post.</p>
+              </div>
+            </details>
             <label className="block text-sm font-semibold">Published post
               <select className="input-shell mt-2 w-full" value={postId} onChange={(e) => setPostId(e.target.value)}>
                 <option value="">Select a publication</option>
