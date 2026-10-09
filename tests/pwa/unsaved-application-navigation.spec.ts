@@ -49,10 +49,49 @@ test("a rejected notes save blocks leaving until the user explicitly chooses wha
   await expect(page.getByRole("dialog", { name: "Leave with unsaved changes?" })).toBeVisible();
   await page.getByRole("dialog").getByRole("button", { name: "Stay on this page" }).click();
   await expect(notes).toHaveValue("Carefully recorded interview notes not yet persisted");
+  await page.getByRole("link", { name: "Find Jobs" }).click();
+  await page.getByRole("dialog", { name: "Leave with unsaved changes?" })
+    .getByRole("button", { name: "Leave without saving" }).click();
+  await expect(page).toHaveURL(/#\/jobs$/);
+  await page.getByRole("link", { name: "Applications" }).click();
+  await expect(page.getByRole("textbox", { name: "Notes" })).toHaveValue("");
 });
 
 test("clean application navigation is not blocked", async ({ page }) => {
   await seedTrackedApplication(page);
   await page.getByRole("link", { name: "Find Jobs" }).click();
   await expect(page).toHaveURL(/#\/jobs$/);
+});
+
+
+test("a pending status write blocks route navigation until the canonical update completes", async ({ page }) => {
+  const id = await seedTrackedApplication(page);
+  await page.evaluate(() => {
+    const original = window.electronAPI.applications.update.bind(window.electronAPI.applications);
+    (window as unknown as { releaseStatus?: () => void }).releaseStatus = undefined;
+    window.electronAPI.applications.update = async (applicationId, patch) => {
+      if (patch.status !== undefined) {
+        await new Promise<void>((resolve) => {
+          (window as unknown as { releaseStatus?: () => void }).releaseStatus = resolve;
+        });
+      }
+      return original(applicationId, patch);
+    };
+  });
+  const select = page.getByRole("combobox", { name: /Application status for/ });
+  await select.selectOption("interview");
+  await expect(page.getByRole("status", { name: "Application status save status" }))
+    .toContainText("Saving status");
+  await page.getByRole("link", { name: "Career Profile" }).click();
+  const dialog = page.getByRole("dialog", { name: "Leave with unsaved changes?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stay on this page" }).click();
+  await expect(select).toHaveValue("interview");
+  await page.evaluate(() => (window as unknown as { releaseStatus: () => void }).releaseStatus());
+  await expect(page.getByRole("status", { name: "Application status save status" }))
+    .toContainText("Saved");
+  expect((await page.evaluate(() => window.electronAPI.applications.list()))
+    .find((row) => row.id === id)?.status).toBe("interview");
+  await page.getByRole("link", { name: "Career Profile" }).click();
+  await expect(page).toHaveURL(/#\/career-profile$/);
 });
