@@ -114,6 +114,38 @@ const taskLeap = assessStructuralContext(mutate(v => {
 assert.deepEqual(taskLeap.scenarios[0].contextualSignalIds, []);
 assert.ok(taskLeap.scenarios[0].cautions.some(text => /Task-level changes alone/.test(text)));
 
+// Diverse, genuinely different industry scopes share the same domain contract.
+// They assert *relevance and uncertainty*, not made-up real-world job demand.
+for (const [industry, model, event, layer] of [
+  ["Regulated healthcare", "Outpatient clinic", "regulatory-change", "industry"],
+  ["Skilled trades", "Electrical contracting", "employment-change", "task"],
+  ["Local services", "Home maintenance", "market-entry", "business-model"],
+]) {
+  const industrySignal = observation("s-scoped-fixture", {
+    layer, event,
+    scope: { geographies: ["Annapolis"], industries: [industry], businessModels: [model] },
+    methodologyLimits: ["Local synthetic observations cannot justify national conclusions"],
+  });
+  const context = {
+    asOf: "2026-10-09",
+    market: { geography: "Annapolis", industry, businessModel: model },
+    signals: [industrySignal],
+    scenarios: [{
+      ...entryScenario, id: "h-scoped-fixture", layer,
+      signalIds: ["s-scoped-fixture"], counterScenarioIds: [],
+    }],
+  };
+  const inScope = assessStructuralContext(context);
+  assert.equal(inScope.signals[0].relevance, "matching-scope");
+  assert.deepEqual(inScope.scenarios[0].contextualSignalIds, ["s-scoped-fixture"]);
+  assert.equal(inScope.scenarios[0].authority, "hypothesis-only");
+  const wrongIndustry = assessStructuralContext({
+    ...context, market: { ...context.market, industry: "Another industry" },
+  });
+  assert.equal(wrongIndustry.signals[0].relevance, "out-of-scope");
+  assert.deepEqual(wrongIndustry.scenarios[0].contextualSignalIds, []);
+}
+
 // Matching is literal and explicit. "United States" must not magically imply Maryland.
 const mismatch = assessStructuralContext(mutate(v => {
   v.market.geography = "Maryland";
