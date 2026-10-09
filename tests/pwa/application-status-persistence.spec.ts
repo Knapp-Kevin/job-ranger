@@ -43,7 +43,6 @@ test("failed application status retains unsaved intent, reveals failure and supp
   const apps = await seedTwoApplications(page);
   const first = apps.find((app) => app.companyName === "Harbor Health")!;
   const other = apps.find((app) => app.companyName === "Bayview Care")!;
-  const target = page.getByRole("combobox", { name: `Application status for ${first.title}` }).first();
   // Both cards have the same title. Isolate by the card's company name.
   const card = page.locator("article").filter({ hasText: first.companyName });
   const select = card.getByRole("combobox");
