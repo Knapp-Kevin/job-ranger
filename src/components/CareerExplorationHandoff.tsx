@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from "react";
+import { useCallback, useMemo, useRef, useState } from "react";
 import { ClipboardCopy, Compass, RefreshCw } from "lucide-react";
 import type { CandidateEvidenceReviewItem } from "../shared/contracts";
 import { getDesktopApi } from "../services/api";
@@ -28,8 +28,11 @@ export function CareerExplorationHandoff({ onTryDirection }: CareerExplorationHa
   const [copyStatus, setCopyStatus] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [direction, setDirection] = useState("");
+  // An in-flight read must not copy a brief after consent or input changed.
+  const reviewEpoch = useRef(0);
 
   const refreshEvidence = useCallback(async () => {
+    reviewEpoch.current += 1;
     setLoading(true);
     setError(null);
     try {
@@ -62,6 +65,7 @@ export function CareerExplorationHandoff({ onTryDirection }: CareerExplorationHa
   }, [goal, preferences, constraints, selected]);
 
   const onEdit = (update: () => void) => {
+    reviewEpoch.current += 1;
     update();
     setConsentedBrief(null);
     setCopyStatus(null);
@@ -78,6 +82,7 @@ export function CareerExplorationHandoff({ onTryDirection }: CareerExplorationHa
     if (!rendered.brief || rendered.brief !== consentedBrief) return;
     setCopyStatus(null);
     setError(null);
+    const approvedEpoch = reviewEpoch.current;
     try {
       // Refuse copying an already-approved brief if its selected canonical
       // source has changed or become unconfirmed since the preview was made.
@@ -91,6 +96,10 @@ export function CareerExplorationHandoff({ onTryDirection }: CareerExplorationHa
           setError("Selected Career Evidence changed. Refresh and review the brief again.");
           return;
         }
+      }
+      if (approvedEpoch !== reviewEpoch.current) {
+        setError("The brief changed during verification. Review and approve it again.");
+        return;
       }
       if (!navigator.clipboard?.writeText) {
         setError("Clipboard access is unavailable. The preview remains available for manual copying.");
@@ -206,7 +215,10 @@ export function CareerExplorationHandoff({ onTryDirection }: CareerExplorationHa
           <input type="checkbox" className="mt-1"
             checked={Boolean(rendered.brief && consentedBrief === rendered.brief)}
             disabled={!rendered.brief}
-            onChange={(event) => setConsentedBrief(event.target.checked ? rendered.brief : null)}
+            onChange={(event) => {
+              reviewEpoch.current += 1;
+              setConsentedBrief(event.target.checked ? rendered.brief : null);
+            }}
           />
           I have reviewed this exact brief and choose to copy it for possible use with an external assistant.
         </label>
