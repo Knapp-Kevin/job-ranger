@@ -35,14 +35,14 @@ test("career exploration creates an opt-in handoff, then only an unsaved, paused
   await page.getByLabel("Hard constraints you want respected").fill("No overnight shifts.");
 
   const brief = page.getByLabel("Exact career exploration brief");
-  await expect(brief).toContainText("3–5 materially different directions");
-  await expect(brief).not.toContainText(statement);
-  await expect(brief).toContainText("(none supplied; do not invent a work history)");
+  await expect(brief).toHaveValue(/3–5 materially different directions/);
+  await expect(brief).not.toHaveValue(new RegExp(statement));
+  await expect(brief).toHaveValue(/none supplied; do not invent a work history/);
   const copy = page.getByRole("button", { name: "Copy reviewed brief" });
   await expect(copy).toBeDisabled();
 
   await page.getByRole("checkbox", { name: /Include confirmed Career Evidence/ }).check();
-  await expect(brief).toContainText(statement);
+  await expect(brief).toHaveValue(new RegExp(statement));
   await expect(copy).toBeDisabled();
 
   const review = page.getByRole("checkbox", {
