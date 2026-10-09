@@ -18,10 +18,12 @@ import type { InferenceRegistry, InferenceRegistryEntry } from "./registry.cjs";
 import { invokeWithLimits } from "./invoke.cjs";
 import { rewriteResumeStatementSpec } from "./task-rewrite.cjs";
 import { semanticEvidenceSupportSpec } from "./task-semantic.cjs";
+import { careerPathExplorationSpec } from "./task-exploration.cjs";
 import { RequestBuildError, type CanonicalReader, type RequestSnapshot, type TaskSpec } from "./task-spec.cjs";
 
 const TASK_SPECS = new Map<InferenceTask, TaskSpec<unknown, unknown>>([
   [semanticEvidenceSupportSpec.task, semanticEvidenceSupportSpec as TaskSpec<unknown, unknown>],
+  [careerPathExplorationSpec.task, careerPathExplorationSpec as TaskSpec<unknown, unknown>],
   [rewriteResumeStatementSpec.task, rewriteResumeStatementSpec as TaskSpec<unknown, unknown>],
 ]);
 
