@@ -88,7 +88,11 @@ test("resume-first user can pursue a fixture job without importing unapproved fa
     sources: await window.electronAPI.career.listSourceArtifacts(),
   }));
   expect(reviewed.sources.some((item) => item.originalName === "morgan-rivera-healthcare.docx")).toBe(true);
-  expect(reviewed.items.some((item) => item.evidence.verificationState === "imported")).toBe(true);
+  const remainingImported = reviewed.items.filter((item) =>
+    imported.some((candidate) => candidate.evidence.id === item.evidence.id) &&
+    item.evidence.verificationState === "imported",
+  );
+  expect(remainingImported.length).toBe(imported.length - 1);
 
   // US-0: save broad preference/identity data through the visible profile form.
   await page.getByRole("textbox", { name: "Your name" }).fill("Morgan Rivera");
@@ -122,6 +126,9 @@ test("resume-first user can pursue a fixture job without importing unapproved fa
   const sourceRow = page.getByRole("row").filter({ hasText: "Harbor Health" });
   await expect(sourceRow).toBeVisible();
   await sourceRow.getByRole("button", { name: "Run", exact: true }).click();
+  // Do not race the asynchronous fixture scrape or mistake an enabled button
+  // for evidence that the source's canonical run has completed.
+  await expect(sourceRow).toContainText(/success/i, { timeout: 30_000 });
   await expect(sourceRow.getByRole("button", { name: "Run", exact: true })).toBeEnabled();
 
   await page.getByRole("link", { name: "Find Jobs" }).click();
