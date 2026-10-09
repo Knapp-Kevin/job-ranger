@@ -5,20 +5,12 @@ import { ApplicationInsightsPanel } from "../components/ApplicationInsightsPanel
 import { ApplicationLifecyclePanel } from "../components/ApplicationLifecyclePanel";
 import { ApplicationMaterialsPanel } from "../components/ApplicationMaterialsPanel";
 import { ApplicationNotesEditor } from "../components/ApplicationNotesEditor";
+import { ApplicationStatusEditor } from "../components/ApplicationStatusEditor";
 import { InterviewPrepPanel } from "../components/InterviewPrepPanel";
 import { Layout } from "../components/Layout";
 import { ConfirmDialog } from "../components/ConfirmDialog";
-import { useApplications, type ApplicationStatus } from "../career/storage";
+import { useApplications } from "../career/storage";
 import { getDesktopApi } from "../services/api";
-
-const statuses: Array<{ value: ApplicationStatus; label: string }> = [
-  { value: "interested", label: "Interested" },
-  { value: "applied", label: "Applied" },
-  { value: "interview", label: "Interview" },
-  { value: "offer", label: "Offer" },
-  { value: "rejected", label: "Rejected" },
-  { value: "withdrawn", label: "Withdrawn" },
-];
 
 export function Applications() {
   const { applications, update, remove, loading, error } = useApplications();
@@ -79,22 +71,10 @@ export function Applications() {
               </div>
 
               <div className="flex items-center gap-2">
-                <select
-                  className="select-shell min-w-40"
-                  value={application.status}
-                  onChange={(event) =>
-                    void update(application.id, {
-                      status: event.target.value as ApplicationStatus,
-                    })
-                  }
-                  aria-label={`Application status for ${application.title}`}
-                >
-                  {statuses.map((status) => (
-                    <option key={status.value} value={status.value}>
-                      {status.label}
-                    </option>
-                  ))}
-                </select>
+                <ApplicationStatusEditor
+                  application={application}
+                  onSave={(status) => update(application.id, { status })}
+                />
                 <button
                   type="button"
                   className="secondary-button"
