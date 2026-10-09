@@ -10,6 +10,7 @@ export type InferenceTask =
   | "extract-career-evidence"
   | "extract-job-requirements"
   | "semantic-evidence-support"
+  | "explore-career-paths"
   | "rewrite-resume-statement"
   | "draft-application-material"
   | "draft-career-story"
@@ -140,6 +141,24 @@ export interface SemanticEvidenceSupportProposal {
     rationale: { code: SemanticRationaleCode; evidenceFields: EvidenceField[] };
   }>;
   unknownRequirementIds: string[];
+}
+
+/**
+ * Career direction hypotheses are intentionally not classifications or career
+ * truth. Bounded free text is permitted here because nothing in this proposal
+ * can update a Target Track, Career Evidence, eligibility or any other state.
+ */
+export interface CareerPathExplorationProposal {
+  directions: Array<{
+    direction: string;
+    explorationRationale: string;
+    supportingEvidenceIds: string[];
+    tradeoffs: string[];
+    validationQuestions: string[];
+    lowRiskNextStep: string;
+  }>;
+  /** Explicit questions the user could answer to improve later exploration. */
+  openQuestions: string[];
 }
 
 export type RewriteRationaleCode =
