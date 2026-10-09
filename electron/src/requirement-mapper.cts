@@ -29,6 +29,11 @@ function normalize(value: string): string {
 function significantTokens(value: string): string[] {
   return normalize(value)
     .split(" ")
+    // G11: normalize deliberately retains dots in Node.js, .NET and versions
+    // such as 3.0. Strip only sentence-terminal periods for matching so a
+    // stop word like "required." does not dilute evidence overlap. Do not
+    // change normalize(): requirement fingerprints must remain stable.
+    .map((token) => token.replace(/\.+$/u, ""))
     .filter((token) => token.length >= 3 && !STOP_WORDS.has(token));
 }
 
