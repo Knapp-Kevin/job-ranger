@@ -4,6 +4,7 @@ import { formatDistanceToNow } from "date-fns";
 import { ApplicationInsightsPanel } from "../components/ApplicationInsightsPanel";
 import { ApplicationLifecyclePanel } from "../components/ApplicationLifecyclePanel";
 import { ApplicationMaterialsPanel } from "../components/ApplicationMaterialsPanel";
+import { ApplicationNotesEditor } from "../components/ApplicationNotesEditor";
 import { InterviewPrepPanel } from "../components/InterviewPrepPanel";
 import { Layout } from "../components/Layout";
 import { ConfirmDialog } from "../components/ConfirmDialog";
@@ -106,17 +107,10 @@ export function Applications() {
               </div>
             </div>
 
-            <label className="mt-5 block">
-              <span className="metric-label">Notes</span>
-              <textarea
-                className="input-shell mt-2 min-h-24 resize-y py-3"
-                value={application.notes}
-                onChange={(event) =>
-                  void update(application.id, { notes: event.target.value })
-                }
-                placeholder="What you liked about the role, context you want to remember, or anything that does not belong to a specific person or milestone..."
-              />
-            </label>
+            <ApplicationNotesEditor
+              application={application}
+              onSave={(notes) => update(application.id, { notes })}
+            />
 
             <ApplicationLifecyclePanel applicationId={application.id} />
             <ApplicationInsightsPanel applicationId={application.id} />
