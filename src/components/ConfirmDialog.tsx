@@ -9,6 +9,7 @@ interface ConfirmDialogProps {
   title: string;
   message: string;
   confirmLabel?: string;
+  cancelLabel?: string;
   variant?: "danger" | "warning";
 }
 
@@ -19,6 +20,7 @@ export function ConfirmDialog({
   title,
   message,
   confirmLabel = "Delete",
+  cancelLabel = "Cancel",
   variant = "danger",
 }: ConfirmDialogProps) {
   const [pending, setPending] = useState(false);
@@ -71,7 +73,7 @@ export function ConfirmDialog({
       )}
       <div className="mt-6 flex justify-end gap-3">
         <button type="button" onClick={closeIfIdle} disabled={pending} className="secondary-button">
-          Cancel
+          {cancelLabel}
         </button>
         <button
           type="button"
