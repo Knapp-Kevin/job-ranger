@@ -4,6 +4,7 @@ import type { TrackedApplication } from "../shared/contracts";
 interface ApplicationNotesEditorProps {
   application: TrackedApplication;
   onSave: (notes: string) => Promise<TrackedApplication>;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 /**
@@ -11,11 +12,13 @@ interface ApplicationNotesEditorProps {
  * one application. A late response must never overwrite newer user input.
  * No shadow persistence or external service is introduced.
  */
-export function ApplicationNotesEditor({ application, onSave }: ApplicationNotesEditorProps) {
+export function ApplicationNotesEditor({ application, onSave, onDirtyChange }: ApplicationNotesEditorProps) {
   const [draft, setDraft] = useState(application.notes);
   const desiredRef = useRef(application.notes);
   const persistedRef = useRef(application.notes);
   const savingRef = useRef(false);
+  const reportDirty = () => onDirtyChange?.(desiredRef.current !== persistedRef.current);
+
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -32,6 +35,7 @@ export function ApplicationNotesEditor({ application, onSave }: ApplicationNotes
           throw new Error("The saved notes differed from your draft. Review and retry.");
         }
         persistedRef.current = submitted;
+        reportDirty();
       }
       setState("saved");
     } catch (cause) {
@@ -44,6 +48,7 @@ export function ApplicationNotesEditor({ application, onSave }: ApplicationNotes
 
   const edit = (text: string) => {
     desiredRef.current = text;
+    reportDirty();
     setDraft(text);
     setError(null);
     if (!savingRef.current && text === persistedRef.current) {
