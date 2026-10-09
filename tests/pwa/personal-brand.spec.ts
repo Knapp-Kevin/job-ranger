@@ -21,7 +21,7 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   await expect(exportGuide.locator("summary")).toHaveText(/export your LinkedIn analytics/i);
   await exportGuide.locator("summary").click();
   await expect(exportGuide.getByRole("link", { name: /LinkedIn Help/i })).toHaveAttribute("href", "https://www.linkedin.com/help/linkedin/answer/a703268");
-  await expect(exportGuide.getByText(/does not yet import the exported workbook/i)).toBeVisible();
+  await expect(exportGuide.getByText(/Import preview available below/i)).toBeVisible();
   await expect(exportGuide.getByText(/Past 365 days/)).toBeVisible();
 
 
@@ -324,7 +324,10 @@ test("LinkedIn XLSX upload previews six-sheet analytics locally without saving",
   await area.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
     name: "AggregateAnalytics_synthetic.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: zip,
   });
-  await expect(area.getByTestId("linkedin-preview-results")).toBeVisible();
+  await expect.poll(async () => ({
+    preview: await area.getByTestId("linkedin-preview-results").count(),
+    importError: (await area.getByRole("alert").allTextContents()).join(" | "),
+  }), { timeout: 10_000 }).toEqual({ preview: 1, importError: "" });
   await expect(area.getByText(/Preview only, not saved: 2026-10-08 through 2026-10-09/)).toBeVisible();
   await expect(area.getByText("12", { exact: true })).toBeVisible();
   await expect(area.getByText("101", { exact: true })).toBeVisible();
