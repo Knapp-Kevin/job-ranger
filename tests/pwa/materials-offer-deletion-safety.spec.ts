@@ -65,7 +65,25 @@ test("cover-letter version deletion requires review and leaves other versions an
   await expect(dialog).toBeHidden();
   expect((await page.evaluate((id) => window.electronAPI.applicationMaterials.list(id), applicationId)).length).toBe(2);
 
+  // A failed canonical deletion must not close the dialog or remove a version
+  // from the UI. A retry must use the same selected version, not the next one.
+  await page.evaluate(() => {
+    const api = window.electronAPI.applicationMaterials;
+    const original = api.delete.bind(api);
+    let failOnce = true;
+    api.delete = async (id) => {
+      if (failOnce) {
+        failOnce = false;
+        throw new Error("Synthetic cover letter deletion failure");
+      }
+      return original(id);
+    };
+  });
   await versionOne.click();
+  await dialog.getByRole("button", { name: "Delete cover letter", exact: true }).click();
+  await expect(dialog.getByRole("alert")).toContainText("Synthetic cover letter deletion failure");
+  await expect(versionTwo).toBeVisible();
+  expect((await page.evaluate((id) => window.electronAPI.applicationMaterials.list(id), applicationId)).length).toBe(2);
   await dialog.getByRole("button", { name: "Delete cover letter", exact: true }).click();
   await expect(dialog).toBeHidden();
   await expect(versionOne).toBeHidden();
