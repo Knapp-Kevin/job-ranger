@@ -13,6 +13,8 @@ import {
   buildPersonalBrandLearningReport, type LearningMetric, type LearningWindowHours,
 } from "../shared/personal-brand-learning";
 import type { CandidateEvidence } from "../shared/contracts";
+import { normalizeLinkedInAnalyticsExport, type LinkedInExportPreview } from "../shared/linkedin-analytics";
+import { readLinkedInXlsx } from "../shared/linkedin-xlsx";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
@@ -83,6 +85,9 @@ export function PersonalBrand() {
   const [cohortMetric, setCohortMetric] = useState<LearningMetric>("profile_views_per_reached");
   const [metrics, setMetrics] = useState<Partial<Record<MetricName, string>>>({});
   const [metricsSource, setMetricsSource] = useState("LinkedIn post analytics (manual entry)");
+  const [linkedinPreview, setLinkedinPreview] = useState<LinkedInExportPreview | null>(null);
+  const [linkedinImportError, setLinkedinImportError] = useState<string | null>(null);
+  const [linkedinImportBusy, setLinkedinImportBusy] = useState(false);
   const [publishedUrl, setPublishedUrl] = useState("");
   const [publishedLocal, setPublishedLocal] = useState("");
   const [reviewed, setReviewed] = useState(false);
@@ -312,6 +317,25 @@ export function PersonalBrand() {
     setNotice("Timestamped analytics saved with manual provenance. Empty fields remain unavailable, not zero.");
   });
 
+  const previewLinkedInWorkbook = async (file: File | null): Promise<void> => {
+    setLinkedinPreview(null);
+    setLinkedinImportError(null);
+    if (!file) return;
+    if (!/\.xlsx$/i.test(file.name) || file.size > 4 * 1024 * 1024) {
+      setLinkedinImportError("Select a LinkedIn .xlsx export under 4 MB.");
+      return;
+    }
+    setLinkedinImportBusy(true);
+    try {
+      const rows = readLinkedInXlsx(await file.arrayBuffer());
+      setLinkedinPreview(normalizeLinkedInAnalyticsExport(rows));
+    } catch (cause) {
+      setLinkedinImportError(cause instanceof Error ? cause.message : "Could not read the LinkedIn workbook.");
+    } finally {
+      setLinkedinImportBusy(false);
+    }
+  };
+
   return (
     <Layout>
       <section className="panel panel-strong p-6 sm:p-8 space-y-3">
@@ -534,9 +558,60 @@ export function PersonalBrand() {
                   </a>
                 </p>
                 <p>LinkedIn can change its labels or navigation. Follow the linked official help article if the steps differ.</p>
-                <p><strong>Current limitation:</strong> Job Ranger does not yet import the exported workbook. Keep the original .XLSX unchanged for the planned importer. The fields below are manual, per-post observations, not an upload destination for aggregated statistics. Do not copy account-wide totals into a single post.</p>
+                <p><strong>Import preview available below:</strong> You can inspect an XLSX export locally. Previewed data is not yet saved to the Job Ranger database. Keep the original file unchanged. The fields below are manual, per-post observations, not an upload destination for account-wide totals.</p>
               </div>
             </details>
+            <div className="rounded-xl border border-[var(--color-border)] p-4 space-y-3" data-testid="linkedin-xlsx-preview">
+              <h3 className="font-semibold">Review a LinkedIn analytics export</h3>
+              <label className="block text-sm font-medium">Choose exported LinkedIn XLSX (local preview only)
+                <input type="file" accept=".xlsx,application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
+                  className="input-shell mt-2 w-full" disabled={linkedinImportBusy}
+                  onChange={event => {
+                    const file = event.currentTarget.files?.[0] ?? null;
+                    event.currentTarget.value = "";
+                    void previewLinkedInWorkbook(file);
+                  }} />
+              </label>
+              <p className="text-xs text-[var(--color-text-secondary)]">
+                Read locally without LinkedIn account access, network calls or automatic saving. The complete workbook is not uploaded. Imported figures are observational analytics, not evidence of career outcomes.
+              </p>
+              {linkedinImportBusy && <p role="status">Reading workbook locally...</p>}
+              {linkedinImportError && <p role="alert" className="text-sm text-[var(--color-danger)]">{linkedinImportError}</p>}
+              {linkedinPreview && (
+                <div className="space-y-3 text-sm" data-testid="linkedin-preview-results" role="region" aria-label="LinkedIn analytics workbook preview">
+                  <p className="font-semibold">Preview only, not saved: {linkedinPreview.period.start} through {linkedinPreview.period.end}</p>
+                  <dl className="grid grid-cols-2 gap-2 md:grid-cols-4">
+                    <div><dt>Impressions</dt><dd className="font-semibold">{linkedinPreview.discovery.impressions.toLocaleString()}</dd></div>
+                    <div><dt>Members reached</dt><dd className="font-semibold">{linkedinPreview.discovery.membersReached.toLocaleString()}</dd></div>
+                    <div><dt>Current followers</dt><dd className="font-semibold">{linkedinPreview.followers.total.toLocaleString()}</dd></div>
+                    <div><dt>Ranked unique posts</dt><dd className="font-semibold">{linkedinPreview.topPosts.length}</dd></div>
+                  </dl>
+                  <p>{linkedinPreview.daily.length} daily engagement observations; {linkedinPreview.audienceDemographics.length} audience and {linkedinPreview.contentDemographics.length} content demographic rows.</p>
+                  {linkedinPreview.warnings.length > 0 && (
+                    <div className="rounded-lg border border-[var(--color-border)] p-3" role="note">
+                      <strong>Import interpretation warnings</strong>
+                      <ul className="list-disc pl-5 mt-1 space-y-1">
+                        {linkedinPreview.warnings.map(warning => <li key={warning}>{warning}</li>)}
+                      </ul>
+                    </div>
+                  )}
+                  <div className="max-h-72 overflow-auto" tabIndex={0} aria-label="Sample of ranked post observations">
+                    <table className="w-full text-left text-xs">
+                      <caption className="text-left font-semibold mb-2">Top posts (sample; missing values are unknown)</caption>
+                      <thead><tr><th scope="col" className="pr-3">Published</th><th scope="col" className="pr-3">Impressions</th><th scope="col" className="pr-3">Engagements</th><th scope="col">LinkedIn post</th></tr></thead>
+                      <tbody>{linkedinPreview.topPosts.slice(0, 8).map(post => (
+                        <tr key={post.url}>
+                          <td className="pr-3 py-1">{post.publishedOn}</td>
+                          <td className="pr-3">{post.impressions === null ? "Unknown" : post.impressions.toLocaleString()}</td>
+                          <td className="pr-3">{post.engagements === null ? "Unknown" : post.engagements.toLocaleString()}</td>
+                          <td><a href={post.url} target="_blank" rel="noopener noreferrer" className="underline">View post</a></td>
+                        </tr>
+                      ))}</tbody>
+                    </table>
+                  </div>
+                </div>
+              )}
+            </div>
             <label className="block text-sm font-semibold">Published post
               <select className="input-shell mt-2 w-full" value={postId} onChange={(e) => setPostId(e.target.value)}>
                 <option value="">Select a publication</option>
