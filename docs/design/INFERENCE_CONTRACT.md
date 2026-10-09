@@ -1,6 +1,6 @@
 # Inference Contract
 
-Status: **Draft 0.2 — adversarially reviewed; Slice A (#164) authorized; no provider authorized**  
+Status: **Draft 0.2 base; additive exploratory Slice B (#187) under review; no production provider authorized**  
 Owner: #162  
 Prior constraints: #59, #64  
 Review: Phase 13 adversarial architecture/security review (`docs/plan-qor-phase13-inference-contract-review.md`, META_LEDGER #67-#71). Findings F1-F23, and post-amendment findings F24-F27, are listed under [Review record](#review-record).
@@ -251,6 +251,7 @@ type InferenceTask =
   | "extract-career-evidence"
   | "extract-job-requirements"
   | "semantic-evidence-support"
+  | "explore-career-paths" // additive hypothesis-only task; no state mutation
   | "rewrite-resume-statement"
   | "draft-application-material"
   | "draft-career-story"
@@ -492,13 +493,26 @@ interface InferenceResponseEnvelope<TProposal> {
 
 ## Proposal contracts
 
-**Structured-only rule (all v1 tasks).** The only provider free text that can reach a user is:
+**Bounded-structure rule (all v1 tasks).** Every task keeps a closed response envelope and a task-specific closed shape. Free prose is available only in the tasks that explicitly permit it:
 
-1. `proposedText` of `rewrite-resume-statement`, gated as described below;
+1. `proposedText` of `rewrite-resume-statement`, passed through the existing Truth Gate;
 2. the quoted fragment and proposed fields of `extract-career-evidence`, gated as described below;
-3. bounded, non-factual communication phrasing in the tasks limited to non-factual output (see [Application materials, Career Stories, and interview practice](#application-materials-career-stories-and-interview-practice)).
+3. bounded, non-factual communication phrasing in the tasks limited to non-factual output (see [Application materials, Career Stories, and interview practice](#application-materials-career-stories-and-interview-practice));
+4. **exploratory hypothesis prose** in `explore-career-paths`: career ideas, trade-offs, open questions and a user-executable next experiment. These fields are NOT factual assertions, eligibility results, or approved actions.
 
-Every other explanatory field is a closed code or a request-scoped ID. Any other free-text field is `invalid-response` under the closed schema.
+Other tasks continue to reject arbitrary explanatory prose. Introducing flexible thought into one *advisory* task never loosens factual writing or canonical authorization.
+
+### Career-path exploration: flexibility inside the authority boundary
+
+**Implementation slice (#187):** A new provider-neutral task, `explore-career-paths`, accepts an explicitly supplied goal, up to six preferences, six user-described constraints, and at most twelve **selected confirmed** Career Evidence records. Evidence is optional, so goal-first users can explore without a resume. None of the supplied preferences or constraints is automatically promoted into a canonical Target Track or interpreted as verified eligibility.
+
+The output contains **one to five alternative career hypotheses**, each with a free-form direction, open-language rationale, a subset of the selected evidence IDs, trade-offs, at least one question to validate, and a low-risk next step. The reply may include additional open questions. It is not a restricted list of job titles, a fixed personality taxonomy, a single deterministic path, or a machine ranking of people. Contradictory and unconventional alternatives may be useful to consider.
+
+The *structure* remains strict: closed request/response fields; bounded strings; no extra tool/action fields; no probability or hiring-likelihood estimates; no fabricated evidence identifiers; no extra URLs, contacts, or paths; explicit manifest classification for the user's goals and selected facts; and a fresh evidence verification/version check after inference. The request remains one-shot and never causes a write. The result's status is `review-required`, which here means **advisory human inspection, not a path to automatic acceptance**. There is no `acceptCareerPath` or Track mutation endpoint in this task.
+
+**What Job Ranger cannot validate:** a novel career title's existence, the causal accuracy of an LLM rationale, predicted economic outcomes, or semantic compliance with each free-text user constraint. Consequently the product must label these as *exploration hypotheses* and present questions and possible downsides, not claim deterministic verification. A user may later explicitly enter a direction in Target Tracks, where normal rules and records remain authoritative.
+
+The production inference registry remains empty until separately authorized. This slice adds a testable contract for an in-process synthetic provider, **not** an activated consumer-model service or ChatGPT plugin. It preserves independent deterministic baseline output; disabled inference is equivalent to not implementing this task at all.
 
 ### Career Evidence extraction
 
