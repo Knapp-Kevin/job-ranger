@@ -153,3 +153,28 @@ test("reverting text or status during a pending write cannot bypass the unsaved 
   await page.getByRole("link", { name: "Find Jobs" }).click();
   await expect(page).toHaveURL(/#\/jobs$/);
 });
+
+test("dirty browser-history navigation is blocked and unload warning is registered", async ({ page }) => {
+  await seedTrackedApplication(page);
+  await page.evaluate(() => {
+    window.electronAPI.applications.update = async () => { throw new Error("Synthetic offline notes write"); };
+  });
+  await page.getByRole("textbox", { name: "Notes" }).fill("Unsaved interview preparation");
+  await expect(page.getByRole("alert")).toContainText("Synthetic offline notes write");
+
+  // A synthetic cancellable event validates the listener's decision, not
+  // Chrome's browser-owned tab-close prompt (which cannot be customized).
+  const unloadPrevented = await page.evaluate(() => {
+    const event = new Event("beforeunload", { cancelable: true });
+    window.dispatchEvent(event);
+    return event.defaultPrevented;
+  });
+  expect(unloadPrevented).toBe(true);
+
+  await page.evaluate(() => window.history.back());
+  const dialog = page.getByRole("dialog", { name: "Leave with unsaved changes?" });
+  await expect(dialog).toBeVisible();
+  await expect(page).toHaveURL(/#\/applications$/);
+  await dialog.getByRole("button", { name: "Stay on this page" }).click();
+  await expect(page.getByRole("textbox", { name: "Notes" })).toHaveValue("Unsaved interview preparation");
+});
