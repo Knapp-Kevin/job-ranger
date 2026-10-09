@@ -4,6 +4,7 @@ import type { ApplicationStatus, TrackedApplication } from "../shared/contracts"
 interface ApplicationStatusEditorProps {
   application: TrackedApplication;
   onSave: (status: ApplicationStatus) => Promise<TrackedApplication>;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
 const statuses: Array<{ value: ApplicationStatus; label: string }> = [
@@ -16,11 +17,13 @@ const statuses: Array<{ value: ApplicationStatus; label: string }> = [
 ];
 
 /** Keep unacknowledged status intent separate from the last stored value. */
-export function ApplicationStatusEditor({ application, onSave }: ApplicationStatusEditorProps) {
+export function ApplicationStatusEditor({ application, onSave, onDirtyChange }: ApplicationStatusEditorProps) {
   const [draft, setDraft] = useState<ApplicationStatus>(application.status);
   const desiredRef = useRef<ApplicationStatus>(application.status);
   const savedRef = useRef<ApplicationStatus>(application.status);
   const pendingRef = useRef(false);
+  const reportDirty = () => onDirtyChange?.(desiredRef.current !== savedRef.current || pendingRef.current);
+
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
 
@@ -40,6 +43,7 @@ export function ApplicationStatusEditor({ application, onSave }: ApplicationStat
           throw new Error("The saved application status differed from your selection.");
         }
         savedRef.current = submitted;
+        reportDirty();
       }
       setState("saved");
     } catch (cause) {
@@ -47,11 +51,13 @@ export function ApplicationStatusEditor({ application, onSave }: ApplicationStat
       setError(cause instanceof Error ? cause.message : "Unable to save application status.");
     } finally {
       pendingRef.current = false;
+      reportDirty();
     }
   };
 
   const select = (value: ApplicationStatus) => {
     desiredRef.current = value;
+    reportDirty();
     setDraft(value);
     setError(null);
     if (!pendingRef.current && value === savedRef.current) {
