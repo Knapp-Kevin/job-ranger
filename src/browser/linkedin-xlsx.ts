@@ -1,7 +1,8 @@
 /**
- * Browser-local XLSX cell reader for LinkedIn's native analytics workbook.
- * Reads only required XLSX XML records; does not execute macros, formulas,
- * external relationships, embedded links or remote requests.
+ * Browser-local XLSX reader for LinkedIn's six-sheet export. Parses only a
+ * strict subset of Office Open XML with bounded strings and ZIP contents.
+ * Deliberately does not call DOMParser, an HTML sink blocked by the PWA's
+ * Trusted Types policy. No scripts, formulas, entities, DTDs or network I/O.
  */
 import { unzipSync } from "fflate";
 import type { WorkbookRows } from "../shared/linkedin-analytics";
@@ -10,15 +11,57 @@ const MAX_FILE = 4 * 1024 * 1024;
 const MAX_XML = 8 * 1024 * 1024;
 const MAX_TOTAL = 18 * 1024 * 1024;
 const decoder = new TextDecoder("utf-8", { fatal: true });
-function xml(bytes: Uint8Array, name: string): Document {
+
+function decodedXml(bytes: Uint8Array, name: string): string {
   const source = decoder.decode(bytes);
-  if (/<!DOCTYPE|<!ENTITY/i.test(source)) throw new Error("Unsupported XML declaration in " + name + ".");
-  const doc = new DOMParser().parseFromString(source, "application/xml");
-  if (doc.getElementsByTagName("parsererror").length) throw new Error("Malformed XLSX XML in " + name + ".");
-  return doc;
+  if (/<!/i.test(source)) throw new Error("Unsupported XML markup in " + name + ".");
+  return source;
 }
-const descendants = (el: Document | Element, name: string): Element[] =>
-  Array.from(el.getElementsByTagNameNS("*", name));
+function unescapeXml(raw: string): string {
+  // Decode XML's five predefined entities and explicit numeric characters.
+  // Unknown entities are rejected, never expanded recursively.
+  const entities = /&(#x[0-9a-fA-F]+|#\d+|amp|lt|gt|quot|apos);/g;
+  const remainder = raw.replace(entities, "");
+  if (remainder.includes("&") || remainder.includes("<")) {
+    throw new Error("Unsupported XML entity or text markup in LinkedIn export.");
+  }
+  return raw.replace(entities, (_match, code: string) => {
+    const named: Record<string, string> = {
+      amp: "&", lt: "<", gt: ">", quot: '"', apos: "'",
+    };
+    if (Object.hasOwn(named, code)) return named[code];
+    const point = Number.parseInt(code.startsWith("#x") ? code.slice(2) : code.slice(1), code.startsWith("#x") ? 16 : 10);
+    if (!Number.isInteger(point) || point === 0 || point > 0x10ffff ||
+        (point >= 0xd800 && point <= 0xdfff)) throw new Error("Invalid XML numeric character.");
+    return String.fromCodePoint(point);
+  });
+}
+function attributes(source: string): Record<string, string> {
+  const result: Record<string, string> = Object.create(null) as Record<string, string>;
+  let left = source;
+  while (left.trim()) {
+    const match = /^\s+([A-Za-z_][\w:.-]*)\s*=\s*(["'])([\s\S]*?)\2/.exec(left);
+    if (!match || Object.hasOwn(result, match[1])) throw new Error("Invalid XLSX XML attributes.");
+    result[match[1]] = unescapeXml(match[3]);
+    left = left.slice(match[0].length);
+  }
+  return result;
+}
+type ElementParts = { attrs: Record<string, string>; body: string };
+function elements(source: string, tag: string): ElementParts[] {
+  const name = "(?:[A-Za-z_][\\w.-]*:)?" + tag;
+  const expression = new RegExp("<" + name + "\\b([^>]*)>([\\s\\S]*?)<\\/" + name + "\\s*>", "g");
+  return [...source.matchAll(expression)].map(match => ({ attrs: attributes(match[1]), body: match[2] }));
+}
+function emptyElements(source: string, tag: string): Record<string, string>[] {
+  const name = "(?:[A-Za-z_][\\w.-]*:)?" + tag;
+  const expression = new RegExp("<" + name + "\\b([^>]*)\\/>", "g");
+  return [...source.matchAll(expression)].map(match => attributes(match[1]));
+}
+function textValue(body: string, tag: string): string {
+  const matches = elements(body, tag);
+  return matches.map(el => unescapeXml(el.body)).join("");
+}
 function requiredFile(entries: Record<string, Uint8Array>, path: string): Uint8Array {
   const entry = entries[path];
   if (!entry) throw new Error("LinkedIn XLSX is missing " + path + ".");
@@ -33,39 +76,42 @@ function column(ref: string): number {
 }
 function readStrings(entries: Record<string, Uint8Array>): string[] {
   if (!entries["xl/sharedStrings.xml"]) return [];
-  const sst = xml(entries["xl/sharedStrings.xml"], "sharedStrings.xml");
-  const items = descendants(sst, "si");
+  const source = decodedXml(entries["xl/sharedStrings.xml"], "sharedStrings.xml");
+  const items = elements(source, "si");
   if (items.length > 100_000) throw new Error("Too many XLSX shared strings.");
-  return items.map(el => descendants(el, "t").map(t => t.textContent ?? "").join(""));
+  return items.map(si => textValue(si.body, "t"));
 }
 function readSheet(bytes: Uint8Array, shared: string[], name: string): unknown[][] {
-  const sheet = xml(bytes, name);
-  const result: unknown[][] = [];
-  const rows = descendants(sheet, "sheetData").flatMap(el => descendants(el, "row"));
+  const source = decodedXml(bytes, name);
+  const data = elements(source, "sheetData");
+  if (data.length !== 1) throw new Error("Invalid XLSX sheetData element.");
+  const rows = elements(data[0].body, "row");
   if (rows.length > 1000) throw new Error("LinkedIn XLSX exceeds row limit.");
+  const result: unknown[][] = [];
   let nextRow = 0;
   for (const row of rows) {
-    const rawIndex = row.getAttribute("r");
+    const rawIndex = row.attrs.r;
     const index = rawIndex ? Number(rawIndex) - 1 : nextRow;
     if (!Number.isSafeInteger(index) || index < nextRow || index >= 1000) {
       throw new Error("Invalid or duplicate XLSX row number.");
     }
-    const cells: unknown[] = [];
-    for (const entry of descendants(row, "c")) {
-      if (descendants(entry, "f").length) throw new Error("Formula cells are not supported in LinkedIn analytics imports.");
-      const ref = entry.getAttribute("r");
-      if (!ref) throw new Error("XLSX cell address is missing.");
-      const col = column(ref);
-      if (cells[col] !== undefined) throw new Error("Duplicate XLSX cell address.");
-      const type = entry.getAttribute("t") ?? "n";
-      const raw = descendants(entry, "v")[0]?.textContent ?? "";
+    const values: unknown[] = [];
+    for (const entry of elements(row.body, "c")) {
+      if (elements(entry.body, "f").length || emptyElements(entry.body, "f").length) {
+        throw new Error("Formula cells are not supported in LinkedIn analytics imports.");
+      }
+      if (!entry.attrs.r) throw new Error("XLSX cell address is missing.");
+      const col = column(entry.attrs.r);
+      if (values[col] !== undefined) throw new Error("Duplicate XLSX cell address.");
+      const type = entry.attrs.t ?? "n";
+      const raw = textValue(entry.body, "v");
       let value: unknown = null;
       if (type === "s") {
         if (!/^\d+$/.test(raw) || Number(raw) >= shared.length) throw new Error("Invalid XLSX shared string index.");
         value = shared[Number(raw)];
       } else if (type === "inlineStr") {
-        value = descendants(entry, "t").map(t => t.textContent ?? "").join("");
-      } else if (type === "n" || !type) {
+        value = textValue(entry.body, "t");
+      } else if (type === "n") {
         if (raw) {
           const number = Number(raw);
           if (!Number.isFinite(number)) throw new Error("Invalid numeric XLSX cell.");
@@ -80,9 +126,9 @@ function readSheet(bytes: Uint8Array, shared: string[], name: string): unknown[]
       } else {
         throw new Error("Unsupported XLSX cell encoding: " + type + ".");
       }
-      cells[col] = value;
+      values[col] = value;
     }
-    result[index] = cells;
+    result[index] = values;
     nextRow = index + 1;
   }
   return Array.from({ length: result.length }, (_, i) => result[i] ?? []);
@@ -96,7 +142,7 @@ function targetPath(target: string): string {
   return path;
 }
 
-/** Workbook bytes never leave the device. Strictly bounded and no external I/O. */
+/** The original workbook stays local and never becomes a code or HTML sink. */
 export function readLinkedInXlsx(buffer: ArrayBuffer): WorkbookRows {
   if (!(buffer instanceof ArrayBuffer) || buffer.byteLength < 100 || buffer.byteLength > MAX_FILE) {
     throw new Error("Select a valid LinkedIn .xlsx export under 4 MB.");
@@ -116,20 +162,20 @@ export function readLinkedInXlsx(buffer: ArrayBuffer): WorkbookRows {
       return allow;
     },
   });
-  const workbook = xml(requiredFile(entries, "xl/workbook.xml"), "workbook.xml");
-  const relationships = xml(requiredFile(entries, "xl/_rels/workbook.xml.rels"), "workbook.xml.rels");
-  const targets = new Map(descendants(relationships, "Relationship")
-    .filter(rel => rel.getAttribute("TargetMode") !== "External")
-    .map(rel => [rel.getAttribute("Id"), rel.getAttribute("Target")]));
-  const names = descendants(workbook, "sheet");
+  const workbook = decodedXml(requiredFile(entries, "xl/workbook.xml"), "workbook.xml");
+  const relationships = decodedXml(requiredFile(entries, "xl/_rels/workbook.xml.rels"), "workbook.xml.rels");
+  const targets = new Map(emptyElements(relationships, "Relationship")
+    .filter(rel => rel.TargetMode !== "External")
+    .map(rel => [rel.Id, rel.Target]));
+  const names = emptyElements(workbook, "sheet");
   if (!names.length || names.length > 20) throw new Error("LinkedIn XLSX contains an unexpected sheet count.");
   const shared = readStrings(entries);
   const result: WorkbookRows = {};
   for (const item of names) {
-    const name = item.getAttribute("name");
-    const id = item.getAttributeNS("http://schemas.openxmlformats.org/officeDocument/2006/relationships", "id") ??
-      item.getAttribute("r:id");
-    if (!name || !id || name.length > 80 || Object.hasOwn(result, name)) throw new Error("Invalid XLSX worksheet identity.");
+    const name = item.name, id = item["r:id"];
+    if (!name || !id || name.length > 80 || Object.hasOwn(result, name)) {
+      throw new Error("Invalid XLSX worksheet identity.");
+    }
     const target = targets.get(id);
     if (!target) throw new Error("XLSX worksheet relationship is missing.");
     result[name] = readSheet(requiredFile(entries, targetPath(target)), shared, name);
