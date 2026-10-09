@@ -1,4 +1,6 @@
 import assert from "node:assert/strict";
+import { zipSync, strToU8 } from "fflate";
+import { readLinkedInXlsx } from "../src/browser/linkedin-xlsx.ts";
 import { normalizeLinkedInAnalyticsExport } from "../src/shared/linkedin-analytics.ts";
 
 const clone = x => structuredClone(x);
@@ -63,4 +65,31 @@ fail(v => { v.FOLLOWERS[4][1] = ""; }, /Invalid new followers/);
 const stale = clone(rows);
 stale.DISCOVERY[1][1] = "13";
 assert.ok(normalizeLinkedInAnalyticsExport(stale).warnings.some(w => /daily impression total/i.test(w)));
-console.log("LinkedIn six-sheet analytics normalizer: synthetic and adversarial cases passed");
+
+const xesc = x => String(x).replaceAll("&", "&amp;").replaceAll("<", "&lt;");
+const fakeSheet = rows => '<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>' +
+  rows.map((r, idx) => '<row r="' + (idx + 1) + '">' + r.map((value, col) => value == null ? "" :
+    '<c r="' + String.fromCharCode(65 + col) + (idx + 1) + '" t="inlineStr"><is><t>' + xesc(value) + '</t></is></c>'
+  ).join("") + '</row>').join("") + '</sheetData></worksheet>';
+const names = Object.keys(rows);
+const wb = '<workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>' +
+  names.map((n, i) => '<sheet name="' + n + '" sheetId="' + (i+1) + '" r:id="rId' + (i+1) + '"/>').join("") + '</sheets></workbook>';
+const relations = '<Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">' +
+  names.map((n, i) => '<Relationship Id="rId' + (i+1) + '" Target="worksheets/sheet' + (i+1) + '.xml"/>').join("") + '</Relationships>';
+const syntheticFiles = {
+  "xl/workbook.xml": strToU8(wb),
+  "xl/_rels/workbook.xml.rels": strToU8(relations),
+};
+names.forEach((name,i) => { syntheticFiles["xl/worksheets/sheet" + (i+1) + ".xml"] = strToU8(fakeSheet(rows[name])); });
+const workbookBytes = (files) => Uint8Array.from(zipSync(files)).buffer;
+const decoded = readLinkedInXlsx(workbookBytes(syntheticFiles));
+assert.equal(decoded.DISCOVERY[1][1], "12");
+assert.equal(normalizeLinkedInAnalyticsExport(decoded).discovery.impressions, 12);
+const withBadXml = { ...syntheticFiles,
+  "xl/worksheets/sheet1.xml": strToU8('<!DOCTYPE x><worksheet><sheetData/></worksheet>') };
+assert.throws(() => readLinkedInXlsx(workbookBytes(withBadXml)), /Unsupported XML markup/);
+const withFormula = { ...syntheticFiles,
+  "xl/worksheets/sheet1.xml": strToU8(syntheticFiles["xl/worksheets/sheet1.xml"].length ? new TextDecoder().decode(syntheticFiles["xl/worksheets/sheet1.xml"]).replace('<is><t>12</t></is>', '<f>1+2</f><v>3</v>') : "") };
+assert.throws(() => readLinkedInXlsx(workbookBytes(withFormula)), /Formula cells are not supported/);
+
+console.log("LinkedIn XLSX reader and six-sheet normalizer: synthetic and adversarial cases passed");
