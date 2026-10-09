@@ -51,10 +51,13 @@ const base = {
     publishedAt, userConfirmed: true,
   }), /already been recorded/);
   assert.equal((await db.listPublications()).length, 1);
+  // A snapshot has one observation instant. Two Date.now() calls can make its
+  // windowEnd later than capturedAt and mask the metric-validation assertion.
+  const observationInstant = "2026-10-09T14:00:00.000Z";
   const first = await db.appendSnapshot(receipt.postId, {
-    capturedAt: new Date().toISOString(),
+    capturedAt: observationInstant,
     windowStart: publishedAt,
-    windowEnd: new Date().toISOString(),
+    windowEnd: observationInstant,
     sourceLabel: "Individual post panel, manually entered",
     observations: [
       { name: "impressions", value: 100, state: "manual" },
@@ -64,14 +67,23 @@ const base = {
   });
   assert.equal((await db.listSnapshots(receipt.postId)).length, 1);
   assert.equal(first.observations[2].value, undefined);
+  // Preserve the strict chronology check while exercising metric validation
+  // separately with a valid same-instant observation window.
   await assert.rejects(() => db.appendSnapshot(receipt.postId, {
-    capturedAt: new Date().toISOString(), windowStart: publishedAt,
-    windowEnd: new Date().toISOString(), sourceLabel: "Spoofed API",
+    capturedAt: observationInstant,
+    windowStart: publishedAt,
+    windowEnd: "2026-10-10T14:00:00.000Z",
+    sourceLabel: "Future observation window",
+    observations: [{ name: "reached", value: 10, state: "manual" }],
+  }), /chronological/);
+  await assert.rejects(() => db.appendSnapshot(receipt.postId, {
+    capturedAt: observationInstant, windowStart: publishedAt,
+    windowEnd: observationInstant, sourceLabel: "Spoofed API",
     observations: [{ name: "reached", value: 999, state: "provider_observed" }],
   }), /Invalid analytics observation/);
   await assert.rejects(() => db.appendSnapshot(receipt.postId, {
-    capturedAt: new Date().toISOString(), windowStart: publishedAt,
-    windowEnd: new Date().toISOString(), sourceLabel: "Negative",
+    capturedAt: observationInstant, windowStart: publishedAt,
+    windowEnd: observationInstant, sourceLabel: "Negative",
     observations: [{ name: "reached", value: -3, state: "manual" }],
   }), /nonnegative/);
 
