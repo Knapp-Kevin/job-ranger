@@ -1,6 +1,6 @@
 # Job Ranger local read-only MCP prototype
 
-**Development-only status (2026-10-08).** This is an opt-in local [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server**, not an installed ChatGPT plugin, a remote MCP endpoint, or a feature of the published Job Ranger v1.2.0 installer. Do **not** point a public tunnel, browser endpoint, or unknown remote tool host at it.
+**Development-only status (2026-10-08).** This is an opt-in local [Model Context Protocol](https://modelcontextprotocol.io/) **stdio server**, not an installed ChatGPT plugin, a remote MCP endpoint, or a feature of the published Job Ranger v1.2.0 installer. Do **not** expose it through a public no-auth tunnel, browser endpoint, or unknown remote tool host. An independent **official, outbound-only Secure MCP Tunnel development pathway** is documented in [the owner-only trial guide](./JOB_RANGER_SECURE_TUNNEL.md); it has not been confirmed live in ChatGPT.
 
 The baseline application works independently of this adapter and never needs a ChatGPT subscription or a model.
 
