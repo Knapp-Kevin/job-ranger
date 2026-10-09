@@ -54,6 +54,8 @@ test("out-of-order note writes never erase the latest text in UI or durable stor
     };
   });
   await notes.fill("First draft");
+  await expect(page.getByRole("status", { name: "Application notes save status" }))
+    .toContainText("Saving notes");
   await notes.fill("Final draft that must survive");
   await page.waitForFunction(() => (window as unknown as { noteCalls?: number }).noteCalls >= 1);
   // There must be no unacknowledged last-write-wins race, whether the UI
@@ -63,6 +65,8 @@ test("out-of-order note writes never erase the latest text in UI or durable stor
     state.releaseFirstNote();
   });
   await expect(notes).toHaveValue("Final draft that must survive");
+  await expect(page.getByRole("status", { name: "Application notes save status" }))
+    .toContainText("Saved");
   await expect.poll(async () => (await page.evaluate(() => window.electronAPI.applications.list()))
     .find((row) => row.id === id)?.notes).toBe("Final draft that must survive");
   await page.reload();
