@@ -1,5 +1,7 @@
 import assert from "node:assert/strict";
 import { buildSyntheticScenarioBoard } from "../src/shared/synthetic-scenario-board.ts";
+import { validateStructuralContext, assessStructuralContext } from "../src/shared/structural-signals.ts";
+const build = (data, options) => buildSyntheticScenarioBoard(validateStructuralContext(data), assessStructuralContext(data), options);
 
 const citation = (id) => ({
   url: "https://example.org/synthetic/" + id,
@@ -29,8 +31,8 @@ const input = {
               scenario("h-consolidation", "consolidation", ["s-consolidation"])],
 };
 const before = JSON.stringify(input);
-assert.throws(() => buildSyntheticScenarioBoard(input, {}), /explicit fixture/);
-const board = buildSyntheticScenarioBoard(input, { fictionalFixture: true });
+assert.throws(() => build(input, {}), /explicit fixture/);
+const board = build(input, { fictionalFixture: true });
 assert.equal(board.cards.length, 2);
 assert.equal(board.authority, "hypothesis-only");
 assert.match(board.label, /FICTIONAL/);
@@ -41,10 +43,10 @@ assert.ok(board.cards[1].linkedSources[0].contested);
 assert.ok(!("score" in board.cards[0]));
 assert.ok(!("recommended" in board.cards[0]));
 assert.equal(JSON.stringify(input), before);
-const empty = buildSyntheticScenarioBoard({ ...input, signals: [], scenarios: [scenario("h-unknown", "unknown", [])] }, { fictionalFixture: true });
+const empty = build({ ...input, signals: [], scenarios: [scenario("h-unknown", "unknown", [])] }, { fictionalFixture: true });
 assert.equal(empty.cards[0].linkedSources.length, 0);
 assert.ok(empty.cards[0].cautions.some(s => /No external evidence/.test(s)));
 const changed = structuredClone(input);
 changed.market.geography = "Maryland";
-assert.equal(buildSyntheticScenarioBoard(changed, { fictionalFixture: true }).cards[0].linkedSources[0].relevance, "out-of-scope");
+assert.equal(build(changed, { fictionalFixture: true }).cards[0].linkedSources[0].relevance, "out-of-scope");
 console.log("Synthetic-only scenario board contract passed");
