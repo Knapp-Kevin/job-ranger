@@ -1,3 +1,4 @@
+import { useState } from "react";
 import { ExternalLink, FileText, Trash2 } from "lucide-react";
 import { formatDistanceToNow } from "date-fns";
 import { ApplicationInsightsPanel } from "../components/ApplicationInsightsPanel";
@@ -5,6 +6,7 @@ import { ApplicationLifecyclePanel } from "../components/ApplicationLifecyclePan
 import { ApplicationMaterialsPanel } from "../components/ApplicationMaterialsPanel";
 import { InterviewPrepPanel } from "../components/InterviewPrepPanel";
 import { Layout } from "../components/Layout";
+import { ConfirmDialog } from "../components/ConfirmDialog";
 import { useApplications, type ApplicationStatus } from "../career/storage";
 import { getDesktopApi } from "../services/api";
 
@@ -19,6 +21,8 @@ const statuses: Array<{ value: ApplicationStatus; label: string }> = [
 
 export function Applications() {
   const { applications, update, remove, loading, error } = useApplications();
+  const [deleteApplicationId, setDeleteApplicationId] = useState<string | null>(null);
+  const deleteApplication = applications.find((item) => item.id === deleteApplicationId) ?? null;
 
   return (
     <Layout>
@@ -93,7 +97,7 @@ export function Applications() {
                 <button
                   type="button"
                   className="secondary-button"
-                  onClick={() => void remove(application.id)}
+                  onClick={() => setDeleteApplicationId(application.id)}
                   aria-label={`Remove ${application.title} from applications`}
                 >
                   <Trash2 className="h-4 w-4" />
@@ -123,6 +127,18 @@ export function Applications() {
           </article>
         ))}
       </div>
+      <ConfirmDialog
+        open={Boolean(deleteApplication)}
+        onClose={() => setDeleteApplicationId(null)}
+        onConfirm={async () => {
+          if (!deleteApplication) throw new Error("The selected application is no longer available.");
+          await remove(deleteApplication.id);
+          setDeleteApplicationId(null);
+        }}
+        title="Remove tracked application?"
+        message={`Remove "${deleteApplication?.title ?? "this application"}" at "${deleteApplication?.companyName ?? "this organization"}" from your tracked job search? This also removes the locally recorded application context, including its notes and associated contacts and milestones. This cannot be undone.`}
+        confirmLabel="Remove application"
+      />
     </Layout>
   );
 }
