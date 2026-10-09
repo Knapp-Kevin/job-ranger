@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { Compass, Plus, Save, Trash2 } from "lucide-react";
 import { Layout } from "../components/Layout";
+import { CareerExplorationHandoff } from "../components/CareerExplorationHandoff";
 import {
   emptyTargetTrackInput,
   toTargetTrackInput,
@@ -150,6 +151,15 @@ export function TargetTracks() {
     setDraft(toTargetTrackInput(track));
     setSaved(false);
   };
+  // A hypothesis is not a persisted search intent. Even an explicit user
+  // selection starts a *paused, unsaved* draft with no inferred constraints.
+  const exploreDirection = (direction: string) => {
+    setInitialized(true);
+    setEditingId(null);
+    setDraft({ ...cloneEmpty(), name: direction, direction, isActive: false });
+    setSaved(false);
+    document.getElementById("target-track-editor")?.scrollIntoView({ behavior: "smooth", block: "start" });
+  };
 
   const updateConstraints = <K extends keyof CareerTargetTrackInput["constraints"]>(
     key: K,
@@ -182,6 +192,8 @@ export function TargetTracks() {
           Create another track when the rules materially change. Empty fields stay irrelevant.
         </p>
       </section>
+
+      <CareerExplorationHandoff onTryDirection={exploreDirection} />
 
       {targetTracks.error && (
         <section className="support-note mt-6 px-5 py-4 text-sm text-[var(--color-danger)]">
@@ -226,7 +238,7 @@ export function TargetTracks() {
           </div>
         </aside>
 
-        <div className="panel panel-strong p-6 sm:p-8">
+        <div id="target-track-editor" className="panel panel-strong p-6 sm:p-8">
           <div className="flex flex-wrap items-start justify-between gap-4">
             <div>
               <span className="metric-label">{editingTrack ? "Edit track" : "New track"}</span>
