@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { Compass, Plus, Save, Trash2 } from "lucide-react";
 import { Layout } from "../components/Layout";
 import { ConfirmDialog } from "../components/ConfirmDialog";
+import { EconomicPathwayExplorer } from "../components/EconomicPathwayExplorer";
 import {
   emptyTargetTrackInput,
   toTargetTrackInput,
@@ -350,6 +351,7 @@ export function TargetTracks() {
           </div>
         </div>
       </section>
+      <EconomicPathwayExplorer />
       <ConfirmDialog
         open={Boolean(deleteTarget)}
         onClose={() => setDeleteTargetId(null)}
