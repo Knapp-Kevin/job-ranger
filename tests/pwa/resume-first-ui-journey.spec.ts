@@ -37,7 +37,14 @@ test("resume-first user can pursue a fixture job without importing unapproved fa
   });
   context.on("request", (request) => {
     const url = new URL(request.url());
-    if (url.origin !== new URL(server.url).origin && !url.hostname.endsWith("greenhouse.io")) {
+    // Hostname suffix tests are not security boundaries: "notgreenhouse.io"
+    // and "boards-api.greenhouse.io.attacker.example" are not our fixture.
+    // Only exact HTTPS GET reads of the approved public board API are allowed.
+    const isFixtureRead =
+      request.method() === "GET" &&
+      url.protocol === "https:" &&
+      url.hostname === "boards-api.greenhouse.io";
+    if (url.origin !== new URL(server.url).origin && !isFixtureRead) {
       outbound.push(request.method() + " " + request.url());
     }
   });
