@@ -1,0 +1,103 @@
+import { expect, test } from "@playwright/test";
+import { startPwaServer, type PwaServer } from "./support/server";
+import { distPwa, waitForRuntime } from "./support/fixtures";
+
+let server: PwaServer;
+test.beforeAll(async () => { server = await startPwaServer(distPwa); });
+test.afterAll(async () => { await server.close(); });
+
+test("Target Track deletion requires explicit review, cancel preserves the record", async ({ page }) => {
+  await page.goto(`${server.url}#/target-tracks`);
+  await waitForRuntime(page);
+  await page.getByRole("button", { name: "New", exact: true }).click();
+  await page.getByLabel("Track name").fill("Community operations");
+  await page.getByRole("button", { name: "Save target track" }).click();
+  await expect(page.getByText("Saved", { exact: true })).toBeVisible();
+  const before = await page.evaluate(() => window.electronAPI.career.listTargetTracks());
+  const target = before.find((track) => track.name === "Community operations");
+  expect(target).toBeTruthy();
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  const dialog = page.getByRole("dialog", { name: "Delete target track?" });
+  await expect(dialog).toBeVisible();
+  await expect(dialog).toContainText("Community operations");
+  await expect(dialog).toContainText("cannot be undone");
+  expect(await page.evaluate(() => window.electronAPI.career.listTargetTracks())).toEqual(before);
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  expect(await page.evaluate(() => window.electronAPI.career.listTargetTracks())).toEqual(before);
+  await page.getByRole("button", { name: "Delete", exact: true }).click();
+  await dialog.getByRole("button", { name: "Delete target track" }).click();
+  await expect(dialog).toBeHidden();
+  const after = await page.evaluate(() => window.electronAPI.career.listTargetTracks());
+  expect(after.some((track) => track.id === target!.id)).toBe(false);
+});
+
+test("Filter deletion is specific, cancellable and keeps failures visible", async ({ page }) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  const added = await page.evaluate(() => window.electronAPI.filters.create({
+    name: "No overnight openings",
+    companyId: null,
+    titleInclude: ["Coordinator"],
+    titleExclude: [],
+    keywordsInclude: [],
+    keywordsExclude: [],
+    salaryMin: null,
+    locationInclude: [],
+    locationExclude: [],
+    isActive: true,
+  }));
+  await page.goto(`${server.url}#/filters`);
+  await waitForRuntime(page);
+  const remove = page.getByRole("button", { name: "Delete filter No overnight openings" });
+  await expect(remove).toBeVisible();
+  await remove.click();
+  const dialog = page.getByRole("dialog", { name: "Delete filter?" });
+  await expect(dialog).toContainText("No overnight openings");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+  expect((await page.evaluate(() => window.electronAPI.filters.list())).some((filter) => filter.id === added.id)).toBe(true);
+
+  // Simulate a real runtime failure at the shared API boundary. Do not
+  // mutate SQLite here: the assertion is that the dialog does NOT hide an error.
+  await page.evaluate(() => {
+    window.electronAPI.filters.delete = async () => {
+      await new Promise((resolve) => setTimeout(resolve, 150));
+      throw new Error("Synthetic filter deletion failure");
+    };
+  });
+  await remove.click();
+  await dialog.getByRole("button", { name: "Delete filter", exact: true }).click();
+  await expect(dialog.getByRole("button", { name: "Cancel" })).toBeDisabled();
+  await expect(dialog.getByRole("button", { name: "Working..." })).toBeDisabled();
+  await expect(dialog.getByRole("alert")).toContainText("Synthetic filter deletion failure");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Cancel" })).toBeEnabled();
+  expect((await page.evaluate(() => window.electronAPI.filters.list())).some((filter) => filter.id === added.id)).toBe(true);
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  await expect(dialog).toBeHidden();
+});
+
+test("Job source removal warns about cascading job and history deletion", async ({ page }) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  const company = await page.evaluate(() => window.electronAPI.companies.create({
+    name: "Example community clinic",
+    url: "https://boards.greenhouse.io/examplecommunityclinic",
+    frequencyMinutes: 60,
+    isActive: true,
+  }));
+  await page.goto(`${server.url}#/companies`);
+  await waitForRuntime(page);
+  const remove = page.getByRole("button", { name: "Remove source Example community clinic" });
+  await expect(remove).toBeVisible();
+  await remove.click();
+  const dialog = page.getByRole("dialog", { name: "Remove job source?" });
+  await expect(dialog).toContainText("saved jobs and scrape history");
+  await dialog.getByRole("button", { name: "Cancel" }).click();
+  expect((await page.evaluate(() => window.electronAPI.companies.list())).some((item) => item.id === company.id)).toBe(true);
+  await remove.click();
+  await dialog.getByRole("button", { name: "Remove source", exact: true }).click();
+  await expect(dialog).toBeHidden();
+  expect((await page.evaluate(() => window.electronAPI.companies.list())).some((item) => item.id === company.id)).toBe(false);
+});
