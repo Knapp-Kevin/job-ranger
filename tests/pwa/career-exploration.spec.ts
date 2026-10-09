@@ -60,7 +60,10 @@ test("career exploration creates an opt-in handoff, then only an unsaved, paused
   await expect(page.getByRole("status")).toContainText("Brief copied locally");
   const clipboard = await page.evaluate(() => navigator.clipboard.readText());
   const exact = await brief.inputValue();
-  expect(clipboard).toBe(exact);
+  // Windows' clipboard API normalizes newline bytes to CRLF even when the
+  // controlled textarea has LF. Only that OS transport conversion is allowed;
+  // the words, quotes, boundaries and selected Career Evidence must match.
+  expect(clipboard.replace(/\r\n/g, "\n")).toBe(exact.replace(/\r\n/g, "\n"));
   expect(clipboard).toContain(statement);
 
   await page.getByLabel("Direction I want to explore").fill("Community-centered design operations");
