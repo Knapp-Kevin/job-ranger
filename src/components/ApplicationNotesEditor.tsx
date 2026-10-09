@@ -45,8 +45,12 @@ export function ApplicationNotesEditor({ application, onSave }: ApplicationNotes
   const edit = (text: string) => {
     desiredRef.current = text;
     setDraft(text);
-    setState("saving");
     setError(null);
+    if (!savingRef.current && text === persistedRef.current) {
+      setState("saved");
+      return;
+    }
+    setState("saving");
     void saveLatest();
   };
 
