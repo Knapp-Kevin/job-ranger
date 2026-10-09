@@ -87,6 +87,46 @@ const base = {
     observations: [{ name: "reached", value: -3, state: "manual" }],
   }), /nonnegative/);
 
+  const sampleLinkedIn = {
+    format: "linkedin-aggregate-analytics-v1",
+    period: { start: "2026-10-08", end: "2026-10-09" },
+    discovery: { impressions: 12, membersReached: 8 },
+    followers: { asOf: "2026-10-09", total: 101 },
+    daily: [
+      { date: "2026-10-08", impressions: 4, engagements: 0, newFollowers: 0 },
+      { date: "2026-10-09", impressions: 8, engagements: 2, newFollowers: 1 },
+    ],
+    topPosts: [{
+      url: "https://www.linkedin.com/posts/example-jobs-share-123",
+      publishedOn: "2026-10-09", impressions: 10, engagements: 2,
+    }],
+    audienceDemographics: [{ category: "Location", value: "Exampleville", reportedPercentage: "< 1%" }],
+    contentDemographics: [], warnings: [], provenance: "manual-linkedIn-export",
+  };
+  await assert.rejects(() => db.saveLinkedInImport(sampleLinkedIn, false), /explicit user confirmation/);
+  const firstLinkedIn = await db.saveLinkedInImport(sampleLinkedIn, true);
+  assert.equal(firstLinkedIn.alreadyPresent, false);
+  assert.match(firstLinkedIn.record.contentSha256, /^[a-f0-9]{64}$/);
+  assert.equal((await db.saveLinkedInImport(sampleLinkedIn, true)).alreadyPresent, true);
+  assert.equal((await db.listLinkedInImports()).length, 1);
+  const altered = structuredClone(sampleLinkedIn);
+  altered.discovery.impressions = 13;
+  altered.daily[1].impressions = 9;
+  const secondLinkedIn = await db.saveLinkedInImport(altered, true);
+  assert.equal(secondLinkedIn.alreadyPresent, false,
+    "overlapping corrected exports must remain separate observations");
+  assert.equal((await db.listLinkedInImports()).length, 2);
+  const malicious = { ...sampleLinkedIn, salary: 90000 };
+  await assert.rejects(() => db.saveLinkedInImport(malicious, true), /fields/);
+  await assert.rejects(() => db.saveLinkedInImport({
+    ...sampleLinkedIn, topPosts: [{ ...sampleLinkedIn.topPosts[0], url: "https://linkedin.com.evil.example/posts/abc" }],
+  }, true), /LinkedIn post URL/);
+  await assert.rejects(() => db.deleteLinkedInImport(firstLinkedIn.record.id, false), /confirmation/);
+  await db.deleteLinkedInImport(firstLinkedIn.record.id, true);
+  assert.equal((await db.listLinkedInImports()).length, 1);
+  assert.equal((await db.listSnapshots(receipt.postId)).length, 1,
+    "import ledger must not affect existing publication snapshots");
+
   const careerEvent = await db.recordCareerOutcome({
     kind: "meaningful_conversation",
     occurredAt: "2026-10-08T15:00:00.000Z",
