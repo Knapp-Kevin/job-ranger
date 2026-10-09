@@ -59,19 +59,30 @@ test("Filter deletion is specific, cancellable and keeps failures visible", asyn
   await expect(dialog).toBeHidden();
   expect((await page.evaluate(() => window.electronAPI.filters.list())).some((filter) => filter.id === added.id)).toBe(true);
 
-  // Simulate a real runtime failure at the shared API boundary. Do not
-  // mutate SQLite here: the assertion is that the dialog does NOT hide an error.
+  // Hold the canonical API call open until the test explicitly rejects it.
+  // This verifies the pending interaction without races or arbitrary sleeps.
   await page.evaluate(() => {
-    window.electronAPI.filters.delete = async () => {
-      await new Promise((resolve) => setTimeout(resolve, 150));
-      throw new Error("Synthetic filter deletion failure");
-    };
+    const state = window as unknown as { rejectDelete?: () => void; deleteAttempts?: number };
+    state.deleteAttempts = 0;
+    window.electronAPI.filters.delete = async () => new Promise<void>((_resolve, reject) => {
+      state.deleteAttempts = (state.deleteAttempts ?? 0) + 1;
+      state.rejectDelete = () => reject(new Error("Synthetic filter deletion failure"));
+    });
   });
   await remove.click();
   await dialog.getByRole("button", { name: "Delete filter", exact: true }).click();
   await expect(dialog.getByRole("button", { name: "Cancel" })).toBeDisabled();
   await expect(dialog.getByRole("button", { name: "Working..." })).toBeDisabled();
+  // Closing or confirming twice during persistence would misrepresent the
+  // operation. Escape must not bypass the active confirmation contract.
+  await page.keyboard.press("Escape");
+  await expect(dialog).toBeVisible();
+  await expect(dialog.getByRole("button", { name: "Working..." })).toBeDisabled();
+  await page.evaluate(() => {
+    (window as unknown as { rejectDelete: () => void }).rejectDelete();
+  });
   await expect(dialog.getByRole("alert")).toContainText("Synthetic filter deletion failure");
+  expect(await page.evaluate(() => (window as unknown as { deleteAttempts: number }).deleteAttempts)).toBe(1);
   await expect(dialog).toBeVisible();
   await expect(dialog.getByRole("button", { name: "Cancel" })).toBeEnabled();
   expect((await page.evaluate(() => window.electronAPI.filters.list())).some((filter) => filter.id === added.id)).toBe(true);
