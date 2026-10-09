@@ -86,10 +86,19 @@ test("Career Story deletion requires approval, leaves evidence and unrelated sto
   expect(await page.evaluate(() => (window as unknown as { attempts: number }).attempts)).toBe(1);
   expect((await page.evaluate(() => window.electronAPI.careerStories.list())).length).toBe(2);
 
-  await page.evaluate(() => (window as unknown as { restoreDelete: () => void }).restoreDelete());
+  await page.evaluate(() => {
+    (window as unknown as { restoreDelete: () => void }).restoreDelete();
+    const api = window.electronAPI.careerStories;
+    const originalList = api.list.bind(api);
+    (window as unknown as { restoreList?: () => void }).restoreList = () => { api.list = originalList; };
+    api.list = async () => { throw new Error("Synthetic post-delete listing interruption"); };
+  });
   await dialog.getByRole("button", { name: "Delete Career Story", exact: true }).click();
+  // DELETE success is enough. A separate read outage must not make the user
+  // believe their irreversible deletion was rejected.
   await expect(dialog).toBeHidden();
   await expect(firstButton).toBeHidden();
+  await page.evaluate(() => (window as unknown as { restoreList: () => void }).restoreList());
   await expect(secondButton).toBeVisible();
   expect((await page.evaluate(() => window.electronAPI.careerStories.list())).map((story) => story.id))
     .toEqual([fixture.storyB]);
