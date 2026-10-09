@@ -48,6 +48,7 @@ test("Filter deletion is specific, cancellable and keeps failures visible", asyn
     isActive: true,
   }));
   await page.goto(`${server.url}#/filters`);
+  await page.reload(); // AppContext's initial read must see the synthetic record.
   await waitForRuntime(page);
   const remove = page.getByRole("button", { name: "Delete filter No overnight openings" });
   await expect(remove).toBeVisible();
@@ -88,6 +89,7 @@ test("Job source removal warns about cascading job and history deletion", async 
     isActive: true,
   }));
   await page.goto(`${server.url}#/companies`);
+  await page.reload(); // AppContext's initial read must see the synthetic record.
   await waitForRuntime(page);
   const remove = page.getByRole("button", { name: "Remove source Example community clinic" });
   await expect(remove).toBeVisible();
