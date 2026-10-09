@@ -26,7 +26,7 @@ test("Target Track deletion requires explicit review, cancel preserves the recor
   await expect(dialog).toBeHidden();
   expect(await page.evaluate(() => window.electronAPI.career.listTargetTracks())).toEqual(before);
   await page.getByRole("button", { name: "Delete", exact: true }).click();
-  await dialog.getByRole("button", { name: "Delete target track" }).click();
+  await dialog.getByRole("button", { name: "Delete target track", exact: true }).click();
   await expect(dialog).toBeHidden();
   const after = await page.evaluate(() => window.electronAPI.career.listTargetTracks());
   expect(after.some((track) => track.id === target!.id)).toBe(false);
