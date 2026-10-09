@@ -29,12 +29,12 @@ function normalize(value: string): string {
 function significantTokens(value: string): string[] {
   return normalize(value)
     .split(" ")
-    // G11: normalize deliberately retains dots in Node.js, .NET and versions
-    // such as 3.0. Strip only sentence-terminal periods for matching so a
-    // stop word like "required." does not dilute evidence overlap. Do not
-    // change normalize(): requirement fingerprints must remain stable.
-    .map((token) => token.replace(/\.+$/u, ""))
-    .filter((token) => token.length >= 3 && !STOP_WORDS.has(token));
+    // G11: discard sentence-terminal stop words such as "required." without
+    // rewriting ordinary lexical tokens. Broadly stripping periods changed
+    // established positive corpus classifications; keep that wider semantic
+    // matching question separate from this safe stop-word correction.
+    // normalize() stays stable for persisted requirement fingerprints.
+    .filter((token) => token.length >= 3 && !STOP_WORDS.has(token.replace(/\.+$/u, "")));
 }
 
 function commonPrefixLength(left: string, right: string): number {
