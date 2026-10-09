@@ -6,6 +6,7 @@ import {
   Briefcase,
   Building2,
   Compass,
+  CircleHelp,
   FileText,
   LayoutDashboard,
   Library,
@@ -28,6 +29,7 @@ const navigation = [
   { name: "Companies", href: "/companies", icon: Building2 },
   { name: "Filters", href: "/filters", icon: Bell },
   { name: "Settings", href: "/settings", icon: Settings },
+  { name: "Help", href: "/help", icon: CircleHelp },
 ];
 
 export function Sidebar() {
