@@ -95,3 +95,61 @@ test("a pending status write blocks route navigation until the canonical update 
   await page.getByRole("link", { name: "Career Profile" }).click();
   await expect(page).toHaveURL(/#\/career-profile$/);
 });
+
+test("reverting text or status during a pending write cannot bypass the unsaved guard", async ({ page }) => {
+  const id = await seedTrackedApplication(page);
+  await page.evaluate(() => {
+    const api = window.electronAPI.applications;
+    const original = api.update.bind(api);
+    const state = window as unknown as { releaseFirstNotes?: () => void };
+    api.update = async (applicationId, patch) => {
+      if (patch.notes === "Temporary unsaved content") {
+        await new Promise<void>((resolve) => { state.releaseFirstNotes = resolve; });
+      }
+      return original(applicationId, patch);
+    };
+  });
+
+  const notes = page.getByRole("textbox", { name: "Notes" });
+  await notes.fill("Temporary unsaved content");
+  await notes.fill("");
+  await expect(notes).toHaveValue("");
+  await expect(page.getByRole("status", { name: "Application notes save status" }))
+    .toContainText("Saving notes");
+  await page.getByRole("link", { name: "Find Jobs" }).click();
+  const dialog = page.getByRole("dialog", { name: "Leave with unsaved changes?" });
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stay on this page" }).click();
+  await page.evaluate(() => (window as unknown as { releaseFirstNotes: () => void }).releaseFirstNotes());
+  await expect(page.getByRole("status", { name: "Application notes save status" })).toContainText("Saved");
+  await expect.poll(async () => (await page.evaluate(() => window.electronAPI.applications.list()))
+    .find((item) => item.id === id)?.notes).toBe("");
+
+  await page.evaluate(() => {
+    const api = window.electronAPI.applications;
+    const original = api.update.bind(api);
+    const state = window as unknown as { releaseFirstStatus?: () => void };
+    api.update = async (applicationId, patch) => {
+      if (patch.status === "applied") {
+        await new Promise<void>((resolve) => { state.releaseFirstStatus = resolve; });
+      }
+      return original(applicationId, patch);
+    };
+  });
+  const status = page.getByRole("combobox", { name: /Application status for/ });
+  await status.selectOption("applied");
+  await status.selectOption("interested");
+  await expect(status).toHaveValue("interested");
+  await expect(page.getByRole("status", { name: "Application status save status" }))
+    .toContainText("Saving status");
+  await page.getByRole("link", { name: "Career Profile" }).click();
+  await expect(dialog).toBeVisible();
+  await dialog.getByRole("button", { name: "Stay on this page" }).click();
+  await page.evaluate(() => (window as unknown as { releaseFirstStatus: () => void }).releaseFirstStatus());
+  await expect(page.getByRole("status", { name: "Application status save status" })).toContainText("Saved");
+  await expect.poll(async () => (await page.evaluate(() => window.electronAPI.applications.list()))
+    .find((item) => item.id === id)?.status).toBe("interested");
+
+  await page.getByRole("link", { name: "Find Jobs" }).click();
+  await expect(page).toHaveURL(/#\/jobs$/);
+});
