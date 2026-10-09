@@ -17,7 +17,7 @@ export function ApplicationNotesEditor({ application, onSave, onDirtyChange }: A
   const desiredRef = useRef(application.notes);
   const persistedRef = useRef(application.notes);
   const savingRef = useRef(false);
-  const reportDirty = () => onDirtyChange?.(desiredRef.current !== persistedRef.current);
+  const reportDirty = () => onDirtyChange?.(desiredRef.current !== persistedRef.current || savingRef.current);
 
   const [state, setState] = useState<"idle" | "saving" | "saved" | "error">("idle");
   const [error, setError] = useState<string | null>(null);
@@ -43,6 +43,7 @@ export function ApplicationNotesEditor({ application, onSave, onDirtyChange }: A
       setError(cause instanceof Error ? cause.message : "Unable to save application notes.");
     } finally {
       savingRef.current = false;
+      reportDirty();
     }
   };
 
