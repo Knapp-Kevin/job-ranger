@@ -156,6 +156,13 @@ test("reverting text or status during a pending write cannot bypass the unsaved 
 
 test("dirty browser-history navigation is blocked and unload warning is registered", async ({ page }) => {
   await seedTrackedApplication(page);
+  // Create a same-document hash-router history entry through the actual UI.
+  // Back to the seed helper's pre-router URL would instead be a full document
+  // navigation, governed by the native beforeunload prompt, not useBlocker.
+  await page.getByRole("link", { name: "Find Jobs" }).click();
+  await expect(page).toHaveURL(/#\/jobs$/);
+  await page.getByRole("link", { name: "Applications" }).click();
+  await expect(page).toHaveURL(/#\/applications$/);
   await page.evaluate(() => {
     window.electronAPI.applications.update = async () => { throw new Error("Synthetic offline notes write"); };
   });
