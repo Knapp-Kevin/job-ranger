@@ -1,4 +1,5 @@
 import { expect, test } from "@playwright/test";
+import { zipSync, strToU8 } from "fflate";
 import { startPwaServer, type PwaServer } from "./support/server";
 import { distPwa, waitForRuntime } from "./support/fixtures";
 
@@ -272,4 +273,64 @@ test("career outcomes require manual confirmation and retain only user-attested 
   outcomes = await page.evaluate(() => window.electronAPI.personalBrand.listCareerOutcomes());
   expect(outcomes).toHaveLength(0);
   await expect(page.getByText("No confirmed events recorded.")).toBeVisible();
+});
+
+
+test("LinkedIn XLSX upload previews six-sheet analytics locally without saving", async ({ page, context }) => {
+  const outbound: string[] = [];
+  context.on("request", request => {
+    if (new URL(request.url()).origin !== new URL(server.url).origin) outbound.push(request.url());
+  });
+  const columns = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
+  const escape = (text: string) => text.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;");
+  const sheetXml = (rows: Array<Array<string | number | null>>) => {
+    const xmlRows = rows.map((row, index) => {
+      const cells = row.map((value, col) => {
+        if (value === null) return "";
+        const ref = columns[col] + (index + 1);
+        return typeof value === "number"
+          ? `<c r="${ref}" t="n"><v>${value}</v></c>`
+          : `<c r="${ref}" t="inlineStr"><is><t>${escape(value)}</t></is></c>`;
+      }).join("");
+      return `<row r="${index + 1}">${cells}</row>`;
+    }).join("");
+    return `<?xml version="1.0" encoding="UTF-8"?><worksheet xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main"><sheetData>${xmlRows}</sheetData></worksheet>`;
+  };
+  const fakeUrl = "https://www.linkedin.com/posts/example-jobs-share-98765-abc";
+  const data: Record<string, Array<Array<string | number | null>>> = {
+    "DISCOVERY": [["Overall Performance", "10/8/2026 - 10/9/2026"], ["Impressions", 12], ["Members reached", 8]],
+    "ENGAGEMENT": [["Date", "Impressions", "Engagements"], ["10/8/2026", 4, 0], ["10/9/2026", 8, 2]],
+    "TOP POSTS": [["Maximum of 50 posts available to include in this list"], [],
+      ["Post URL", "Post Publish Date", "Engagements", "481", "Post URL", "Post Publish Date", "Impressions"],
+      [fakeUrl, "10/9/2026", 2, "481", fakeUrl, "10/9/2026", 10]],
+    "FOLLOWERS": [["Total followers on 10/9/2026", 101], [], ["Date", "New followers"],
+      ["10/8/2026", 0], ["10/9/2026", 1]],
+    "AUDIENCE DEMOGRAPHICS": [["Top Demographics", "Value", "Percentage"], ["Location", "Exampleville", "< 1%"]],
+    "CONTENT DEMOGRAPHICS": [["Top Demographics", "Value", "Percentage"], ["Company size", "11-50", "12%"]],
+  };
+  const names = Object.keys(data);
+  const book = `<?xml version="1.0" encoding="UTF-8"?><workbook xmlns="http://schemas.openxmlformats.org/spreadsheetml/2006/main" xmlns:r="http://schemas.openxmlformats.org/officeDocument/2006/relationships"><sheets>${names.map((n, i) => `<sheet name="${n}" sheetId="${i + 1}" r:id="rId${i + 1}"/>`).join("")}</sheets></workbook>`;
+  const rels = `<?xml version="1.0" encoding="UTF-8"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships">${names.map((_, i) => `<Relationship Id="rId${i + 1}" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/worksheet" Target="worksheets/sheet${i + 1}.xml"/>`).join("")}</Relationships>`;
+  const files: Record<string, Uint8Array> = {
+    "xl/workbook.xml": strToU8(book),
+    "xl/_rels/workbook.xml.rels": strToU8(rels),
+  };
+  names.forEach((name, i) => { files[`xl/worksheets/sheet${i + 1}.xml`] = strToU8(sheetXml(data[name])); });
+  const zip = Buffer.from(zipSync(files));
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  await page.goto(`${server.url}#/personal-brand`);
+  const area = page.getByTestId("linkedin-xlsx-preview");
+  await area.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
+    name: "AggregateAnalytics_synthetic.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: zip,
+  });
+  await expect(area.getByTestId("linkedin-preview-results")).toBeVisible();
+  await expect(area.getByText(/Preview only, not saved: 2026-10-08 through 2026-10-09/)).toBeVisible();
+  await expect(area.getByText("12", { exact: true })).toBeVisible();
+  await expect(area.getByText("101", { exact: true })).toBeVisible();
+  await expect(area.getByRole("link", { name: "View post" })).toHaveAttribute("href", fakeUrl);
+  expect(outbound).toEqual([]);
+  await page.reload();
+  await waitForRuntime(page);
+  await expect(page.getByTestId("linkedin-preview-results")).toHaveCount(0);
 });
