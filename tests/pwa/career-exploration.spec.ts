@@ -80,3 +80,42 @@ test("career exploration creates an opt-in handoff, then only an unsaved, paused
   expect(track!.roleTitles).toEqual([]);
   expect(outbound).toEqual([]);
 });
+
+
+test("approved exploration brief cannot copy superseded evidence", async ({ page, context }) => {
+  const outbound: string[] = [];
+  context.on("request", (request) => {
+    if (new URL(request.url()).origin !== new URL(server.url).origin) outbound.push(request.url());
+  });
+  await context.addInitScript(() => localStorage.setItem("job-ranger.onboarding.dismissed.v1", "true"));
+  await page.goto(server.url);
+  await waitForRuntime(page);
+
+  const record = await page.evaluate(() => window.electronAPI.career.createUserEvidence({
+    subjectType: "role", organization: "Example Community Group", titleOrName: "Coordinator",
+    startDate: "2024-01", endDate: null,
+    statement: "Coordinated community volunteer schedules.",
+    skills: ["Scheduling"], methodsOrTools: [], scope: [], outcomes: [], metrics: [], credential: null,
+  }));
+  await page.goto(`${server.url}#/target-tracks`);
+  await page.locator("summary").filter({ hasText: "Explore career possibilities with an assistant" }).click();
+  await expect(page.getByRole("checkbox", { name: /Include confirmed Career Evidence/ })).toBeVisible();
+  await page.getByLabel("Career exploration goal").fill("Explore opportunities supporting community programs.");
+  await page.getByRole("checkbox", { name: /Include confirmed Career Evidence/ }).check();
+  const approved = page.getByRole("checkbox", { name: /I have reviewed this exact brief and choose to copy it/i });
+  await approved.check();
+  await expect(page.getByRole("button", { name: "Copy reviewed brief" })).toBeEnabled();
+
+  // External canonical update without a renderer refresh, simulating a stale
+  // snapshot at the moment the person tries to hand a brief to a model.
+  await page.evaluate((id) => window.electronAPI.careerEvidence.supersedeEvidence(id, {
+    subjectType: "role",
+    statement: "Coordinated program scheduling under supervision; revised record.",
+  }), record.id);
+
+  await page.getByRole("button", { name: "Copy reviewed brief" }).click();
+  await expect(page.getByRole("alert")).toContainText("Selected Career Evidence changed");
+  await expect(approved).not.toBeChecked();
+  await expect(page.getByRole("button", { name: "Copy reviewed brief" })).toBeDisabled();
+  expect(outbound).toEqual([]);
+});
