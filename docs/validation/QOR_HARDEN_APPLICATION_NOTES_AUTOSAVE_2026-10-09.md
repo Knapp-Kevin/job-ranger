@@ -10,7 +10,7 @@
 
 Previously `Applications.tsx` directly used an application's *last persisted* `notes` as its controlled textarea `value`. Every keystroke immediately called `void update(id, { notes: text })`. In `src/career/storage.ts`, each call independently awaited the canonical API, then replaced the entire application in React state with whatever response arrived. Neither input responsiveness nor write ordering was protected against delayed/failed API responses; errors propagated through unhandled `void` calls.
 
-This is a confirmed source-level concurrency/failure-boundary defect (IQ-CORRECT / IQ-OBSERVE). The independent baseline PWA tests exercise actual SQLite via a controllably delayed older update, and simulate failed IPC storage. **Treat baseline runtime reproduction as pending until CI results are available; the source observation alone does not prove a measured failure frequency.**
+This is a confirmed source-level and **runtime-reproduced** concurrency/failure-boundary defect (IQ-CORRECT / IQ-OBSERVE). The independent test-only baseline at `16177c3ed185ca12743c3031ae2a395f24ce1728` ran on Linux PWA in [CI job 113975855320](https://github.com/MythologIQ-Labs-LLC/job-ranger/actions/runs/37976448601/job/113975855320): **24 of 26 tests passed, and both new regression tests failed as expected.** Under controlled out-of-order writes the final note was `First draft`, not `Final draft that must survive`; on simulated storage rejection the original input reset to the empty string instead of retaining `My unsaved interview notes`. This is explicit evidence of data loss and concealed failure in the original application; it does not establish a production incidence rate.
 
 ## Smallest sufficient repair
 
