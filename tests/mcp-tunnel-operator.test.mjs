@@ -9,6 +9,7 @@ import {
 import { adapterArguments, scrubForAdapter } from "../mcp/sanitized-stdio-launcher.mjs";
 
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const mockWorkspace = path.join(root, "_synthetic_workspace");
 const tunnelId = `tunnel_${"c".repeat(32)}`;
 const env = {
   CONTROL_PLANE_API_KEY: "sk-SENTINEL_CONTROL_PLANE_SECRET_DO_NOT_EXPOSE",
@@ -27,7 +28,7 @@ assert.throws(() => parseOperatorArguments([]), /Explicit/);
 assert.throws(() => parseOperatorArguments(["--scopes=all:read"]), /supported read scopes/);
 assert.throws(() => parseOperatorArguments(["--scopes=posts:read,posts:read"]), /unique/);
 assert.throws(() => parseOperatorArguments(["--scopes=posts:read"]), /absolute --data-dir/);
-assert.throws(() => parseOperatorArguments(["--mode=run", "--scopes=evidence:read", "--data-dir=/tmp/example"]), /approval|approve-private-data-transfer/);
+assert.throws(() => parseOperatorArguments(["--mode=run", "--scopes=evidence:read", `--data-dir=${mockWorkspace}`]), /approval|approve-private-data-transfer/);
 assert.throws(() => parseOperatorArguments(["--mode=run", "--scopes=none", "--bad=1"]), /Unknown/);
 assert.throws(() => parseOperatorArguments(["--mode=shell", "--scopes=none"]), /Only check or run/);
 assert.throws(() => parseOperatorArguments(["--mode=run", "--scopes=none", "--tunnel-bin=a\ncmd"]), /Invalid tunnel/);
@@ -37,19 +38,19 @@ assert.equal(validateTunnelEnvironment({ ...env, CONTROL_PLANE_API_KEY: "" }, "r
 assert.equal(validateTunnelEnvironment({ ...env, CONTROL_PLANE_TUNNEL_ID: "tunnel_notvalid" }, "run").ready, false);
 const config = parseOperatorArguments([
   "--mode=run", "--scopes=posts:read,evidence:read",
-  "--data-dir=/tmp/example",
+  `--data-dir=${mockWorkspace}`,
   "--approve-private-data-transfer=yes",
 ]);
 const spec = buildLaunchSpec(config, env);
 assert.equal(spec.binary, "tunnel-client");
 assert(spec.args.includes("--mcp.max-concurrent-requests=1"));
 assert(spec.args.some((v) => v.includes("mcp/sanitized-stdio-launcher.mjs")));
-assert(!JSON.stringify(spec.args).includes("/tmp/example"));
+assert(!JSON.stringify(spec.args).includes(mockWorkspace));
 assert(!JSON.stringify(spec.args).includes("SENTINEL"));
 assert.equal(spec.env.JOB_RANGER_MCP_SCOPES, "posts:read,evidence:read");
-assert.equal(spec.env.JOB_RANGER_MCP_DATA_DIR, "/tmp/example");
+assert.equal(spec.env.JOB_RANGER_MCP_DATA_DIR, mockWorkspace);
 assert.deepEqual(adapterArguments(spec.env), [
-  "--data-dir=/tmp/example", "--scopes=posts:read,evidence:read",
+  `--data-dir=${mockWorkspace}`, "--scopes=posts:read,evidence:read",
 ]);
 const minimal = buildLaunchSpec({ ...off, mode: "run", binary: "tunnel-client" }, env);
 assert.equal(minimal.env.JOB_RANGER_MCP_SCOPES, "none");
