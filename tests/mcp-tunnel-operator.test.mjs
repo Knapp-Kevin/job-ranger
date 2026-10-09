@@ -83,7 +83,7 @@ assert.equal(inspectLocalPrerequisites(config, {
 async function spawnMcpWithoutData() {
   const child = spawn(process.execPath,
     [path.join(root, "mcp", "sanitized-stdio-launcher.mjs")], {
-      cwd: root, env: { ...process.env, ...env, JOB_RANGER_MCP_SCOPES: "none" },
+      cwd: root, env: { ...process.env, ...env, NODE_OPTIONS: "", JOB_RANGER_MCP_SCOPES: "none" },
       stdio: ["pipe", "pipe", "pipe"],
     });
   let transcript = "";
