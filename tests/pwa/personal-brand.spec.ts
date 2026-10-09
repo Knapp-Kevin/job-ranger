@@ -16,6 +16,13 @@ test("Personal Brand manual workflow persists exact copy, receipt and analytics 
   await waitForRuntime(page);
   await page.goto(`${server.url}#/personal-brand`);
   await expect(page.getByRole("heading", { name: /Make the post useful/i })).toBeVisible();
+  const exportGuide = page.getByTestId("linkedin-analytics-export-guide");
+  await expect(exportGuide.locator("summary")).toHaveText(/export your LinkedIn analytics/i);
+  await exportGuide.locator("summary").click();
+  await expect(exportGuide.getByRole("link", { name: /LinkedIn Help/i })).toHaveAttribute("href", "https://www.linkedin.com/help/linkedin/answer/a703268");
+  await expect(exportGuide.getByText(/does not yet import the exported workbook/i)).toBeVisible();
+  await expect(exportGuide.getByText(/Past 365 days/)).toBeVisible();
+
 
   const text = "A rejection taught me that hiring signals can be incomplete. Here is what I learned.";
   await page.getByLabel("Post text (LinkedIn, text only)").fill(text);
