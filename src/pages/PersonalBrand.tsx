@@ -14,7 +14,7 @@ import {
 } from "../shared/personal-brand-learning";
 import type { CandidateEvidence } from "../shared/contracts";
 import { normalizeLinkedInAnalyticsExport, type LinkedInExportPreview } from "../shared/linkedin-analytics";
-import { readLinkedInXlsx } from "../shared/linkedin-xlsx";
+import { readLinkedInXlsx } from "../browser/linkedin-xlsx";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
