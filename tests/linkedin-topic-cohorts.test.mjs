@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { createHash } from "node:crypto";
 import { buildPersonalBrandLearningReport } from "../src/shared/personal-brand-learning.ts";
-import { buildLinkedInTopicCohorts } from "../src/shared/linkedin-topic-cohorts.ts";
+import { buildLinkedInTopicCohorts } from "../electron-runtime/src/shared/linkedin-topic-cohorts.js";
 
 const h=(text)=>createHash("sha256").update(text).digest("hex");
 const origin=Date.parse("2026-09-01T12:00:00.000Z");
