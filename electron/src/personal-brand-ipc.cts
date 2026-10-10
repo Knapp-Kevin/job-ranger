@@ -67,6 +67,18 @@ export function initializePersonalBrandIpc(options: {
     await ready;
     return backend.deleteHistoricalLinkedInPost(id, confirmed);
   });
+  ipcMain.handle("personal-brand:list-linkedin-topic-labels", async () => {
+    await ready;
+    return backend.listLinkedInTopicLabels();
+  });
+  ipcMain.handle("personal-brand:list-linkedin-topic-history", async (_event, target: unknown) => {
+    await ready;
+    return backend.listLinkedInTopicHistory(target);
+  });
+  ipcMain.handle("personal-brand:attest-linkedin-topics", async (_event, input: unknown, expectedRevision: number, confirmed: boolean) => {
+    await ready;
+    return backend.attestLinkedInTopics(input, expectedRevision, confirmed);
+  });
   ipcMain.handle("personal-brand:list-career-outcomes", async () => {
     await ready;
     return backend.listCareerOutcomes();
