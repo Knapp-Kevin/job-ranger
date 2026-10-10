@@ -35,12 +35,14 @@ Career Evidence remains factual truth, the Application owns lifecycle state, and
 ### Phase 1: Pure handoff-readiness contract (tests first)
 
 **Failing tests to write first**
-- Add `tests/application-handoff.test.mjs`; directly call the exported readiness function with synthetic `ApplicationMaterialProjection` inputs and assert exact results for (a) usable confirmed cover letter, (b) absent material, (c) draft containing no meaningful text, (d) stale supporting evidence, (e) unsupported material kind, (f) unsupported / contradictory evidence references. No presence-only or regex-only tests.
+- Add `tests/application-handoff.test.mjs`; directly call the exported readiness function with synthetic `ApplicationMaterialProjection` inputs and assert exact result values and exact text for (a) usable cover letter backed by evidence links, (b) absent material, (c) draft containing no meaningful text, (d) stale supporting evidence, (e) unsupported material kind, (f) missing or contradictory evidence references/timestamps. No presence-only or regex-only tests.
 - Run `node --experimental-strip-types tests/application-handoff.test.mjs` and capture expected failure before implementation; then run it twice successfully when implemented.
 
 **Implementation**
 - Add `src/shared/application-handoff.ts`: a pure function accepting the selected current projection or null, producing an explicit ready/blocked result with deterministic reasons and the exact text already rendered by the panel. No IO, storage, network, clock, generated assertions or hidden normalization. Keep the behavior independent of Electron and PWA.
-- Reuse the existing exported `ApplicationMaterialProjection` type; do not change the stored format or `ApplicationMaterialsDesktopApi`.
+- Reuse the existing exported `ApplicationMaterialProjection` type; do not change the stored format or `ApplicationMaterialsDesktopApi`. The pure function takes a single current projection or `null` and returns a discriminated result: `{ ready: true, text: string }` or `{ ready: false, reason: 'missing-material' | 'unsupported-kind' | 'empty-material' | 'stale-evidence' | 'missing-evidence-links' }`. Use the same joining behavior as the existing preview; do not silently alter punctuation or spacing.
+- Explicitly reject missing supporting evidence links, mismatches between selected ids and cited section ids, and missing evidence timestamps. Staleness remains decided by the canonical backend, not inferred from wall-clock time.
+- Add the new direct unit suite to the `test` script in `package.json`, so `npm run repo:health` invokes it rather than leaving the test orphaned.
 
 ### Phase 2: Explicit, fail-closed UI handoff
 
@@ -62,6 +64,7 @@ Career Evidence remains factual truth, the Application owns lifecycle state, and
 - Review network traces, authority boundaries, stale-evidence interleaving, clipboard-denied handling, browser activation, accessibility, and Electron/PWA parity. Review on a real employer listing only with mock data and **no submission**.
 
 **Implementation**
+- Register the direct unit test in `package.json` during Phase 1; include this change in the implementation PR's file-by-file scope.
 - Update `docs/design/APPLICATION_MATERIALS.md`, `HELP.md` and the feature inventory `docs/FEATURE_INDEX.md` *only after code is implemented*, marking verification state honestly. Do not mark as shipped or published.
 - Include the issue, specific test evidence, design limits and gate references in the implementation PR.
 
