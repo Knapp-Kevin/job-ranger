@@ -8,11 +8,18 @@
  * calendar dates agree. This is an observational read model, not a mutation.
  */
 import type { LinkedInReconciliationReport } from "./linkedin-reconciliation.js";
-import { fingerprintExactPost } from "./personal-brand.js";
 import type {
   HookArchetype, ManualPostPackage, ManualPublicationReceipt,
   PersonalBrandDraft, PostFormat, PresenceObjective,
 } from "./personal-brand.js";
+
+/** Same SHA-256-of-exact-UTF8 contract used by manual post preparation.
+ * Inline here to keep Node type-stripping tests and both runtimes source-only.
+ */
+async function fingerprintExactCopy(body: string): Promise<string> {
+  const hash = await crypto.subtle.digest("SHA-256", new TextEncoder().encode(body));
+  return Array.from(new Uint8Array(hash), byte => byte.toString(16).padStart(2, "0")).join("");
+}
 
 export type RankedPostLinkStatus =
   | "unmatched" | "ambiguous-url" | "publication-date-conflict"
@@ -115,7 +122,7 @@ export async function matchLinkedInRankedPosts(
     };
     if (approved.length !== 1 || !approved[0].sha256 ||
         approved[0].sha256 !== receipt.contentSha256 ||
-        await fingerprintExactPost(approved[0].body) !== approved[0].sha256) return {
+        await fingerprintExactCopy(approved[0].body) !== approved[0].sha256) return {
       ...base, status: "copy-fingerprint-conflict" as const, postId: receipt.postId,
       explanation: "The stored approved copy has inconsistent fingerprints or revisions. Content is withheld.",
     };
