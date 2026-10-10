@@ -617,8 +617,14 @@ test("reviewed topics show qualified same-context samples and clear to withheld"
   await expect(area.getByText(/1 descriptive topic comparison group/)).toBeVisible();
   await expect(area.getByTestId("topic-coverage")).toContainText(/6 single-topic, age-matched posts/);
   const rows=area.getByRole("row");
-  await expect(rows.filter({hasText:"ai governance"})).toContainText(/ai governance\s+3\s+5\.00%/);
-  await expect(rows.filter({hasText:"career change"})).toContainText(/career change\s+3\s+2\.00%/);
+  const aiRow=rows.filter({hasText:"ai governance"});
+  const careerRow=rows.filter({hasText:"career change"});
+  await expect(aiRow.getByRole("rowheader")).toHaveText("ai governance");
+  await expect(aiRow.getByRole("cell").nth(0)).toHaveText("3");
+  await expect(aiRow.getByRole("cell").nth(1)).toHaveText("5.00%");
+  await expect(careerRow.getByRole("rowheader")).toHaveText("career change");
+  await expect(careerRow.getByRole("cell").nth(0)).toHaveText("3");
+  await expect(careerRow.getByRole("cell").nth(1)).toHaveText("2.00%");
   await page.getByLabel("Observation age").selectOption("48");
   await expect(area.getByText(/0 descriptive topic comparison group/)).toBeVisible();
   await page.getByLabel("Observation age").selectOption("24");
