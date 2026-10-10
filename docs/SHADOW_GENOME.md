@@ -535,4 +535,31 @@ None in this cycle. The events 1f15661a and f0b67f91 remain addressed_pending, a
 
 ---
 
+## Failure Entry #18
+
+**Date**: 2026-10-10T06:43:41Z
+**Verdict ID**: Entry #104 (GATE TRIBUNAL Phase 17 Gate-Loop Remediation Amendment 1 Review)
+**Failure Mode**: COMPLEXITY_VIOLATION / coverage-gap (completeness gate satisfiable by reference reuse; false verification in a claim evaluator; binding dependency unworkable as specified)
+
+### What Failed
+
+Amendment 1 of the Phase 17 /qor-remediate proposal (.qor/gates/2026-10-10T0443-9d3df3/remediate.json, content hash 55782866) and its read-only checker (scripts/plan_claims_check.py, plan_claims_schema.py, plan_claims_source.py), plus .github/workflows/plan-claims.yml.
+
+### Why It Failed
+
+- The completeness rule tests only whether a detected assertion has *some* declared reference on the same line. One trivial claim ID, or one generic judgment, reused on every false line passes. So does an empty manifest whose prose uses undetected phrasings, and so does prose inside a fenced (or unclosed) block in a canonical section.
+- The function-lines brace scanner does not understand regex literals, so it under-counts. A 104-line function measured 2 lines and a max-40 claim verified true.
+- The CI job is path-filtered. Under GitHub semantics a path-skipped required check stays pending, so the declared closure dependency D1 cannot be applied as written. The gated PR can also edit the checker that gates it.
+- The test file is 308 lines, and the evaluator contains a nested ternary.
+
+### Pattern to Avoid
+
+Requiring that an assertion carry a reference is not the same as linking that assertion to a claim. A completeness gate must check that the referenced claim is about the asserted thing (compatible kind, same path) and must reject empty inventories when assertions are detected. Never exempt fenced content inside the sections being scanned. A verifier that can return a false PASS is worse than none, so fail closed on any token the parser does not model. A path-filtered workflow cannot be made a required check without blocking unrelated PRs. And a gate that runs from the PR head can be weakened by the PR it gates: load it from the base revision or protect it with CODEOWNERS.
+
+### Remediation Attempted
+
+None in this cycle. Events 1f15661a and f0b67f91 remain addressed_pending, and no addressed flip was performed. The Governor amends via /qor-remediate (Amendment 2) per AUDIT_REPORT V1-V4, then resubmits to an independent /qor-audit reviews-remediate. Closure additionally requires D1 and D2.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

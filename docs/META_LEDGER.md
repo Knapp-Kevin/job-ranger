@@ -2831,6 +2831,39 @@ Status: HOLD. Event closure requires an independent reviews-remediate PASS plus 
 
 ---
 
+### Entry #104: GATE TRIBUNAL (Phase 17 Gate-Loop Remediation Amendment 1 Review)
+
+**Timestamp**: 2026-10-10T06:43:41Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Target**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json (reviews-remediate; target content hash 55782866)
+
+**Verdict**: VETO
+
+**Content Hash**: `7cba0ffc44cd2d634e715633b160f59c9dac3347e62e1c22d89a7e7c53fa04ce`
+
+**Previous Hash**: `3390013a0dff1dc9dbacad6077351d1c0caad26e81a0a6cc58a8cf5be25aa595`
+
+**Chain Hash**: `eaeade0565a85478160c2cee9df49049a44f193f42a4f4402582769f6ae6a1a9`
+
+**Decision**: VETO for Amendment 1 of the Phase 17 gate-loop remediation, from a fresh-context subagent review (not a human or separately authenticated approval). The addressed flip was not performed.
+
+Verified:
+- R3 and R4 are closed. No manifest-controlled program executes. The only subprocesses are fixed list-argv git cat-file/ls-tree calls. Non-SHA refs are rejected before git is called. There is no checkout or env override.
+- Protocol fidelity holds. Events 1f15661a and f0b67f91 are real and addressed_pending only, with no IDs missing. The session has no events, and none were fabricated. Entries #96-#102 are unchanged. The artifact is schema-valid and the closure enforcer passes.
+- The CI job ran on 9e1d51e (run 38031540249): self-tests passed and the checker failed iteration 4 (no manifest), as expected. No application source changed. PRs #233 and #238 are untouched.
+
+Findings:
+- (V1) The R1 vacuous-satisfaction case is not closed. Four variants pass with exit 0: one trivial claim ID, or one blanket judgment, reused on every false line (kind and path are not checked); an empty manifest; fenced or unclosed-fence prose in canonical sections; and undetected phrasings.
+- (V2) The function-lines scanner ignores regex literals. A 104-line function measured as 2 lines, so a false Razor claim verifies.
+- (V3) D1 is unworkable with the paths-filtered workflow: a required check would leave non-plan PRs pending. The gated PR can also replace its own checker. Both are fixable in this repository.
+- (V4) Razor: the test file is 308 lines, and plan_claims_source.py:72 contains a nested ternary.
+
+Closure is not legal: this verdict is a VETO, and D1 and D2 are unmet. A PASS would not have been sufficient either. Events stay addressed_pending. Phase 17 plan iteration 5 is not authorized, and WWR remains HELD. The Governor must amend via /qor-remediate (Amendment 2) and then resubmit to an independent /qor-audit reviews-remediate.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2849,5 +2882,5 @@ Status: HOLD. Event closure requires an independent reviews-remediate PASS plus 
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101; VETO #102; REMEDIATE amendment #103 (HOLD on D1, D2); Phase 2 WWR HELD*
-*Next required action: independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json; event closure also requires D1 and D2*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101; VETO #102; REMEDIATE amendment #103 (HOLD on D1, D2); VETO #104; Phase 2 WWR HELD*
+*Next required action: Governor amends the remediation per Entry #104 findings V1-V4 via /qor-remediate (Amendment 2), then a fresh independent /qor-audit reviews-remediate; event closure also requires D1 and D2*
