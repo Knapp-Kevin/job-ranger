@@ -5,6 +5,7 @@ import { CareerOutcomeJournal } from "../components/CareerOutcomeJournal";
 import { HistoricalLinkedInArchive } from "../components/HistoricalLinkedInArchive";
 import { LinkedInObservedDashboard } from "../components/LinkedInObservedDashboard";
 import { LinkedInApprovedContentCohorts } from "../components/LinkedInApprovedContentCohorts";
+import { LinkedInTopicAttestations } from "../components/LinkedInTopicAttestations";
 import { getDesktopApi } from "../services/api";
 import {
   assessPersonalBrandDraft, derivedPostMetrics,
@@ -820,6 +821,7 @@ export function PersonalBrand() {
                 )}
               </section>
               <HistoricalLinkedInArchive analytics={linkedinReconciliation} />
+              <LinkedInTopicAttestations publications={publications} />
               <div className="rounded-lg border border-[var(--color-border)] p-3 space-y-3" data-testid="linkedin-import-ledger">
                 <h4 className="font-semibold">Saved LinkedIn exports ({linkedinSaved.length})</h4>
                 <p className="text-xs text-[var(--color-text-secondary)]">Overlapping exports are separate observations, never summed together. Original .xlsx files are not stored; preserve your originals. Deleting an import does not modify career evidence or manually recorded post snapshots.</p>

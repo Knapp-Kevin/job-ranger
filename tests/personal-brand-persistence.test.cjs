@@ -153,6 +153,40 @@ const base = {
   await assert.rejects(() => db.deleteHistoricalLinkedInPost(historic.id, false), /explicit confirmation/);
   await assert.rejects(() => db.deleteHistoricalLinkedInPost("fake", true), /Invalid historical/);
 
+  const target={targetKind:"confirmed_publication",targetId:receipt.postId};
+  const historicalTarget={targetKind:"historical_post",targetId:historic.id};
+  await assert.rejects(()=>db.attestLinkedInTopics({...target,topics:["career strategy"]},0,false),/explicit user confirmation/);
+  await assert.rejects(()=>db.attestLinkedInTopics({...target,topics:["career strategy","CAREER  STRATEGY"]},0,true),/Duplicate topic/);
+  await assert.rejects(()=>db.attestLinkedInTopics({...target,targetId:"presence-00000000-0000-4000-8000-000000000999:r1",topics:["career strategy"]},0,true),/does not exist/);
+  const tagged=await db.attestLinkedInTopics({...target,topics:["AI Governance","career   change"]},0,true);
+  assert.equal(tagged.revision,1);
+  assert.deepEqual(tagged.topics,["ai governance","career change"]);
+  assert.equal(tagged.sourceFingerprint,receipt.contentSha256);
+  await assert.rejects(()=>db.attestLinkedInTopics({...target,topics:["customer experience"]},0,true),/Stale LinkedIn topic revision/);
+  const renamed=await db.attestLinkedInTopics({...target,topics:["customer experience"]},1,true);
+  assert.equal(renamed.revision,2);
+  const cleared=await db.attestLinkedInTopics({...target,topics:[]},2,true);
+  assert.equal(cleared.action,"clear");
+  assert.deepEqual(cleared.topics,[]);
+  const labeledAgain=await db.attestLinkedInTopics({...target,topics:["customer advocacy"]},3,true);
+  assert.equal(labeledAgain.revision,4);
+  const reviewHistory=await db.listLinkedInTopicHistory(target);
+  assert.deepEqual(reviewHistory.map(e=>e.revision),[1,2,3,4]);
+  assert.equal(reviewHistory[0].topics[0],"ai governance","old topic revisions must be immutable");
+  const historicalLabel=await db.attestLinkedInTopics({...historicalTarget,topics:["career change"]},0,true);
+  assert.equal(historicalLabel.sourceFingerprint,historic.bodySha256);
+  const both=await db.listLinkedInTopicLabels();
+  assert.equal(both.length,2);
+  assert.equal(both.find(t=>t.targetKind==="confirmed_publication").revision,4);
+  const contested=await Promise.allSettled([
+    db.attestLinkedInTopics({...historicalTarget,topics:["one writer"]},1,true),
+    db.attestLinkedInTopics({...historicalTarget,topics:["second writer"]},1,true),
+  ]);
+  assert.equal(contested.filter(x=>x.status==="fulfilled").length,1,
+    "Only one writer can commit a revision after the same expected revision");
+  assert.equal(contested.filter(x=>x.status==="rejected").length,1);
+  assert.equal((await db.listLinkedInTopicHistory(historicalTarget)).length,2);
+
   const careerEvent = await db.recordCareerOutcome({
     kind: "meaningful_conversation",
     occurredAt: "2026-10-08T15:00:00.000Z",
@@ -180,6 +214,10 @@ const base = {
   assert.equal((await restored.listPublications())[0].publishedUrl, receipt.publishedUrl);
   assert.equal((await restored.listSnapshots(receipt.postId))[0].id, first.id);
   assert.equal((await restored.listCareerOutcomes())[0].id, careerEvent.id);
+  assert.equal((await restored.listLinkedInTopicHistory(target)).length,4,
+    "Immutable topic history survives backup and restore");
+  assert.equal((await restored.listLinkedInTopicLabels()).length,2,
+    "Topic current projection survives backup/restore");
   assert.equal((await restored.listHistoricalLinkedInPosts())[0].bodySha256, historic.bodySha256,
     "Historical user-attested post text must survive SQLite backup/restore");
   assert.equal((await restored.listLinkedInImports())[0].contentSha256, secondLinkedIn.record.contentSha256,
@@ -197,8 +235,21 @@ const base = {
   const historicalMigration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne(
     "SELECT version FROM schema_migrations WHERE version = 1008");
   assert.equal(historicalMigration.version, 1008);
+  const topicMigration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne(
+    "SELECT version FROM schema_migrations WHERE version = 1009");
+  assert.equal(topicMigration.version, 1009);
   await db.deleteHistoricalLinkedInPost(historic.id, true);
   assert.equal((await db.listHistoricalLinkedInPosts()).length, 0);
+  assert.equal((await db.listLinkedInTopicHistory(target)).length,4,
+    "Deleting unrelated historical content cannot change publication annotations");
+  assert.equal((await db.listLinkedInTopicLabels()).length,1,
+    "Deleting historical post must purge its topic annotations");
+  const rawTopicEvents = await new SqliteClient(databasePath,sqliteBinaryPath).queryOne(
+    "SELECT COUNT(*) AS n FROM personal_brand_linkedin_topic_events WHERE target_kind='historical_post'");
+  assert.equal(rawTopicEvents.n,0,"Removed historical post cannot retain topic text in audit storage");
+  assert.equal((await restored.listLinkedInTopicLabels()).length,2,
+    "Backup copy remains unchanged after deletion in original database");
+
   assert.equal((await db.listLinkedInImports()).length, 1,
     "Deleting a historical post cannot alter imported analytics");
   assert.equal((await db.listPublications()).length, 1,

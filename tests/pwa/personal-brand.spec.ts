@@ -494,3 +494,80 @@ test("LinkedIn dashboard compares only complete seven-day windows and withholds 
   await expect(impressions.getByText("Change unavailable")).toBeVisible();
   await expect(dashboard.getByTestId("linkedin-weekly-engagements").getByText("14",{exact:true})).toBeVisible();
 });
+
+
+test("user-attested LinkedIn topic labels survive reload, protect revisions and clear without altering posts", async ({ page }) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  const source=await page.evaluate(async()=>{
+    const api=window.electronAPI.personalBrand;
+    const draft=await api.createDraft({
+      body:"Synthetic LinkedIn topic labeling example, no model-derived themes.",
+      objective:"expertise_proof",audiences:["recruiters"],destination:"linkedin",
+      format:"text",hookArchetype:"lesson",hypothesis:"Test explicit labels",
+      claimChecks:[],mediaCount:0,mediaAccessibilityReviewed:true,
+    });
+    await api.prepareDraft(draft.id,draft.revision,true);
+    const receipt=await api.confirmPublication({
+      draftId:draft.id,revision:draft.revision,
+      publishedUrl:"https://www.linkedin.com/posts/synthetic-user-topic-example-991",
+      publishedAt:"2026-10-09T14:00:00-04:00",userConfirmed:true,
+    });
+    const historic=await api.recordHistoricalLinkedInPost({
+      url:"https://www.linkedin.com/posts/synthetic-user-historical-topic-992",
+      publishedOn:"2026-09-01",
+      body:"A previous published post about changing career directions.",
+      textSource:"copied_from_post",
+    },true);
+    return {receipt,historic};
+  });
+  await page.goto(`${server.url}#/personal-brand`);
+  const section=page.getByTestId("linkedin-topic-attestations");
+  await expect(section.getByRole("heading",{name:"Classify published content by topic"})).toBeVisible();
+  const selector=section.getByLabel("Choose an existing LinkedIn post");
+  await selector.selectOption("confirmed_publication:"+source.receipt.postId);
+  const topics=section.getByLabel("Topics (one per line, maximum 6)");
+  await topics.fill("Career Change\nAI Governance");
+  const confirm=section.getByRole("checkbox",{name:/I personally reviewed these topic labels/});
+  const save=section.getByRole("button",{name:"Save reviewed topics"});
+  await expect(save).toBeDisabled();
+  await confirm.check();
+  await save.click();
+  await expect(section.getByText(/Current revision: 1/)).toBeVisible();
+  const active=await page.evaluate(()=>window.electronAPI.personalBrand.listLinkedInTopicLabels());
+  expect(active).toHaveLength(1);
+  expect(active[0].topics).toEqual(["ai governance","career change"]);
+  const rawDraft=await page.evaluate(()=>window.electronAPI.personalBrand.listDrafts());
+  expect(rawDraft[0].body).toContain("Synthetic LinkedIn topic labeling example");
+
+  await page.reload();
+  await waitForRuntime(page);
+  const fresh=page.getByTestId("linkedin-topic-attestations");
+  await fresh.getByLabel("Choose an existing LinkedIn post")
+    .selectOption("confirmed_publication:"+source.receipt.postId);
+  await expect(fresh.getByLabel("Topics (one per line, maximum 6)")).toHaveValue("ai governance\ncareer change");
+  await fresh.getByLabel("Topics (one per line, maximum 6)").fill("Customer Experience");
+  await fresh.getByRole("checkbox",{name:/I personally reviewed these topic labels/}).check();
+  await fresh.getByRole("button",{name:"Save reviewed topics"}).click();
+  await expect(fresh.getByText(/Current revision: 2/)).toBeVisible();
+  await fresh.getByRole("checkbox",{name:/I personally reviewed these topic labels/}).check();
+  await fresh.getByRole("button",{name:"Clear active topic labels"}).click();
+  await expect(fresh.getByText(/Current revision: 3/)).toBeVisible();
+  expect(await page.evaluate((postId)=>window.electronAPI.personalBrand.listLinkedInTopicHistory({
+    targetKind:"confirmed_publication",targetId:postId,
+  }),source.receipt.postId)).toHaveLength(3);
+  const labels=await page.evaluate(()=>window.electronAPI.personalBrand.listLinkedInTopicLabels());
+  expect(labels).toHaveLength(1);
+  expect(labels[0].action).toBe("clear");
+  expect(labels[0].topics).toEqual([]);
+  await fresh.getByLabel("Choose an existing LinkedIn post")
+    .selectOption("historical_post:"+source.historic.id);
+  await fresh.getByLabel("Topics (one per line, maximum 6)").fill("Career reinvention");
+  await fresh.getByRole("checkbox",{name:/I personally reviewed these topic labels/}).check();
+  await fresh.getByRole("button",{name:"Save reviewed topics"}).click();
+  await expect(fresh.getByText(/Current revision: 1/)).toBeVisible();
+  await page.evaluate((id)=>window.electronAPI.personalBrand.deleteHistoricalLinkedInPost(id,true),source.historic.id);
+  const surviving=await page.evaluate(()=>window.electronAPI.personalBrand.listLinkedInTopicLabels());
+  expect(surviving).toHaveLength(1);
+  expect(surviving[0].targetId).toBe(source.receipt.postId);
+});
