@@ -553,9 +553,9 @@ test("user-attested LinkedIn topic labels survive reload, protect revisions and 
   await fresh.getByRole("checkbox",{name:/I personally reviewed these topic labels/}).check();
   await fresh.getByRole("button",{name:"Clear active topic labels"}).click();
   await expect(fresh.getByText(/Current revision: 3/)).toBeVisible();
-  expect(await page.evaluate(()=>window.electronAPI.personalBrand.listLinkedInTopicHistory({
-    targetKind:"confirmed_publication",targetId:source.receipt.postId,
-  }))).toHaveLength(3);
+  expect(await page.evaluate((postId)=>window.electronAPI.personalBrand.listLinkedInTopicHistory({
+    targetKind:"confirmed_publication",targetId:postId,
+  }),source.receipt.postId)).toHaveLength(3);
   const labels=await page.evaluate(()=>window.electronAPI.personalBrand.listLinkedInTopicLabels());
   expect(labels).toHaveLength(1);
   expect(labels[0].action).toBe("clear");
