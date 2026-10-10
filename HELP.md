@@ -215,6 +215,30 @@ JSON Resume import/export is a portability adapter, not Job Ranger's canonical d
 
 Imported JSON Resume facts still require user authority before becoming factual Career Evidence.
 
+## Newer development-line workflows (not in published v1.2.0)
+
+These features are implemented in the source development line but are **not claims about the downloadable v1.2.0 installers** or a promoted v1.3.0 release. Their exact menus and availability must be rechecked against the eventual packaged candidate.
+
+### Personal Brand and LinkedIn (manual-first)
+
+The Personal Brand page lets you author post drafts and inspect deterministic readiness findings. After reviewing the exact copy, you can prepare a manual posting package, publish it yourself, then record a user-confirmed publication receipt. Job Ranger does **not** log into LinkedIn or post on your behalf.
+
+You can also preview a LinkedIn-exported **XLSX analytics file locally** and choose whether to save its normalized evidence. Preview is not persistence. The saved-import ledger detects duplicate exports; reconciliation separates observed, missing and conflicting values instead of treating an export as complete authority. Historical post text and topic labels are **your attestations**, not verification from LinkedIn. Observed dashboards and cohorts are descriptive; they do not prove why a post performed well or caused an interview.
+
+Original published post permalinks and manually confirmed facts matter. LinkedIn exports do not automatically provide complete post text, comments, or employment outcomes. The current interface supports those limits explicitly. See [Personal Brand design](./docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md).
+
+### Economic pathway comparisons in Target Tracks
+
+The current Target Tracks page includes an exploratory comparison of user-authored employment, contract, self-employment, training and blended-income scenarios. Enter your own assumptions and examine the arithmetic. Outputs are **hypotheses**, not verified income forecasts or recommendations to change careers. No live labor-market feed or authoritative salary validation is implied.
+
+### Optional developer-only MCP reader
+
+There is a separate [local read-only MCP prototype](./docs/integrations/JOB_RANGER_MCP_READONLY.md) for technically proficient users developing a trusted agent integration. It is not built into the stable v1.2.0 installer, cannot submit applications or change Career Evidence through its read-only interface, and is not proof of a live ChatGPT integration.
+
+### Candidate providers and application handoff
+
+Himalayas discovery and We Work Remotely RSS are **draft-only**, not selectable main-line providers; WWR is held pending publisher-terms clarification. The candidate-controlled application handoff is also a separate unqualified draft. Neither should be followed as an instruction to connect, monitor or submit anything from the published product. Follow [System State](./docs/SYSTEM_STATE.md) for verified scope and the issue/PR evidence for current development disposition.
+
 ## Source-support labels
 
 ### Supported
