@@ -339,11 +339,17 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await area.getByRole("button", { name: "Review and save LinkedIn export" }).click();
   await expect(area.getByText(/LinkedIn analytics saved in the local Job Ranger database/)).toBeVisible();
   await expect(area.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
+  const reconcile = area.getByTestId("linkedin-reconciliation");
+  await expect(reconcile.getByText("Days observed", { exact: true })).toBeVisible();
+  await expect(reconcile.getByText("2 of 2", { exact: true })).toBeVisible();
+  await expect(reconcile.getByText("12", { exact: true })).toBeVisible();
+  await expect(reconcile.getByText(/2026-10-08 to 2026-10-09/)).toBeVisible();
   await page.reload();
   await waitForRuntime(page);
   const newArea = page.getByTestId("linkedin-xlsx-preview");
   await expect(page.getByTestId("linkedin-preview-results")).toHaveCount(0);
   await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
+  await expect(newArea.getByTestId("linkedin-reconciliation").getByText("2 of 2", { exact: true })).toBeVisible();
   await newArea.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
     name: "AggregateAnalytics_synthetic.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: zip,
   });
@@ -356,4 +362,5 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await newArea.getByRole("checkbox", { name: /I confirm deletion of the selected/i }).check();
   await newArea.getByRole("button", { name: "Delete selected export" }).click();
   await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(0\)/)).toBeVisible();
+  await expect(newArea.getByTestId("linkedin-reconciliation").getByText(/No saved LinkedIn exports yet/)).toBeVisible();
 });
