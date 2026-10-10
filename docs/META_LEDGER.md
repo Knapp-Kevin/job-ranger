@@ -2864,6 +2864,33 @@ Closure is not legal: this verdict is a VETO, and D1 and D2 are unmet. A PASS wo
 
 ---
 
+### Entry #105: REMEDIATE (Phase 17 Gate-Loop Remediation, Amendment 2)
+
+**Timestamp**: 2026-10-10T07:14:35Z
+**Phase**: REMEDIATE
+**Author**: Governor
+**Risk Grade**: L2
+**Gate**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json
+
+**Content Hash**: `fa0e69249c1d63a0bba4f8a442cef5ac148ea424b07ccb2a8d92b0e366391183`
+
+**Previous Hash**: `eaeade0565a85478160c2cee9df49049a44f193f42a4f4402582769f6ae6a1a9`
+
+**Chain Hash**: `9f7ed3c675ef38b9fa9be30abf460d183b7775afba920e353ab5a343d29aa66c`
+
+**Decision**: Operator-authorized Amendment 2, scoped to the findings of independent VETO #104 (V1-V4).
+The runtime re-emitted the remediation at the canonical gate path, superseding 55782866; Entries #101-#104 are unchanged.
+Evidence: test-first red at 1ce8b29 (57 run, 30 failed, 7 errors, gate suite unimportable); green at 8a93333 (66/66, twice).
+- V1: typed claims bound by subject, revision and property; one reference per id; scoped judgments; fenced text scanned.
+- V2: a fail-closed JS/TS tokenizer; the regex-brace counterexample now measures 104 lines.
+- V3: an always-reporting pull_request_target gate that runs base-revision code and treats the PR head as data only, plus CODEOWNERS and a prepared D1 payload.
+- V4: Razor limits enforced by a test.
+R3/R4 are preserved. Events 1f15661a and f0b67f91 remain addressed_pending, with no missing IDs.
+Status: HOLD. Closure needs an independent PASS plus D1 and D2. D1 must not be enabled until the gate has been observed end to end on main.
+Correction: commit 421ef20 (the remediate.json re-emit) names this entry in its message, but the entry was written afterwards, in the follow-up commit.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2882,5 +2909,5 @@ Closure is not legal: this verdict is a VETO, and D1 and D2 are unmet. A PASS wo
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101; VETO #102; REMEDIATE amendment #103 (HOLD on D1, D2); VETO #104; Phase 2 WWR HELD*
-*Next required action: Governor amends the remediation per Entry #104 findings V1-V4 via /qor-remediate (Amendment 2), then a fresh independent /qor-audit reviews-remediate; event closure also requires D1 and D2*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101/#103/#105; VETO #102/#104; HOLD on review, D1, D2; Phase 2 WWR HELD*
+*Next required action: fresh independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json; closure also requires D1 and D2*
