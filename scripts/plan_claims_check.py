@@ -1,158 +1,166 @@
-"""Executable plan-claims gate (Phase 17 /qor-remediate closure enforcer).
+"""Read-only plan-claims gate for governed plans (phase 17 onward).
 
-Plans from phase 17 onward must carry a fenced ```json qor-plan-claims block.
-Each claim restates an empirical statement from the plan prose (a cited line,
-a function size, a red/green test status) in a form this file can execute
-against an exact git ref. A plan whose claims do not reproduce is not ready
-for /qor-audit.
+A gated plan carries one ```json qor-plan-claims manifest (version 2). The
+gate never runs plan-supplied commands. It only reads immutable git objects
+with fixed `git cat-file` / `git ls-tree` calls. The checks are:
+- closed schema;
+- full 40-hex commit SHAs, each declared in the manifest and recorded in prose;
+- every known empirical assertion form in a canonical section references a
+  claim or a judgment exception;
+- no missing or orphan IDs.
 
-Run: python -m pytest tests/test_plan_claims_manifest.py
-Select a plan explicitly with QOR_PLAN=docs/plan-qor-phaseNN-*.md.
-Reuse a prepared checkout for command claims with
-QOR_CLAIMS_CHECKOUT_<ref-prefix>=<path> (its HEAD must equal the ref).
+Detection is lexical. It cannot prove that arbitrary prose is complete, so the
+independent auditor still owns undeclared or judgment-only assertions.
+
+Usage: python scripts/plan_claims_check.py [--repo DIR] [PLAN ...]
 """
 from __future__ import annotations
 
+import argparse
 import json
 import os
 import re
-import shutil
 import subprocess
-import tempfile
+import sys
 from pathlib import Path
 
-REPO = Path(__file__).resolve().parents[1]
+from plan_claims_schema import SHA_RE, PlanClaimsError, _fail, validate_manifest
+from plan_claims_source import evaluate
+
 FIRST_GATED_PHASE = 17
-BLOCK_RE = re.compile(r"```json qor-plan-claims\n(.*?)\n```", re.S)
+BLOCK_RE = re.compile(r"```json qor-plan-claims\r?\n(.*?)\r?\n```", re.S)
+REF_RE = re.compile(r"\[(claim|judgment):([a-z0-9][a-z0-9-]{0,48})\]")
 PHASE_RE = re.compile(r"plan-qor-phase(\d+)")
+REQUIRED_SECTIONS = ("## Locked Decisions", "## Definition of Done", "## CI Commands")
+CANONICAL_PREFIXES = REQUIRED_SECTIONS + ("## Phase ",)
+ASSERTION_FORMS = [
+    ("file:line citation", re.compile(r"[\w./-]+\.(?:cts|ts|tsx|js|cjs|mjs|json|py|ya?ml|md):\d+")),
+    ("grep evidence", re.compile(r"->\s*`\d+:")),
+    ("size or count", re.compile(r"\b\d[\d,]*(?:\.\d+)?\s*(?:lines?|entries|items|bytes|B|KiB|MiB|characters|chars|countries|jobs|listings|files|functions|callers|time zones)\b")),
+    ("enum literal", re.compile(r"\"[^\"\s]{1,40}\"\s*\|\s*\"[^\"\s]{1,40}\"")),
+    ("test classification", re.compile(r"(?i)\bred-first\b|\bregression-lock\b|\balready (?:passes|green)\b|\bfails? (?:red|by name)\b|\bcurrently (?:red|green)\b")),
+    ("import or dependency", re.compile(r"(?i)\bimport (?:cycle|edge)s?\b|\bimports? `[^`]+`|\brequire\(\s*[\"']")),
+]
+GIT_ENV = {"GIT_OPTIONAL_LOCKS": "0", "GIT_TERMINAL_PROMPT": "0", "GIT_NO_REPLACE_OBJECTS": "1"}
 
 
-def git(repo: Path, *args: str) -> str:
-    return subprocess.run(["git", "-C", str(repo), *args], check=True,
-                          capture_output=True, text=True, encoding="utf-8").stdout
+def canonical_lines(plan_text: str) -> list[tuple[int, str]]:
+    found, inside, fenced, out = set(), False, False, []
+    for number, line in enumerate(plan_text.splitlines(), 1):
+        if line.startswith("```"):
+            fenced = not fenced
+            continue
+        if line.startswith("## "):
+            inside = line.startswith(CANONICAL_PREFIXES)
+            found.update(p for p in CANONICAL_PREFIXES if line.startswith(p))
+        elif inside and not fenced:
+            out.append((number, line))
+    missing = [p.strip("# ").strip() for p in CANONICAL_PREFIXES if p not in found]
+    if missing:
+        _fail("R1", f"plan is missing canonical sections: {', '.join(missing)}")
+    return out
 
 
-def load_manifest(plan_text: str, phase: int) -> dict | None:
-    blocks = BLOCK_RE.findall(plan_text)
-    if not blocks:
-        if phase >= FIRST_GATED_PHASE:
-            raise AssertionError(f"phase {phase} plan has no qor-plan-claims block")
-        return None
-    if len(blocks) > 1:
-        raise AssertionError("plan has more than one qor-plan-claims block")
-    manifest = json.loads(blocks[0])
-    if manifest.get("version") != 1 or not manifest.get("claims"):
-        raise AssertionError("qor-plan-claims needs version 1 and a non-empty claims list")
-    return manifest
+def check_completeness(plan_text: str, manifest: dict) -> None:
+    kinds = {c["id"]: c["kind"] for c in manifest["claims"]}
+    ids = [c["id"] for c in manifest["claims"]] + [j["id"] for j in manifest["judgments"]]
+    if len(ids) != len(set(ids)):
+        _fail("R1", f"duplicate claim or judgment ids: {sorted({i for i in ids if ids.count(i) > 1})}")
+    prose = BLOCK_RE.sub("", plan_text)
+    for number, line in canonical_lines(prose):
+        refs = REF_RE.findall(line)
+        for form, pattern in ASSERTION_FORMS:
+            if not pattern.search(line):
+                continue
+            if not refs:
+                _fail("R1", f"unreferenced empirical assertion ({form}) at line {number}: {line.strip()[:120]}")
+            if form == "test classification" and not any(t == "claim" and kinds.get(i) == "test-outcome" for t, i in refs):
+                _fail("R1", f"test classification at line {number} needs a test-outcome claim backed by a trusted harness")
+    referenced = {(t, i) for t, i in REF_RE.findall(prose)}
+    declared = {("claim", i) for i in kinds} | {("judgment", j["id"]) for j in manifest["judgments"]}
+    if referenced - declared:
+        _fail("R1", f"missing claim or judgment for references {sorted(referenced - declared)}")
+    if declared - referenced:
+        _fail("R1", f"orphan manifest entries never referenced by the plan: {sorted(declared - referenced)}")
+    for label, sha in manifest["commits"].items():
+        if sha not in prose:
+            _fail("R4", f"commit {label} {sha} is not recorded in the plan prose")
 
 
-def check_grep(repo: Path, claim: dict) -> None:
-    text = git(repo, "show", f"{claim['ref']}:{claim['path']}")
-    pattern = re.compile(claim["pattern"])
-    hits = [f"{n}:{line}" for n, line in enumerate(text.splitlines(), 1) if pattern.search(line)]
-    if claim.get("expect_absent"):
-        assert not hits, f"{claim['id']}: expected no match, found {hits[:3]}"
-        return
-    assert hits, f"{claim['id']}: pattern not found at {claim['ref']}:{claim['path']}"
-    assert hits[0] == claim["expect"], f"{claim['id']}: expected {claim['expect']!r}, observed {hits[0]!r}"
+def _git(repo: Path, *args: str) -> subprocess.CompletedProcess:
+    argv = ["git", "-C", str(repo), "-c", "core.fsmonitor=false", "--literal-pathspecs", "--no-pager", *args]
+    return subprocess.run(argv, capture_output=True, env={**os.environ, **GIT_ENV}, check=False)
 
 
-def function_length(text: str, name: str) -> int:
-    lines = text.splitlines()
-    start_re = re.compile(rf"^(export )?(async )?function {re.escape(name)}\b")
-    for index, line in enumerate(lines):
-        if start_re.match(line):
-            for end in range(index, len(lines)):
-                if lines[end] == "}":
-                    return end - index + 1
-            raise AssertionError(f"function {name} has no column-0 closing brace")
-    raise AssertionError(f"function {name} not found")
+def resolve_commit(repo: Path, sha: str) -> None:
+    result = _git(repo, "cat-file", "-t", sha)
+    if result.returncode != 0 or result.stdout.strip() != b"commit":
+        _fail("R4", f"{sha} does not resolve to a commit object")
 
 
-def check_size(repo: Path, claim: dict) -> None:
-    text = git(repo, "show", f"{claim['ref']}:{claim['path']}")
-    if claim["kind"] == "file-lines":
-        observed = len(text.splitlines())
-    else:
-        observed = function_length(text, claim["function"])
-    assert observed <= claim["max"], f"{claim['id']}: {observed} lines exceeds {claim['max']}"
-    if "expect" in claim:
-        assert observed == claim["expect"], f"{claim['id']}: expected {claim['expect']} lines, observed {observed}"
-
-
-def checkout_for(repo: Path, ref: str, scratch: Path) -> Path:
-    full = git(repo, "rev-parse", ref).strip()
-    override = os.environ.get(f"QOR_CLAIMS_CHECKOUT_{ref[:7]}")
-    if override:
-        head = git(Path(override), "rev-parse", "HEAD").strip()
-        assert head == full, f"checkout {override} is at {head}, claims require {full}"
-        return Path(override)
-    target = scratch / full[:12]
-    if not target.exists():
-        git(repo, "worktree", "add", "--detach", str(target), full)
-    return target
-
-
-def check_command(repo: Path, claim: dict, scratch: Path, prepared: set) -> None:
-    cwd = checkout_for(repo, claim["ref"], scratch)
-    for step in claim.get("setup", []):
-        if (str(cwd), tuple(step)) not in prepared:
-            run_argv(step, cwd, must_pass=True)
-            prepared.add((str(cwd), tuple(step)))
-    result = run_argv(claim["argv"], cwd, must_pass=False)
-    passed = result.returncode == 0
-    want = claim["expect"]
-    assert want in ("pass", "fail"), f"{claim['id']}: expect must be pass or fail"
-    assert passed == (want == "pass"), (
-        f"{claim['id']}: expected {want}, exit {result.returncode}\n{result.stdout[-800:]}{result.stderr[-800:]}")
-    if claim.get("output_regex"):
-        assert re.search(claim["output_regex"], result.stdout + result.stderr), (
-            f"{claim['id']}: output does not match {claim['output_regex']!r}")
-
-
-def run_argv(argv: list, cwd: Path, must_pass: bool) -> subprocess.CompletedProcess:
-    exe = shutil.which(argv[0]) or argv[0]
-    result = subprocess.run([exe, *argv[1:]], cwd=cwd, capture_output=True, text=True,
-                            encoding="utf-8", errors="replace")
-    if must_pass and result.returncode != 0:
-        raise AssertionError(f"setup {argv} failed: {result.stderr[-800:]}")
-    return result
+def read_blob(repo: Path, claim: dict) -> str:
+    listed = _git(repo, "ls-tree", "-z", claim["commit"], "--", claim["path"]).stdout.split(b"\0")[0]
+    if not listed:
+        _fail("R1", f"claim {claim['id']}: {claim['path']} does not exist at {claim['commit']}")
+    meta, _, name = listed.partition(b"\t")
+    mode, kind, oid = meta.decode().split(" ")
+    if name.decode() != claim["path"] or kind != "blob" or mode not in ("100644", "100755") or not SHA_RE.fullmatch(oid):
+        _fail("R3", f"claim {claim['id']}: {claim['path']} is not a regular file at {claim['commit']}")
+    try:
+        return _git(repo, "cat-file", "blob", oid).stdout.decode("utf-8")
+    except UnicodeDecodeError:
+        _fail("R3", f"claim {claim['id']}: {claim['path']} is not UTF-8 text")
 
 
 def verify_plan(repo: Path, plan_path: Path) -> list[str]:
     match = PHASE_RE.search(plan_path.name)
-    assert match, f"{plan_path} is not a docs/plan-qor-phaseNN plan"
-    manifest = load_manifest(plan_path.read_text(encoding="utf-8"), int(match.group(1)))
-    if manifest is None:
+    if not match:
+        _fail("R1", f"{plan_path.name} is not a docs/plan-qor-phaseNN plan")
+    text = plan_path.read_text(encoding="utf-8")
+    blocks = BLOCK_RE.findall(text)
+    if not blocks:
+        if int(match.group(1)) >= FIRST_GATED_PHASE:
+            _fail("R1", f"phase {match.group(1)} plan has no qor-plan-claims manifest")
         return []
-    ids = [c["id"] for c in manifest["claims"]]
-    assert len(ids) == len(set(ids)), "claim ids must be unique"
-    prepared: set = set()
-    with tempfile.TemporaryDirectory(prefix="qor-claims-") as tmp:
-        scratch = Path(tmp)
+    if len(blocks) > 1:
+        _fail("SCHEMA", "plan has more than one qor-plan-claims block")
+    try:
+        manifest = validate_manifest(json.loads(blocks[0]))
+    except json.JSONDecodeError as error:
+        _fail("SCHEMA", f"manifest is not JSON: {error}")
+    check_completeness(text, manifest)
+    for sha in sorted(set(manifest["commits"].values())):
+        resolve_commit(repo, sha)
+    for claim in manifest["claims"]:
+        if claim["kind"] == "test-outcome":
+            _fail("R1", f"claim {claim['id']}: test-outcome needs trusted harness evidence; none exists yet (dependency D3)")
+        problem = evaluate(read_blob(repo, claim), claim)
+        if problem:
+            _fail("R1", f"claim {claim['id']} does not reproduce at {claim['commit']}: {problem}")
+    return [c["id"] for c in manifest["claims"]] + [j["id"] for j in manifest["judgments"]]
+
+
+def gated_plans(repo: Path) -> list[Path]:
+    plans = [p for p in (repo / "docs").glob("plan-qor-phase*.md") if PHASE_RE.search(p.name)]
+    return sorted(p for p in plans if int(PHASE_RE.search(p.name).group(1)) >= FIRST_GATED_PHASE)
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__.splitlines()[0])
+    parser.add_argument("--repo", default=".")
+    parser.add_argument("plans", nargs="*")
+    args = parser.parse_args(argv)
+    repo = Path(args.repo).resolve()
+    plans = [Path(p) for p in args.plans] or gated_plans(repo)
+    failed = 0
+    for plan in plans:
         try:
-            for claim in manifest["claims"]:
-                kind = claim["kind"]
-                if kind == "git-grep":
-                    check_grep(repo, claim)
-                elif kind in ("function-lines", "file-lines"):
-                    check_size(repo, claim)
-                elif kind == "command":
-                    check_command(repo, claim, scratch, prepared)
-                else:
-                    raise AssertionError(f"{claim['id']}: unknown claim kind {kind!r}")
-        finally:
-            for child in scratch.iterdir():
-                subprocess.run(["git", "-C", str(repo), "worktree", "remove", "--force", str(child)],
-                               capture_output=True)
-    return ids
+            print(f"PASS {plan.name}: {len(verify_plan(repo, plan))} claims/judgments")
+        except PlanClaimsError as error:
+            failed += 1
+            print(f"FAIL {plan.name}: {error}")
+    return 1 if failed else 0
 
 
-def active_plan(repo: Path) -> Path:
-    explicit = os.environ.get("QOR_PLAN")
-    if explicit:
-        return repo / explicit
-    plans = sorted((repo / "docs").glob("plan-qor-phase*.md"),
-                   key=lambda p: int(PHASE_RE.search(p.name).group(1)))
-    assert plans, "no docs/plan-qor-phase*.md plan found"
-    return plans[-1]
+if __name__ == "__main__":
+    sys.exit(main())

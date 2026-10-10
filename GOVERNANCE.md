@@ -132,6 +132,36 @@ Do not imply a GitHub Actions gate ran when it did not.
 
 Likewise, a green hosted workflow demonstrates only that its configured assertions passed. It does not prove product fitness, source compatibility, platform packaging, or user success.
 
+## Plan claims gate
+
+Governed plans from `docs/plan-qor-phase17-*` onward must carry one fenced `json qor-plan-claims` manifest (version 2). The manifest restates the plan's empirical assertions as read-only checks against full 40-character commit SHAs:
+
+- exact cited lines;
+- text presence or absence;
+- file and function sizes;
+- string-union enum values;
+- import edges.
+
+Every such assertion in a canonical section (Locked Decisions, each Phase, Definition of Done, CI Commands) must reference a claim (`[claim:id]`) or a judgment exception (`[judgment:id]`, with a rationale the independent auditor challenges). Every manifest entry must be referenced.
+
+`scripts/plan_claims_check.py` enforces this. It never executes plan-supplied commands: it only reads git objects through fixed `git cat-file` and `git ls-tree` calls, and it rejects HEAD, branch, tag and short references. `tests/test_plan_claims_manifest.py` is its regression suite.
+
+Before a plan is recorded or submitted for audit, run both commands at the plan commit:
+
+```bash
+python -m unittest discover -s tests -p test_plan_claims_manifest.py
+python scripts/plan_claims_check.py --repo .
+```
+
+The `Plan claims gate` workflow runs the same two commands, fail-closed. A failing gate means the plan is not ready for `/qor-audit`.
+
+Limits, stated plainly:
+
+- Detection is lexical and cannot prove that arbitrary prose is complete. The auditor remains responsible for undeclared and judgment-only assertions.
+- Red-first and regression-lock test classifications cannot be asserted until a separately controlled test harness produces trusted evidence. Until then, the gate rejects them.
+- The workflow blocks merges only after it is added as a required status check on `main`.
+- `/qor-plan` and `/qor-audit` reach this gate only once the shared skills are amended through their own governed phase.
+
 ## Merge standard
 
 Material changes should not merge unless:

@@ -1,0 +1,45 @@
+name: Plan claims gate
+
+# Read-only governance gate for docs/plan-qor-phase17+ plans. The checker never
+# executes plan-supplied commands: it reads immutable git objects only. This job
+# blocks merges once it is listed as a required status check in the main ruleset.
+on:
+  pull_request:
+    paths:
+      - 'docs/plan-qor-phase*.md'
+      - 'scripts/plan_claims_*.py'
+      - 'tests/test_plan_claims_manifest.py'
+      - '.github/workflows/plan-claims.yml'
+  push:
+    branches:
+      - main
+    paths:
+      - 'docs/plan-qor-phase*.md'
+      - 'scripts/plan_claims_*.py'
+      - 'tests/test_plan_claims_manifest.py'
+      - '.github/workflows/plan-claims.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  plan-claims:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out repository with full history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Gate self-tests (R1-R4 regression suite)
+        run: python -m unittest discover -s tests -p test_plan_claims_manifest.py
+
+      - name: Verify every gated plan's claims against immutable git objects
+        run: python scripts/plan_claims_check.py --repo .
