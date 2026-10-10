@@ -480,4 +480,32 @@ Amend the plan per AUDIT_REPORT N1-N4: classify the red-first and regression-loc
 
 ---
 
+## Failure Entry #16
+
+**Date**: 2026-10-10T05:24:27Z
+**Verdict ID**: Entry #100 (GATE TRIBUNAL Phase 17 Public Discovery Provider Tranche, Iteration 4)
+**Failure Mode**: SPECIFICATION_DRIFT (with COMPLEXITY_VIOLATION)
+
+### What Failed
+
+The iteration-4 plan for the Himalayas provider. It closed N2 and N3 and stated the main baseline truthfully, but its new red-first classification and Phase 0 golden lock were not fully verified against the candidate.
+
+### Why It Failed
+
+- The plan called its red/green split "measured", yet it placed "51 time-zone entries -> null" in the red-first group. The candidate already returns null for that input.
+- The golden test's ability to catch dedupe and cap regressions depends on the duplicate pair being the first two Remote OK rows. The plan never says so; two of the three orders it permits detect nothing at limit 4.
+- Moving `himalayasQuery` while keeping the endpoints in `source-discovery.cts` either contradicts the plan or creates an import cycle.
+- D2 promises that every function is under 40 lines, while the authorized diff edits the 167-line `registerCoreIpcHandlers`.
+- The golden test names a runtime kind ("desktop") that the `RuntimeKind` type does not contain.
+
+### Pattern to Avoid
+
+Run every red-first input, including each length-rule input, through the current code, and write the observed output beside it. Any item without an observed red value is a regression lock. When a golden test claims to detect a pipeline-stage mutation, state the fixture precondition that puts the affected item inside the cap window, and check it by mutating the stage once. When a refactor moves a function, move its constants with it, or say where they live. A Razor promise covers every function the diff touches, including pre-existing ones; exempt them explicitly or split them.
+
+### Remediation Required
+
+Amend the plan per AUDIT_REPORT F1-F5: reclassify the 51-entry item; pin the golden duplicate rows to positions 0 and 1; resolve the endpoint and `himalayasQuery` placement; refactor or explicitly exempt `registerCoreIpcHandlers` (/qor-refactor); use `runtimeKind: "electron"`. Then resubmit to an independent /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

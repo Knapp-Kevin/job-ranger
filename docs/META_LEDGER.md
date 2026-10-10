@@ -2715,6 +2715,41 @@ Phase 2 WWR remains HELD. Awaiting a fresh independent GATE tribunal.
 
 ---
 
+### Entry #100: GATE TRIBUNAL (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T05:24:27Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Verdict**: VETO
+
+**Content Hash**: `4a8e6f1c2f9ded4f910e7cdf87984107f03390719eefbce20303f0ba4d9bfd10`
+
+**Previous Hash**: `37d4231b3fd517fc76cb8d56cdd54f67966b9d0ff0b9eb3a40c897bf4fc2e3ab`
+
+**Chain Hash**: `30526d44958a02c8964e60d7ab99422c032bf8444e6f5b1ca628ba5853e4fa05`
+
+**Decision**: VETO for plan iteration 4 (content hash 08b95334), from an Option B fresh-context subagent review (not a human or separately authenticated approval).
+
+Verified:
+- N2 and N3 are closed. The 37-entry time-zone input is null on the compiled candidate, and the expected rendering is consistent with LD3 and LD4.
+- The main-baseline statement is true: the test hits MODULE_NOT_FOUND at line 2 and exits 1.
+- LD1-LD7 greps reproduce. A live Himalayas request reconfirms seconds pubDate, numeric time zones, a 149-entry list and no CORS header.
+- The delivery path still has a single package.json conflict against live main f81586f.
+
+N1 and N4 are partial. Findings:
+- (F1) the red-first assertion "51 entries -> null" is already null on the candidate, so D4's named red output is unsatisfiable;
+- (F2) the golden fixture detects dropped dedupe, cap-before-dedupe or stage reordering only if the duplicate pair are the first two Remote OK rows, and the plan does not specify that;
+- (F3) moving himalayasQuery while source-discovery.cts keeps the endpoints contradicts itself or creates an import cycle;
+- (F4) the authorized diff modifies the 167-line registerCoreIpcHandlers, contradicting D2's under-40-line promise;
+- (F5) the golden test uses runtimeKind "desktop", which is not a RuntimeKind.
+
+Phase 2 WWR remains HELD. Governor must amend the plan text (with /qor-refactor for F4) and resubmit to an independent /qor-audit.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2733,5 +2768,5 @@ Phase 2 WWR remains HELD. Awaiting a fresh independent GATE tribunal.
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95; VETO #96; PLAN it.3 #97; VETO #98; PLAN it.4 #99; Phase 2 WWR HELD*
-*Next required action: fresh independent /qor-audit of plan iteration 4 (Entry #99)*
+*Phase 17 Public Discovery Providers (#136): PLAN #95; VETO #96; PLAN it.3 #97; VETO #98; PLAN it.4 #99; VETO #100; Phase 2 WWR HELD*
+*Next required action: Governor amends plan iteration 4 per Entry #100 findings F1-F5, then a fresh independent /qor-audit*
