@@ -527,7 +527,7 @@ test("user-attested LinkedIn topic labels survive reload, protect revisions and 
   const selector=section.getByLabel("Choose an existing LinkedIn post");
   await selector.selectOption("confirmed_publication:"+source.receipt.postId);
   const topics=section.getByLabel("Topics (one per line, maximum 6)");
-  await topics.fill("Career Change\\nAI Governance");
+  await topics.fill("Career Change\nAI Governance");
   const confirm=section.getByRole("checkbox",{name:/I personally reviewed these topic labels/});
   const save=section.getByRole("button",{name:"Save reviewed topics"});
   await expect(save).toBeDisabled();
@@ -545,7 +545,7 @@ test("user-attested LinkedIn topic labels survive reload, protect revisions and 
   const fresh=page.getByTestId("linkedin-topic-attestations");
   await fresh.getByLabel("Choose an existing LinkedIn post")
     .selectOption("confirmed_publication:"+source.receipt.postId);
-  await expect(fresh.getByLabel("Topics (one per line, maximum 6)")).toHaveValue("ai governance\\ncareer change");
+  await expect(fresh.getByLabel("Topics (one per line, maximum 6)")).toHaveValue("ai governance\ncareer change");
   await fresh.getByLabel("Topics (one per line, maximum 6)").fill("Customer Experience");
   await fresh.getByRole("checkbox",{name:/I personally reviewed these topic labels/}).check();
   await fresh.getByRole("button",{name:"Save reviewed topics"}).click();
