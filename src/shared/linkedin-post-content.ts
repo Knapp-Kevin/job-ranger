@@ -8,6 +8,7 @@
  * calendar dates agree. This is an observational read model, not a mutation.
  */
 import type { LinkedInReconciliationReport } from "./linkedin-reconciliation.js";
+import { fingerprintExactPost } from "./personal-brand.js";
 import type {
   HookArchetype, ManualPostPackage, ManualPublicationReceipt,
   PersonalBrandDraft, PostFormat, PresenceObjective,
@@ -59,12 +60,12 @@ export function canonicalLinkedInPostUrl(raw: string): string | null {
   return url.toString();
 }
 
-export function matchLinkedInRankedPosts(
+export async function matchLinkedInRankedPosts(
   analytics: LinkedInReconciliationReport,
   receipts: readonly ManualPublicationReceipt[],
   packages: readonly ManualPostPackage[],
   currentDrafts: readonly PersonalBrandDraft[],
-): RankedPostContentReport {
+): Promise<RankedPostContentReport> {
   const byUrl = new Map<string, ManualPublicationReceipt[]>();
   for (const receipt of receipts) {
     if (receipt.destination !== "linkedin" || receipt.source !== "user_confirmed") continue;
@@ -74,7 +75,7 @@ export function matchLinkedInRankedPosts(
     group.push(receipt);
     byUrl.set(canonical, group);
   }
-  const rows: RankedPostContentRow[] = analytics.topPostsFromLatestExport.map(post => {
+  const rows: RankedPostContentRow[] = await Promise.all(analytics.topPostsFromLatestExport.map(async post => {
     const base = {
       url: post.url, publishedOn: post.publishedOn, impressions: post.impressions,
       engagements: post.engagements, sourceImportId: post.sourceImportId,
@@ -113,7 +114,8 @@ export function matchLinkedInRankedPosts(
       explanation: "A receipt matches, but no original human-reviewed copy package is available.",
     };
     if (approved.length !== 1 || !approved[0].sha256 ||
-        approved[0].sha256 !== receipt.contentSha256) return {
+        approved[0].sha256 !== receipt.contentSha256 ||
+        await fingerprintExactPost(approved[0].body) !== approved[0].sha256) return {
       ...base, status: "copy-fingerprint-conflict" as const, postId: receipt.postId,
       explanation: "The stored approved copy has inconsistent fingerprints or revisions. Content is withheld.",
     };
@@ -128,7 +130,7 @@ export function matchLinkedInRankedPosts(
       metadataCurrent: !!draft, objective: draft?.objective ?? null,
       hook: draft?.hookArchetype ?? null, format: draft?.format ?? null,
     };
-  });
+  }));
   const verifiedCopyCount = rows.filter(row => row.status === "copy-verified").length;
   const unmatchedCount = rows.filter(row => row.status === "unmatched").length;
   const warnings = [
