@@ -1,14 +1,16 @@
 {
   "phase": "plan",
   "session_id": "2026-10-10T0443-9d3df3",
-  "ts": "2026-10-10T04:44:15Z",
+  "ts": "2026-10-10T05:00:24Z",
   "plan_path": "docs/plan-qor-phase17-provider-tranche.md",
   "phases": [
-    "Phase 1: Himalayas defect closure and qualification",
+    "Phase 0: Behaviour-preserving refactor (Razor)",
+    "Phase 1: Himalayas defect closure",
     "Phase 2: We Work Remotely RSS - HELD (no implementation authorized)",
     "Phase 3: Evidence and documentation"
   ],
   "ci_commands": [
+    "npm run desktop:compile",
     "npm run typecheck",
     "node tests/himalayas-discovery.test.cjs",
     "node tests/source-discovery-provider.test.cjs",
@@ -21,7 +23,7 @@
   "doc_tier": "standard",
   "high_risk_target": false,
   "pr_target": "main",
-  "originating_remediation": "issue #136",
+  "originating_remediation": "issue #136; VETO Entry #96",
   "terms": [
     {
       "term": "provider eligibility text",
@@ -33,13 +35,13 @@
       "entry_id": "FX016",
       "operation": "MODIFIED",
       "test_path": "tests/himalayas-discovery.test.cjs",
-      "test_descriptor": "discoverPublicJobFeeds with a Himalayas fixture returns an attributed, non-monitorable candidate whose location carries country and UTC restrictions and whose publishedAt is the seconds-epoch instant"
+      "test_descriptor": "discoverPublicJobFeeds with a Himalayas fixture returns a Himalayas-attributed candidate with canMonitor false, a himalayas.app opportunityUrl, LD3/LD4 eligibility text and the seconds-epoch publishedAt"
     },
     {
       "entry_id": "FX016",
       "operation": "MODIFIED",
       "test_path": "tests/e2e/source-discovery.spec.ts",
-      "test_descriptor": "Electron UI renders Found via Himalayas with an Open opportunity link to himalayas.app and no monitor approval for that row"
+      "test_descriptor": "Electron UI renders the Himalayas card with Found via Himalayas, its eligibility text, Opportunity only, and no monitor approval button"
     }
   ],
   "ai_provenance": {
@@ -48,6 +50,6 @@
     "host": "unknown",
     "model_family": "opus",
     "human_oversight": "absent",
-    "ts": "2026-10-10T04:44:15Z"
+    "ts": "2026-10-10T05:00:24Z"
   }
 }

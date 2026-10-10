@@ -2654,6 +2654,24 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #97: PLAN (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T05:00:24Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Content Hash**: `1ad2126a35ab3e831785e3c05305224a7649ba258f1113cad7760ff4b3fb4f2f`
+
+**Previous Hash**: `6c74292d6930f8dce3e5c91137b9edba87ba541f00685cbef5f770fc84e71452`
+
+**Chain Hash**: `b085813c0c772475b3d5bf789ea7252fa527e9c4f465527e85970d535c5c4381`
+
+**Decision**: Plan iteration 3 amends iteration 2 after the independent VETO at Entry #96, and addresses V1-V10. It defines the time-zone format so the candidate assertions stay valid. It lists the full candidate diff and the delivery path: merge main into PR #233, retarget it to main, and keep #238 out. It adds a Phase 0 Razor refactor and reject-branch tests, and requires JSON byte caps for all three feeds. It corrects the location count to 149, puts the compile step first, and makes the literals ASCII. Phase 2 (WWR) remains HELD. Awaiting a fresh independent GATE tribunal.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2672,5 +2690,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN recorded (Entry #95); GATE VETO (Entry #96); Phase 2 WWR HELD*
-*Next required action: Governor amends docs/plan-qor-phase17-provider-tranche.md per Entry #96 (/qor-refactor for the Razor ground, /qor-debug for the A04 ground), then independent re-run of /qor-audit*
+*Phase 17 Public Discovery Providers (#136): PLAN #95; GATE VETO #96; PLAN iteration 3 #97; Phase 2 WWR HELD*
+*Next required action: fresh independent /qor-audit of plan iteration 3 (Entry #97)*
