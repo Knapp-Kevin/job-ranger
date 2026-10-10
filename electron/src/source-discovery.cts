@@ -366,6 +366,28 @@ function himalayasQuery(role: string): string {
   return url.toString();
 }
 
+/**
+ * Keep one prolific feed from consuming the entire user-visible result limit.
+ * Preserve each feed's order while taking one result per source per round.
+ */
+function balanceProviderResults(items: SourceDiscoveryCandidate[]): SourceDiscoveryCandidate[] {
+  const providers = new Map<string, SourceDiscoveryCandidate[]>();
+  for (const item of items) {
+    const group = providers.get(item.providerName) ?? [];
+    group.push(item);
+    providers.set(item.providerName, group);
+  }
+  const groups = Array.from(providers.values());
+  const depth = groups.reduce((largest, group) => Math.max(largest, group.length), 0);
+  const ordered: SourceDiscoveryCandidate[] = [];
+  for (let index = 0; index < depth; index += 1) {
+    for (const group of groups) {
+      if (group[index]) ordered.push(group[index]);
+    }
+  }
+  return ordered;
+}
+
 export async function discoverPublicJobFeeds(
   request: SourceDiscoveryRequest,
   context: DiscoveryContext,
@@ -438,7 +460,7 @@ export async function discoverPublicJobFeeds(
   }
 
   const seen = new Set<string>();
-  candidates = candidates
+  candidates = balanceProviderResults(candidates)
     .filter((candidate) => {
       const key = `${normalize(candidate.employerName)}\n${normalize(candidate.opportunityTitle)}\n${normalize(candidate.opportunityUrl)}`;
       if (seen.has(key)) return false;
