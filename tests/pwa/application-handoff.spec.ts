@@ -44,13 +44,9 @@ test("candidate-authorized handoff copies only a fresh saved material without su
   await card.getByRole("button", { name: "Application materials", exact: false }).click();
   await expect(card.getByText("Cover letter v1", { exact: true })).toBeVisible();
 
-  await page.evaluate(() => {
-    Object.defineProperty(navigator, "clipboard", {
-      configurable: true,
-      value: { writeText: async (text: string) => {
-        (window as unknown as { __copied?: string }).__copied = text;
-      } },
-    });
+  // Exercise Chromium's real clipboard path before introducing a synthetic denial.
+  await page.context().grantPermissions(["clipboard-read", "clipboard-write"], {
+    origin: new URL(server.url).origin,
   });
   const externalRequests: string[] = [];
   page.on("request", (request) => {
@@ -58,7 +54,7 @@ test("candidate-authorized handoff copies only a fresh saved material without su
   });
   await card.getByRole("button", { name: "Copy cover letter v1" }).click();
   await expect(card.getByRole("status", { name: "Cover letter copy status" })).toContainText("Copied");
-  expect(await page.evaluate(() => (window as unknown as { __copied?: string }).__copied))
+  expect(await page.evaluate(() => navigator.clipboard.readText()))
     .toContain("Coordinated patient scheduling");
   expect((await page.evaluate(() => window.electronAPI.applications.list()))
     .find((item) => item.id === ids.applicationId)?.status).toBe("interested");
