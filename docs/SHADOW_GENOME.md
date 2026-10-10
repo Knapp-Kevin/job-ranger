@@ -453,4 +453,31 @@ Amend the plan per AUDIT_REPORT V1-V10 (with /qor-refactor for the Razor ground 
 
 ---
 
+## Failure Entry #15
+
+**Date**: 2026-10-10T05:09:35Z
+**Verdict ID**: Entry #98 (GATE TRIBUNAL Phase 17 Public Discovery Provider Tranche, Iteration 3)
+**Failure Mode**: SPECIFICATION_DRIFT
+
+### What Failed
+
+Iteration-3 plan for the Himalayas provider. It closed the iteration-2 findings V1-V8 and V10, but its new test and evidence contracts did not hold up against the candidate code.
+
+### Why It Failed
+
+- The plan required every new Phase 1 assertion to fail red before the source change, and D4 required the red output to name each one. Seven planned assertions already pass on the candidate, because the candidate is already stricter on those inputs. The "named assertion" red evidence against main is also impossible: the unit test fails with MODULE_NOT_FOUND.
+- A CI command was described as covering the web Himalayas skip warning. No PWA test does.
+- The time-zone rule cited a live maximum of 37 entries but set no list-length rule, and every planned test used 3 or fewer entries. The candidate's 12-entry cap could therefore survive with all tests green.
+- The Phase 0 behaviour-preserving refactor relied on suites that never exercise the dedupe stage it restructures.
+
+### Pattern to Avoid
+
+Before you declare a red-first test, run it in your head against the code as it stands. A fail-closed assertion on code that already fails closed is a regression lock, not red evidence; label it that way. Every "this command covers X" statement needs a grep hit in the test tree. When a Locked Decision records a live maximum, turn it into a rule and a test at that maximum. A refactor's test lock has to exercise each pipeline stage the refactor touches.
+
+### Remediation Required
+
+Amend the plan per AUDIT_REPORT N1-N4: classify the red-first and regression-lock assertions and amend D4; add or retract the PWA skip-warning coverage; add the time-zone length rule and a test longer than 12 entries; add a dedupe and exact-output lock fixture for Phase 0. Then resubmit to an independent /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

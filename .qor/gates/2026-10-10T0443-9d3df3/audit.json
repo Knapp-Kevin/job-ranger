@@ -1,26 +1,23 @@
 {
   "phase": "audit",
   "session_id": "2026-10-10T0443-9d3df3",
-  "ts": "2026-10-10T04:54:11Z",
+  "ts": "2026-10-10T05:09:35Z",
   "target": "docs/plan-qor-phase17-provider-tranche.md",
   "verdict": "VETO",
   "report_path": ".agent/staging/AUDIT_REPORT.md",
   "risk_grade": "L2",
   "findings_categories": [
     "specification-drift",
-    "feature-test-undeclared",
     "infrastructure-mismatch",
-    "razor-overage",
-    "coverage-gap",
-    "owasp-violation"
+    "coverage-gap"
   ],
-  "target_content_hash": "060dd40c431c6d0465092cb0031b73a0f00e6456e7b8609995cc9c4f7d1895e9",
+  "target_content_hash": "1ad2126a35ab3e831785e3c05305224a7649ba258f1113cad7760ff4b3fb4f2f",
   "ai_provenance": {
     "system": "Qor-logic",
     "version": "unknown",
     "host": "unknown",
     "model_family": "opus",
     "human_oversight": "veto",
-    "ts": "2026-10-10T04:54:11Z"
+    "ts": "2026-10-10T05:11:24Z"
   }
 }

@@ -2672,6 +2672,26 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #98: GATE TRIBUNAL (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T05:09:35Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Verdict**: VETO
+
+**Content Hash**: `8cddd19e5017b2f1b831bf21d26df1b3521b517b92cd61cf972da2fa933c709e`
+
+**Previous Hash**: `b085813c0c772475b3d5bf789ea7252fa527e9c4f465527e85970d535c5c4381`
+
+**Chain Hash**: `cb2d743854f6dc4e529093caa12482069a2bd7de38f33a6dffb785d2efc1e11e`
+
+**Decision**: VETO for plan iteration 3 (content hash 1ad2126a), from an Option B fresh-context subagent review (not a human or separately authenticated approval). Prior findings V1-V8 and V10 are closed on verification. LD1-LD7 greps reproduce. A merge simulation confirms that package.json is the only conflict with main and that its resolution is well-defined. The fetchDiscoveryJson callers are fully enumerated (3, all in source-discovery.cts). The Razor split is plausible against e22d49b sizes. The live Remote OK size of 559,053 B reproduces. V9 is partial. New findings: (N1) the red-first contract and D4 are unsatisfiable, because at least seven planned assertions already pass on the candidate behaviour and the unit test fails with MODULE_NOT_FOUND, not a named assertion, on main; (N2) the CI line claims test:pwa:e2e covers the Himalayas skip warning, but no PWA spec does; (N3) LD3 sets no time-zone list-length rule and no test covers lists of more than 12 entries, which occur in 10 of 310 captured listings (max 37); (N4) the Phase 0 behaviour lock does not exercise the dedupe stage and compares no full outputs. Phase 2 WWR remains HELD. Governor must amend the plan text and resubmit to an independent /qor-audit.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2690,5 +2710,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95; GATE VETO #96; PLAN iteration 3 #97; Phase 2 WWR HELD*
-*Next required action: fresh independent /qor-audit of plan iteration 3 (Entry #97)*
+*Phase 17 Public Discovery Providers (#136): PLAN #95; GATE VETO #96; PLAN iteration 3 #97; GATE VETO #98; Phase 2 WWR HELD*
+*Next required action: Governor amends plan iteration 3 per Entry #98 findings N1-N4, then fresh independent /qor-audit*
