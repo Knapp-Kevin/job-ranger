@@ -114,6 +114,27 @@ function fetchFixture(url) {
   assert.ok(urls.some(x => new URL(x).searchParams.get("q") === "Customer Success Manager"));
   assert.ok(urls.some(x => new URL(x).searchParams.get("q") === "Product Manager"));
 
+  // A prolific incumbent feed must not crowd a distinct source out of a short result list.
+  const saturatedRemoteOk = Array.from({ length: 12 }, (_, index) => ({
+    id: 9000 + index,
+    company: `Remote Employer ${index}`,
+    position: "Customer Success Manager",
+    url: `https://remoteok.com/remote-jobs/${9000 + index}`,
+    location: "Remote",
+  }));
+  const diversified = await discoverPublicJobFeeds({ ...request, limit: 3 }, {
+    fetchImpl: (url) => {
+      const value = String(url);
+      if (value.includes("remoteok.com")) return Promise.resolve(json(saturatedRemoteOk));
+      return fetchFixture(url);
+    },
+    existingCompanies: [],
+    runtimeKind: "electron",
+  });
+  assert.equal(diversified.candidates.length, 3);
+  assert.ok(diversified.candidates.some(candidate => candidate.providerName === "Himalayas"),
+    "newly discovered relevant opportunities must not be starved by first-source ordering");
+
   const unavailable = await discoverPublicJobFeeds(request, {
     fetchImpl: (url) => {
       if (String(url).includes("himalayas.app")) return Promise.resolve(json({ errors: "Rate limited" }, 429));
