@@ -24,7 +24,7 @@ export function validateTopicTarget(value:unknown):TopicTarget {
     throw new Error("Unsupported LinkedIn topic target.");
   if(typeof input.targetId!=="string" ||
      !(input.targetKind==="confirmed_publication"
-       ? /^post-[a-f0-9-]{36}$/.test(input.targetId)
+       ? /^presence-[a-f0-9-]{36}:r[1-9]\\d*$/.test(input.targetId)
        : /^linkedin-history-[a-f0-9-]{36}$/.test(input.targetId)))
     throw new Error("Invalid LinkedIn topic target identifier.");
   return {targetKind:input.targetKind,targetId:input.targetId};
