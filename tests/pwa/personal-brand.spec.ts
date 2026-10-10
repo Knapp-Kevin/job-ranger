@@ -199,8 +199,11 @@ test("comparison screen uses since-publication ages and shows non-causal suggest
   await expect(contentReview.getByText(/2 of 2 posts have verified original copy/)).toBeVisible();
   await expect(contentReview.getByText(/1 hook-contrast review candidates/)).toBeVisible();
   await expect(contentReview.getByText(/not controlled/)).toBeVisible();
-  await contentReview.getByText("Inspect fingerprint-verified approved copy").first().click();
+  for (const summary of await contentReview.getByText("Inspect fingerprint-verified approved copy").all()) {
+    await summary.click();
+  }
   await expect(contentReview.getByText("A verifiable experience from my professional journey 0.")).toBeVisible();
+  await expect(contentReview.getByText("A verifiable experience from my professional journey 1.")).toBeVisible();
 
   await page.getByLabel("Observation age").selectOption("48");
   await expect(page.getByText("0 comparable of 2 recorded LinkedIn posts")).toBeVisible();
