@@ -106,7 +106,7 @@ export async function buildLinkedInTopicCohorts(
     const events=eventGroups.get(member.postId)??[];
     if(events.length!==1){withoutValidTopic++;continue;}
     const event=events[0];
-    if(event.topics.length>1){multiTopicExcluded++;continue;}
+    if(Array.isArray(event.topics) && event.topics.length>1){multiTopicExcluded++;continue;}
     const topic=validSingleLabel(member,event);
     if(!topic){withoutValidTopic++;continue;}
     if(Math.abs(member.observedAgeHours-learning.targetAgeHours)>maxDifference){
