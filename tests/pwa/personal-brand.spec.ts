@@ -195,9 +195,16 @@ test("comparison screen uses since-publication ages and shows non-causal suggest
   await expect(page.getByRole("cell", { name: "3.00%" })).toBeVisible();
   await expect(page.getByText(/test one hook variation/i)).toBeVisible();
   await expect(page.getByText(/not proof of a winning hook/i)).toBeVisible();
+  const contentReview = page.getByTestId("linkedin-approved-content-cohorts");
+  await expect(contentReview.getByText(/2 of 2 posts have verified original copy/)).toBeVisible();
+  await expect(contentReview.getByText(/1 hook-contrast review candidates/)).toBeVisible();
+  await expect(contentReview.getByText(/not controlled/)).toBeVisible();
+  await contentReview.getByText("Inspect fingerprint-verified approved copy").first().click();
+  await expect(contentReview.getByText("A verifiable experience from my professional journey 0.")).toBeVisible();
 
   await page.getByLabel("Observation age").selectOption("48");
   await expect(page.getByText("0 comparable of 2 recorded LinkedIn posts")).toBeVisible();
+  await expect(contentReview.getByText(/0 hook-contrast review candidates/)).toBeVisible();
   await expect(page.getByText(/Insufficient comparable data/)).toBeVisible();
   await expect(page.getByText("Unavailable", { exact: true }).first()).toBeVisible();
   await page.getByLabel("Observation age").selectOption("24");
