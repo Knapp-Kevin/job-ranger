@@ -1,7 +1,7 @@
 {
   "pattern": "gate-loop",
   "proposal_kind": "gate",
-  "proposal_text": "Gate-loop recurrence, third phase in a row (Phase 15 overrides, Phase 16 overrides 1f15661a/f0b67f91, Phase 17 VETOs at META_LEDGER #96, #98, #100 in session 2026-10-10T0443-9d3df3). The Phase 16 remediation (closure_enforcer '/qor-audit Step 3') did not prevent recurrence. Root cause across all three Phase 17 VETOs: the plan asserted empirical facts (cited line numbers, list counts, function and file sizes, enum literals, absence of import cycles, and red-first versus regression-lock test status) that the Governor never executed against the named refs, so each audit found a new unexecuted claim (V4/V5/V6/V9, N1/N3/N4, F1/F3/F4/F5). Process change: (1) a plan for phase 17 or later must carry exactly one ```json qor-plan-claims manifest that restates every such empirical claim as an executable claim (git-grep, function-lines, file-lines, or a command expected to pass or fail at an exact ref); (2) before submitting to /qor-audit the Governor must run `python -m pytest tests/test_plan_claims_manifest.py` green at the plan commit and record the run in the PLAN ledger entry; (3) the Judge runs the same command at /qor-audit Step 0.6 and treats a failure as a not-ready short-circuit (no cycle consumed); an empirical claim in plan prose without a manifest entry is a specification-drift finding. Not code: no application source changes. Phase 17 has no process-shadow events of its own: cycle_count_escalator.check returned None (the three VETO signatures differ) and check_session_total raised UnmappedCategoryError (Qor-logic-plus #173), so no escalation event was written; none is manufactured here.",
+  "proposal_text": "AMENDMENT 1 (after independent VETO #102, findings R1-R4) of the Phase 17 gate-loop remediation. Pattern: gate-loop on qor-plan, recurring across Phases 15, 16 and 17 (Phase 16 overrides 1f15661a/f0b67f91; Phase 17 VETOs #96, #98, #100 in session 2026-10-10T0443-9d3df3, which itself has no process-shadow events; the session-total detector is blocked by Qor-logic-plus #173 and nothing was manufactured). Root cause: plans asserted empirical facts that were never executed against named commits; N3, N4 and F3 were design gaps the auditor still owns. Process change (gate): every docs/plan-qor-phase17+ plan carries a closed v2 qor-plan-claims manifest; scripts/plan_claims_check.py reads only immutable git objects (fixed git cat-file/ls-tree), requires full commit SHAs declared and recorded in prose, requires every known empirical assertion form in canonical sections to reference a claim or an auditor-challenged judgment exception, rejects missing/orphan/duplicate ids, and never executes plan-supplied commands. Red-first/regression-lock classifications fail closed until a separately controlled trusted harness exists. Mechanical detection is lexical and does not make arbitrary prose machine-verifiable; /qor-audit Step 3 keeps responsibility for undeclared assertions. Binding status: repository CI job 'Plan claims gate' runs fail-closed but blocks merges only after D1. Skill binding requires D2. Event closure (the addressed flip) is NOT legal until an independent reviews-remediate PASS AND D1 AND D2 are satisfied; until then this remediation is HOLD.",
   "addressed_event_ids": [
     "1f15661a2633a8d7de36cc22edc5ac48f218bb4abf446a4ee49af7df71da98e7",
     "f0b67f9178bff4e90b45f0fca7922f4ed79e18975b0d364a816df483ee9c01ce"
@@ -25,30 +25,68 @@
   },
   "proposed_changes": [
     {
+      "target": "scripts/plan_claims_check.py, scripts/plan_claims_schema.py, scripts/plan_claims_source.py",
+      "change": "Pure read-only checker: closed v2 schema, R1 completeness (canonical-section assertion detection, missing/orphan/duplicate ids, judgment rationale), R3 no execution and safe paths, R4 full-SHA commit objects with no checkout.",
+      "rationale": "Closes R1, R3, R4."
+    },
+    {
       "target": "tests/test_plan_claims_manifest.py",
-      "change": "New executable plan-claims gate: rejects a phase>=17 plan with no qor-plan-claims manifest and executes git-grep, function-lines, file-lines and command (pass/fail at exact ref) claims.",
-      "rationale": "Turns every empirical plan claim into a reproducible check; self-tests cover drift, oversize, misclassified red-first, duplicate ids and grandfathering."
+      "change": "25-test regression suite; red at a68d68e (legacy manifest executed author-controlled Python), green at f82368f.",
+      "rationale": "Executable closure enforcer."
     },
     {
-      "target": "/qor-plan Step 3 (this repository, phase>=17)",
-      "change": "Every cited line, count, size, enum literal, absent import and red-first/regression-lock status appears in the qor-plan-claims manifest; the manifest passes at the plan commit before the PLAN ledger entry is written.",
-      "rationale": "V4-V6, V9, N1, N3, F1, F3, F4, F5 were all unexecuted claims."
+      "target": ".github/workflows/plan-claims.yml",
+      "change": "Fail-closed job (contents: read, fetch-depth 0, no bypass) running the suite and the checker on gated plans.",
+      "rationale": "R2 repository integration; merge-binding after D1."
     },
     {
-      "target": "/qor-audit Step 0.6 (this repository)",
-      "change": "Judge runs `python -m pytest tests/test_plan_claims_manifest.py`; failure is a not-ready short-circuit; a prose empirical claim lacking a manifest entry is specification-drift.",
-      "rationale": "Moves mechanical verification ahead of adversarial review so audit cycles are spent on judgment, not on re-executing greps."
+      "target": "GOVERNANCE.md 'Plan claims gate'",
+      "change": "Documents the gate, the pre-audit commands, and its limits (lexical detection, auditor responsibility, D1-D3).",
+      "rationale": "R2 doctrine integration within this repository."
     },
     {
-      "target": "Phase 17 next authorized plan iteration (inputs, not edits made here)",
-      "change": "Reconcile F1 (51-zone test is regression-lock: command claim expect pass), F2 (golden duplicates at positions 0 and 1, plus command claims proving cap-before-dedupe and reorder mutations fail), F3 (keep himalayasQuery with HIMALAYAS_SEARCH_ENDPOINT; git-grep expect_absent for the reverse import), F4 (split or explicitly exempt registerCoreIpcHandlers; function-lines claim), F5 (runtimeKind 'electron'; git-grep on src/shared/runtime.ts).",
-      "rationale": "Iteration-4 findings expressed as executable claims."
+      "target": "Qor-logic-plus /qor-plan submission and /qor-audit Step 0.3 (D2)",
+      "change": "Not changed here; requires its own governed phase.",
+      "rationale": "Shared skills are outside this workspace's authority."
     },
     {
-      "target": "Qor-logic-plus (separate workspace, not changed here)",
-      "change": "Session-total escalation is blocked by #173 (feature-test-undeclared rejected by findings_signature); draft fix PR #179 needs refreshed base-consistency and its own plan/ledger/seal before merge.",
-      "rationale": "Explains why no Phase 17 escalation event exists."
+      "target": "Phase 17 next authorized plan iteration (inputs only)",
+      "change": "Express F1-F5 as manifest claims or judgment exceptions; red-first classification only with D3 evidence.",
+      "rationale": "Iteration-4 findings."
     }
   ],
-  "ts": "2026-10-10T06:07:25Z"
+  "ts": "2026-10-10T06:36:14Z",
+  "amendment": {
+    "number": 1,
+    "after_veto_entry": 102,
+    "supersedes_content_hash": "44c2f13501d8b7ffe909e8f17c14f6cea4feb503cdb902483a67b87a58526d8f",
+    "red_commit": "a68d68ee94032f1a6dcc72b52271d01b47f4f46b",
+    "green_commit": "f82368f77e9a08e2169881300e6b42cb572fbf0a"
+  },
+  "closure_conditions": [
+    "independent /qor-audit reviews-remediate PASS on this exact artifact",
+    "D1 satisfied",
+    "D2 satisfied"
+  ],
+  "binding_dependencies": [
+    {
+      "id": "D1",
+      "owner": "operator (repository settings)",
+      "requirement": "Add the 'Plan claims gate / plan-claims' check as a required status check in the main ruleset (ruleset 'Default Main' currently has no required checks).",
+      "blocks": "event closure; merge-binding enforcement"
+    },
+    {
+      "id": "D2",
+      "owner": "MythologIQ-Labs-LLC/Qor-logic-plus, separate governed phase (plan, independent audit, implement, seal)",
+      "requirement": "Wire a repository-provided plan-claims preflight into the /qor-plan submission path and the binding /qor-audit Step 0.3 ABORT (Step 0.6 stays WARN-only), and add the doctrine reference. Independent of #173/#179, which must be governed separately and are not evidence here.",
+      "blocks": "event closure; skill-level enforcement; Phase 17 iteration-5 authorization"
+    },
+    {
+      "id": "D3",
+      "owner": "separately controlled harness (Qor-logic-plus or ruleset-protected workflow), governed separately",
+      "requirement": "Trusted test-outcome evidence (exact SHA, suite id, named assertion, immutable result) for red-first/regression-lock claims; until then the gate rejects such claims.",
+      "blocks": "test-classification claims only"
+    }
+  ],
+  "status": "HOLD pending D1 and D2"
 }

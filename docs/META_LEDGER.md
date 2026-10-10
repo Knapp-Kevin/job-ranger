@@ -2801,6 +2801,36 @@ Events stay addressed_pending. Phase 17 plan iteration 5 is not authorized and W
 
 ---
 
+### Entry #103: REMEDIATE (Phase 17 Gate-Loop Remediation, Amendment 1)
+
+**Timestamp**: 2026-10-10T06:36:31Z
+**Phase**: REMEDIATE
+**Author**: Governor
+**Risk Grade**: L2
+**Gate**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json
+
+**Content Hash**: `55782866e1c43f79aeb1d4903f4d1cbaeab12d60630dadf4d213a0e855076a01`
+
+**Previous Hash**: `993058404f54f7d89ee7f8ddd41020c03d4522d5822582ca0189ee0483190e3f`
+
+**Chain Hash**: `3390013a0dff1dc9dbacad6077351d1c0caad26e81a0a6cc58a8cf5be25aa595`
+
+**Decision**: Amends the Entry #101 remediation after the independent VETO at Entry #102 (R1-R4). The remediation gate was re-emitted through the runtime at the same canonical path; this entry supersedes content hash 44c2f135, and Entries #101 and #102 are unchanged.
+
+What changed:
+- Tests were written first, at a68d68e. They were red: 24 failed and 1 errored, and the legacy manifest executed author-controlled Python.
+- A read-only checker landed at f82368f; the suite is 25/25 green twice.
+- R3: the checker executes no plan-supplied commands.
+- R4: references must be full SHAs that resolve to commit objects, with no checkout.
+- R1: claim completeness is lexical, so the auditor remains responsible for prose.
+- R2: a fail-closed CI job is added and GOVERNANCE.md documents the gate.
+
+Events 1f15661a and f0b67f91 remain addressed_pending; no IDs are missing.
+
+Status: HOLD. Event closure requires an independent reviews-remediate PASS plus D1 (operator: required status check in the main ruleset) and D2 (a separately governed Qor-logic-plus phase wiring /qor-plan and /qor-audit Step 0.3). D3 (a trusted test harness) gates red-first claims only.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2819,5 +2849,5 @@ Events stay addressed_pending. Phase 17 plan iteration 5 is not authorized and W
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101 (addressed_pending); REMEDIATE REVIEW VETO #102; Phase 2 WWR HELD*
-*Next required action: Governor amends the remediation per Entry #102 findings R1-R4 via /qor-remediate, then a fresh independent /qor-audit reviews-remediate*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101; VETO #102; REMEDIATE amendment #103 (HOLD on D1, D2); Phase 2 WWR HELD*
+*Next required action: independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json; event closure also requires D1 and D2*
