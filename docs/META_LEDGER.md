@@ -2692,6 +2692,29 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #99: PLAN (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T05:15:35Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Content Hash**: `08b95334c9467df3449b6a2bce781a513070972164e126846ba5fe0f638d4677`
+
+**Previous Hash**: `cb2d743854f6dc4e529093caa12482069a2bd7de38f33a6dffb785d2efc1e11e`
+
+**Chain Hash**: `37d4231b3fd517fc76cb8d56cdd54f67966b9d0ff0b9eb3a40c897bf4fc2e3ab`
+
+**Decision**: Plan iteration 4 amends iteration 3 after the second independent VETO at Entry #98, and closes N1-N4:
+- Phase 1 tests are split into red-first and regression-lock groups, measured against the compiled candidate. The record states that on main the candidate test fails at module load and shows no named assertions.
+- The PWA Himalayas coverage claim is replaced by the named unit test.
+- A 0-50 time-zone list length rule is added, with a 37-entry live-maximum test.
+- A Phase 0 exact-output golden test is added, with a duplicate fixture and limit 4. Remote OK and Arbeitnow move to public-feed-adapters.cts.
+Phase 2 WWR remains HELD. Awaiting a fresh independent GATE tribunal.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2710,5 +2733,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95; GATE VETO #96; PLAN iteration 3 #97; GATE VETO #98; Phase 2 WWR HELD*
-*Next required action: Governor amends plan iteration 3 per Entry #98 findings N1-N4, then fresh independent /qor-audit*
+*Phase 17 Public Discovery Providers (#136): PLAN #95; VETO #96; PLAN it.3 #97; VETO #98; PLAN it.4 #99; Phase 2 WWR HELD*
+*Next required action: fresh independent /qor-audit of plan iteration 4 (Entry #99)*

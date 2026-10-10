@@ -17,7 +17,7 @@
 
 **risk_grade**: L2 (untrusted network JSON on the acquisition boundary; no new authority)
 
-**iteration**: 3
+**iteration**: 4
 
 ## Iteration history
 
@@ -33,6 +33,11 @@
   - V8: LD7 response byte caps.
   - V9: compile-first CI order, and named red assertions.
   - V10: ASCII literal.
+- Iteration 3 (Entry #97) was VETOed at Entry #98 by a second, separate fresh-context judge. That judge confirmed V1-V8 and V10 closed and V9 partial, and raised N1-N4. Iteration 4 closes them:
+  - N1 / V9: Phase 1 tests are split into red-first and regression-lock groups. The split was determined empirically against the compiled candidate, and the `main` evidence is stated truthfully.
+  - N2: the PWA claim is dropped; web-skip coverage is a named unit test.
+  - N3: LD3 adds a time-zone list length rule and a 37-entry red-first test.
+  - N4: Phase 0 adds an exact-output golden test, with a duplicate fixture and a low limit.
 
 The installed governance runtime is `qor-logic-plus 3.8.0`. No `qortara` executable exists on this host, and `MythologIQ-Labs-LLC/qortara-logic` states that no runtime has been migrated into it yet.
 
@@ -41,8 +46,8 @@ The installed governance runtime is `qor-logic-plus 3.8.0`. No `qortara` executa
 Draft branches `wip/136-himalayas-discovery-unqualified` (head `e22d49b`) and `wip/136-wwr-rss-unqualified` (head `0c77dfc`) were written **before** any plan was recorded or audited. No gate authorized them. Iteration-1 commits `fd19d24` and `9965119` were written after those branches existed and describe their behaviour. A PASS on this plan does not retroactively authorize the candidate commits.
 
 The Himalayas candidate becomes authorized code only through this plan. Every candidate file is listed under Candidate scope and is reviewed as part of the Phase 0-1 diff. Implementation records three pieces of evidence:
-- red evidence: the candidate tests are run against the compiled `main` baseline, where they fail with named assertions;
-- red-first evidence for every new test in this plan;
+- baseline evidence: on the compiled `main` baseline, `tests/himalayas-discovery.test.cjs` cannot run. It exits non-zero with `MODULE_NOT_FOUND` for `electron-runtime/electron/src/himalayas-discovery.cjs` at line 2. That is recorded as-is and is NOT represented as named-assertion red or as red-first evidence;
+- red-first evidence only for the Phase 1 **red-first** group, where each assertion fails by name on the compiled Phase 0 head before the Phase 1 source change. The **regression-lock** group already passes on the candidate and is recorded passing before and after;
 - an intent lock taken before any new source edit.
 
 The WWR branch remains an unauthorized candidate (Phase 2 is HELD).
@@ -65,7 +70,7 @@ Baseline `main` = `b78d06c8a05e80f93b0eaf1de9bb89e9bd95b26c`; merge-base of the 
   - a finite number n with -12 <= n <= 14, normalized to `UTC-5` / `UTC+3.5` / `UTC+0` (sign always shown, no padding); OR
   - a string matching `^UTC[+-](0[0-9]|1[0-4]):(00|30|45)$`, kept verbatim.
 
-  Any other entry (an out-of-range number, `NaN`, `"EST"`, `"-5"`) makes the whole list `null`.
+  Any other entry (an out-of-range number, `NaN`, `"EST"`, `"-5"`) makes the whole list `null`. Length rule: a list of 0-50 entries is accepted. The live maximum is 37: one listing carried exactly `[-11, -10, -9.5, -9, -8, -7, -6, -5, -4, -3.5, -3, -2, -1, 0, 1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 5.75, 6, 6.5, 7, 8, 8.75, 9, 9.5, 10, 10.5, 11, 12, 12.75, 13, 14]`. A list longer than 50 is `null`. Rendering follows the LD4 rule.
 - **LD4 - location lists.** The candidate drops lists longer than 12: `git show e22d49b:electron/src/himalayas-discovery.cts | grep -n 'value.length > 12'` -> `32:  if (value.length > 12) return null;`. The longest live list observed on 2026-10-10 (310 jobs across 20 searches) has 149 entries: a Zensai EMEA listing, which the candidate shows as "eligibility unspecified". Decision: accept up to 250 entries, each a string of 1-80 characters after trimming; any other shape becomes `null`. Rendering for both location and time-zone lists:
   - 3 or fewer entries are joined with `, `;
   - longer lists show the first 3 entries, then `and N more`;
@@ -104,11 +109,14 @@ Relative to merge-base `ebfd7c9`, the Himalayas candidate `e22d49b` changes the 
 
 ### Affected Files
 
-- `tests/source-discovery-provider.test.cjs`, `tests/himalayas-discovery.test.cjs` - assertions unchanged; these lock the behaviour and are run before and after the refactor
+- `tests/source-discovery-provider.test.cjs`, `tests/himalayas-discovery.test.cjs` - existing assertions unchanged, run before and after the refactor
+- `tests/source-discovery-golden.test.cjs` (new) - written and committed before any Phase 0 source move; the exact-output lock described under Unit Tests
+- `package.json` - registers `tests/source-discovery-golden.test.cjs` in `test` and `test:unit`
+- `electron/src/public-feed-adapters.cts` (new) - moved verbatim: the Remote OK and Arbeitnow response types, `remoteOkCandidates` and `arbeitnowCandidates`, so `source-discovery.cts` stays well under 250 lines
 - `electron/src/source-discovery-text.cts` (new) - moved verbatim: `STOP_WORDS`, `stableId`, `normalize`, `meaningfulTokens`, `roleMatchScore`, `cleanHtml`, `snippet`, `toIsoFromEpoch`
 - `electron/src/source-discovery-monitoring.cts` (new) - moved: `STRUCTURED_MONITORABLE_TYPES`, `isAggregatorUrl`, `firstPathSegment`, `sourceIdentity`, `canonicalSourceUrl`, `monitoringCandidate`. The three identical "not monitorable" returns in `monitoringCandidate` become one `NOT_MONITORABLE` constant, taking it from 64 lines to under 40.
 - `electron/src/himalayas-discovery.cts` - receives `himalayasLocation`, `himalayasCandidates` and `himalayasQuery` from `source-discovery.cts`
-- `electron/src/source-discovery.cts` - keeps the Remote OK/Arbeitnow adapters, `balanceProviderResults` and orchestration. `discoverPublicJobFeeds` (92 lines) is split into five functions, each under 40 lines:
+- `electron/src/source-discovery.cts` - keeps the endpoints, `DiscoveryContext`, `balanceProviderResults` and orchestration. `discoverPublicJobFeeds` (92 lines) is split into five functions, each under 40 lines:
   - `fetchProviderPayloads`
   - `settleRemoteOk`, `settleArbeitnow` and `settleHimalayas`, each returning `{ candidates, warnings, succeeded }`
   - `finalizeCandidates`, which balances, then dedupes, then caps, in that order
@@ -119,7 +127,12 @@ No behaviour change. The only importer of `source-discovery.cjs` is `electron/sr
 
 ### Unit Tests
 
-- `tests/source-discovery-provider.test.cjs` and `tests/himalayas-discovery.test.cjs` - both full suites pass identically before and after the refactor: same assertions, and the same `discoverPublicJobFeeds` outputs for the existing fixtures.
+- `tests/source-discovery-golden.test.cjs` - calls `discoverPublicJobFeeds` with a fake `fetchImpl`, `limit: 4`, `runtimeKind: "desktop"` and a fixed `now`. Fixture:
+  - Remote OK: 3 matching rows, two of which share employer, title and URL (an exact duplicate);
+  - Arbeitnow: 2 matching rows;
+  - Himalayas: 2 matching jobs for the first role, and HTTP 429 for the second role.
+  It asserts `assert.deepStrictEqual` on the full ordered candidate list (every field) and on the full ordered `warnings` array. The expected literals are the candidate's actual output at `e22d49b`, captured once before any move. If `finalizeCandidates` drops dedupe, caps before deduping, reorders candidates, or changes or reorders warnings, the test fails.
+- `tests/source-discovery-provider.test.cjs` and `tests/himalayas-discovery.test.cjs` - both full suites pass unchanged before and after the refactor.
 
 ## Phase 1: Himalayas defect closure (authorized scope on PR #233)
 
@@ -131,30 +144,34 @@ No behaviour change. The only importer of `source-discovery.cjs` is `electron/sr
 - `electron/src/source-discovery-fetch.cts` - `fetchDiscoveryJson` becomes streamed and capped, and cancels on overflow (LD7)
 - `electron/src/source-discovery.cts` - passes the LD7 caps at its three `fetchDiscoveryJson` call sites, which are the only callers
 
-### Unit Tests (each invokes the unit and asserts its output; each named assertion must fail red before the source change)
+### Unit Tests (each invokes the unit and asserts its output)
 
-`tests/himalayas-discovery.test.cjs`, dates (via `normalizeHimalayasResponse`):
-- `pubDate: 1789962228` -> `publishedAt === "2026-09-21T03:43:48.000Z"`
-- `pubDate: 1791504000000` -> `new Date(1791504000000).toISOString()`
-- `pubDate: 946684799` (1999-12-31) -> `null`
-- `pubDate: 4102444800` (2100) -> `null`
-- `pubDate: "not a date"` -> `null`
+The red/green classification below was measured on 2026-10-10 by running each input through the compiled candidate normalizer, which is byte-identical at `e22d49b` and `0c77dfc`.
 
-Time zones:
-- `timezoneRestrictions: [-5, 3.5, 0]` -> `["UTC-5", "UTC+3.5", "UTC+0"]`, and the matching discovery candidate's `location` equals `Remote {MIDDOT} United States {MIDDOT} UTC-5, UTC+3.5, UTC+0 time zone`
-- `[15]`, `[-13]`, `["EST"]`, `["-5"]` and `[NaN]` each -> `timezoneRestrictions === null`
-- `["UTC-05:00"]` stays `["UTC-05:00"]`. This is the existing assertion at line 75, and the existing exact location `Remote {MIDDOT} United States {MIDDOT} UTC-05:00 time zone` at line 103 is unchanged.
+**Red-first group.** These fail by name on the Phase 0 head before the Phase 1 source change and pass after it. Candidate output is shown in brackets.
 
-Locations:
-- A 149-entry location list -> the candidate `location` starts with `Remote {MIDDOT} ` followed by the first 3 entries joined by `, `, contains ` and 146 more`, and does not contain `Worldwide`.
-- A 251-entry list -> `locationRestrictions === null` and `location` is `Remote {MIDDOT} eligibility unspecified`.
-- A list containing an 81-char entry -> `locationRestrictions === null` and `location` is `Remote {MIDDOT} eligibility unspecified`.
-
-Byte cap (via `discoverPublicJobFeeds`):
-- A fake Himalayas response that streams 1 MiB + 1 byte -> no Himalayas candidates, and a warning matching `/Himalayas search unavailable: .*too large/`. The Remote OK fixture candidate is still returned, and the fake stream observes `cancel()`.
+`tests/himalayas-discovery.test.cjs`, via `normalizeHimalayasResponse`, unless a test says it goes through `discoverPublicJobFeeds`:
+- `pubDate: 1789962228` -> `publishedAt === "2026-09-21T03:43:48.000Z"` [candidate: `1970-01-21T17:12:42.228Z`]
+- `pubDate: 946684799` (1999-12-31) -> `null` [candidate: a 1970 date]
+- `pubDate: 4102444800` (2100) -> `null` [candidate: a 1970 date]
+- `timezoneRestrictions: [-5, 3.5, 0]` -> `["UTC-5", "UTC+3.5", "UTC+0"]`, and the matching discovery candidate's `location` equals `Remote {MIDDOT} United States {MIDDOT} UTC-5, UTC+3.5, UTC+0 time zone` [candidate: `null`]
+- `timezoneRestrictions: ["EST"]` -> `null` [candidate: `["EST"]`]
+- `timezoneRestrictions: ["-5"]` -> `null` [candidate: `["-5"]`]
+- `timezoneRestrictions: [-11, -10, -9.5, -9, -8, -7, -6, -5, -4, -3.5, -3, -2, -1, 0, 1, 2, 3, 3.5, 4, 4.5, 5, 5.5, 5.75, 6, 6.5, 7, 8, 8.75, 9, 9.5, 10, 10.5, 11, 12, 12.75, 13, 14]` (37 entries, the live maximum) -> a 37-entry list starting `["UTC-11", "UTC-10", "UTC-9.5"`. The matching discovery candidate's `location` contains `UTC-11, UTC-10, UTC-9.5 and 34 more time zone` [candidate: `null`]
+- 51 entries (the 37 above plus 14 repeats of `0`) -> `null` (length rule)
+- a 149-entry location list -> the candidate's `location` starts with `Remote {MIDDOT} `, then the first 3 entries joined by `, `; it contains ` and 146 more` and does not contain `Worldwide` [candidate: eligibility unspecified]
+- via `discoverPublicJobFeeds`, a fake Himalayas response streaming 1 MiB + 1 byte -> no Himalayas candidates, plus a warning matching `/Himalayas search unavailable: .*too large/`. The Remote OK fixture candidate is still returned, and the fake stream observes `cancel()`.
 
 `tests/source-discovery-provider.test.cjs`:
-- Remote OK at 4 MiB + 1 byte -> a warning matching `/Remote OK was unavailable: .*too large/`, and the Arbeitnow candidates are still returned.
+- Remote OK at 4 MiB + 1 byte -> warning `/Remote OK was unavailable: .*too large/`; the Arbeitnow candidates are still returned
+- Arbeitnow at 8 MiB + 1 byte -> warning `/Arbeitnow was unavailable: .*too large/`; the Remote OK candidates are still returned
+
+**Regression-lock group.** These already pass on the candidate. They must pass before and after Phase 1 and are not claimed as red-first.
+- `pubDate: 1791504000000` -> `new Date(1791504000000).toISOString()`
+- `pubDate: "not a date"` -> `null`
+- `timezoneRestrictions` of `[15]`, `[-13]` and `[NaN]` -> `null` each
+- `["UTC-05:00"]` stays `["UTC-05:00"]` (existing line 75); its exact location is `Remote {MIDDOT} United States {MIDDOT} UTC-05:00 time zone` (existing line 103)
+- a 251-entry location list, and a list containing an 81-char entry -> `locationRestrictions === null`, with location `Remote {MIDDOT} eligibility unspecified`
 
 The existing candidate assertions (attribution, unsafe URL rejection, duplicate GUIDs, 429 and malformed-payload isolation, web skip, result-cap starvation) pass with no edits beyond the router change.
 
@@ -208,7 +225,8 @@ The technical qualification of `0c77dfc` is recorded in `docs/validation/source-
   - PR #233 retargeted to `main` and still a draft.
 - **D4**:
   - After `npm run desktop:compile`, `node tests/himalayas-discovery.test.cjs` and `node tests/source-discovery-provider.test.cjs` each pass twice.
-  - The recorded red output names each new assertion.
+  - The recorded red output (Phase 0 head) names each red-first assertion, and the regression-lock group is recorded passing on both heads.
+  - `node tests/source-discovery-golden.test.cjs` passes on the candidate before Phase 0, and again after Phases 0 and 1.
   - `npm run test:e2e` passes the source-discovery spec.
   - CodeQL on the PR #233 head reports no `js/incomplete-url-substring-sanitization` alert in `tests/himalayas-discovery.test.cjs`.
 
@@ -225,9 +243,10 @@ The technical qualification of `0c77dfc` is recorded in `docs/validation/source-
 - `npm run typecheck` - TypeScript (web and electron)
 - `node tests/himalayas-discovery.test.cjs` - provider contract (run twice)
 - `node tests/source-discovery-provider.test.cjs` - provider isolation, approval and caps (run twice)
-- `node -e "for (const f of ['electron/src/source-discovery.cts','electron/src/source-discovery-text.cts','electron/src/source-discovery-monitoring.cts','electron/src/himalayas-discovery.cts','electron/src/source-discovery-fetch.cts']) { const n = require('fs').readFileSync(f, 'utf8').split('\n').length; if (n > 250) { console.error(f, n); process.exit(1); } }"` - Razor file-size check
+- `node tests/source-discovery-golden.test.cjs` - Phase 0 exact-output lock (run twice)
+- `node -e "for (const f of ['electron/src/source-discovery.cts','electron/src/source-discovery-text.cts','electron/src/source-discovery-monitoring.cts','electron/src/himalayas-discovery.cts','electron/src/source-discovery-fetch.cts','electron/src/public-feed-adapters.cts']) { const n = require('fs').readFileSync(f, 'utf8').split('\n').length; if (n > 250) { console.error(f, n); process.exit(1); } }"` - Razor file-size check
 - `npm run repo:health` - typecheck, builds and the full `npm test` suite
-- `npm run test:pwa:e2e` - web runtime, including the Himalayas skip warning
+- `npm run test:pwa:e2e` - web runtime regression suite. It has no Himalayas-specific spec. Web-skip coverage comes from the existing unit test in `tests/himalayas-discovery.test.cjs`: a `runtimeKind: "web"` discovery makes no Himalayas request and returns the CORS warning.
 - `npm run test:e2e` - Electron E2E, including the source-discovery spec
 - `npm run test:release-upgrade` - release upgrade verification
 - `qor-logic-plus scripts prompt_injection_canaries --files docs/ARCHITECTURE_PLAN.md docs/META_LEDGER.md docs/CONCEPT.md docs/plan-qor-phase17-provider-tranche.md` - governance canaries
