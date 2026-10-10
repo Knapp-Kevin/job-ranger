@@ -4,6 +4,7 @@ import { Layout } from "../components/Layout";
 import { CareerOutcomeJournal } from "../components/CareerOutcomeJournal";
 import { HistoricalLinkedInArchive } from "../components/HistoricalLinkedInArchive";
 import { LinkedInObservedDashboard } from "../components/LinkedInObservedDashboard";
+import { LinkedInApprovedContentCohorts } from "../components/LinkedInApprovedContentCohorts";
 import { getDesktopApi } from "../services/api";
 import {
   assessPersonalBrandDraft, derivedPostMetrics,
@@ -974,6 +975,7 @@ export function PersonalBrand() {
               </>
             )}
           </section>
+          {!cohortLoading && !cohortError && <LinkedInApprovedContentCohorts learning={learning} publications={publications} prepared={prepared} drafts={drafts} />}
           <CareerOutcomeJournal publications={publications} />
         </div>
       )}
