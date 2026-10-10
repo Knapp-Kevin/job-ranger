@@ -8,9 +8,7 @@ Status is assigned honestly:
 
 - `verified` — a UI-driven Playwright spec exercises the feature and passed on 2026-10-06
   (`npm run test:e2e`, Windows host).
-- `unverified` — no UI-driven test; or the feature is only reached through `window.electronAPI`
-  calls in tests; or its only tests currently fail. Every `tests/pwa` spec fails on Windows hosts
-  until BACKLOG D1 is fixed, so web-only rows are `unverified` here even where a spec exists.
+- `unverified` — no recorded passing UI-driven acceptance evidence for this exact feature and validation target at the inventory checkpoint, even if deterministic unit tests or a Playwright spec exist. The October 6 Windows-host PWA limitation is historical evidence, not a claim that all PWA tests still fail today.
 
 Surface is the route (or runtime surface) where the feature ships.
 
@@ -66,3 +64,12 @@ Surface is the route (or runtime surface) where the feature ships.
 | FX048 | Web runtime non-Latin resume PDF | src/pwa/runtime/resume-pdf.ts:1 | docs/design/PWA_RUNTIME.md | tests/pwa/unicode-resume.spec.ts | unverified | web runtime |
 | FX049 | Desktop Help window and data folder menu | electron/src/main.cts:190 | HELP.md |  | unverified | desktop menu |
 | FX050 | Desktop tray and notifications | electron/src/tray-notifications.cts:30 | HELP.md |  | unverified | desktop tray |
+| FX051 | Personal Brand drafts and deterministic readiness | src/pages/PersonalBrand.tsx:84 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/pwa/personal-brand.spec.ts | unverified | /personal-brand |
+| FX052 | Human-reviewed exact-copy post package and manual receipt | src/shared/personal-brand.ts:121 | docs/adr/0001-personal-brand-publishing-and-analytics.md | tests/personal-brand.test.mjs | unverified | /personal-brand |
+| FX053 | Local LinkedIn XLSX import preview and user-confirmed persistence | src/pages/PersonalBrand.tsx:647 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/linkedin-analytics.test.mjs; tests/personal-brand-persistence.test.cjs | unverified | /personal-brand |
+| FX054 | Reconciled observed LinkedIn metrics | src/components/LinkedInObservedDashboard.tsx:19 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/linkedin-reconciliation.test.mjs; tests/linkedin-observed-dashboard.test.mjs | unverified | /personal-brand |
+| FX055 | User-attested historical LinkedIn post text | src/components/HistoricalLinkedInArchive.tsx:10 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/linkedin-history.test.mjs | unverified | /personal-brand |
+| FX056 | Human-confirmed LinkedIn topic labels | src/components/LinkedInTopicAttestations.tsx:8 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/linkedin-topics.test.mjs | unverified | /personal-brand |
+| FX057 | Approved-content cohort comparisons | src/components/LinkedInApprovedContentCohorts.tsx:31 | docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md | tests/linkedin-approved-content-cohorts.test.mjs | unverified | /personal-brand |
+| FX058 | User-authored economic pathway scenario comparison | src/pages/TargetTracks.tsx:354 | docs/rfc/RFC_ECONOMIC_PATHWAYS_2026-10-09.md | tests/economic-pathways.test.mjs; tests/pwa/economic-pathways-exploration.spec.ts | unverified | /target-tracks |
+| FX059 | Development-only read-only MCP adapter | mcp/read-only-adapter.mjs:1 | docs/integrations/JOB_RANGER_MCP_READONLY.md | tests/mcp-readonly-adapter.test.mjs; tests/mcp-readonly-stdio.test.mjs | unverified | local agent stdio (not an end-user route) |
