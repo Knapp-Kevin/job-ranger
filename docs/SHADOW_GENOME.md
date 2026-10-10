@@ -423,4 +423,34 @@ Correct the attestation commands and the build-config fallback; resubmit.
 
 ---
 
+## Failure Entry #14
+
+**Date**: 2026-10-10T04:54:11Z
+**Verdict ID**: Entry #96 (GATE TRIBUNAL Phase 17 Public Discovery Provider Tranche, Iteration 2)
+**Failure Mode**: SPECIFICATION_DRIFT
+
+### What Failed
+
+Iteration-2 plan for the Himalayas provider (Phase 1), built on an exploratory candidate branch (e22d49b) that was written before any plan existed.
+
+### Why It Failed
+
+The plan described only its own deltas on top of the candidate. As a result:
+- A new parsing rule silently broke candidate assertions that the plan said "must pass unchanged", including an E2E exact-text check.
+- The plan claimed an E2E assertion that the test does not make.
+- Affected Files omitted the candidate files that Phase 1 would actually ship.
+- The declared `pr_target` (main) did not match the real PR base. The candidate was forked before main and conflicts with it.
+
+The candidate also carried a Razor overage, and an unbounded response read, into the authorized scope. One live-data figure (164 countries) did not reproduce; the observed value was 149.
+
+### Pattern to Avoid
+
+When a plan adopts pre-existing candidate code, enumerate the full diff against `pr_target` as Affected Files. Re-read every candidate assertion against each new rule. Confirm the real PR base and merge cleanliness against the declared baseline. Re-measure every live figure from a saved capture before writing it into a Locked Decision.
+
+### Remediation Required
+
+Amend the plan per AUDIT_REPORT V1-V10 (with /qor-refactor for the Razor ground and /qor-debug for the A04 byte cap), then resubmit to an independent /qor-audit.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

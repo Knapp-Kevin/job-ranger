@@ -2634,6 +2634,26 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #96: GATE TRIBUNAL (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T04:54:11Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Verdict**: VETO
+
+**Content Hash**: `919a2804fcce9277b0249ee805500f8adf39f06c35a9b6aceab970235983f63b`
+
+**Previous Hash**: `5ca9e263ea3c8bd5c08751312fd7b86794071b8e28e0373c5dee3215bc99a240`
+
+**Chain Hash**: `6c74292d6930f8dce3e5c91137b9edba87ba541f00685cbef5f770fc84e71452`
+
+**Decision**: VETO for plan iteration 2, from an Option B fresh-context subagent review (not a human or separately authenticated approval). Locked Decision greps LD1-LD6 reproduce. The live checks confirm the seconds-epoch pubDate, numeric time zones and absence of CORS for Himalayas. They also confirm the WWR terms conflict and that the WWR feed returns `Access-Control-Allow-Origin: *`. The Phase 2 HOLD is coherent. Findings: (1) the new time-zone rule breaks candidate assertions the plan says must pass unchanged, including the E2E exact-text assertion; (2) the FX016 E2E row claims a link-target assertion the test does not make; (3) PR #233 targets the plan branch, is forked before main b78d06c, and conflicts with main in package.json; (4) Affected Files omit most of the candidate diff that Phase 1 would ship; (5) discoverPublicJobFeeds (92 lines) and source-discovery.cts (482 lines) exceed the Razor limits; (6) the LD4 figure of 164 countries does not reproduce (the live value is 149); (7) the fail-closed branches are untested; (8) the Himalayas response body has no byte cap (A04); (9) the CI order runs the node test without desktop:compile; (10) the test literal is garbled. Governor must amend and resubmit.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2652,5 +2672,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN recorded (Entry #95); independent GATE pending*
-*Next required action: independent /qor-audit of docs/plan-qor-phase17-provider-tranche.md*
+*Phase 17 Public Discovery Providers (#136): PLAN recorded (Entry #95); GATE VETO (Entry #96); Phase 2 WWR HELD*
+*Next required action: Governor amends docs/plan-qor-phase17-provider-tranche.md per Entry #96 (/qor-refactor for the Razor ground, /qor-debug for the A04 ground), then independent re-run of /qor-audit*
