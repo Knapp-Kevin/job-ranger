@@ -111,8 +111,8 @@ function fetchFixture(url) {
   assert.equal(result.candidates[2].location, "Remote · eligibility unspecified");
   assert.equal(new Set(result.candidates.map(x=>x.id)).size, 3);
   assert.equal(urls.filter(x=>x.includes("himalayas.app")).length, 2);
-  assert.ok(urls.some(x => x.includes("q=Customer%20Success%20Manager")));
-  assert.ok(urls.some(x => x.includes("q=Product%20Manager")));
+  assert.ok(urls.some(x => new URL(x).searchParams.get("q") === "Customer Success Manager"));
+  assert.ok(urls.some(x => new URL(x).searchParams.get("q") === "Product Manager"));
 
   const unavailable = await discoverPublicJobFeeds(request, {
     fetchImpl: (url) => {
