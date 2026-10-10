@@ -29,6 +29,14 @@ Each created cover letter receives a monotonically increasing version per applic
 
 Version history is immutable application context, not a live view of current Career Evidence. When factual evidence changes after a material version was prepared, Job Ranger preserves the old wording for history and marks that version stale rather than silently rewriting it.
 
+## Development candidate: deliberate cover-letter handoff (issue #228)
+
+A scoped candidate implementation adds **Copy cover letter** for a selected saved version. The UI re-reads the canonical material list and refuses missing, stale, empty, unsupported, or incorrectly evidence-linked drafts. Copying is explicit, not automatic. The action does not submit an employer application, change application status, or transmit content to Job Ranger's servers.
+
+The clipboard is outside Job Ranger's local database: the candidate chooses when to copy, and operating-system/browser clipboard consumers can then access the text. An unavailable or denied clipboard must be shown as a failure.
+
+**Qualification:** The feature is on an isolated WIP branch only. Formal Qortara plan and audit gates, Electron/PWA integration tests, and release readiness are not yet established. See `docs/plans/228-application-handoff.md` and issue #228.
+
 ## Deliberate limitations
 
 This tranche does not add free-form AI rewriting, arbitrary factual editing, autonomous submission, DOCX/PDF rendering, or generic document templates. Those capabilities require their own evidence-backed justification and must preserve the same truth boundary.
