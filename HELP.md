@@ -184,6 +184,8 @@ Career Stories provide reusable evidence-linked narratives for interviews/applic
 
 Job Ranger can prepare versioned evidence-grounded application materials. If supporting Career Evidence changes, prior drafts remain historical and are marked stale rather than silently rewritten.
 
+**Development candidate, not in the published v1.2.0 release:** a **Copy cover letter** action is being implemented for one explicitly selected saved draft. It rechecks current evidence-link freshness before asking the browser to copy the text, never submits an employer application and never marks it applied. If clipboard permission fails or evidence changed, the application screen must show the failure instead of claiming success. This candidate is still subject to Qortara approval and Electron/PWA verification.
+
 ### 13. Search Insights
 
 Search Insights summarizes observed search state such as applications by Target Track/source/status, interview/offer outcomes, recurring unsupported requirements, and evidence-based strategy signals above bounded sample thresholds.
