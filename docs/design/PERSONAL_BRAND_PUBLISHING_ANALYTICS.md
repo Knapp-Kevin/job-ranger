@@ -830,3 +830,14 @@ A future common protocol library may remove duplicated HTTP/schema mechanics. It
 **Validation:** Synthetic/adversarial tests exercise overlapping agreement, per-metric disagreement, missing fields/dates, deterministic ordering, exact source attribution, top-post boundary, idempotence, pure input preservation and hostile inputs. The existing real-PWA browser journey now checks the reconciliation view after explicit save, reload and deletion. Linux/Windows PWA, Electron, upgrades and Store packaging remain mandatory exact-head checks.
 
 **Not yet delivered:** deeper analytics dashboards, source-backed historical post text ingestion, matching rankings to separately recorded publication receipts, trend segmentation, user-resolved corrected-statistic conflicts, cross-file citation/authorization UI, and externally verified LinkedIn source metrics. These require separately governed slices, including tests ensuring no accidental employment-outcome claims.
+
+
+## LinkedIn ranked-post to approved-copy provenance (2026-10-10 candidate)
+
+This bounded issue #236 slice does **not** scrape LinkedIn or infer text from the XLSX. It reads the latest imported workbook's partial TOP POSTS sample and attempts to match each ranked URL to a distinct, existing **user-confirmed LinkedIn publication receipt**. Tracking query strings and fragments are discarded for safe LinkedIn permalink comparison; a date discrepancy causes explicit refusal, not automatic timezone guessing.
+
+To disclose a draft's **original approved copy**, the record must also have precisely one prepared package with identical approved draft revision, platform, stored fingerprint and recomputed SHA-256 over its exact body. Ambiguous URLs, publication-date mismatch, absent original copy, forged body/fingerprint or duplicate packages all fail closed. Current objective/hook/format metadata is shown only when the current persisted draft is still the same approved revision and exact text. Otherwise historical metadata remains unknown, while an independently fingerprint-verified original prepared copy can still be shown.
+
+The user interface names this material *approved copy*, not verified live LinkedIn text. The export contains no comments, actual text, or proof of career outcomes. Source-ranked metrics are kept separate from manual per-post snapshots and age-normalized comparisons; aggregate daily metrics are not assigned to a ranked post. Source-provenance warnings remain visible. This is a read projection only: no new schema, API permissions, persistence, external requests, automatic posting, or modification of the Truth Gate.
+
+The follow-on work in #236 remains open for individually reviewed historical post text not already captured by Job Ranger, optional privacy-governed comments, and richer observational dashboards. None may be inferred or synthesized from the native Excel export.
