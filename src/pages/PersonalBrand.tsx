@@ -2,6 +2,7 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 import { ClipboardCopy, Save, BarChart3, CheckCircle2, AlertTriangle } from "lucide-react";
 import { Layout } from "../components/Layout";
 import { CareerOutcomeJournal } from "../components/CareerOutcomeJournal";
+import { HistoricalLinkedInArchive } from "../components/HistoricalLinkedInArchive";
 import { getDesktopApi } from "../services/api";
 import {
   assessPersonalBrandDraft, derivedPostMetrics,
@@ -815,6 +816,7 @@ export function PersonalBrand() {
                   </>
                 )}
               </section>
+              <HistoricalLinkedInArchive analytics={linkedinReconciliation} />
               <div className="rounded-lg border border-[var(--color-border)] p-3 space-y-3" data-testid="linkedin-import-ledger">
                 <h4 className="font-semibold">Saved LinkedIn exports ({linkedinSaved.length})</h4>
                 <p className="text-xs text-[var(--color-text-secondary)]">Overlapping exports are separate observations, never summed together. Original .xlsx files are not stored; preserve your originals. Deleting an import does not modify career evidence or manually recorded post snapshots.</p>
