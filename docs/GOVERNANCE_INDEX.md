@@ -79,7 +79,7 @@ Status below is quoted from the Meta Ledger. All are historical; they remain in 
 | Phase 14 inference Slice A | `docs/plan-qor-phase14-inference-slice-a.md` | PLAN #74, VETO #75, PASS #76, implemented #77, sealed #78 |
 | Phase 15 mapper negation (G12) | `docs/plan-qor-phase15-mapper-negation.md` | PLAN #79, VETO #80-#83, remediate, user-approved override, PASS #84, implemented #85, sealed #86 |
 | Phase 16 mapper claim action (G13) | `docs/plan-qor-phase16-mapper-claim-action.md` | PLAN #87, VETO #88-#91, remediate (gate-loop), user-approved overrides, PASS #92, implemented #93, sealed #94 |
-| Public discovery providers (#136) | `docs/plans/136-provider-expansion.md` | plan prepared, formal Qortara plan gate and independent audit pending |
+| Phase 17 public discovery providers (#136) | `docs/plan-qor-phase17-provider-tranche.md` | iteration 2 recorded (PLAN); independent audit pending; WWR phase HELD on publisher terms |
 
 ## Tier 5 — Reference Material
 

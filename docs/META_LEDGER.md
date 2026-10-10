@@ -2616,6 +2616,24 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 
 ---
 
+### Entry #95: PLAN (Phase 17 Public Discovery Provider Tranche)
+
+**Timestamp**: 2026-10-10T04:44:15Z
+**Phase**: PLAN
+**Author**: Governor
+**Risk Grade**: L2
+**Plan**: docs/plan-qor-phase17-provider-tranche.md
+
+**Content Hash**: `060dd40c431c6d0465092cb0031b73a0f00e6456e7b8609995cc9c4f7d1895e9`
+
+**Previous Hash**: `7dad088975401fe8bece329424688cd1b690f4147e37dabaaa45b432ad647d8c`
+
+**Chain Hash**: `5ca9e263ea3c8bd5c08751312fd7b86794071b8e28e0373c5dee3215bc99a240`
+
+**Decision**: Phase 17 plan iteration 2 recorded for #136. It supersedes the unrecorded iteration 1 (`docs/plans/136-provider-expansion.md`, commit 9965119), which cited a nonexistent `qortara` CLI and lacked canonical sections. Phase 1 (Himalayas) carries three defects confirmed against live data: seconds-epoch dates rendered as 1970, numeric time zones dropped, and long country lists dropped. Phase 2 (We Work Remotely) is HELD on a publisher-terms conflict and authorizes no code. The exploratory branches e22d49b and 0c77dfc predate this plan and are not authorized by it. audit_risk_score requires Option B independent review. Awaiting GATE tribunal.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2634,4 +2652,5 @@ Content hash is the Merkle digest (sorted path:SHA256) of the files touched:
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Next required action: merge the G13 PR (#168)*
+*Phase 17 Public Discovery Providers (#136): PLAN recorded (Entry #95); independent GATE pending*
+*Next required action: independent /qor-audit of docs/plan-qor-phase17-provider-tranche.md*
