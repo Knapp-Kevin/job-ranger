@@ -1,5 +1,6 @@
 import { randomUUID, createHash } from "node:crypto";
 import { validateLinkedInImport, type SavedLinkedInExport, type LinkedInImportResult } from "../../src/shared/linkedin-import-ledger.js";
+import { validateHistoricalLinkedInPost, canonicalHistoricalLinkedInUrl, collidesWithApprovedPublication, type HistoricalLinkedInPost } from "../../src/shared/linkedin-history.js";
 import type {
   AnalyticsSnapshot, ManualPostPackage, ManualPublicationReceipt, PersonalBrandDraft, MetricObservation,
 } from "../../src/shared/personal-brand.js";
@@ -68,6 +69,18 @@ CREATE TABLE IF NOT EXISTS personal_brand_linkedin_exports (
 );
 CREATE INDEX IF NOT EXISTS idx_personal_brand_linkedin_exports_period
   ON personal_brand_linkedin_exports(period_start, period_end, imported_at);
+`;
+
+const historicalLinkedInSchema = `
+CREATE TABLE IF NOT EXISTS personal_brand_linkedin_historical_posts (
+  id TEXT PRIMARY KEY,
+  canonical_url TEXT NOT NULL UNIQUE,
+  published_on TEXT NOT NULL,
+  recorded_at TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_personal_brand_linkedin_historical_dates
+  ON personal_brand_linkedin_historical_posts(published_on DESC, recorded_at DESC);
 `;
 
 type JsonRow = { payload_json: string };
@@ -184,6 +197,17 @@ export class PersonalBrandBackend {
           VALUES (${linkedinMigration.version}, ${linkedinMigration.name}, ${new Date().toISOString()});`,
       ]);
     }
+    const historicMigration = FEATURE_MIGRATIONS.personalBrandHistoricalLinkedIn;
+    const historicExists = await this.db.queryOne<{ version: number }>(sql`
+      SELECT version FROM schema_migrations WHERE version = ${historicMigration.version} LIMIT 1;
+    `);
+    if (!historicExists) {
+      await this.db.transaction([
+        historicalLinkedInSchema,
+        sql`INSERT INTO schema_migrations (version, name, applied_at)
+          VALUES (${historicMigration.version}, ${historicMigration.name}, ${new Date().toISOString()});`,
+      ]);
+    }
   }
 
   private async getDraft(id: string): Promise<PersonalBrandDraft> {
@@ -281,6 +305,14 @@ export class PersonalBrandBackend {
       userConfirmed: input.userConfirmed,
       existing: await this.listPublications(),
     });
+    const canonical = receipt.destination === "linkedin" ? canonicalHistoricalLinkedInUrl(receipt.publishedUrl) : null;
+    if (canonical) {
+      const historical = await this.db.queryOne<{ id: string }>(sql`
+        SELECT id FROM personal_brand_linkedin_historical_posts
+        WHERE canonical_url = ${canonical} LIMIT 1;
+      `);
+      if (historical) throw new Error("This URL is recorded in the historical archive. Delete that user-attested entry before confirming a reviewed publication.");
+    }
     await this.db.exec(sql`INSERT INTO personal_brand_publications
       (post_id, draft_id, approved_revision, published_url, payload_json)
       VALUES (${receipt.postId}, ${receipt.draftId}, ${receipt.approvedRevision},
@@ -375,6 +407,53 @@ export class PersonalBrandBackend {
     `);
     if (!existing) throw new Error("LinkedIn import record not found.");
     await this.db.exec(sql`DELETE FROM personal_brand_linkedin_exports WHERE id = ${id};`);
+  }
+
+  async listHistoricalLinkedInPosts(): Promise<HistoricalLinkedInPost[]> {
+    const rows = await this.db.queryAll<JsonRow>(
+      "SELECT payload_json FROM personal_brand_linkedin_historical_posts ORDER BY published_on DESC, recorded_at DESC, id ASC;",
+    );
+    return rows.map(row => rowJson<HistoricalLinkedInPost>(row));
+  }
+
+  async recordHistoricalLinkedInPost(raw: unknown, confirmed: boolean): Promise<HistoricalLinkedInPost> {
+    if (confirmed !== true) throw new Error("Historical post text requires explicit user attestation.");
+    const input = validateHistoricalLinkedInPost(raw);
+    if (input.publishedOn > new Date().toISOString().slice(0, 10)) {
+      throw new Error("Historical LinkedIn publication date cannot be in the future.");
+    }
+    if (collidesWithApprovedPublication(input.url, await this.listPublications())) {
+      throw new Error("A reviewed publication receipt already exists for this LinkedIn URL.");
+    }
+    const exists = await this.db.queryOne<{ id: string }>(sql`
+      SELECT id FROM personal_brand_linkedin_historical_posts WHERE canonical_url = ${input.url} LIMIT 1;
+    `);
+    if (exists) throw new Error("This historical LinkedIn URL is already archived.");
+    const record: HistoricalLinkedInPost = {
+      ...input, id: `linkedin-history-${randomUUID()}`,
+      recordedAt: new Date().toISOString(),
+      bodySha256: createHash("sha256").update(input.body,"utf8").digest("hex"),
+      source: "user_attested_historical", userConfirmed: true,
+    };
+    await this.db.exec(sql`
+      INSERT INTO personal_brand_linkedin_historical_posts
+        (id, canonical_url, published_on, recorded_at, payload_json)
+      VALUES (${record.id}, ${record.url}, ${record.publishedOn},
+        ${record.recordedAt}, ${JSON.stringify(record)});
+    `);
+    return record;
+  }
+
+  async deleteHistoricalLinkedInPost(id: string, confirmed: boolean): Promise<void> {
+    if (confirmed !== true) throw new Error("Deleting a historical LinkedIn post requires explicit confirmation.");
+    if (typeof id !== "string" || !/^linkedin-history-[0-9a-f-]{36}$/.test(id)) {
+      throw new Error("Invalid historical LinkedIn post identifier.");
+    }
+    const exists = await this.db.queryOne<{ id: string }>(sql`
+      SELECT id FROM personal_brand_linkedin_historical_posts WHERE id = ${id} LIMIT 1;
+    `);
+    if (!exists) throw new Error("Historical LinkedIn post not found.");
+    await this.db.exec(sql`DELETE FROM personal_brand_linkedin_historical_posts WHERE id = ${id};`);
   }
 
   async listCareerOutcomes(): Promise<CareerOutcomeRecord[]> {

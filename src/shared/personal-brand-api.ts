@@ -3,6 +3,7 @@ import type {
   PersonalBrandDraft,
 } from "./personal-brand.js";
 import type { LinkedInExportPreview } from "./linkedin-analytics.js";
+import type { HistoricalLinkedInPostInput, HistoricalLinkedInPost } from "./linkedin-history.js";
 import type { SavedLinkedInExport, LinkedInImportResult } from "./linkedin-import-ledger.js";
 import type { CareerOutcomeInput, CareerOutcomeRecord } from "./personal-brand-outcomes.js";
 
@@ -31,6 +32,9 @@ export interface PersonalBrandDesktopApi {
     listLinkedInImports(): Promise<SavedLinkedInExport[]>;
     saveLinkedInImport(preview: LinkedInExportPreview, userConfirmed: boolean): Promise<LinkedInImportResult>;
     deleteLinkedInImport(id: string, userConfirmed: boolean): Promise<void>;
+    listHistoricalLinkedInPosts(): Promise<HistoricalLinkedInPost[]>;
+    recordHistoricalLinkedInPost(input: HistoricalLinkedInPostInput, confirmed: boolean): Promise<HistoricalLinkedInPost>;
+    deleteHistoricalLinkedInPost(id: string, confirmed: boolean): Promise<void>;
     listCareerOutcomes(): Promise<CareerOutcomeRecord[]>;
     recordCareerOutcome(input: CareerOutcomeInput): Promise<CareerOutcomeRecord>;
     deleteCareerOutcome(id: string, userConfirmed: boolean): Promise<void>;
