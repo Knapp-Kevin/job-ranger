@@ -66,3 +66,4 @@ Surface is the route (or runtime surface) where the feature ships.
 | FX048 | Web runtime non-Latin resume PDF | src/pwa/runtime/resume-pdf.ts:1 | docs/design/PWA_RUNTIME.md | tests/pwa/unicode-resume.spec.ts | unverified | web runtime |
 | FX049 | Desktop Help window and data folder menu | electron/src/main.cts:190 | HELP.md |  | unverified | desktop menu |
 | FX050 | Desktop tray and notifications | electron/src/tray-notifications.cts:30 | HELP.md |  | unverified | desktop tray |
+| FX051 | Candidate-controlled cover-letter copy (unqualified branch, not shipped) | src/components/ApplicationMaterialsPanel.tsx:62 | docs/design/APPLICATION_MATERIALS.md | tests/e2e/application-materials.spec.ts, tests/pwa/application-handoff.spec.ts, tests/application-handoff.test.mjs | unverified | /applications |
