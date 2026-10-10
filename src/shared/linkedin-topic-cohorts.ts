@@ -65,18 +65,11 @@ function validSingleLabel(member:ApprovedPostCohortMember, event:LinkedInTopicEv
      !Number.isSafeInteger(event.revision) || event.revision<1 ||
      !Number.isFinite(Date.parse(event.recordedAt)))return null;
   try {
-    const cleaned=validateTopicLabels(event);
-    return cleaned.topics.length===1 && cleaned.topics[0]===event.topics[0] ? cleaned.topics[0]:null;
-  }catch{
-    // validateTopicLabels intentionally disallows event metadata; validate the
-    // explicit labeling shape instead, keeping all authority checks above.
-    try {
-      const cleaned=validateTopicLabels({
-        targetKind:event.targetKind,targetId:event.targetId,topics:event.topics,
-      });
-      return cleaned.topics.length===1 && cleaned.topics[0]===event.topics[0]?cleaned.topics[0]:null;
-    }catch{return null;}
-  }
+    const cleaned=validateTopicLabels({
+      targetKind:event.targetKind,targetId:event.targetId,topics:event.topics,
+    });
+    return cleaned.topics.length===1 && cleaned.topics[0]===event.topics[0]?cleaned.topics[0]:null;
+  }catch{return null;}
 }
 function contextKey(member:ApprovedPostCohortMember):string {
   return JSON.stringify([
