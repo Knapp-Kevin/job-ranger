@@ -1,45 +1,46 @@
-name: Plan claims gate
+name: Plan claims self-test
 
-# Read-only governance gate for docs/plan-qor-phase17+ plans. The checker never
-# executes plan-supplied commands: it reads immutable git objects only. This job
-# blocks merges once it is listed as a required status check in the main ruleset.
+# Informational and unprivileged: runs the PR head's own gate regression suites
+# and checker. It is NOT the required check. A PR can change these files, which
+# is why the required check is plan-claims-gate (plan-claims-gate.yml): that one
+# runs the base-revision checker and treats the PR head as data only.
 on:
   pull_request:
     paths:
       - 'docs/plan-qor-phase*.md'
       - 'scripts/plan_claims_*.py'
-      - 'tests/test_plan_claims_manifest.py'
-      - '.github/workflows/plan-claims.yml'
+      - 'tests/test_plan_claims_*.py'
+      - 'tests/plan_claims_fixture.py'
+      - '.github/workflows/plan-claims*.yml'
+      - '.github/CODEOWNERS'
   push:
     branches:
       - main
     paths:
       - 'docs/plan-qor-phase*.md'
       - 'scripts/plan_claims_*.py'
-      - 'tests/test_plan_claims_manifest.py'
-      - '.github/workflows/plan-claims.yml'
+      - 'tests/test_plan_claims_*.py'
+      - 'tests/plan_claims_fixture.py'
+      - '.github/workflows/plan-claims*.yml'
+      - '.github/CODEOWNERS'
 
 permissions:
   contents: read
 
 jobs:
-  plan-claims:
+  plan-claims-selftest:
+    name: plan-claims-selftest
     runs-on: ubuntu-24.04
     timeout-minutes: 10
     steps:
       - name: Check out repository with full history
-        uses: actions/checkout@v4
+        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
           persist-credentials: false
 
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.12'
-
-      - name: Gate self-tests (R1-R4 regression suite)
-        run: python -m unittest discover -s tests -p test_plan_claims_manifest.py
+      - name: Gate regression suites (R1-R4, V1-V4)
+        run: python3 -m unittest discover -s tests -p "test_plan_claims_*.py"
 
       - name: Verify every gated plan's claims against immutable git objects
-        run: python scripts/plan_claims_check.py --repo .
+        run: python3 scripts/plan_claims_check.py --repo .

@@ -5,7 +5,7 @@ import re
 
 SHA_RE = re.compile(r"[0-9a-f]{40}")
 ID_RE = re.compile(r"[a-z0-9][a-z0-9-]{0,48}")
-SEGMENT_RE = re.compile(r"[A-Za-z0-9_][A-Za-z0-9_.-]*")
+SEGMENT_RE = re.compile(r"[A-Za-z0-9_.][A-Za-z0-9_.-]*")
 IDENT_RE = re.compile(r"[A-Za-z_$][A-Za-z0-9_$]*")
 COMMON = {"id", "kind", "commit"}
 KINDS = {
@@ -59,7 +59,34 @@ def _check_fields(claim: dict) -> None:
         _fail("SCHEMA", f"claim {cid}: outcome must be pass or fail")
 
 
-def validate_manifest(manifest: object) -> dict:
+def _validate_claim(claim: object, commits: dict) -> None:
+    if not isinstance(claim, dict) or not isinstance(claim.get("kind"), str) or claim["kind"] not in KINDS:
+        _fail("SCHEMA", "unsupported claim kind")
+    required, optional = KINDS[claim["kind"]]
+    extra = set(claim) - COMMON - required - optional
+    if extra or not (COMMON | required) <= set(claim):
+        _fail("SCHEMA", f"claim {claim.get('id')!r} ({claim['kind']}): unexpected {sorted(extra)} or missing fields")
+    if not isinstance(claim["id"], str) or not ID_RE.fullmatch(claim["id"]):
+        _fail("SCHEMA", f"invalid claim id {claim['id']!r}")
+    if not isinstance(claim["commit"], str) or not SHA_RE.fullmatch(claim["commit"]):
+        _fail("R4", f"claim {claim['id']}: commit must be a full 40-character lowercase SHA")
+    if claim["commit"] not in commits.values():
+        _fail("R4", f"claim {claim['id']}: commit {claim['commit']} is not declared in commits")
+    _check_fields(claim)
+
+
+def _validate_judgment(item: object) -> None:
+    if not isinstance(item, dict) or set(item) != {"id", "statement", "rationale"}:
+        _fail("SCHEMA", "judgment must have exactly id, statement, rationale")
+    if not all(isinstance(item[k], str) for k in item) or not ID_RE.fullmatch(item["id"]):
+        _fail("SCHEMA", "judgment id, statement and rationale must be strings with a valid id")
+    if not 8 <= len(item["statement"]) <= 300 or "\n" in item["statement"]:
+        _fail("SCHEMA", f"judgment {item['id']}: statement must be one line of 8-300 characters")
+    if len(item["rationale"].strip()) < 40:
+        _fail("SCHEMA", f"judgment {item['id']}: rationale must be at least 40 characters")
+
+
+def _validate(manifest: object) -> dict:
     if not isinstance(manifest, dict) or manifest.get("version") != 2:
         _fail("SCHEMA", "manifest must be an object with version 2")
     if set(manifest) != {"version", "commits", "claims", "judgments"}:
@@ -73,22 +100,14 @@ def validate_manifest(manifest: object) -> dict:
     if not isinstance(claims, list) or not isinstance(judgments, list):
         _fail("SCHEMA", "claims and judgments must be lists")
     for claim in claims:
-        if not isinstance(claim, dict) or claim.get("kind") not in KINDS:
-            _fail("SCHEMA", f"unsupported claim kind: {claim.get('kind') if isinstance(claim, dict) else claim!r}")
-        required, optional = KINDS[claim["kind"]]
-        extra = set(claim) - COMMON - required - optional
-        if extra or not (COMMON | required) <= set(claim):
-            _fail("SCHEMA", f"claim {claim.get('id')!r} ({claim['kind']}): unexpected {sorted(extra)} or missing fields")
-        if not isinstance(claim["id"], str) or not ID_RE.fullmatch(claim["id"]):
-            _fail("SCHEMA", f"invalid claim id {claim['id']!r}")
-        if not isinstance(claim["commit"], str) or not SHA_RE.fullmatch(claim["commit"]):
-            _fail("R4", f"claim {claim['id']}: commit must be a full 40-character lowercase SHA")
-        if claim["commit"] not in commits.values():
-            _fail("R4", f"claim {claim['id']}: commit {claim['commit']} is not declared in commits")
-        _check_fields(claim)
+        _validate_claim(claim, commits)
     for item in judgments:
-        if not isinstance(item, dict) or set(item) != {"id", "statement", "rationale"} or not ID_RE.fullmatch(str(item["id"])):
-            _fail("SCHEMA", f"judgment must have exactly id, statement, rationale: {item!r}")
-        if not isinstance(item["rationale"], str) or len(item["rationale"].strip()) < 40:
-            _fail("SCHEMA", f"judgment {item['id']}: rationale must be at least 40 characters")
+        _validate_judgment(item)
     return manifest
+
+
+def validate_manifest(manifest: object) -> dict:
+    try:
+        return _validate(manifest)
+    except (TypeError, KeyError, AttributeError, ValueError, RecursionError) as error:
+        raise PlanClaimsError("SCHEMA", f"malformed manifest: {type(error).__name__}") from None

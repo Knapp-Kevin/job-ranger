@@ -1,9 +1,11 @@
 """V2 (VETO #104): function spans come from a JS/TS tokenizer that fails closed."""
 from __future__ import annotations
 
+import sys
 import unittest
+from pathlib import Path
 
-from plan_claims_fixture import REPO  # noqa: F401  (puts scripts/ on sys.path)
+sys.path.insert(0, str(Path(__file__).resolve().parents[1] / "scripts"))
 import plan_claims_source as src  # noqa: E402
 
 

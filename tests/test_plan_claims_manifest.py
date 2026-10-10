@@ -113,6 +113,12 @@ class SchemaHardening(GateTestCase):
         extra = "- At most 3 role searches [judgment:a].\n- Allow up to 2 retries [judgment:b].\n"
         self.rejects(self.f.plan(manifest=self.f.manifest(judgments=judgments), extra=extra), "R1", "rationale")
 
+    def test_all_digit_prefix_of_a_declared_commit_is_not_a_number(self):
+        import plan_claims_prose as prose
+        sha = "4072030" + "a" * 33
+        self.assertEqual(prose.analyse("- Size at `4072030` holds.", False, frozenset({sha}))[1], [])
+        self.assertNotEqual(prose.analyse("- Size at `4072030` holds.", False, frozenset())[1], [])
+
     def test_manifest_json_round_trips(self):
         plan = self.f.plan(manifest=self.f.manifest())
         block = plan.read_text(encoding="utf-8").split("```json qor-plan-claims\n")[1].split("\n```")[0]
