@@ -127,6 +127,32 @@ const base = {
   assert.equal((await db.listSnapshots(receipt.postId)).length, 1,
     "import ledger must not affect existing publication snapshots");
 
+  const historicalInput = {
+    url: "https://linkedin.com/posts/example-historical-not-tracked-876?trk=timeline",
+    publishedOn: "2026-09-20",
+    body: "An earlier post about designing career options from first principles.",
+    textSource: "copied_from_post",
+  };
+  await assert.rejects(() => db.recordHistoricalLinkedInPost(historicalInput, false), /explicit user attestation/);
+  await assert.rejects(() => db.recordHistoricalLinkedInPost({
+    ...historicalInput, publishedOn: "2026-02-30",
+  }, true), /Invalid historical/);
+  await assert.rejects(() => db.recordHistoricalLinkedInPost({
+    ...historicalInput, url: "https://www.linkedin.com.evil.test/posts/wrong",
+  }, true), /must point to a LinkedIn post/);
+  await assert.rejects(() => db.recordHistoricalLinkedInPost({
+    ...historicalInput, url: receipt.publishedUrl,
+  }, true), /reviewed publication receipt/);
+  const historic = await db.recordHistoricalLinkedInPost(historicalInput, true);
+  assert.equal(historic.source, "user_attested_historical");
+  assert.equal(historic.userConfirmed, true);
+  assert.equal(historic.url, "https://www.linkedin.com/posts/example-historical-not-tracked-876");
+  assert.match(historic.bodySha256, /^[a-f0-9]{64}$/);
+  await assert.rejects(() => db.recordHistoricalLinkedInPost(historicalInput, true), /already archived/);
+  assert.equal((await db.listHistoricalLinkedInPosts()).length, 1);
+  await assert.rejects(() => db.deleteHistoricalLinkedInPost(historic.id, false), /explicit confirmation/);
+  await assert.rejects(() => db.deleteHistoricalLinkedInPost("fake", true), /Invalid historical/);
+
   const careerEvent = await db.recordCareerOutcome({
     kind: "meaningful_conversation",
     occurredAt: "2026-10-08T15:00:00.000Z",
@@ -154,6 +180,8 @@ const base = {
   assert.equal((await restored.listPublications())[0].publishedUrl, receipt.publishedUrl);
   assert.equal((await restored.listSnapshots(receipt.postId))[0].id, first.id);
   assert.equal((await restored.listCareerOutcomes())[0].id, careerEvent.id);
+  assert.equal((await restored.listHistoricalLinkedInPosts())[0].bodySha256, historic.bodySha256,
+    "Historical user-attested post text must survive SQLite backup/restore");
   assert.equal((await restored.listLinkedInImports())[0].contentSha256, secondLinkedIn.record.contentSha256,
     "LinkedIn exports must survive ordinary SQLite data copy and restore");
   await db.deleteCareerOutcome(careerEvent.id, true);
@@ -166,6 +194,17 @@ const base = {
   assert.equal(outcomeMigration.version, 1006);
   const linkedinMigration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne("SELECT version FROM schema_migrations WHERE version = 1007");
   assert.equal(linkedinMigration.version, 1007);
+  const historicalMigration = await new SqliteClient(databasePath, sqliteBinaryPath).queryOne(
+    "SELECT version FROM schema_migrations WHERE version = 1008");
+  assert.equal(historicalMigration.version, 1008);
+  await db.deleteHistoricalLinkedInPost(historic.id, true);
+  assert.equal((await db.listHistoricalLinkedInPosts()).length, 0);
+  assert.equal((await db.listLinkedInImports()).length, 1,
+    "Deleting a historical post cannot alter imported analytics");
+  assert.equal((await db.listPublications()).length, 1,
+    "Deleting a historical post cannot alter reviewed publication receipts");
+  assert.equal((await restored.listHistoricalLinkedInPosts()).length, 1,
+    "Original archive remains intact in the backup copy");
   console.log("Personal Brand SQLite + restart/backup persistence integration tests passed");
 })().catch((error) => {
   console.error(error);
