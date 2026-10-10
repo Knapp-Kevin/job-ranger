@@ -3,6 +3,7 @@ import { ClipboardCopy, Save, BarChart3, CheckCircle2, AlertTriangle } from "luc
 import { Layout } from "../components/Layout";
 import { CareerOutcomeJournal } from "../components/CareerOutcomeJournal";
 import { HistoricalLinkedInArchive } from "../components/HistoricalLinkedInArchive";
+import { LinkedInObservedDashboard } from "../components/LinkedInObservedDashboard";
 import { getDesktopApi } from "../services/api";
 import {
   assessPersonalBrandDraft, derivedPostMetrics,
@@ -696,6 +697,7 @@ export function PersonalBrand() {
                   </div>
                 </div>
               )}
+              <LinkedInObservedDashboard report={linkedinReconciliation} />
               <section className="rounded-lg border border-[var(--color-border)] p-4 space-y-3" aria-label="LinkedIn historical reconciliation" data-testid="linkedin-reconciliation">
                 <h4 className="font-semibold">Historical analytics, reconciled across exports</h4>
                 <p className="text-xs text-[var(--color-text-secondary)]">

@@ -447,3 +447,40 @@ test("historical LinkedIn posts remain user-attested and match only consistent X
   expect(await page.evaluate(() => window.electronAPI.personalBrand.listLinkedInImports())).toHaveLength(1);
   expect(requests).toEqual([]);
 });
+
+
+test("LinkedIn dashboard compares only complete seven-day windows and withholds disputed totals", async ({page}) => {
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  const content = (lastDayImpressions: number) => {
+    const rows = Array.from({length:14},(_,i)=>({
+      date:`2026-09-${String(i+1).padStart(2,"0")}`,
+      impressions:i===13?lastDayImpressions:(i<7?10:20),
+      engagements:i<7?1:2,
+      newFollowers:1,
+    }));
+    return {
+      format:"linkedin-aggregate-analytics-v1",
+      period:{start:"2026-09-01",end:"2026-09-14"},
+      discovery:{impressions:rows.reduce((a,b)=>a+b.impressions,0),membersReached:42},
+      followers:{asOf:"2026-09-14",total:91},daily:rows,topPosts:[],
+      audienceDemographics:[],contentDemographics:[],warnings:[],
+      provenance:"manual-linkedIn-export",
+    };
+  };
+  await page.evaluate(payload=>window.electronAPI.personalBrand.saveLinkedInImport(payload,true),content(20));
+  await page.goto(`${server.url}#/personal-brand`);
+  const dashboard=page.getByTestId("linkedin-observed-dashboard");
+  const impressions=dashboard.getByTestId("linkedin-weekly-impressions");
+  await expect(impressions.getByText("140",{exact:true})).toBeVisible();
+  await expect(impressions.getByText("70",{exact:true})).toBeVisible();
+  await expect(impressions.getByText(/\+70 over prior window \(\+100.0%\)/)).toBeVisible();
+  await expect(dashboard.getByTestId("linkedin-weekly-newFollowers").getByText(/0 over prior window/)).toBeVisible();
+  await page.evaluate(payload=>window.electronAPI.personalBrand.saveLinkedInImport(payload,true),content(22));
+  await page.reload();
+  await waitForRuntime(page);
+  await expect(impressions.getByText("Unavailable",{exact:true})).toBeVisible();
+  await expect(impressions.getByText("Conflicting observations")).toBeVisible();
+  await expect(impressions.getByText("Change unavailable")).toBeVisible();
+  await expect(dashboard.getByTestId("linkedin-weekly-engagements").getByText("14",{exact:true})).toBeVisible();
+});
