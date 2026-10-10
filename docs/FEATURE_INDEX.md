@@ -1,8 +1,9 @@
 # Feature Index
 
 Per `qor/references/doctrine-feature-inventory.md` (ships with the installed Qor-logic-plus skills, not this repo): one row per user-touchable feature, cross-referenced
-to the test that proves it works. V1 (2026-10-06) enumerates the user journeys reachable from the
-renderer routes in `src/App.tsx` plus the runtime-specific (Electron / web) surfaces.
+to the supporting test evidence. V1 (2026-10-06) enumerated user journeys reachable from the
+renderer routes in `src/App.tsx` plus runtime-specific (Electron / web) surfaces.
+The 2026-10-10 reconciliation adds FX051-FX059 against `main` at `4721e7fa782099c69019494d6f823c2cc372b98d`; these new entries do not inherit the earlier UI-verification results.
 
 Status is assigned honestly:
 
