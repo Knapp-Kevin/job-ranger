@@ -1,6 +1,6 @@
 # Documentation and Governance Reconciliation, 2026-10-10
 
-**Status:** documentation-only candidate; draft PR, not merged or released.
+**Status:** documentation-only reconciliation evidence; not a runtime, release or governance qualification.
 **Baseline reviewed:** `main` at `4721e7fa782099c69019494d6f823c2cc372b98d`.
 **Reference release:** published stable `v1.2.0` from `71f9b790a1f456321aee2c783f39f4a6784b83a9`.
 **Method:** read-only, exact-ref inspection through the connected GitHub repository interface; review of the repository tree, original source paths, tests, active GitHub PRs/issues, and canonical docs. No local executable checkout or UI testing in this environment. This record does not qualify application behavior.
@@ -30,7 +30,8 @@
 - Inspected main-branch tree, checked-in source, tests and current documentation using GitHub reads at the exact baseline SHA.
 - Cross-checked documentation and governance status against current open PR and issue metadata at the time of review.
 - Documentation-only changes; the review does not touch application runtime code, test execution, release tags, or protected governance gate artifacts.
-- Verified known internal relative links referenced by the new documentation against the same repository tree (see PR review notes). **No local lint/build/unit/E2E/test commands were run**, and no qualification of new features is claimed.
+- Parsed **129 Markdown relative links** across the 11 changed/indexed documents and checked every internal file target against the repository's recursive branch tree: **0 broken file targets**. Parsed **59 feature-index IDs**, covering FX001–FX059 without gaps, and checked source/test paths for every feature row against that same tree: **0 missing paths**. These are static GitHub-source checks, not application tests.
+- **No local lint/build/unit/E2E/test commands were run**, and no qualification of new features is claimed.
 - This record is a dated reconciliation snapshot. Merging subsequent changes or receiving new independent governance decisions requires another update, rather than retroactively interpreting this record as current.
 
 ## Maintenance rule
