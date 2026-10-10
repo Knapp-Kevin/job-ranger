@@ -12,6 +12,7 @@
 - Job location represents provider restrictions explicitly: worldwide only when both geography and time-zone lists are explicitly empty. Missing location data stays **eligibility unspecified** rather than fabricated as unrestricted remote.
 - Listings remain *opportunity-only*. They never become monitorable employers merely because the upstream provider returns a listing. Existing monitored-source approval is unchanged.
 - Responses with missing or hostile URLs are discarded. An invalid response, HTTP 429, or browser policy block produces provider-specific warnings while other feeds remain available.
+- Results are deterministically interleaved by provider before applying the user's result cap, so large legacy feed responses cannot silently crowd out new relevant providers. This does not establish a real-world improvement in unique coverage; that needs measured fixtures.
 - The browser/PWA explicitly skips Himalayas with a CORS warning, because the official API disallows direct browser requests. No proxy, CORS bypass, personal-data upload, or mandatory credentials have been added.
 
 ## Limits
