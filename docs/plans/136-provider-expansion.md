@@ -10,14 +10,14 @@
 
 1. The installed Qortara CLI and runtime are not accessible in the current environment. Check `qortara status`, run plan checks and record the exact plan under the authorized runtime before claiming Qortara-governed implementation.
 2. **PWA CORS:** Himalayas says its public JSON endpoints do not return `Access-Control-Allow-Origin` and may only be called from a backend/build step. Job Ranger's web runtime is local-first and does not have a general discovery gateway. Do not add an invisible proxy or credentials. First tranche may be desktop-supported while web explicitly degrades to an honest source-unavailable warning; independent review must decide whether that is acceptable before promotion.
-3. **We Work Remotely RSS:** public and attribution-permitted, but a safe, bounded RSS parser and browser cross-origin behavior have not yet been qualified. Implement only as a second independently reviewed bounded phase; do not use unaudited XML parsing or scraping to meet a checkbox.
+3. **We Work Remotely RSS:** its public RSS page says feeds may be used with attribution, but its separate API terms expressly prohibit building a job-search service using WWR API data, and direct applying may not bypass WWR. Whether those API terms also constrain the public RSS feed is not established. **Publisher/terms clearance is a blocking prerequisite for release.** Independently qualify a strict RSS parser and browser cross-origin behavior; do not scrape, proxy, or substitute an authenticated API.
 4. Real-world **unique relevant opportunity coverage** over the frozen universal career fixtures has not yet been measured. Do not claim #136 complete solely because providers return data.
 
 ## Verified public-provider references (2026-10-09)
 
 - Himalayas API and attribution: https://himalayas.app/docs/remote-jobs-api and https://himalayas.app/api . Public/no-key `GET /jobs/api/search?q=...&sort=recent&page=1`; source attribution and backlink required; no reposting to third-party job aggregators. Cached daily, rate-limited (429). Explicit **no CORS for browser JavaScript**.
 - Himalayas machine-readable schema: https://himalayas.app/docs/openapi.json . `jobs[]` includes `title`, `companyName`, `companySlug`, `applicationLink`, `guid`, `locationRestrictions` and `timezoneRestrictions`; `pubDate` can be a millisecond epoch value in the advertised schema. Treat undefined versus empty restrictions carefully.
-- We Work Remotely official RSS and attribution: https://weworkremotely.com/remote-job-rss-feed and `https://weworkremotely.com/remote-jobs.rss`. Category feeds are official. The listing-posting API is separate and requires a partnership.
+- We Work Remotely official RSS and attribution: https://weworkremotely.com/remote-job-rss-feed and `https://weworkremotely.com/remote-jobs.rss`. Category feeds are official. The listing-posting API is separate and requires a partnership. Separate API usage restrictions: https://weworkremotely.com/api-terms-and-guidelines ; the interaction of those restrictions with the public RSS grant remains unresolved.
 
 ## Grounded current repository boundary
 
@@ -52,9 +52,9 @@ Improve deliberate, diverse discovery for user-authored Target Tracks through fi
 
 ### Phase 2: We Work Remotely (independently assessed before enabling)
 
-**Red tests:** deterministic feed fixture with namespaced RSS fields, HTML CDATA, multiple jobs, attribution URL, malformed XML, oversized feed, redirects, geo restrictions, unsafe links, failure isolation, duplicate jobs.
+**Red tests:** deterministic WWR RSS fixture with `Employer: Role` titles, XML CDATA and escaped entities, country-versus-region conflicts, duplicate GUIDs/links, HTML descriptions, invalid nesting, forbidden DTD/entity declarations, oversized feed, cross-host redirects, unsafe links, failure isolation and explicit PWA exclusion pending verified CORS.
 
-**Implementation:** fetch documented first-party public RSS, parse with a safe size-bounded, external-entity-disabled XML mechanism available in both supported runtimes (or leave deferred with a recorded technical disposition). Preserve `We Work Remotely` name and backlink. Do not treat publishing/posting API as a candidate application API. A failed or blocked RSS integration does not inhibit the existing feeds.
+**Implementation:** fetch the documented first-party public RSS only once per discovery, with strict size/item caps, manual redirect and publisher host checks, no DTD/entity expansion, no authenticated API. Preserve `We Work Remotely` name and backlink; no direct application URLs, employer monitoring or application submission. Prefer `country` to `region` for eligibility, and do not claim worldwide access from a broad region value alone. On web, fail visibly and omit the fetch unless real cross-origin support is established; no cloud proxy. Do not treat the posting API as a candidate application API. This phase is a release-blocked candidate until publisher terms review clears the usage, even if technical tests pass.
 
 ### Phase 3: Evidence, docs and qualification
 
