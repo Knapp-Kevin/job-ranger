@@ -2750,6 +2750,24 @@ Phase 2 WWR remains HELD. Governor must amend the plan text (with /qor-refactor 
 
 ---
 
+### Entry #101: REMEDIATE (Phase 17 Gate-Loop Process Remediation)
+
+**Timestamp**: 2026-10-10T06:07:42Z
+**Phase**: REMEDIATE
+**Author**: Governor
+**Risk Grade**: L2
+**Gate**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json
+
+**Content Hash**: `44c2f13501d8b7ffe909e8f17c14f6cea4feb503cdb902483a67b87a58526d8f`
+
+**Previous Hash**: `30526d44958a02c8964e60d7ab99422c032bf8444e6f5b1ca628ba5853e4fa05`
+
+**Chain Hash**: `fdd338301e8f36d8f8bd5e432637a3003b412de47b405d0a05a7d3ecc6f2665f`
+
+**Decision**: The operator ran /qor-remediate after three consecutive Phase 17 VETOs (#96, #98, #100); no iteration-5 override was approved. The runtime classified a gate-loop on qor-plan for session 2026-10-07T2054-978a4e (events 1f15661a..., f0b67f91...). Both events are now marked addressed_pending, and no IDs were missing. Phase 17 session 2026-10-10T0443-9d3df3 has no process-shadow events of its own: the escalator found no same-signature streak, and the session-total mode is blocked by Qor-logic-plus #173. None were manufactured. The proposal is a gate: every phase>=17 plan carries an executable qor-plan-claims manifest, which is enforced by tests/test_plan_claims_manifest.py at plan time and at /qor-audit Step 0.6. F1-F5 are inputs to the next authorized plan iteration. The addressed flip awaits an independent /qor-audit reviews-remediate PASS.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2768,5 +2786,5 @@ Phase 2 WWR remains HELD. Governor must amend the plan text (with /qor-refactor 
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95; VETO #96; PLAN it.3 #97; VETO #98; PLAN it.4 #99; VETO #100; Phase 2 WWR HELD*
-*Next required action: Governor amends plan iteration 4 per Entry #100 findings F1-F5, then a fresh independent /qor-audit*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101 (addressed_pending); Phase 2 WWR HELD*
+*Next required action: independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json*
