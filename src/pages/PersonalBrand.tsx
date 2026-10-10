@@ -17,6 +17,7 @@ import { normalizeLinkedInAnalyticsExport, type LinkedInExportPreview } from "..
 import { readLinkedInXlsx } from "../browser/linkedin-xlsx";
 import type { SavedLinkedInExport } from "../shared/linkedin-import-ledger";
 import { reconcileLinkedInExports, type ReconciledValue } from "../shared/linkedin-reconciliation";
+import { matchLinkedInRankedPosts, canonicalLinkedInPostUrl, type RankedPostContentReport } from "../shared/linkedin-post-content";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
@@ -98,6 +99,8 @@ export function PersonalBrand() {
   const [linkedinImportBusy, setLinkedinImportBusy] = useState(false);
   const [linkedinSaved, setLinkedinSaved] = useState<SavedLinkedInExport[]>([]);
   const linkedinReconciliation = useMemo(() => reconcileLinkedInExports(linkedinSaved), [linkedinSaved]);
+  const [rankedPostLinkReport, setRankedPostLinkReport] = useState<RankedPostContentReport | null>(null);
+  const [rankedPostLinkError, setRankedPostLinkError] = useState<string | null>(null);
   const [linkedinReviewed, setLinkedinReviewed] = useState(false);
   const [linkedinDeleteId, setLinkedinDeleteId] = useState("");
   const [linkedinDeleteConfirmed, setLinkedinDeleteConfirmed] = useState(false);
@@ -198,6 +201,19 @@ export function PersonalBrand() {
     void load();
     return () => { live = false; };
   }, [publications, cohortRevision]);
+
+  useEffect(() => {
+    let live = true;
+    setRankedPostLinkReport(null);
+    setRankedPostLinkError(null);
+    void matchLinkedInRankedPosts(linkedinReconciliation, publications, prepared, drafts)
+      .then(report => { if (live) setRankedPostLinkReport(report); })
+      .catch(cause => {
+        if (live) setRankedPostLinkError(
+          cause instanceof Error ? cause.message : "Unable to verify LinkedIn ranked post provenance.");
+      });
+    return () => { live = false; };
+  }, [linkedinReconciliation, publications, prepared, drafts]);
 
   const learning = useMemo(() => buildPersonalBrandLearningReport(
     publications.map((receipt) => ({
@@ -732,6 +748,72 @@ export function PersonalBrand() {
                     )}
                   </>
                 ) : <p className="text-sm">No saved LinkedIn exports yet. Export and review a workbook above to begin.</p>}
+              </section>
+              <section className="rounded-lg border border-[var(--color-border)] p-4 space-y-3"
+                data-testid="linkedin-post-content-enrichment" aria-label="LinkedIn ranked post and approved copy matches">
+                <h4 className="font-semibold">Ranked post content: confirmed matches only</h4>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  LinkedIn's XLSX lists URLs and metrics, not the text or comments.
+                  Job Ranger displays an original post copy only when a matching human-confirmed
+                  publication receipt and its fingerprint-checked reviewed package agree.
+                  A copy match does not verify the live LinkedIn post, and post totals
+                  are not comparable unless observation windows are equivalent.
+                </p>
+                {rankedPostLinkError && <p role="alert" className="text-sm text-[var(--color-danger)]">{rankedPostLinkError}</p>}
+                {!rankedPostLinkReport && !rankedPostLinkError && <p role="status" className="text-sm">Checking source matches...</p>}
+                {rankedPostLinkReport && (
+                  <>
+                    <p className="text-sm">
+                      <strong>{rankedPostLinkReport.verifiedCopyCount}</strong> original approved copies matched
+                      {" · "}<strong>{rankedPostLinkReport.unmatchedCount}</strong> posts without a recorded publication
+                      {" · "}<strong>{rankedPostLinkReport.totalRanked}</strong> ranked posts in the latest saved export
+                    </p>
+                    {rankedPostLinkReport.totalRanked === 0 ? (
+                      <p className="text-sm">Save a LinkedIn analytics export to inspect ranked post matches.</p>
+                    ) : (
+                      <div className="space-y-2">
+                        <p className="text-xs text-[var(--color-text-secondary)]">
+                          Showing up to 12 posts from the latest imported workbook. Missing metrics are unknown, not zero.
+                        </p>
+                        {rankedPostLinkReport.rows.slice(0, 12).map(row => (
+                          <div key={row.url} className="rounded-lg border border-[var(--color-border)] p-3 space-y-1 text-sm">
+                            <div className="flex flex-wrap items-center justify-between gap-2">
+                              <span className="font-semibold">{row.publishedOn} · {row.impressions === null ? "Impressions unavailable" : row.impressions.toLocaleString() + " impressions"}</span>
+                              {canonicalLinkedInPostUrl(row.url) && (
+                                <a className="underline break-all text-xs" href={row.url} target="_blank"
+                                  rel="noopener noreferrer">LinkedIn post</a>
+                              )}
+                            </div>
+                            <p className="text-xs">
+                              Engagements: {row.engagements === null ? "Unknown" : row.engagements.toLocaleString()}
+                              {" · "}Source match: <strong>{row.status.replaceAll("-", " ")}</strong>
+                            </p>
+                            <p className="text-xs text-[var(--color-text-secondary)]">{row.explanation}</p>
+                            {row.reviewedCopy !== null && (
+                              <details className="text-sm">
+                                <summary className="cursor-pointer font-medium">View original user-approved copy</summary>
+                                <p className="whitespace-pre-wrap break-words mt-2">{row.reviewedCopy}</p>
+                                {row.metadataCurrent && (
+                                  <p className="text-xs text-[var(--color-text-secondary)] mt-2">
+                                    Current draft metadata: hook {row.hook?.replaceAll("_", " ") ?? "Not recorded"};
+                                    {" "}format {row.format ?? "Not recorded"};
+                                    {" "}objective {row.objective?.replaceAll("_", " ") ?? "Not recorded"}.
+                                  </p>
+                                )}
+                              </details>
+                            )}
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                    <details className="text-xs">
+                      <summary className="cursor-pointer font-semibold">Coverage and provenance cautions ({rankedPostLinkReport.warnings.length})</summary>
+                      <ul className="list-disc pl-5 space-y-1 mt-2">
+                        {rankedPostLinkReport.warnings.map(warning => <li key={warning}>{warning}</li>)}
+                      </ul>
+                    </details>
+                  </>
+                )}
               </section>
               <div className="rounded-lg border border-[var(--color-border)] p-3 space-y-3" data-testid="linkedin-import-ledger">
                 <h4 className="font-semibold">Saved LinkedIn exports ({linkedinSaved.length})</h4>

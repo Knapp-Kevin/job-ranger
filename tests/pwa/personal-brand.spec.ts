@@ -319,6 +319,23 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   const zip = Buffer.from(zipSync(files));
   await page.goto(server.url);
   await waitForRuntime(page);
+  const approvedCopy = "This user-reviewed synthetic LinkedIn post is a historical fixture.";
+  await page.evaluate(async ({ url, body }) => {
+    const api = window.electronAPI.personalBrand;
+    const draft = await api.createDraft({
+      body, objective: "expertise_proof", audiences: ["hiring managers"],
+      destination: "linkedin", format: "text", hookArchetype: "contradiction",
+      hypothesis: "Observe engagement without attributing career outcomes.",
+      claimChecks: [], mediaCount: 0, mediaAccessibilityReviewed: true,
+    });
+    await api.prepareDraft(draft.id, draft.revision, true);
+    await api.confirmPublication({
+      draftId: draft.id, revision: draft.revision,
+      publishedUrl: url + "?trk=manual-test",
+      publishedAt: "2026-10-09T14:00:00-04:00",
+      userConfirmed: true,
+    });
+  }, { url: fakeUrl, body: approvedCopy });
   await page.goto(`${server.url}#/personal-brand`);
   const area = page.getByTestId("linkedin-xlsx-preview");
   await area.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
@@ -339,6 +356,12 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await area.getByRole("button", { name: "Review and save LinkedIn export" }).click();
   await expect(area.getByText(/LinkedIn analytics saved in the local Job Ranger database/)).toBeVisible();
   await expect(area.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
+  const linkedPosts = area.getByTestId("linkedin-post-content-enrichment");
+  await expect(linkedPosts.getByText(/1 original approved copies matched/)).toBeVisible();
+  await expect(linkedPosts.getByText(/copy verified/)).toBeVisible();
+  await linkedPosts.getByText("View original user-approved copy").click();
+  await expect(linkedPosts.getByText(approvedCopy)).toBeVisible();
+  await expect(linkedPosts.getByText(/Current draft metadata: hook contradiction/)).toBeVisible();
   const reconcile = area.getByTestId("linkedin-reconciliation");
   await expect(reconcile.getByText("Days observed", { exact: true })).toBeVisible();
   await expect(reconcile.getByText("2 of 2", { exact: true })).toBeVisible();
@@ -350,6 +373,7 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await expect(page.getByTestId("linkedin-preview-results")).toHaveCount(0);
   await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
   await expect(newArea.getByTestId("linkedin-reconciliation").getByText("2 of 2", { exact: true })).toBeVisible();
+  await expect(newArea.getByTestId("linkedin-post-content-enrichment").getByText(/1 original approved copies matched/)).toBeVisible();
   await newArea.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
     name: "AggregateAnalytics_synthetic.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: zip,
   });
@@ -363,4 +387,5 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await newArea.getByRole("button", { name: "Delete selected export" }).click();
   await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(0\)/)).toBeVisible();
   await expect(newArea.getByTestId("linkedin-reconciliation").getByText(/No saved LinkedIn exports yet/)).toBeVisible();
+  await expect(newArea.getByTestId("linkedin-post-content-enrichment").getByText(/Save a LinkedIn analytics export/)).toBeVisible();
 });
