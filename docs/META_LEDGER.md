@@ -2768,6 +2768,39 @@ Phase 2 WWR remains HELD. Governor must amend the plan text (with /qor-refactor 
 
 ---
 
+### Entry #102: GATE TRIBUNAL (Phase 17 Gate-Loop Remediation Review)
+
+**Timestamp**: 2026-10-10T06:12:25Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Target**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json (reviews-remediate; target content hash 44c2f135)
+
+**Verdict**: VETO
+
+**Content Hash**: `987689e656f71814bd7270e1bdf02fc4d0240254f55a0ab50ab3ef52ebb373e7`
+
+**Previous Hash**: `fdd338301e8f36d8f8bd5e432637a3003b412de47b405d0a05a7d3ecc6f2665f`
+
+**Chain Hash**: `993058404f54f7d89ee7f8ddd41020c03d4522d5822582ca0189ee0483190e3f`
+
+**Decision**: VETO for the Phase 17 gate-loop remediation proposal, from a fresh-context subagent review (not a human or separately authenticated approval). The addressed flip was not performed.
+
+Verified:
+- Protocol fidelity holds. The runtime pipeline reproduces, the two addressed events (1f15661a, f0b67f91) are real and only addressed_pending, no Phase 17 events were manufactured, prior VETOs are unchanged, the artifact is schema-valid, and the closure enforcer passes form 1.
+- No application source changed. PRs #233 and #238 are untouched.
+- The enforcer fails iteration 4 (no manifest) and reproduces the 167-line registerCoreIpcHandlers overage.
+
+Findings:
+- (R1) The enforcer checks only declared claims: a phase-17 plan with one trivial claim passes while its prose carries false claims, so unexecuted prose claims (the root cause) are not mechanically guarded;
+- (R2) the proposed hard short-circuit at /qor-audit Step 0.6 contradicts that step's WARN-only contract, and the plan/audit step amendments are written into no skill, doctrine or CI path (the Phase 16 nominal-enforcer failure again);
+- (R3) author-controlled argv/setup run on the auditor's host before any adversarial pass, with no executable allowlist and inside a worktree sharing the audited .git (OWASP A03/A04);
+- (R4) the "exact ref" claim is not enforced: non-SHA refs are accepted, and override checkouts are not checked for a clean tree.
+
+Events stay addressed_pending. Phase 17 plan iteration 5 is not authorized and WWR remains HELD. Governor must amend the remediation via /qor-remediate and resubmit to an independent /qor-audit reviews-remediate.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2786,5 +2819,5 @@ Phase 2 WWR remains HELD. Governor must amend the plan text (with /qor-refactor 
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101 (addressed_pending); Phase 2 WWR HELD*
-*Next required action: independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101 (addressed_pending); REMEDIATE REVIEW VETO #102; Phase 2 WWR HELD*
+*Next required action: Governor amends the remediation per Entry #102 findings R1-R4 via /qor-remediate, then a fresh independent /qor-audit reviews-remediate*

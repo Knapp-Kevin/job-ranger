@@ -508,4 +508,31 @@ Amend the plan per AUDIT_REPORT F1-F5: reclassify the 51-entry item; pin the gol
 
 ---
 
+## Failure Entry #17
+
+**Date**: 2026-10-10T06:12:25Z
+**Verdict ID**: Entry #102 (GATE TRIBUNAL Phase 17 Gate-Loop Remediation Review)
+**Failure Mode**: SPECIFICATION_DRIFT (nominal closure enforcer; with an OWASP A03/A04 subprocess design gap)
+
+### What Failed
+
+The Phase 17 /qor-remediate proposal (.qor/gates/2026-10-10T0443-9d3df3/remediate.json) and its closure enforcer, tests/test_plan_claims_manifest.py.
+
+### Why It Failed
+
+- The enforcer executes only the claims a plan author chooses to declare. A gated plan with one trivial claim passes while its prose carries false empirical claims. The root cause it was meant to close (empirical claims nobody executed) therefore stays unguarded, and the remaining guard is a Judge-side prose rule that restates existing audit behaviour.
+- The plan-time and audit-time rules that would bind the enforcer exist only in the gate JSON and the ledger. One of them places a hard short-circuit at /qor-audit Step 0.6, which the skill defines as WARN-only. No CI job, doctrine file or skill reference invokes the enforcer.
+- Author-controlled command claims execute on the auditor's machine before any adversarial pass, with no executable allowlist, inside a worktree that shares the audited repository's .git.
+- "Exact ref" is promised but not enforced.
+
+### Pattern to Avoid
+
+A closure enforcer must fail on the pattern it closes, not only on the instances the author opts in to. If an executable check can be satisfied vacuously, add the completeness check (here, every prose citation must reference a claim id) or the closure is prose in disguise. Do not declare a gate step a hard stop when the skill defines it as WARN; write the binding rule where the skill or CI actually reads it. Any mechanism that runs plan-supplied commands on the auditor's host needs an executable allowlist and isolation from the audited repository.
+
+### Remediation Attempted
+
+None in this cycle. The events 1f15661a and f0b67f91 remain addressed_pending, and no addressed flip was performed. The Governor amends the remediation per AUDIT_REPORT R1-R4 via /qor-remediate, then resubmits to an independent /qor-audit reviews-remediate.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*
