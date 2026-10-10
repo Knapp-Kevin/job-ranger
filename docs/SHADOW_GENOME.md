@@ -562,4 +562,37 @@ None in this cycle. Events 1f15661a and f0b67f91 remain addressed_pending, and n
 
 ---
 
+## Failure Entry #19
+
+**Date**: 2026-10-10T07:25:42Z
+**Verdict ID**: Entry #106 (GATE TRIBUNAL Phase 17 Gate-Loop Remediation Amendment 2 Review)
+**Failure Mode**: COMPLEXITY_VIOLATION / coverage-gap (parser divergence between gate and rendered document; line-wide subject binding; false verification in the function-span and import evaluators)
+
+### What Failed
+
+Amendment 2 of the Phase 17 /qor-remediate proposal (.qor/gates/2026-10-10T0443-9d3df3/remediate.json, content hash fa0e6924) and its checker (scripts/plan_claims_prose.py, plan_claims_source.py, plan_claims_tokens.py, plan_claims_gate.py).
+
+### Why It Failed
+
+- The scanner decides sections and fences with its own line rules. These diverge from Markdown rendering in several ways:
+  - a heading inside an HTML comment or a <pre> block;
+  - a ~~~ line or a shorter fence inside a backtick fence;
+  - a 1-3-space-indented heading.
+
+  Facts that render inside Locked Decisions therefore went unscanned, and both the checker and the gate passed the plan.
+- Subject binding accepts any claim whose path or function name appears anywhere on the line. A claim about file B therefore discharges an assertion about file A. Exact-size prose also binds to an upper-bound claim.
+- Any H3 heading containing the substring "test" disables numeric-assertion detection.
+- The JS/TS span evaluator returns a 1-line measurement for a 103-line arrow function whose generic constraint contains `=> { ... }`. Template-literal require/import arguments are invisible to the import-edge evaluator. Both produce false PASS results instead of failing closed.
+- _bind_claims nests 4 levels deep.
+
+### Pattern to Avoid
+
+A lexical gate over a rendered document must use the renderer's block structure, or it must fail closed on every construct whose structure it does not model (raw HTML, non-matching fences, indented headings). Otherwise a reader sees content that the gate never scanned. Bind each assertion to the subject named inside its own span, not to any token on the line. Bind exact quantities to exact claims. Exemptions must match exact headings and delimited data, never substrings or prose. A parser-based verifier must fail closed whenever its own heuristics skip a region (type parameters, non-literal specifiers); any shortcut that can shrink a measurement or hide an edge is a false-PASS generator. Measure nesting depth in the automated razor test as well as line counts.
+
+### Remediation Attempted
+
+None in this cycle. Events 1f15661a and f0b67f91 remain addressed_pending, and no addressed flip was performed. The Governor amends via /qor-remediate (Amendment 3) per AUDIT_REPORT V1-A, V1-B, V1-C, V2 and Razor, then resubmits to an independent /qor-audit reviews-remediate. Closure additionally requires D1 and D2.
+
+---
+
 *Shadow Genome updated. Pattern documented for future avoidance.*

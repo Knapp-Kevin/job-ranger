@@ -2891,6 +2891,42 @@ Correction: commit 421ef20 (the remediate.json re-emit) names this entry in its 
 
 ---
 
+### Entry #106: GATE TRIBUNAL (Phase 17 Gate-Loop Remediation Amendment 2 Review)
+
+**Timestamp**: 2026-10-10T07:25:42Z
+**Phase**: GATE
+**Author**: Judge
+**Risk Grade**: L2
+**Target**: .qor/gates/2026-10-10T0443-9d3df3/remediate.json (reviews-remediate; target content hash fa0e6924)
+
+**Verdict**: VETO
+
+**Content Hash**: `ae2357e106b0f1a5c0e175f20f57e57b2fa166cc8ade344508bbab6a11f66cab`
+
+**Previous Hash**: `9f7ed3c675ef38b9fa9be30abf460d183b7775afba920e353ab5a343d29aa66c`
+
+**Chain Hash**: `18c0463e900f24928432421f9e3da6e85b9aa7c3221aa75220da5db38672f165`
+
+**Decision**: VETO for Amendment 2 of the Phase 17 gate-loop remediation, from a fresh-context subagent review (not a human or separately authenticated approval). The addressed flip was not performed.
+
+Verified:
+- All four bypasses reported by VETO #104 now fail independently, and the /}/ counterexample measures 104 lines. The suites split within the file and function limits (66/66 OK on both Pythons).
+- The base-revision pull_request_target gate is safe as configured. The PR head is data only, the token is contents: read, there are no secrets, SHAs are passed through env only, and the not-applicable success is truthful in local simulation.
+- R3/R4 are preserved. The protocol is clean: events 1f15661a and f0b67f91 are addressed_pending only, with none missing, and the session has no events. Entries #96-#104 are unchanged, and the artifact is schema-valid.
+- The 421ef20/f48c5f8 ordering disclosure is adequate.
+
+Findings:
+- (V1-A) The heading and fence model diverges from rendered Markdown. An HTML comment or <pre> containing a heading, a mismatched or four-backtick fence, or an indented H2 leaves visible canonical-section facts unscanned. The checker and the gate itself PASS such a plan.
+- (V1-B) Subject and property binding is line-wide. A claim about another file or function binds, and "exactly 500 lines" verifies against max 500 on a 97-line file.
+- (V1-C) Any H3 heading containing "test" exempts prose counts.
+- (V2) A generic-constraint arrow function of 103 lines measures 1 line, and require/import with a template literal is not counted as an edge. Both are false PASS results end to end.
+- (Razor) _bind_claims nests 4 levels deep.
+- plan-claims-gate has never run, because pull_request_target uses main's workflows. D1 is not enabled. Check-name collision and single-owner risks must be addressed before D1.
+
+Closure is not legal: this verdict is a VETO, and D1 and D2 are unmet. Events stay addressed_pending. Phase 17 plan iteration 5 is not authorized, and WWR remains HELD. The Governor must amend via /qor-remediate (Amendment 3) and then resubmit to an independent /qor-audit reviews-remediate.
+
+---
+
 *Chain integrity: VALID*
 *Phase 1 Browser Automation: COMPLIANT*
 *Phase 2 API Adapters: SEALED*
@@ -2909,5 +2945,5 @@ Correction: commit 421ef20 (the remediate.json re-emit) names this entry in its 
 *Phase 14 Inference Slice A: SEALED (Entry #78); PR #165 merged*
 *Phase 15 Mapper Negation (G12): SEALED (Entry #86); PR #169 merged*
 *Phase 16 Mapper Claim Action (G13): SEALED (Entry #94)*
-*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101/#103/#105; VETO #102/#104; HOLD on review, D1, D2; Phase 2 WWR HELD*
-*Next required action: fresh independent /qor-audit reviews-remediate:.qor/gates/2026-10-10T0443-9d3df3/remediate.json; closure also requires D1 and D2*
+*Phase 17 Public Discovery Providers (#136): PLAN #95/#97/#99; VETO #96/#98/#100; REMEDIATE #101/#103/#105; VETO #102/#104/#106; HOLD on review, D1, D2; Phase 2 WWR HELD*
+*Next required action: Governor amends the remediation per Entry #106 findings (V1-A, V1-B, V1-C, V2, Razor) via /qor-remediate (Amendment 3), then a fresh independent /qor-audit reviews-remediate; event closure also requires D1 and D2*
