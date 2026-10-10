@@ -16,6 +16,7 @@ import type { CandidateEvidence } from "../shared/contracts";
 import { normalizeLinkedInAnalyticsExport, type LinkedInExportPreview } from "../shared/linkedin-analytics";
 import { readLinkedInXlsx } from "../browser/linkedin-xlsx";
 import type { SavedLinkedInExport } from "../shared/linkedin-import-ledger";
+import { reconcileLinkedInExports, type ReconciledValue } from "../shared/linkedin-reconciliation";
 
 const baseInput: PersonalBrandDraftInput = {
   body: "",
@@ -69,6 +70,12 @@ function inputFromDraft(draft: PersonalBrandDraft): PersonalBrandDraftInput {
 function formatPercent(n: number | null): string {
   return n === null ? "Unavailable" : `${(n * 100).toFixed(2)}%`;
 }
+function displayLinkedInMetric(metric: ReconciledValue): string {
+  if (metric.state === "conflict") return "Conflicting";
+  if (metric.state === "missing") return "Unknown";
+  return metric.value!.toLocaleString();
+}
+
 export function PersonalBrand() {
   const [drafts, setDrafts] = useState<PersonalBrandDraft[]>([]);
   const [selected, setSelected] = useState<PersonalBrandDraft | null>(null);
@@ -90,6 +97,7 @@ export function PersonalBrand() {
   const [linkedinImportError, setLinkedinImportError] = useState<string | null>(null);
   const [linkedinImportBusy, setLinkedinImportBusy] = useState(false);
   const [linkedinSaved, setLinkedinSaved] = useState<SavedLinkedInExport[]>([]);
+  const linkedinReconciliation = useMemo(() => reconcileLinkedInExports(linkedinSaved), [linkedinSaved]);
   const [linkedinReviewed, setLinkedinReviewed] = useState(false);
   const [linkedinDeleteId, setLinkedinDeleteId] = useState("");
   const [linkedinDeleteConfirmed, setLinkedinDeleteConfirmed] = useState(false);
@@ -671,6 +679,60 @@ export function PersonalBrand() {
                   </div>
                 </div>
               )}
+              <section className="rounded-lg border border-[var(--color-border)] p-4 space-y-3" aria-label="LinkedIn historical reconciliation" data-testid="linkedin-reconciliation">
+                <h4 className="font-semibold">Historical analytics, reconciled across exports</h4>
+                <p className="text-xs text-[var(--color-text-secondary)]">
+                  Observational data from manually supplied exports, not a verified provider API.
+                  Every calendar day is counted once. If two exports disagree, the disputed number stays hidden.
+                  No attribution to career outcomes, and no prediction.
+                </p>
+                {linkedinReconciliation.period ? (
+                  <>
+                    <p className="text-sm">
+                      Period: <strong>{linkedinReconciliation.period.start} to {linkedinReconciliation.period.end}</strong>
+                      {" · "}{linkedinReconciliation.imports} saved export(s)
+                    </p>
+                    <dl className="grid grid-cols-2 gap-3 text-sm md:grid-cols-4">
+                      <div><dt>Days observed</dt><dd className="font-semibold">{linkedinReconciliation.coverage.observedDays} of {linkedinReconciliation.coverage.calendarDays}</dd></div>
+                      <div><dt>Missing days</dt><dd className="font-semibold">{linkedinReconciliation.coverage.missingDays}</dd></div>
+                      <div><dt>Conflicted days</dt><dd className="font-semibold">{linkedinReconciliation.coverage.conflictedDays}</dd></div>
+                      <div><dt>Daily impressions total</dt><dd className="font-semibold">{linkedinReconciliation.totals.impressions === null ? "Withheld (incomplete or disputed)" : linkedinReconciliation.totals.impressions.toLocaleString()}</dd></div>
+                    </dl>
+                    <p className="text-xs text-[var(--color-text-secondary)]">
+                      Full-period daily engagements: {linkedinReconciliation.totals.engagements === null ? "Unavailable" : linkedinReconciliation.totals.engagements.toLocaleString()}.
+                      {" "}Daily new followers: {linkedinReconciliation.totals.newFollowers === null ? "Unavailable" : linkedinReconciliation.totals.newFollowers.toLocaleString()}.
+                      Totals require all calendar days and agreement between overlapping observations.
+                    </p>
+                    <div className="max-h-64 overflow-auto" tabIndex={0} aria-label="Recent reconciled LinkedIn dates">
+                      <table className="w-full text-left text-xs">
+                        <caption className="text-left font-semibold mb-2">Latest 14 calendar days, including missing or disputed entries</caption>
+                        <thead><tr>
+                          <th scope="col" className="pr-3">Date</th>
+                          <th scope="col" className="pr-3">Impressions</th>
+                          <th scope="col" className="pr-3">Engagements</th>
+                          <th scope="col">New followers</th>
+                        </tr></thead>
+                        <tbody>{linkedinReconciliation.daily.slice(-14).reverse().map(row => (
+                          <tr key={row.date}>
+                            <th scope="row" className="pr-3 py-1">{row.date}</th>
+                            <td className="pr-3">{displayLinkedInMetric(row.impressions)}</td>
+                            <td className="pr-3">{displayLinkedInMetric(row.engagements)}</td>
+                            <td>{displayLinkedInMetric(row.newFollowers)}</td>
+                          </tr>
+                        ))}</tbody>
+                      </table>
+                    </div>
+                    {linkedinReconciliation.warnings.length > 0 && (
+                      <details>
+                        <summary className="cursor-pointer text-sm font-semibold">Reconciliation limitations ({linkedinReconciliation.warnings.length})</summary>
+                        <ul className="list-disc pl-5 mt-2 text-xs space-y-1">
+                          {linkedinReconciliation.warnings.map(warning => <li key={warning}>{warning}</li>)}
+                        </ul>
+                      </details>
+                    )}
+                  </>
+                ) : <p className="text-sm">No saved LinkedIn exports yet. Export and review a workbook above to begin.</p>}
+              </section>
               <div className="rounded-lg border border-[var(--color-border)] p-3 space-y-3" data-testid="linkedin-import-ledger">
                 <h4 className="font-semibold">Saved LinkedIn exports ({linkedinSaved.length})</h4>
                 <p className="text-xs text-[var(--color-text-secondary)]">Overlapping exports are separate observations, never summed together. Original .xlsx files are not stored; preserve your originals. Deleting an import does not modify career evidence or manually recorded post snapshots.</p>
