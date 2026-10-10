@@ -21,12 +21,12 @@
 
 ## Grounded current repository boundary
 
-- `src/shared/source-discovery.ts` defines one `public-job-feeds` discovery ID, bounded request/result and per-candidate provider metadata. Keep its wire schema backward-compatible.
-- `electron/src/source-discovery-provider.cts` provides `SourceDiscoveryProvider` and delegates public-feed discovery into `electron/src/source-discovery.cts`.
-- `electron/src/source-discovery.cts` currently fetches Remote OK and Arbeitnow with `Promise.allSettled`, role filters, computes monitorable structured ATS sources and returns `partial` or `unavailable`.
-- `electron/src/source-discovery-fetch.cts` centralizes redirect checks, URL syntax checks, timeouts and JSON requests. Reuse rather than bypassing the acquisition network boundary.
-- `src/pages/Companies.tsx` already credits each result with `Found via {providerName}` and offers an explicit `Open opportunity`; `Approve & monitor source` is an independent deliberate action.
-- `tests/source-discovery-provider.test.cjs` exercises provider normalization, monitoring approval and failure isolation. `tests/e2e/source-discovery.spec.ts` exercises the UI. New tests must assert actual returned results and failure consequences.
+- `src/shared/source-discovery.ts:3` defines one `public-job-feeds` discovery ID, bounded request/result and per-candidate provider metadata. Keep its wire schema backward-compatible.
+- `electron/src/source-discovery-provider.cts:9` provides `SourceDiscoveryProvider` and delegates public-feed discovery into `electron/src/source-discovery.cts`.
+- `electron/src/source-discovery.cts:318-332` currently fetches Remote OK and Arbeitnow with `Promise.allSettled`, role filters, computes monitorable structured ATS sources and returns `partial` or `unavailable`.
+- `electron/src/source-discovery-fetch.cts:6` centralizes redirect checks, URL syntax checks, timeouts and JSON requests. Reuse rather than bypassing the acquisition network boundary.
+- `src/pages/Companies.tsx:323-381` already credits each result with `Found via {providerName}` and offers an explicit `Open opportunity`; `Approve & monitor source` is an independent deliberate action.
+- `tests/source-discovery-provider.test.cjs:74` exercises provider normalization, monitoring approval and failure isolation. `tests/e2e/source-discovery.spec.ts:111` exercises the UI. New tests must assert actual returned results and failure consequences.
 
 ## Goal
 
@@ -39,12 +39,13 @@ Improve deliberate, diverse discovery for user-authored Target Tracks through fi
 **Red tests (before source edits):**
 - Add deterministic `tests/himalayas-discovery.test.cjs` for one matching role, a non-matching job, location-limited and timezone-limited jobs, missing `applicationLink`, invalid URLs, missing/duplicate GUIDs, duplicate results, unsafe apply URL and malformed payloads.
 - Use a fake `fetchImpl` and exact asserted `SourceDiscoveryCandidate` fields for attribution, IDs, opportunity URL, source selection and `canMonitor`. Require no network in tests.
-- Include per-source failure tests (HTTP 429, CORS-style TypeError, malformed `jobs` response); verify Remote OK/Arbeitnow results remain available and failures are explicit.
+- Include per-source failure tests (HTTP 429, browser CORS skip, malformed `jobs` response); verify Remote OK/Arbeitnow results remain available and failures are explicit.
+- Saturate the original Remote OK feed with matching jobs and set a short result cap; assert that at least one unique, relevant Himalayas listing still appears. An overall result limit must not systematically starve later providers.
 - Run the new tests twice successfully after implementation; capture expected red output before implementing.
 
 **Implementation:**
-- Implement small isolated Himalayas normalization and role matching, reusing existing matching/snippet/dedup/security helpers where safe. The displayed location must disclose geographic eligibility restrictions; no unqualified `Remote worldwide` claims when fields are missing.
-- The desktop provider makes at most 3 bounded, role-specific first-page searches, with URL-encoded query values and explicit 429/failure isolation; a `nextCursor` from the browse API is **not** applicable to search endpoint pagination.
+- Implement small isolated Himalayas normalization and role matching, reusing existing matching/snippet/dedup/security helpers where safe. Wire the actual runtime kind through `electron/src/core-ipc.cts:84` via existing `getRuntimeInfo()` (`electron/src/core-ipc.cts:37`) and the provider context, so unsupported browser requests are skipped rather than silently attempted. The displayed location must disclose geographic eligibility restrictions; no unqualified `Remote worldwide` claims when fields are missing.
+- The desktop provider makes at most 3 bounded, role-specific first-page searches, with URL-encoded query values and explicit 429/failure isolation; interleave each source's matching listings deterministically before the result cap to preserve useful diversity; a `nextCursor` from the browse API is **not** applicable to search endpoint pagination.
 - Keep `SourceDiscoveryProviderId` and the existing source authority model unchanged. Structured employer monitoring only from separately vetted ATS URLs, via existing detection and user-approval flow; provider links are opportunity-first.
 - Include provider name **Himalayas**, link candidates to their credited Himalayas listing, and never publish to third-party job aggregation services.
 - No new credentials, sync, cloud proxy or dependency.
