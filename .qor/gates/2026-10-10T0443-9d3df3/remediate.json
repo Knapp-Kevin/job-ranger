@@ -1,7 +1,7 @@
 {
   "pattern": "gate-loop",
   "proposal_kind": "gate",
-  "proposal_text": "AMENDMENT 1 (after independent VETO #102, findings R1-R4) of the Phase 17 gate-loop remediation. Pattern: gate-loop on qor-plan, recurring across Phases 15, 16 and 17 (Phase 16 overrides 1f15661a/f0b67f91; Phase 17 VETOs #96, #98, #100 in session 2026-10-10T0443-9d3df3, which itself has no process-shadow events; the session-total detector is blocked by Qor-logic-plus #173 and nothing was manufactured). Root cause: plans asserted empirical facts that were never executed against named commits; N3, N4 and F3 were design gaps the auditor still owns. Process change (gate): every docs/plan-qor-phase17+ plan carries a closed v2 qor-plan-claims manifest; scripts/plan_claims_check.py reads only immutable git objects (fixed git cat-file/ls-tree), requires full commit SHAs declared and recorded in prose, requires every known empirical assertion form in canonical sections to reference a claim or an auditor-challenged judgment exception, rejects missing/orphan/duplicate ids, and never executes plan-supplied commands. Red-first/regression-lock classifications fail closed until a separately controlled trusted harness exists. Mechanical detection is lexical and does not make arbitrary prose machine-verifiable; /qor-audit Step 3 keeps responsibility for undeclared assertions. Binding status: repository CI job 'Plan claims gate' runs fail-closed but blocks merges only after D1. Skill binding requires D2. Event closure (the addressed flip) is NOT legal until an independent reviews-remediate PASS AND D1 AND D2 are satisfied; until then this remediation is HOLD.",
+  "proposal_text": "AMENDMENT 2 (after independent VETO #104, findings V1-V4; Amendment 1 followed VETO #102, R1-R4) of the Phase 17 gate-loop remediation. Pattern: gate-loop on qor-plan, recurring across Phases 15, 16 and 17 (Phase 16 overrides 1f15661a/f0b67f91; Phase 17 VETOs #96, #98, #100 in session 2026-10-10T0443-9d3df3, which itself has no process-shadow events; the session-total detector is blocked by Qor-logic-plus #173 and nothing was manufactured). Root cause: plans asserted empirical facts that were never executed against named commits; N3, N4 and F3 were design gaps the auditor still owns. Process change (gate): every docs/plan-qor-phase17+ plan carries a closed v2 qor-plan-claims manifest; scripts/plan_claims_check.py reads only immutable git objects (fixed git cat-file/ls-tree), requires full commit SHAs declared and recorded in prose, requires every known empirical assertion form in canonical sections to reference a claim or an auditor-challenged judgment exception, rejects missing/orphan/duplicate ids, and never executes plan-supplied commands. Red-first/regression-lock classifications fail closed until a separately controlled trusted harness exists. Mechanical detection is lexical and does not make arbitrary prose machine-verifiable; /qor-audit Step 3 keeps responsibility for undeclared assertions. Binding status: repository CI job 'Plan claims gate' runs fail-closed but blocks merges only after D1. Skill binding requires D2. Event closure (the addressed flip) is NOT legal until an independent reviews-remediate PASS AND D1 AND D2 are satisfied; until then this remediation is HOLD.",
   "addressed_event_ids": [
     "1f15661a2633a8d7de36cc22edc5ac48f218bb4abf446a4ee49af7df71da98e7",
     "f0b67f9178bff4e90b45f0fca7922f4ed79e18975b0d364a816df483ee9c01ce"
@@ -53,26 +53,53 @@
       "target": "Phase 17 next authorized plan iteration (inputs only)",
       "change": "Express F1-F5 as manifest claims or judgment exceptions; red-first classification only with D3 evidence.",
       "rationale": "Iteration-4 findings."
+    },
+    {
+      "target": "scripts/plan_claims_prose.py, scripts/plan_claims_schema.py",
+      "change": "V1: typed subject/revision/property binding, one reference per id, scoped judgments with distinct rationales, non-empty manifest, fenced and unclosed-fence scanning, manifest outside canonical sections.",
+      "rationale": "Closes the four reported bypasses."
+    },
+    {
+      "target": "scripts/plan_claims_tokens.py, scripts/plan_claims_source.py",
+      "change": "V2: fail-closed JS/TS tokenizer for function spans and import edges.",
+      "rationale": "The /}/ counterexample measures 104 lines."
+    },
+    {
+      "target": ".github/workflows/plan-claims-gate.yml, scripts/plan_claims_gate.py, .github/CODEOWNERS",
+      "change": "V3: always-reporting base-revision pull_request_target gate; PR head read as data only; CODEOWNERS; D1 payload prepared.",
+      "rationale": "Required-check architecture and tamper resistance."
+    },
+    {
+      "target": "tests/plan_claims_fixture.py, tests/test_plan_claims_*.py",
+      "change": "V4: split suites within razor limits plus an automated razor test; 66 regressions.",
+      "rationale": "Razor compliance without losing coverage."
     }
   ],
-  "ts": "2026-10-10T06:36:14Z",
+  "ts": "2026-10-10T07:13:51Z",
   "amendment": {
-    "number": 1,
-    "after_veto_entry": 102,
-    "supersedes_content_hash": "44c2f13501d8b7ffe909e8f17c14f6cea4feb503cdb902483a67b87a58526d8f",
-    "red_commit": "a68d68ee94032f1a6dcc72b52271d01b47f4f46b",
-    "green_commit": "f82368f77e9a08e2169881300e6b42cb572fbf0a"
+    "number": 2,
+    "after_veto_entry": 104,
+    "supersedes_content_hash": "55782866e1c43f79aeb1d4903f4d1cbaeab12d60630dadf4d213a0e855076a01",
+    "red_commit": "1ce8b29b0931188fc08c3ac6a369258fe0385e3a",
+    "green_commit": "8a933332c82aab9d367832918fccaa5331197228",
+    "previous": {
+      "number": 1,
+      "after_veto_entry": 102,
+      "supersedes_content_hash": "44c2f13501d8b7ffe909e8f17c14f6cea4feb503cdb902483a67b87a58526d8f",
+      "red_commit": "a68d68ee94032f1a6dcc72b52271d01b47f4f46b",
+      "green_commit": "f82368f77e9a08e2169881300e6b42cb572fbf0a"
+    }
   },
   "closure_conditions": [
     "independent /qor-audit reviews-remediate PASS on this exact artifact",
-    "D1 satisfied",
-    "D2 satisfied"
+    "D1 satisfied: plan-claims-gate observed on main completing success on an unrelated PR and failure on an invalid governed PR, then required in ruleset Default Main with require_code_owner_review",
+    "D2 satisfied: separately governed Qor-logic-plus phase wiring /qor-plan submission and /qor-audit Step 0.3"
   ],
   "binding_dependencies": [
     {
       "id": "D1",
       "owner": "operator (repository settings)",
-      "requirement": "Add the 'Plan claims gate / plan-claims' check as a required status check in the main ruleset (ruleset 'Default Main' currently has no required checks).",
+      "requirement": "Prepared, not applied (payload in GOVERNANCE.md 'Plan claims gate'): add required status check 'plan-claims-gate' (integration 15368) and require_code_owner_review in ruleset Default Main, only after the base-revision workflow is on main and observed end to end. Residual risk: code-owner review is meaningful only if the automation author is not the sole code owner.",
       "blocks": "event closure; merge-binding enforcement"
     },
     {
@@ -88,5 +115,5 @@
       "blocks": "test-classification claims only"
     }
   ],
-  "status": "HOLD pending D1 and D2"
+  "status": "HOLD pending independent PASS, D1 and D2"
 }
