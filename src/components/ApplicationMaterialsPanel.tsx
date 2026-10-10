@@ -1,6 +1,7 @@
 import { useState } from "react";
-import { AlertTriangle, ChevronDown, FileText, Plus, Trash2 } from "lucide-react";
+import { AlertTriangle, ChevronDown, ClipboardCopy, FileText, Plus, Trash2 } from "lucide-react";
 import type { ApplicationMaterialProjection } from "../shared/application-materials";
+import { evaluateApplicationHandoff, type ApplicationHandoffBlockReason } from "../shared/application-handoff";
 import { getDesktopApi } from "../services/api";
 import { ConfirmDialog } from "./ConfirmDialog";
 
@@ -12,6 +13,14 @@ function materialText(material: ApplicationMaterialProjection): string {
   return material.sections.map((section) => section.text).join("\n\n");
 }
 
+const handoffMessages: Record<ApplicationHandoffBlockReason, string> = {
+  "missing-material": "This cover letter no longer exists. Refresh application materials.",
+  "unsupported-kind": "This material is not a supported cover letter.",
+  "stale-evidence": "Supporting Career Evidence changed. Rebuild this draft before copying.",
+  "empty-material": "This cover letter has no usable text.",
+  "missing-evidence-links": "The factual evidence links for this draft are incomplete. Rebuild it before copying.",
+};
+
 export function ApplicationMaterialsPanel({ applicationId }: ApplicationMaterialsPanelProps) {
   const [open, setOpen] = useState(false);
   const [materials, setMaterials] = useState<ApplicationMaterialProjection[]>([]);
@@ -19,6 +28,11 @@ export function ApplicationMaterialsPanel({ applicationId }: ApplicationMaterial
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [deleteMaterialId, setDeleteMaterialId] = useState<string | null>(null);
+  const [copyOutcome, setCopyOutcome] = useState<{
+    materialId: string;
+    kind: "success" | "error";
+    message: string;
+  } | null>(null);
   const selectedMaterial = materials.find((material) => material.id === deleteMaterialId) ?? null;
 
   const load = async () => {
@@ -53,6 +67,47 @@ export function ApplicationMaterialsPanel({ applicationId }: ApplicationMaterial
       setError(
         createError instanceof Error ? createError.message : "Unable to create cover letter",
       );
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const copyCoverLetter = async (projectionId: string, version: number) => {
+    setLoading(true);
+    setError(null);
+    setCopyOutcome(null);
+    try {
+      // Canonical re-read is required: the UI's cached draft may predate an evidence edit.
+      const current = await getDesktopApi().applicationMaterials.list(applicationId);
+      setMaterials(current);
+      const selected = current.find(
+        (item) => item.id === projectionId && item.applicationId === applicationId,
+      ) ?? null;
+      const readiness = evaluateApplicationHandoff(selected);
+      if (!readiness.ready) {
+        setCopyOutcome({
+          materialId: projectionId,
+          kind: "error",
+          message: handoffMessages[readiness.reason],
+        });
+        return;
+      }
+      if (typeof navigator.clipboard?.writeText !== "function") {
+        throw new Error("Clipboard access is unavailable in this browser.");
+      }
+      await navigator.clipboard.writeText(readiness.text);
+      setCopyOutcome({
+        materialId: projectionId,
+        kind: "success",
+        message: `Copied cover letter v${version}. Paste it into the employer's application when ready.`,
+      });
+    } catch (copyError) {
+      const reason = copyError instanceof Error ? copyError.message : "Clipboard access failed";
+      setCopyOutcome({
+        materialId: projectionId,
+        kind: "error",
+        message: `Copy failed: ${reason}`,
+      });
     } finally {
       setLoading(false);
     }
@@ -154,6 +209,31 @@ export function ApplicationMaterialsPanel({ applicationId }: ApplicationMaterial
                       <Trash2 className="h-4 w-4" />
                     </button>
                   </div>
+
+                  <div className="mt-3 flex flex-wrap items-center gap-3">
+                    <button
+                      type="button"
+                      className="secondary-button"
+                      aria-label={`Copy cover letter v${material.version}`}
+                      disabled={loading || material.staleEvidenceIds.length > 0}
+                      onClick={() => void copyCoverLetter(material.id, material.version)}
+                    >
+                      <ClipboardCopy className="h-4 w-4" />
+                      Copy cover letter
+                    </button>
+                    <span className="text-xs text-[var(--color-text-muted)]">
+                      Explicit copy only. Job Ranger does not submit an application.
+                    </span>
+                  </div>
+                  {copyOutcome?.materialId === material.id && (
+                    <p
+                      className={`mt-2 text-sm ${copyOutcome.kind === "error" ? "text-[var(--color-danger)]" : "text-[var(--color-text-secondary)]"}`}
+                      role={copyOutcome.kind === "error" ? "alert" : "status"}
+                      aria-label={copyOutcome.kind === "error" ? "Cover letter copy error" : "Cover letter copy status"}
+                    >
+                      {copyOutcome.kind === "success" ? "Copied. " : ""}{copyOutcome.message}
+                    </p>
+                  )}
 
                   {material.staleEvidenceIds.length > 0 && (
                     <div className="mt-3 flex items-start gap-2 rounded-xl border border-[var(--color-warning)] px-3 py-3 text-sm">
