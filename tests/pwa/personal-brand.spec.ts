@@ -389,3 +389,61 @@ test("LinkedIn XLSX requires review before saving and deduplicates repeat import
   await expect(newArea.getByTestId("linkedin-reconciliation").getByText(/No saved LinkedIn exports yet/)).toBeVisible();
   await expect(newArea.getByTestId("linkedin-post-content-enrichment").getByText(/Save a LinkedIn analytics export/)).toBeVisible();
 });
+
+
+test("historical LinkedIn posts remain user-attested and match only consistent XLSX source URLs", async ({ page, context }) => {
+  const requests: string[] = [];
+  context.on("request", req => {
+    if (new URL(req.url()).origin !== new URL(server.url).origin) requests.push(req.url());
+  });
+  await page.goto(server.url);
+  await waitForRuntime(page);
+  await page.goto(`${server.url}#/personal-brand`);
+  const historical = page.getByTestId("linkedin-historical-archive");
+  const link = "https://www.linkedin.com/posts/example-user-historical-career-443";
+  const body = "A historical post pasted by its author, never pre-approved in Job Ranger.";
+  await expect(historical.getByText(/No historical posts archived yet/)).toBeVisible();
+  await historical.getByLabel("Historical LinkedIn post permalink").fill(link + "?trk=feed");
+  await historical.getByLabel(/Original publication date/).fill("2026-09-20");
+  await historical.getByLabel("Historical post text").fill(body);
+  await expect(historical.getByRole("button", { name: "Save historical LinkedIn post" })).toBeDisabled();
+  await historical.getByRole("checkbox", { name: /I confirm that this is my historical post/ }).check();
+  await historical.getByRole("button", { name: "Save historical LinkedIn post" }).click();
+  await expect(historical.getByText("Historical archive (1 posts)")).toBeVisible();
+  const saved = await page.evaluate(() => window.electronAPI.personalBrand.listHistoricalLinkedInPosts());
+  expect(saved).toHaveLength(1);
+  expect(saved[0].source).toBe("user_attested_historical");
+  expect(saved[0].url).toBe(link);
+  expect(saved[0].body).toBe(body);
+  const source = {
+    format: "linkedin-aggregate-analytics-v1",
+    period: { start: "2026-09-19", end: "2026-09-20" },
+    discovery: { impressions: 3, membersReached: 2 },
+    followers: { asOf: "2026-09-20", total: 17 },
+    daily: [
+      { date: "2026-09-19", impressions: 1, engagements: 0, newFollowers: 0 },
+      { date: "2026-09-20", impressions: 2, engagements: 1, newFollowers: 0 },
+    ],
+    topPosts: [{
+      url: link, publishedOn: "2026-09-20", impressions: 222, engagements: null,
+    }],
+    audienceDemographics: [], contentDemographics: [], warnings: [],
+    provenance: "manual-linkedIn-export",
+  };
+  await page.evaluate(data => window.electronAPI.personalBrand.saveLinkedInImport(data, true), source);
+  await page.reload();
+  await waitForRuntime(page);
+  const archive = page.getByTestId("linkedin-historical-archive");
+  await expect(archive.getByText("Historical archive (1 posts)")).toBeVisible();
+  await expect(archive.getByText(/Latest XLSX ranking:/)).toBeVisible();
+  await expect(archive.getByText(/222; engagements: Unknown/)).toBeVisible();
+  await archive.getByText("View manually recorded post text").click();
+  await expect(archive.getByText(body)).toBeVisible();
+  await archive.getByLabel("Select a historical post to delete").selectOption({index:1});
+  await expect(archive.getByRole("button", {name:"Delete historical post"})).toBeDisabled();
+  await archive.getByRole("checkbox", {name:/I confirm deletion of this user-attested/}).check();
+  await archive.getByRole("button", {name:"Delete historical post"}).click();
+  await expect(archive.getByText("Historical archive (0 posts)")).toBeVisible();
+  expect(await page.evaluate(() => window.electronAPI.personalBrand.listLinkedInImports())).toHaveLength(1);
+  expect(requests).toEqual([]);
+});
