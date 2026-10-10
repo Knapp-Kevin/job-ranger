@@ -855,3 +855,12 @@ This is a distinct, user-attested record type for LinkedIn posts published *befo
 - The isolated archive is LinkedIn-only. Optional manually reviewed comments, user-controlled qualitative labels, revision/supersession history, fuller dashboards and age-normalized comparisons remain governed follow-ons in issue #236.
 
 Qualification requires repository health, adversarial validation, SQLite restart/backup and deletion isolation, Linux/Windows PWA, Electron E2E, Windows Store package, release upgrades, and CodeQL. All passing gates must refer to the exact merge candidate SHA.
+
+
+## Observed LinkedIn performance dashboard (2026-10-10 candidate)
+
+This read-only summary uses the already-reconciled manual XLSX daily observations. The latest available seven *calendar days* are compared against the immediately preceding seven days for impressions, engagements and new followers **separately**. A metric must have seven uncontested, explicitly observed dates in **each** window before any sum or difference may appear. Unknowns, conflicts, missing days, partial periods, malformed data or unsafe integer totals withhold that metric without hiding independently valid metrics.
+
+Only a complete comparison with a nonzero prior total receives a percent change; a zero baseline cannot produce a percentage. Every displayed trend is a calendar-aligned observation, **not** post-normalized engagement rate, recruiter activity, a career-outcome measurement, causal effectiveness claim, or inference recommendation. Sources remain the user-imported workbooks, not provider-authenticated API observations. Their partial, top-50 post rankings are not silently combined with daily account totals or sorted into a fictitious all-time leaderboard. The feature needs no migrations, new outbound access or new permissions.
+
+The Personal Brand UI presents all three metric comparisons with explicit completeness, calendar windows and unavailable reasons; adversarial unit tests cover overlapping disputes, missing dates, empty history, zero prior values, repeated input identity and stable full-window behavior. A PWA browser journey tests intact and conflicting re-imports through the real IPC/SQLite boundary. Future optional topic/hook/format performance should require user-reviewed labels, comparable post-age capture intervals and transparent uncertainty, rather than extracting unsupported text from analytics exports.
