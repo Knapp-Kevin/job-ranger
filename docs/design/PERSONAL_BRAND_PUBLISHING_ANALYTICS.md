@@ -815,3 +815,18 @@ A future common protocol library may remove duplicated HTTP/schema mechanics. It
 - `CAREER_EVIDENCE_PERSISTENCE_CONTRACT.md`;
 - `SEARCH_LEARNING.md`;
 - `../DISTRIBUTION_TRUST.md`.
+
+
+## Native LinkedIn XLSX analytics and reconciliation (2026-10-10)
+
+**Delivered foundations:** PR #224 embeds LinkedIn-only instructions plus the official LinkedIn help link in Personal Brand. PR #225 supplies a strictly bounded client-local XLSX decoder and six-sheet preview. PR #227 adds versioned feature migration 1007, manual confirmation before save, normalized immutable SQLite import records, content digest-based idempotence, an import ledger and explicitly confirmed deletion. Import records participate in the existing Job Ranger backup and downgrade safeguards. The original XLSX bytes are never stored or sent to LinkedIn; users should retain their original exports.
+
+**Reconciliation scope (this PR):** `src/shared/linkedin-reconciliation.ts` projects saved import snapshots without mutating canonical records. Overlapping exports are aligned to calendar date, and *identical* metric values across exports count once. When two exports disagree for the same calendar date and metric, that metric becomes `conflict` with null display value and retained source IDs; later import time is **not** treated as a truth authority. No values are silently overwritten. An empty or absent observation remains missing, not zero. Complete-period totals are withheld for that metric when any day is missing or disputed. No extrapolation is performed. Users can inspect the latest 14 calendar days, gaps, conflicts and reasons directly on the Personal Brand page.
+
+**Top posts:** LinkedIn's two separate top-post rankings are partial samples. They are never combined into an overall cumulative ranking across different exports, nor are their counts added to daily account totals. The read projection exposes ranked posts only from the most recently *saved* workbook, with explicit provenance. It does not claim that the latest imported file is the most recently measured by LinkedIn. Demographic observations likewise remain tied to each import rather than being averaged across exports.
+
+**Strict authority:** Aggregate impressions, daily engagement, follower growth and ranked-post metrics are *observations from user-imported files*, not authenticated LinkedIn API statements, causal content experiments or verified career outcomes. Reconciliation is deterministic, inference-free, API-free and local-first. No implicit attribution from aggregate analytics to the existing per-post manual publication receipts or Career Outcome Journal is authorized.
+
+**Validation:** Synthetic/adversarial tests exercise overlapping agreement, per-metric disagreement, missing fields/dates, deterministic ordering, exact source attribution, top-post boundary, idempotence, pure input preservation and hostile inputs. The existing real-PWA browser journey now checks the reconciliation view after explicit save, reload and deletion. Linux/Windows PWA, Electron, upgrades and Store packaging remain mandatory exact-head checks.
+
+**Not yet delivered:** deeper analytics dashboards, source-backed historical post text ingestion, matching rankings to separately recorded publication receipts, trend segmentation, user-resolved corrected-statistic conflicts, cross-file citation/authorization UI, and externally verified LinkedIn source metrics. These require separately governed slices, including tests ensuring no accidental employment-outcome claims.
