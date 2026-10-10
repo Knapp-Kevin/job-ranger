@@ -6,6 +6,15 @@ All notable user-facing, architecture, governance, and maintenance changes shoul
 
 Release-candidate preparation for v1.3.0 is active. Changes after the candidate freeze belong here until they are deliberately admitted to the release.
 
+### Added on main (release admission pending)
+
+These capabilities exist on the current development line. They were **not** part of the published v1.2.0 release, and their presence on `main` does not automatically include them in the dated v1.3.0 release-candidate scope.
+
+- **Manual-first Personal Brand:** user-authored post drafts, deterministic readiness findings, exact-copy review packages, human-confirmed publishing receipts, saved observation snapshots, conservative learning, and a dedicated page. No connected publishing or LinkedIn account access.
+- **LinkedIn analytics evidence:** local XLSX preview, explicitly confirmed import/persistence and deduplication, reconciliation of observed snapshots, manually attested historical post text and topic labels, observed performance dashboards, and cautious approved-content cohort comparisons. Missing data remains missing; correlations are not employment outcomes.
+- **Economic pathway exploration:** Target Tracks includes user-authored hypothetical employment, fractional/contract, retraining and self-employment scenario arithmetic, without treating projections as verified market data.
+- **Local read-only MCP prototype:** development-only permission-filtered stdio adapter and separately documented outbound Secure MCP Tunnel experiment, without asserting a live ChatGPT plugin integration.
+
 ### Fixed
 
 - **Recipient roles counted as direct support** (#168): Find Jobs could show a requirement as directly supported when the evidence described receiving or attending rather than doing the work. For example, "Was paid through payroll" counted as direct support for "Managed payroll", and "Was trained on safety procedures" for "Train new hires on safety procedures". The deterministic mapper now caps such results at transferable, and prefers another record that shows the action. A cap needs a recipient marker in a clause about the requirement (a passive, a recipient or attendee verb, or a completed course) and no active verb from the requirement's action family. Synonyms such as "Led" for "Managed", agent nouns and job titles, and evidence with no recipient marker keep direct support. The explanation says why support was capped. Behavior is pinned by a versioned phrasing corpus (`tests/fixtures/action-corpus.v1.json`) that includes its documented limitations. No model is involved.

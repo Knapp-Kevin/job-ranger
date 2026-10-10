@@ -1,6 +1,6 @@
 # System State
 
-**Snapshot date:** 2026-10-06
+**Snapshot date:** 2026-10-10 (reconciled against `main` at `4721e7fa782099c69019494d6f823c2cc372b98d`)
 **Published release:** v1.2.0
 **Current development line:** post-v1.2.0; v1.3.0 release candidate in preparation ([`validation/RELEASE_CANDIDATE_V1.3.0.md`](./validation/RELEASE_CANDIDATE_V1.3.0.md))
 **Shipped release lineage:** v1.2.0 promoted from v1.2.0-rc.5
@@ -55,8 +55,8 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
 ### Validation on this line
 
 - `npm test` adds the archive smoke, Store config test, runtime-adapter contract, PWA adapter tests, and the 18 shared-core suites re-run on the SQLite WASM engine.
-- Electron E2E: 31 tests.
-- PWA browser suite: 12 tests (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, quota failure, and non-Latin resume PDFs with on-demand fonts.
+- Electron E2E: 31 tests in the 2026-10-06 distribution baseline; this is not a current whole-suite count.
+- PWA browser suite: 12 tests in that distribution baseline (Chromium) covering the healthcare Career Ops workflow, Electron↔PWA portability, rejected backups, offline shell, browser restart, tab lock, verified/rejected updates, quota failure, and non-Latin resume PDFs with on-demand fonts.
 - Web parser: 9/9 on the shared resume-parser benchmark corpus.
 - `windows-store-package` workflow: AppX build, manifest verification, install, and in-package smoke on Windows (including native DOCX import).
 - Evidence record: [`validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md`](./validation/DISTRIBUTION_IMPLEMENTATION_2026-10-05.md).
@@ -68,6 +68,34 @@ The accepted distribution architecture ([`design/DISTRIBUTION_ARCHITECTURE.md`](
 - The web runtime cannot monitor career sites that need a full browser (Workday, iCIMS, etc.) or run scheduled checks while closed. These are documented platform limitations; the Windows app covers them.
 - The web PDF writer embeds Noto fonts for Latin extended, Vietnamese, Greek, Cyrillic, Thai, Chinese, Japanese, and Korean (downloaded on first use, then cached). It fails explicitly for right-to-left and Indic scripts, which still need the Windows app.
 - Pre-existing (both runtimes): notification settings exist, but job notifications are not wired to scrape completion.
+
+## Additional development capabilities confirmed on main (not shipped)
+
+This section reconciles source files and checked-in tests on `main` at the snapshot commit above. **Implementation on main is not proof of release admission, live third-party access, or passing every end-to-end test.** The v1.3.0 candidate evidence remains a separate, date-scoped release qualification record.
+
+### Personal Brand and manual LinkedIn evidence
+
+- `src/pages/PersonalBrand.tsx`, `electron/src/personal-brand-backend.cts`, and `src/shared/personal-brand.ts` implement user-authored post drafts, deterministic readiness feedback, explicitly human-reviewed exact-copy packages, user-confirmed publication receipts, and manually observed metrics.
+- `src/browser/linkedin-xlsx.ts` and the Personal Brand page support a **local preview** of LinkedIn XLSX analytics exports. A separate user-confirmed action saves normalized export evidence; `src/shared/linkedin-import-ledger.ts` deduplicates it, and `src/shared/linkedin-reconciliation.ts` reconciles observed values rather than inventing missing metrics.
+- `src/components/HistoricalLinkedInArchive.tsx` supports user-attested historical post content, explicitly distinct from verified or preapproved published copy. `LinkedInTopicAttestations.tsx` records human topic classifications; `LinkedInObservedDashboard.tsx` and `LinkedInApprovedContentCohorts.tsx` render observational analytics and conservative comparisons.
+- Contract and test entry points include `docs/design/PERSONAL_BRAND_PUBLISHING_ANALYTICS.md`, `tests/personal-brand.test.mjs`, `tests/personal-brand-persistence.test.cjs`, `tests/linkedin-analytics.test.mjs`, `tests/linkedin-reconciliation.test.mjs`, `tests/linkedin-topics.test.mjs`, and `tests/pwa/personal-brand.spec.ts`.
+- **Not claimed:** connected LinkedIn authentication, automatic retrieval of LinkedIn post text or comments, automatic publishing, causal conclusions about hiring, or release in v1.2.0. Product-state documentation should not imply that the entire ADR's future connected-provider scope is implemented.
+
+### User-authored economic pathways
+
+- `src/components/EconomicPathwayExplorer.tsx` is mounted from `src/pages/TargetTracks.tsx` and compares explicitly supplied employment, contract, self-employment, retraining, and blended-income scenarios using `src/shared/economic-pathways.ts`.
+- This is **hypothetical scenario arithmetic**, not a verified forecast, salary database, or AI recommendation. See `docs/rfc/RFC_ECONOMIC_PATHWAYS_2026-10-09.md`, `tests/economic-pathways.test.mjs`, and `tests/pwa/economic-pathways-exploration.spec.ts`.
+
+### Opt-in read-only MCP development adapter
+
+- `mcp/local-readonly-server.mjs`, `mcp/read-only-adapter.mjs`, and `mcp/tunnel-operator.mjs` provide a permission-filtered, **development-only**, opt-in read-only local-agent surface. See `docs/integrations/JOB_RANGER_MCP_READONLY.md` and `docs/adr/0002-local-readonly-mcp-boundary.md`.
+- A documented outbound-only Secure MCP Tunnel pathway is **not evidence of a live verified ChatGPT plugin connection**. This is not a feature of the published v1.2.0 installer, and no remote-write authority is implied.
+
+### Active drafts explicitly excluded from main
+
+- Issue [#136](https://github.com/MythologIQ-Labs-LLC/job-ranger/issues/136): Himalayas remains a gated draft candidate under PRs #232/#233. We Work Remotely RSS remains on **HOLD** pending publisher-terms clearance (PR #238). No draft feed should appear as a shipped or main provider.
+- Issue [#228](https://github.com/MythologIQ-Labs-LLC/job-ranger/issues/228): candidate-controlled application handoff remains draft-only on PRs #229/#230. Do not infer approval to submit applications or an implemented main-line feature from those PRs.
+- The Phase 17 governance ledger entries after #94 are on the separate draft plan branch, not the authoritative main ledger. Its independent review has returned VETO; no gate PASS, implementation or SEAL may be implied.
 
 ## v1.2.0 shipped capabilities
 
