@@ -1,4 +1,5 @@
-import { randomUUID } from "node:crypto";
+import { randomUUID, createHash } from "node:crypto";
+import { validateLinkedInImport, type SavedLinkedInExport, type LinkedInImportResult } from "../../src/shared/linkedin-import-ledger.js";
 import type {
   AnalyticsSnapshot, ManualPostPackage, ManualPublicationReceipt, PersonalBrandDraft, MetricObservation,
 } from "../../src/shared/personal-brand.js";
@@ -54,6 +55,19 @@ CREATE TABLE IF NOT EXISTS personal_brand_career_outcomes (
 );
 CREATE INDEX IF NOT EXISTS idx_personal_brand_career_outcomes_at
   ON personal_brand_career_outcomes(occurred_at, id);
+`;
+
+const linkedinExportSchema = `
+CREATE TABLE IF NOT EXISTS personal_brand_linkedin_exports (
+  id TEXT PRIMARY KEY,
+  content_sha256 TEXT NOT NULL UNIQUE CHECK(length(content_sha256) = 64),
+  imported_at TEXT NOT NULL,
+  period_start TEXT NOT NULL,
+  period_end TEXT NOT NULL,
+  payload_json TEXT NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_personal_brand_linkedin_exports_period
+  ON personal_brand_linkedin_exports(period_start, period_end, imported_at);
 `;
 
 type JsonRow = { payload_json: string };
@@ -157,6 +171,17 @@ export class PersonalBrandBackend {
         outcomeSchema,
         sql`INSERT INTO schema_migrations (version, name, applied_at)
             VALUES (${outcomeMigration.version}, ${outcomeMigration.name}, ${new Date().toISOString()});`,
+      ]);
+    }
+    const linkedinMigration = FEATURE_MIGRATIONS.personalBrandLinkedInAnalytics;
+    const linkedinExists = await this.db.queryOne<{ version: number }>(sql`
+      SELECT version FROM schema_migrations WHERE version = ${linkedinMigration.version} LIMIT 1;
+    `);
+    if (!linkedinExists) {
+      await this.db.transaction([
+        linkedinExportSchema,
+        sql`INSERT INTO schema_migrations (version, name, applied_at)
+          VALUES (${linkedinMigration.version}, ${linkedinMigration.name}, ${new Date().toISOString()});`,
       ]);
     }
   }
@@ -303,6 +328,53 @@ export class PersonalBrandBackend {
       (id, post_id, captured_at, payload_json)
       VALUES (${snapshot.id}, ${postId}, ${snapshot.capturedAt}, ${JSON.stringify(snapshot)});`);
     return snapshot;
+  }
+
+  async listLinkedInImports(): Promise<SavedLinkedInExport[]> {
+    const rows = await this.db.queryAll<JsonRow>(
+      "SELECT payload_json FROM personal_brand_linkedin_exports ORDER BY imported_at DESC, id ASC;",
+    );
+    return rows.map(row => rowJson<SavedLinkedInExport>(row));
+  }
+  async saveLinkedInImport(raw: unknown, userConfirmed: boolean): Promise<LinkedInImportResult> {
+    if (userConfirmed !== true) throw new Error("Saving LinkedIn analytics requires explicit user confirmation.");
+    const preview = validateLinkedInImport(raw);
+    const contentSha256 = createHash("sha256").update(JSON.stringify(preview)).digest("hex");
+    const existing = await this.db.queryOne<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_linkedin_exports
+      WHERE content_sha256 = ${contentSha256} LIMIT 1;
+    `);
+    if (existing) return { record: rowJson<SavedLinkedInExport>(existing), alreadyPresent: true };
+    const record: SavedLinkedInExport = {
+      id: `linkedin-import-${randomUUID()}`, contentSha256,
+      importedAt: new Date().toISOString(), source: "linkedin-native-xlsx-manual", preview,
+    };
+    // Ignore conflicts for the identical normalized content hash only.
+    // Read back the unique record after insertion to handle overlapping writers safely.
+    await this.db.exec(sql`
+      INSERT OR IGNORE INTO personal_brand_linkedin_exports
+      (id, content_sha256, imported_at, period_start, period_end, payload_json)
+      VALUES (${record.id}, ${record.contentSha256}, ${record.importedAt},
+        ${preview.period.start}, ${preview.period.end}, ${JSON.stringify(record)});
+    `);
+    const persisted = await this.db.queryOne<JsonRow>(sql`
+      SELECT payload_json FROM personal_brand_linkedin_exports
+      WHERE content_sha256 = ${contentSha256} LIMIT 1;
+    `);
+    if (!persisted) throw new Error("LinkedIn import was not committed.");
+    const actual = rowJson<SavedLinkedInExport>(persisted);
+    return { record: actual, alreadyPresent: actual.id !== record.id };
+  }
+  async deleteLinkedInImport(id: string, userConfirmed: boolean): Promise<void> {
+    if (userConfirmed !== true) throw new Error("Deleting LinkedIn analytics requires explicit confirmation.");
+    if (typeof id !== "string" || !/^linkedin-import-[a-f0-9-]{36}$/.test(id)) {
+      throw new Error("Invalid LinkedIn import ID.");
+    }
+    const existing = await this.db.queryOne<{ id: string }>(sql`
+      SELECT id FROM personal_brand_linkedin_exports WHERE id = ${id} LIMIT 1;
+    `);
+    if (!existing) throw new Error("LinkedIn import record not found.");
+    await this.db.exec(sql`DELETE FROM personal_brand_linkedin_exports WHERE id = ${id};`);
   }
 
   async listCareerOutcomes(): Promise<CareerOutcomeRecord[]> {

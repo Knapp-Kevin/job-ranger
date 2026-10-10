@@ -276,7 +276,7 @@ test("career outcomes require manual confirmation and retain only user-attested 
 });
 
 
-test("LinkedIn XLSX upload previews six-sheet analytics locally without saving", async ({ page, context }) => {
+test("LinkedIn XLSX requires review before saving and deduplicates repeat imports", async ({ page, context }) => {
   const outbound: string[] = [];
   context.on("request", request => {
     if (new URL(request.url()).origin !== new URL(server.url).origin) outbound.push(request.url());
@@ -328,12 +328,32 @@ test("LinkedIn XLSX upload previews six-sheet analytics locally without saving",
     preview: await area.getByTestId("linkedin-preview-results").count(),
     importError: (await area.getByRole("alert").allTextContents()).join(" | "),
   }), { timeout: 10_000 }).toEqual({ preview: 1, importError: "" });
-  await expect(area.getByText(/Preview only, not saved: 2026-10-08 through 2026-10-09/)).toBeVisible();
+  await expect(area.getByText(/Export review: 2026-10-08 through 2026-10-09/)).toBeVisible();
   await expect(area.getByText("12", { exact: true })).toBeVisible();
   await expect(area.getByText("101", { exact: true })).toBeVisible();
   await expect(area.getByRole("link", { name: "View post" })).toHaveAttribute("href", fakeUrl);
   expect(outbound).toEqual([]);
+  await expect(area.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(0\)/)).toBeVisible();
+  await expect(area.getByRole("button", { name: "Review and save LinkedIn export" })).toBeDisabled();
+  await area.getByRole("checkbox", { name: /I reviewed the reporting period/i }).check();
+  await area.getByRole("button", { name: "Review and save LinkedIn export" }).click();
+  await expect(area.getByText(/LinkedIn analytics saved in the local Job Ranger database/)).toBeVisible();
+  await expect(area.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
   await page.reload();
   await waitForRuntime(page);
+  const newArea = page.getByTestId("linkedin-xlsx-preview");
   await expect(page.getByTestId("linkedin-preview-results")).toHaveCount(0);
+  await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
+  await newArea.getByLabel("Choose exported LinkedIn XLSX (local preview only)").setInputFiles({
+    name: "AggregateAnalytics_synthetic.xlsx", mimeType: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet", buffer: zip,
+  });
+  await expect(newArea.getByTestId("linkedin-preview-results")).toBeVisible();
+  await newArea.getByRole("checkbox", { name: /I reviewed the reporting period/i }).check();
+  await newArea.getByRole("button", { name: "Review and save LinkedIn export" }).click();
+  await expect(newArea.getByText(/already saved. No duplicate records/)).toBeVisible();
+  await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(1\)/)).toBeVisible();
+  await newArea.getByLabel("Select an import to delete").selectOption({ index: 1 });
+  await newArea.getByRole("checkbox", { name: /I confirm deletion of the selected/i }).check();
+  await newArea.getByRole("button", { name: "Delete selected export" }).click();
+  await expect(newArea.getByTestId("linkedin-import-ledger").getByText(/Saved LinkedIn exports \(0\)/)).toBeVisible();
 });
