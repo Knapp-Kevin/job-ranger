@@ -53,8 +53,8 @@ function response(body, status = 200) {
 
 (async () => {
   const parsed = parseWwrFeed(sample());
-  assert.equal(parsed.length, 3, "only first-party, unique opportunities admitted");
-  assert.deepEqual(parsed.map(item => item.employerName), ["Headway", "Acme", "Unknown"]);
+  assert.equal(parsed.length, 4, "parser retains valid listings regardless of requested role");
+  assert.deepEqual(parsed.map(item => item.employerName), ["Headway", "Acme", "Unknown", "Developer Co"]);
   assert.equal(parsed[0].title, "Customer Success Manager: Enterprise");
   assert.equal(parsed[0].url, "https://weworkremotely.com/remote-jobs/headway-csm");
   assert.equal(parsed[0].country, "🇨🇦 Canada and 🇺🇸 United States of America");
