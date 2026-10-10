@@ -20,6 +20,12 @@ When documents disagree, use this order:
 
 A stale plan does not outrank merged code merely because it contains more checkboxes.
 
+## Latest documentation reconciliation
+
+The [October 10, 2026 source-backed reconciliation](./validation/DOCUMENTATION_RECONCILIATION_2026-10-10.md) compares the actual development-line code and tests to the current roadmap, System State, feature inventory, and governance index at a pinned `main` commit. It distinguishes **implemented on main**, **published**, **unqualified drafts**, and **legal/terms holds**. It is a dated documentation review, not a runtime verification report or an authorization to merge active plans.
+
+**Branch authority:** Draft pull requests, proposed governance plans, independently VETOed remediations, and test-only branches do not change this index's main-branch product truth. Follow the relevant PR and its exact gate/ledger evidence for their current status; only update main-line governance entries when those artifacts legitimately enter main.
+
 ## Current sources of truth
 
 | Document | Purpose |
